@@ -1,0 +1,32 @@
+POST http://localhost:5000/api/v1/auth/login
+Content-Type: application/json
+
+ { 
+    "email": "kingmforgaming6@gmail.com", 
+    "password": "123"
+ }
+
+### 
+
+POST http://localhost:5000/api/v1/cards
+Content-Type: application/json
+
+ { 
+    "name": "testCollectoin"
+ }
+### 
+
+GET http://localhost:5000/api/v1/cards/
+
+### 
+PUT http://localhost:5000/api/v1/cards/ 
+Content-Type: application/json
+
+ { 
+    "name": "not test todo"
+ }
+### 
+DELETE http://localhost:5000/api/v1/cards/ 
+ 
+### 
+

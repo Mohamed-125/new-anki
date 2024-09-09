@@ -1,0 +1,20 @@
+const express = require("express");
+const router = express.Router();
+const {
+  createCard,
+  getUserCards,
+  getCard,
+  updateCard,
+  deleteCard,
+} = require("../controllers/CardController");
+
+const Authorization = require("../middleware/Authorization");
+
+router
+  .post("/", Authorization, createCard)
+  .get("/", Authorization, getUserCards)
+  .get("/:id", Authorization, getCard)
+  .put("/:id", Authorization, updateCard)
+  .delete("/:id", Authorization, deleteCard);
+
+module.exports = router;
