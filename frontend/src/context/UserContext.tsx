@@ -25,7 +25,6 @@ const UserContext = ({ children }: { children: React.ReactNode }) => {
   const { isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      console.log("fetcing");
       try {
         const res = await axios.get("auth/me");
         const data = res.data;

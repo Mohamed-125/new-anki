@@ -30,10 +30,22 @@ mongoose
 // Middleware Connections
 app.use(
   cors({
-    origin: true, // Reflect the request origin
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "https://new-anki-ia08i8ocl-mohameds-projects-220dfc63.vercel.app", // Vercel domain
+        "http://localhost:5173", // Localhost domain
+      ];
+      // If there's no origin or the origin is in the allowed list, allow the request
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Allow credentials (cookies, headers, etc.)
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

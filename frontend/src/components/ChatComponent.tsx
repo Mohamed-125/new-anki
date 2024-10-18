@@ -5,7 +5,8 @@ import Chat from "./Chat";
 import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 const ChatComponent = () => {
-  const VITE_API_KEY = "AIzaSyBOE7ADX5XOK0iQLFbQbMCahy_d8uA_Jfw";
+  const VITE_API_KEY = console.log(import.meta.env.VITE_API_KEY);
+
   const model = useMemo(() => {
     const genAI = new GoogleGenerativeAI(VITE_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -13,6 +14,7 @@ const ChatComponent = () => {
   }, []);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
+  console.log(VITE_API_KEY);
 
   return (
     <div className="fixed z-50 p-3 rounded-full cursor-pointer group bg-gradient-to-r from-purple-700 to-pink-800 right-12 sm:right-7 bottom-5">

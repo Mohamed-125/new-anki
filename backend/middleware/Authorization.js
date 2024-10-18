@@ -12,6 +12,9 @@ const setReqUser = async (_id, req) => {
 const Authorization = async (req, res, next) => {
   const token = req.cookies.token;
   const refreshToken = req.cookies.refreshToken;
+
+  console.log("req.cookies", req.cookies);
+  return req.cookies;
   if (!token) {
     if (!refreshToken) {
       return res.status(401).send("unathroized you have to login");
