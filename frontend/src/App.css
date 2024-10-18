@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer utilities {
   .openNav {
     transform: translate(0%);
@@ -16,16 +17,28 @@
 .container {
   max-width: 1300px;
   margin-inline: auto;
-  padding: 20px;
+  padding: 20px 50px;
 }
 
 body {
-  font-size: 17px;
-  background-color: rgb(64, 113, 244);
+  background-color: rgb(245, 245, 245);
+  font-size: 15px;
+  zoom: 0.96;
+  font-family: "Bahnschrift";
 }
 
 .grid-container {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-rows: repeat(3, auto);
+}
+
+.videos-container > div {
+  align-items: start;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-template-columns: subgrid;
+  grid-row: span 3;
+  gap: 0;
 }
 
 .backdropOpen {
@@ -104,9 +117,9 @@ hr {
   }
 }
 
-.jodit-popup__content {
+/* .jodit-popup__content {
   z-index: 100;
-}
+} */
 
 .modal-backdrop {
   position: fixed;
@@ -153,4 +166,93 @@ hr {
 iframe {
   width: 100%;
   height: 100%;
+}
+
+@media (max-width: 812px) {
+  .videoContainer {
+    flex-direction: column;
+  }
+}
+
+.subtitle::after {
+  content: attr(data-translated-text);
+  text-wrap: wrap;
+  margin-top: 0px;
+  padding-left: 30px;
+  width: 100%;
+  color: #393939;
+  word-break: break-word;
+  display: block;
+}
+
+.channel-video-thumbnail::before {
+  content: attr(data-duration);
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.552);
+  color: white;
+  right: 5px;
+  bottom: 5px;
+  padding: 5px 10px;
+  font-size: larger;
+}
+
+.ql-editor {
+  font-size: 18px;
+}
+
+.ql-editor img {
+  width: 100%;
+  display: block;
+}
+
+.quill.text .ql-editor {
+  min-height: 90vh;
+}
+
+.ql-disabled {
+  border: none !important;
+}
+.ql-disabled .ql-editor {
+  padding: 0 !important;
+}
+
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3,
+.ql-editor h4,
+.ql-editor h5,
+.ql-editor h6 {
+  margin-block: 15px !important;
+  font-weight: 600 !important;
+}
+
+/* .ql-active {
+  font-weight: bold;
+  border: 2px solid #393939 !important;
+  width: 30px !important;
+  height: 30px !important;
+} */
+
+* {
+  text-wrap: wrap;
+}
+
+.translate-text h1,
+.translate-text h2,
+.translate-text h3,
+.translate-text h4,
+.translate-text h5 {
+  font-weight: 600 !important;
+  margin-block: 15px !important;
+}
+
+.translate-text h1 {
+  font-size: 1.56rem !important;
+}
+.translate-text h2 {
+  font-size: 1.2rem !important;
+}
+
+.translate-text h3 {
+  font-size: 1rem !important;
 }

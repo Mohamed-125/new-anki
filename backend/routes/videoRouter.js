@@ -9,6 +9,8 @@ const {
   deleteVideo,
   getVideoAvailavailableCaptions,
   getTranscript,
+  batchDelete,
+  batchMove,
 } = require("../controllers/VideoController");
 
 const Authorization = require("../middleware/Authorization");
@@ -25,6 +27,8 @@ router
   .get("/getTranscript", Authorization, getTranscript)
   .get("/:id", Authorization, getVideo)
   .put("/:id", Authorization, updateVideo)
-  .delete("/:id", Authorization, deleteVideo);
+  .delete("/:id", Authorization, deleteVideo)
+  .post("/batch-delete", Authorization, batchDelete)
+  .post("/batch-move", Authorization, batchMove);
 
 module.exports = router;

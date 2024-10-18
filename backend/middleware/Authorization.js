@@ -2,9 +2,11 @@ const { decode } = require("jsonwebtoken");
 const UserModel = require("../models/UserModel");
 
 const setReqUser = async (_id, req) => {
-  const user = await UserModel.findOne({ _id });
-  req.user = user;
-  return user;
+  try {
+    const user = await UserModel.findOne({ _id });
+    req.user = user;
+    return user;
+  } catch (err) {}
 };
 
 const Authorization = async (req, res, next) => {
@@ -19,9 +21,7 @@ const Authorization = async (req, res, next) => {
       const { id: userId } = decode(refreshToken);
       const user = await setReqUser(userId, req);
       user.generateNewToken(res);
-    } catch (err) {
-      console.log("err", err);
-    }
+    } catch (err) {}
 
     return next();
   }

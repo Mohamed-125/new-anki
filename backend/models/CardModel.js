@@ -1,15 +1,15 @@
 const mongoose = require("mongoose");
 
 const CardSchema = mongoose.Schema({
-  word: {
+  front: {
     type: String,
-    require: [true, "word is required"],
+    require: [true, "front is required"],
   },
-  translation: {
+  back: {
     type: String,
-    require: [true, "translation name is required"],
+    require: [true, "back name is required"],
   },
-  examples: {
+  content: {
     type: String,
   },
   userId: {

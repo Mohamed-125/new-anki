@@ -1,18 +1,18 @@
 const CardModel = require("../models/CardModel");
 
 module.exports.createCard = async (req, res, next) => {
-  const { word, translation, examples, collectionId, videoId } = req.body;
+  const { front, back, content, collectionId, videoId } = req.body;
 
-  if (!word || !translation)
+  if (!front || !back)
     return res
       .status(400)
-      .send("you have to enter the word and the translation name");
+      .send("you have to enter the front and the back name");
 
   try {
     const createdCard = await CardModel.create({
-      word,
-      translation,
-      examples,
+      front,
+      back,
+      content,
       collectionId,
       userId: req.user._id,
       videoId,
@@ -42,19 +42,19 @@ module.exports.getCard = async (req, res, next) => {
 };
 
 module.exports.updateCard = async (req, res, next) => {
-  const { word, translation, examples, collectionId } = req.body;
+  const { front, back, content, collectionId } = req.body;
 
-  console.log("body", req.body);
+  "body", req.body;
   try {
     const updatedCard = await CardModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { word, translation, examples, collectionId, userId: req.user._id },
+      { front, back, content, collectionId, userId: req.user._id },
       {
         new: true,
       }
     );
 
-    console.log("updatedCard", updatedCard);
+    "updatedCard", updatedCard;
     res.status(200).send(updatedCard);
   } catch (err) {
     res.status(400).send(err);
@@ -68,5 +68,33 @@ module.exports.deleteCard = async (req, res, next) => {
     res.status(200).send("deleted!!");
   } catch (err) {
     res.status(400).send(err);
+  }
+};
+
+module.exports.batchDelete = async (req, res) => {
+  const { ids } = req.body;
+
+  try {
+    // Assuming you're using a database model like `Video`
+    await CardModel.deleteMany({ _id: { $in: ids } });
+    res.status(200).send({ message: "cards deleted successfully" });
+  } catch (error) {
+    res.status(500).send({ error: "Error deleting cards" });
+  }
+};
+
+module.exports.batchMove = async (req, res) => {
+  const { ids, selectedParent } = req.body;
+
+  "ids", ids, selectedParent;
+  try {
+    await CardModel.updateMany(
+      { _id: { $in: ids } },
+      { collectionId: selectedParent }
+    );
+
+    res.status(200).send({ message: "cards moved successfully" });
+  } catch (error) {
+    res.status(500).send({ error: "Error moving cards" });
   }
 };

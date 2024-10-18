@@ -9,7 +9,13 @@ export default {
       md: { max: "767px" },
       sm: { max: "650px" },
     },
-    extend: {},
+    extend: {
+      colors: {
+        textGray: "var(--gray)",
+        primary: "var(--primary)",
+        "dark-primary": "var(--dark-primary)",
+      },
+    },
   },
   plugins: [],
 };

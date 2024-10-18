@@ -2,6 +2,7 @@ const { default: axios } = require("axios");
 const VideoModel = require("../models/VideoModel");
 const { YoutubeTranscript } = require("youtube-transcript");
 const cheerio = require("cheerio");
+const { default: translate } = require("google-translate-api-x");
 
 module.exports.getVideoAvailavailableCaptions = async (req, res, next) => {
   const { url } = req.body;
@@ -11,12 +12,13 @@ module.exports.getVideoAvailavailableCaptions = async (req, res, next) => {
   YoutubeTranscript.fetchTranscript(url, { lang: "1" })
     .then((response) => {})
     .catch((err) => {
-      console.log("err", err);
-      if (err.message.includes("thisLangDoesNotExsist")) {
-        console.log("thisLangDoesNotExsist", err.message);
+      if (
+        err.message.includes("thisLangDoesNotExsist") ||
+        err.message.includes("No transcripts are available in 1 this video")
+      ) {
         return res.status(400).send({
           availableCaptions: err.message
-            .substring(err.message.indexOf(":") + 1)
+            .substring(err.message.indexOf("~") + 1)
             .split(","),
         });
       }
@@ -36,7 +38,7 @@ module.exports.getVideoTitle = async (req, res, next) => {
       res.send({ title, thumbnail });
     })
     .catch((err) => {
-      console.log(err);
+      err;
       return res.status(400).send(err.message);
     });
 };
@@ -48,25 +50,35 @@ module.exports.createVideo = async (req, res, next) => {
     thumbnail,
     availableCaptions,
     defaultCaption,
+    playlistId,
   } = req.body;
 
   if (!url) return res.status(400).send("you have to enter the video url");
-
-  const createdVideo = await VideoModel.create({
-    url,
-    userId: req.user._id,
-    title,
-    thumbnail,
-    availableCaptions,
+  const caption = await YoutubeTranscript.fetchTranscript(url, {
     defaultCaption,
   });
-  res.status(200).send(createdVideo);
+
+  try {
+    const createdVideo = await VideoModel.create({
+      url,
+      userId: req.user._id,
+      title,
+      thumbnail,
+      availableCaptions,
+      defaultCaption,
+      playlistId,
+    });
+
+    res.status(200).send(createdVideo);
+  } catch (err) {
+    err.message;
+    res.status(400).send(err);
+  }
 };
 
 module.exports.getTranscript = async (req, res, next) => {
   const { url, lang } = req.query;
 
-  console.log("url , lang", url, lang);
   YoutubeTranscript.fetchTranscript(url, { lang })
     .then((response) => {
       res.status(200).send({ caption: response });
@@ -90,22 +102,23 @@ module.exports.getVideo = async (req, res, next) => {
     );
     res.status(200).send(video[0]);
   } catch (err) {
-    console.log("err", err);
+    "err", err;
     res.status(400).send(err);
   }
 };
 
 module.exports.updateVideo = async (req, res, next) => {
-  const { word, translation, examples, collection } = req.body;
+  const { playlistId, defaultCaption } = req.body;
+
   try {
-    const updateVideo = await VideoModel.findByIdAndUpdate(
+    const updatedVideo = await VideoModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { word, translation, examples, collection, userId: req.user._id },
+      { playlistId, defaultCaption },
       {
         new: true,
       }
     );
-    res.status(200).send(updateVideo);
+    res.status(200).send(updatedVideo);
   } catch (err) {
     res.status(400).send(err);
   }
@@ -118,5 +131,28 @@ module.exports.deleteVideo = async (req, res, next) => {
     res.status(200).send("deleted!!");
   } catch (err) {
     res.status(400).send(err);
+  }
+};
+
+module.exports.batchDelete = async (req, res) => {
+  const { ids } = req.body;
+  try {
+    await VideoModel.deleteMany({ _id: { $in: ids } });
+    res.status(200).send({ message: "videos deleted successfully" });
+  } catch (error) {
+    res.status(500).send({ error: "Error deleting videos" });
+  }
+};
+module.exports.batchMove = async (req, res) => {
+  const { ids, selectedParent } = req.body;
+
+  try {
+    await VideoModel.updateMany(
+      { _id: { $in: ids } },
+      { playlistId: selectedParent }
+    );
+    res.status(200).send({ message: "videos moved successfully" });
+  } catch (error) {
+    res.status(500).send({ error: "Error moveing videos" });
   }
 };

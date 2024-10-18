@@ -16,7 +16,7 @@ module.exports.registerUserController = async (req, res, next) => {
 
     res.status(201).send(createdUser);
   } catch (err) {
-    console.log(err);
+    err;
     res.status(400).send(err.message);
   }
 };
@@ -41,7 +41,7 @@ module.exports.loginUserController = async (req, res, next) => {
 
     res.status(201).send(userFound);
   } catch (err) {
-    console.log(err);
+    err;
     res.status(400).send(err.message);
   }
 };
@@ -50,5 +50,5 @@ module.exports.logUserOutController = async (req, res, next) => {
   res.clearCookie("token");
   res.clearCookie("refreshToken");
 
-  return res.status(200).send({ msg: "user logged out " });
+  return res.status(200).send("user logged out ");
 };

@@ -20,6 +20,12 @@ const VideoSchema = mongoose.Schema(
         lang: { type: String },
       },
     ],
+    translatedTranscript: [
+      {
+        type: String,
+      },
+    ],
+
     availableCaptions: {
       type: [String],
       default: [],
@@ -30,6 +36,10 @@ const VideoSchema = mongoose.Schema(
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
+    },
+    playlistId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Playlist",
     },
   },
   {

@@ -14,7 +14,7 @@ router
   .post("/logout", logUserOutController)
   .get("/me", Authorization, async (req, res) => {
     const user = req.user;
-    console.log("2222222222222", user);
+    "user", user;
     res.send(user);
   });
 

@@ -10,6 +10,9 @@ const CollectionSchema = mongoose.Schema({
   slug: {
     type: String,
   },
+  public: {
+    type: Boolean,
+  },
   collectionCards: [
     {
       type: mongoose.Types.ObjectId,
@@ -47,7 +50,7 @@ CollectionSchema.post(["find", "findOne"], async function (docs) {
     });
 
     // Log and update the document
-    console.log(docs.collectionCards, docs.name);
+    docs.collectionCards, docs.name;
     docs.collectionCards = [
       ...docs.collectionCards,
       ...cardsBelongsToThisCollection,
