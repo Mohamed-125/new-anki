@@ -61,6 +61,10 @@ app.use("/api/v1/translate", translateRouter);
 app.use("/api/v1/channels", channelsRouter);
 app.use("/api/v1/text", textRouter);
 
+app.use("/", (req, res) => {
+  res.send("/api");
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
