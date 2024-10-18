@@ -37,16 +37,16 @@ function App() {
     { name: "videos", path: "/videos" },
     { name: "playlists", path: "/playlists" },
     { name: "Notes", path: "/notes" },
-    { name: "der,die oder das?", path: "/article" },
+    { name: "word article", path: "/article" },
     { name: "My Texts", path: "/myTexts" },
     { name: "Library", path: "/library" },
-    { name: "Important channels", path: "/channels" },
+    { name: "channels", path: "/channels" },
   ];
 
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
-        <Navbar links={links} gap={11} />
+        <Navbar links={links} gap={7} />
 
         <Routes>
           <Route

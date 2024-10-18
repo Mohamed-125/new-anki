@@ -27,7 +27,7 @@ function NavLinks({
     <div
       style={{ gap: `${gap}px` }}
       className={twMerge(
-        `navlinks md:fixed md:top-0 md:bottom-0 md:right-0 md:text-xl flex items-center w-[70%] z-40  md:py-24 md:px-7 bg-white md:flex-col justify-end md:justify-start md:items-end text-[16.18px]`,
+        `navlinks md:fixed md:top-0 md:bottom-0 md:right-0 md:text-xl flex items-center w-[70%] z-40  md:py-24 md:px-7 bg-white md:flex-col justify-end md:justify-start md:items-end text-[14px]`,
         isNavOpen ? "md:openNav" : "md:closeNav"
       )}
     >
@@ -55,7 +55,7 @@ function NavLinks({
         </>
       ) : (
         <>
-          <div style={{ gap: `${gap}rem` }} className="flex md:hidden">
+          <div style={{ gap: `${gap}px` }} className="flex md:hidden">
             <Button variant="primary-outline">Login</Button>
             <Button>Sign Up</Button>
           </div>
