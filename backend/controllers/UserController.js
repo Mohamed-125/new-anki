@@ -41,7 +41,6 @@ module.exports.loginUserController = async (req, res, next) => {
 
     res.status(201).send(userFound);
   } catch (err) {
-    err;
     res.status(400).send(err.message);
   }
 };
