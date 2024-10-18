@@ -33,6 +33,8 @@ function App() {
     import.meta.env.MODE === "production"
       ? import.meta.env.VITE_BACKEND_URL
       : "http://localhost:5000/api/v1/";
+  console.log(import.meta.env.MODE);
+  console.log(import.meta.env.VITE_BACKEND_URL);
 
   const links = [
     { name: "Home", path: "/" },
