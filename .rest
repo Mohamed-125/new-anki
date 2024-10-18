@@ -44,3 +44,8 @@ Content-Type: application/json
 { 
    "collectionId":"670cdff7b1097dfea808e1c4"
 }
+### 
+
+GET https://new-anki-server.vercel.app/
+Content-Type: application/json
+

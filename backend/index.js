@@ -61,7 +61,7 @@ app.use("/api/v1/translate", translateRouter);
 app.use("/api/v1/channels", channelsRouter);
 app.use("/api/v1/text", textRouter);
 
-app.use("/", (req, res) => {
+app.get("/", (req, res) => {
   res.json({
     message: "Welcome to the API. Use /api/v1/ for available routes.",
   });
