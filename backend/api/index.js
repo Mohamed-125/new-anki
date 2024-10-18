@@ -32,7 +32,7 @@ app.use(
   cors({
     origin: function (origin, callback) {
       const allowedOrigins = [
-        "https://new-anki-ia08i8ocl-mohameds-projects-220dfc63.vercel.app", // Vercel domain
+        "https://new-anki-one.vercel.app", // Vercel domain
         "http://localhost:5173", // Localhost domain
       ];
       // If there's no origin or the origin is in the allowed list, allow the request
