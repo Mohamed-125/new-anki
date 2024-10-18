@@ -62,7 +62,9 @@ app.use("/api/v1/channels", channelsRouter);
 app.use("/api/v1/text", textRouter);
 
 app.use("/", (req, res) => {
-  res.send("/api");
+  res.json({
+    message: "Welcome to the API. Use /api/v1/ for available routes.",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
