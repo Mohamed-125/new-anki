@@ -7,9 +7,4 @@ export default defineConfig({
       include: "**/*.tsx",
     }),
   ],
-  build: {
-    rollupOptions: {
-      external: ['@tanstack/react-query']
-    }
-  }
 });
