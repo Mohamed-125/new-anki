@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { createContext, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import Loading from "../components/Loading";
 import { useQuery } from "@tanstack/react-query";
 
@@ -18,23 +18,25 @@ type ContextType = {
 
 export const userContext = createContext<ContextType | null>(null);
 
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL =
+  import.meta.env.MODE === "production"
+    ? import.meta.env.VITE_BACKEND_URL
+    : "http://localhost:5000/api/v1/";
+
 const UserContext = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null);
 
-  ("context ran");
   const { isLoading } = useQuery({
     queryKey: ["me"],
-    queryFn: async () => {
-      try {
-        const res = await axios.get("auth/me");
-        const data = res.data;
-        setUser(data);
-        return data;
-      } catch (err) {
-        setUser(null);
-        return "error";
-      }
-    },
+    queryFn: () =>
+      axios.get("auth/me").then((res) => {
+        console.log("res.data", res.data);
+        setUser(res.data);
+        return res.data;
+      }),
+    staleTime: 0, // Data is always considered stale
+    refetchOnWindowFocus: false,
   });
 
   return (

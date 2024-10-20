@@ -8,8 +8,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("user", user);
-    console.log("isLoading", isLoading);
+    console.log("user", user, "isLoading", isLoading);
     if (!isLoading) {
       if (!user) navigate("/login");
     }

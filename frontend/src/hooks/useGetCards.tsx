@@ -8,6 +8,7 @@ export type CardType = {
   back: string;
   content?: string;
   collectionId?: string;
+  userId: string;
 };
 
 const useGetCards = () => {

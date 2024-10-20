@@ -21,22 +21,12 @@ import TextPage from "./pages/TextPage";
 import MyTexts from "./pages/MyTexts";
 import AddNewText from "./pages/AddNewText";
 import WordArticle from "./pages/WordArticle.tsx";
-import axios from "axios";
 import useToasts from "./hooks/useToasts";
 import Library from "./pages/Library.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.tsx";
 
 function App() {
-  axios.defaults.withCredentials = true;
-  axios.defaults.baseURL =
-    import.meta.env.MODE === "production"
-      ? import.meta.env.VITE_BACKEND_URL
-      : "http://localhost:5000/api/v1/";
-
-  console.log(import.meta.env.MODE);
-  console.log(import.meta.env.VITE_BACKEND_URL);
-
   const links = [
     { name: "Home", path: "/" },
     { name: "Collections", path: "/collections" },

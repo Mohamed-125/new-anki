@@ -27,26 +27,21 @@ mongoose
     "Error in DB connection: " + error;
   });
 
+var whitelist = ["https://new-anki-one.vercel.app", "http://localhost:5173"];
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+
+  credentials: true, // Allow credentials (cookies, headers, etc.)
+};
+
 // Middleware Connections
-app.use(
-  cors({
-    // origin: function (origin, callback) {
-    //   const allowedOrigins = [
-    //     "https://new-anki-one.vercel.app",
-    //     // Vercel domain
-    //     "http://localhost:5173", // Localhost domain
-    //   ];
-    //   // If there's no origin or the origin is in the allowed list, allow the request
-    //   if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-    //     callback(null, true);
-    //   } else {
-    //     callback(new Error("Not allowed by CORS"));
-    //   }
-    // },
-    origin: "https://new-anki-one.vercel.app", // Directly specify the frontend domain
-    credentials: true, // Allow credentials (cookies, headers, etc.)
-  })
-);
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -62,12 +57,6 @@ app.use("/api/v1/note", noteRouter);
 app.use("/api/v1/translate", translateRouter);
 app.use("/api/v1/channels", channelsRouter);
 app.use("/api/v1/text", textRouter);
-
-app.get("/", (req, res) => {
-  res.json({
-    message: "Welcome to the API. Use /api/v1/ for available routes.",
-  });
-});
 
 const PORT = process.env.PORT || 5000;
 

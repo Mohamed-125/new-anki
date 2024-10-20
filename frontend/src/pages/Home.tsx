@@ -9,6 +9,7 @@ import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent";
 import { CardType } from "../hooks/useGetCards";
+import useGetCurrentUser from "../hooks/useGetCurrentUser";
 
 const Home = () => {
   const {
@@ -17,8 +18,13 @@ const Home = () => {
     isError,
   } = useQuery({
     queryKey: ["cards"],
-    queryFn: () => axios.get("card").then((res) => res.data),
+    queryFn: () => {
+      console.log("fetcing cards");
+      return axios.get("card").then((res) => res.data);
+    },
   });
+
+  const { user } = useGetCurrentUser();
 
   const [filteredCards, setFilteredCards] = useState<CardType[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -75,6 +81,7 @@ const Home = () => {
           {filteredCards?.map((card) => {
             return (
               <Card
+                isSameUser={card.userId === user?._id}
                 setEditId={setEditId}
                 setContent={setContent}
                 setIsAddCardModalOpen={setIsAddCardModalOpen}

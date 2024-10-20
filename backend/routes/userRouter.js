@@ -5,6 +5,7 @@ const {
   registerUserController,
   loginUserController,
   logUserOutController,
+  Me,
 } = require("../controllers/UserController");
 const Authorization = require("../middleware/Authorization");
 
@@ -12,9 +13,10 @@ router
   .post("/register", registerUserController)
   .post("/login", loginUserController)
   .post("/logout", logUserOutController)
-  .get("/me", Authorization, async (req, res) => {
+  .get("/me", Authorization, (req, res) => {
     const user = req.user;
-    res.send(user);
+    console.log("User:", user);
+    return res.status(200).send(user);
   });
 
 module.exports = router;
