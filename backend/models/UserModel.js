@@ -26,7 +26,9 @@ UserSchema.methods.generateNewToken = async function (res) {
   });
   res.cookie("token", token, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Only over HTTPS
     maxAge: process.env.TOKEN_EXPIRESIN,
+    sameSite: "none",
   });
 };
 
@@ -36,6 +38,8 @@ UserSchema.methods.generateRefreshToken = async function (res) {
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Only over HTTPS
+    sameSite: "none",
     maxAge: process.env.REFRESH_TOKEN_EXPIRESIN,
   });
 };
