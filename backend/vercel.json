@@ -4,7 +4,7 @@
     { "source": "/api/v1/(.*)", "destination": "/api" },
     {
       "source": "/(.*)",
-      "destination": "../frontend/main.tsx"
+      "destination": "../frontend"
     }
   ]
 }
