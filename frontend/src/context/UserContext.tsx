@@ -30,11 +30,16 @@ const UserContext = ({ children }: { children: React.ReactNode }) => {
   const { isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: () =>
-      axios.get("auth/me").then((res) => {
-        console.log("res.data", res.data);
-        setUser(res.data);
-        return res.data;
-      }),
+      axios
+        .get("auth/me")
+        .then((res) => {
+          setUser(res.data);
+          return res.data;
+        })
+        .catch((err) => {
+          setUser(null);
+          return null;
+        }),
     staleTime: 0, // Data is always considered stale
     refetchOnWindowFocus: false,
   });
