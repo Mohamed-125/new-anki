@@ -185,6 +185,7 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Register />} />
         </Routes>
         <ChatComponent />
       </div>
