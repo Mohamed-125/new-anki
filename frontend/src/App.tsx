@@ -25,6 +25,7 @@ import useToasts from "./hooks/useToasts";
 import Library from "./pages/Library.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.tsx";
+import PageNotFound from "./pages/PageNotFound.tsx";
 
 function App() {
   const links = [
@@ -185,7 +186,7 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Register />} />
+          <Route path="*" element={<PageNotFound />} />
         </Routes>
         <ChatComponent />
       </div>
