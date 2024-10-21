@@ -68,7 +68,6 @@ const AddVideoModal = ({
   const { mutateAsync: updateVideoMutation } = useMutation({
     mutationFn: (data: dataType) => axios.put(`video/${data.id}`, data),
     onSuccess: (data) => {
-      data;
       queryClient.invalidateQueries({ queryKey: ["videos"] });
     },
   });
@@ -103,11 +102,9 @@ const AddVideoModal = ({
       .post("/video/getVideoAvailavailableCaptions", { url })
       .catch((err) => {
         if (err.response.data.availableCaptions) {
-          "err", err.response.data;
           setAvailavailableCaptions(err.response.data.availableCaptions);
         }
 
-        "err", err;
         setModalLoading(false);
       });
   };
@@ -168,7 +165,6 @@ const AddVideoModal = ({
       id: defaultValues?.videoId,
     };
 
-    "data", data;
     updateVideoMutation(data).then(() => {
       setIsVideoModalOpen(false);
     });
@@ -287,7 +283,7 @@ const AddVideoModal = ({
                   onChange={(e) => {
                     setDefaultCaption(e.target.value);
                   }}
-                  className="w-full px-4 py-1 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
                 >
                   {availableCaptions.map((caption) => (
                     <option value={caption}>{caption}</option>

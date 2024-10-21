@@ -38,9 +38,7 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
     },
     mutationFn: (data) => {
-      "cardData", data;
       return axios.post("/card/", data).then((res) => {
-        "new card created !!!", res.data;
         return res.data;
       });
     },

@@ -64,6 +64,7 @@ const ImportantChannelsAndVideos = () => {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  console.log(document.documentElement.scrollTop);
   return (
     <div className="container " ref={containerRef}>
       <h1 className="my-6 text-3xl font-bold text-black mb-11">
@@ -75,14 +76,12 @@ const ImportantChannelsAndVideos = () => {
         defaultValues={defaultValues}
         setAvailavailableCaptions={setAvailavailableCaptions}
         availableCaptions={availableCaptions}
-        className={` absolute z-[1000]  w-full max-w-[800px] inset-[unset] left2/4 right-2/4 translate-x-2/4 -translate-y-2/4`}
+        className={` fixed z-[1000]  w-[95%] max-w-[800px] inset-[unset] left2/4 right-2/4 translate-x-2/4 -translate-y-2/4`}
         style={{
-          top: `calc(${
-            openedVideo
-              ? (document.querySelector(`#${openedVideo}`) as HTMLInputElement)
-                  ?.offsetTop
-              : 0
-          }px `,
+          // top: `calc(${
+          //   // openedVideo ? document.documentElement.scrollTop : 0
+          // }px `,
+          top: "50vh",
         }}
         // Corrected this line
       />
@@ -166,7 +165,7 @@ const ImportantChannelsAndVideos = () => {
                     <Button
                       onClick={() => {
                         setIsVideoModalOpen(true);
-                        setOpenedVideo("video-" + index);
+                        setOpenedVideo(id);
                         setDefaultValues({
                           videoUrl: `https://www.youtube.com/watch?v=${videoLinkId}`,
                         });

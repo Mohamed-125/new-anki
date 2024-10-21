@@ -44,7 +44,6 @@ const TranslationWindow = ({
       axios
         .post(`/translate?targetLanguage=${targetLanguage}`, { text })
         .then((res) => {
-          "back", res.data;
           setTranslatedText(res.data);
         })
         .finally(() => {
@@ -66,7 +65,6 @@ const TranslationWindow = ({
       <Form.Label>Choose the target language :</Form.Label>
       <Form.Select
         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-          "e.target.value", e.target.value.toLowerCase();
           setTargetLanguage(e.target.value.toLowerCase());
         }}
         data-placeholder="Target Language..."

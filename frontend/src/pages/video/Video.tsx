@@ -1,29 +1,18 @@
 import AddCardModal from "../../components/AddCardModal";
 import axios from "axios";
-import React, {
-  DO_NOT_USE_OR_YOU_WILL_BE_FIRED_EXPERIMENTAL_REACT_NODES,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import Loading from "../../components/Loading";
 import TranslationWindow from "../../components/TranslationWindow";
-import YouTube from "react-youtube"; // Assuming you have a YouTube player library
 import useCreateNewCard from "../../hooks/useCreateNewCardMutation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // import useCreateNewCardMutation from "../hooks/useCreateNewCardMutation";
 // import { createCardHandler } from "../hooks/useCreateNewCardMutation";
-import JoditEditor from "jodit-react";
 import Card from "../../components/Card";
-import useCardActions from "../../hooks/useCardActions";
-import { FaPlay } from "react-icons/fa";
-import Button from "../../components/Button";
-import { MdVerticalAlignCenter } from "react-icons/md";
 import ReactYoutubeComponent from "./ReactYoutubeComponent";
 import Subtitles from "./Subtitles";
 import { CardType } from "../../hooks/useGetCards";
+import useGetCurrentUser from "../../hooks/useGetCurrentUser";
 
 export type CaptionType = {
   duration: number;
@@ -43,6 +32,7 @@ const Video = () => {
     queryFn: () => axios.get("video/" + id).then((res) => res.data),
   });
 
+  const { user } = useGetCurrentUser();
   if (isLoading) <Loading />;
 
   const { createCardHandler } = useCreateNewCard();
@@ -139,6 +129,7 @@ const Video = () => {
         <div className="mt-5">
           {video?.videoCards?.map((card: CardType) => (
             <Card
+              isSameUser={user?._id === card.userId}
               setEditId={setEditId}
               setContent={setContent}
               setIsAddCardModalOpen={setIsAddCardModalOpen}

@@ -1,7 +1,7 @@
 const TextModel = require("../models/TextModel");
 
 module.exports.getTexts = async (req, res) => {
-  const texts = await TextModel.find({ userId: req.params.userId });
+  const texts = await TextModel.find({ userId: req.user._id });
   res.send(texts);
 };
 
@@ -15,7 +15,7 @@ module.exports.createText = async (req, res) => {
     return res.status(400).send("Title and content are required");
   }
   const createdText = await TextModel.create({
-    userId: req.params.userId,
+    userId: req.user._id,
     ...req.body,
   });
   res.send(createdText);

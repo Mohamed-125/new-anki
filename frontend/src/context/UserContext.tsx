@@ -36,7 +36,7 @@ const UserContext = ({ children }: { children: React.ReactNode }) => {
           setUser(res.data);
           return res.data;
         })
-        .catch((err) => {
+        .catch(() => {
           setUser(null);
           return null;
         }),

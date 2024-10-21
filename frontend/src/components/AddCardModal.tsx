@@ -37,11 +37,11 @@ export function AddCardModal({
   editId,
   setDefaultValues,
   optimistic,
+  videoId,
 }: AddCardModalProps) {
   const isEdit = !!editId;
 
   useEffect(() => {
-    "isAddCardModalOpen", isAddCardModalOpen;
     if (!isAddCardModalOpen) {
       setDefaultValues?.(null);
       setEditId?.("");
@@ -54,10 +54,6 @@ export function AddCardModal({
       setContent(defaultValues.content);
     }
   }, [defaultValues?.content]);
-
-  useEffect(() => {
-    "content", content;
-  }, [content]);
 
   const { data: collections } = useGetCollections();
 
@@ -88,6 +84,7 @@ export function AddCardModal({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const cardData = {
       collectionId: defaultValues.collectionId || selectedCollection || null,
+      videoId,
       content,
     };
 

@@ -12,17 +12,10 @@ module.exports.getVideoAvailavailableCaptions = async (req, res, next) => {
   YoutubeTranscript.fetchTranscript(url, { lang: "1" })
     .then((response) => {})
     .catch((err) => {
-      if (
-        err.message.includes("thisLangDoesNotExsist") ||
-        err.message.includes("No transcripts are available in 1 this video")
-      ) {
-        return res.status(400).send({
-          availableCaptions: err.message
-            .substring(err.message.indexOf("~") + 1)
-            .split(","),
-        });
-      }
-      return res.status(400).send(err.message);
+      console.log(err.message);
+      return res.status(400).send({
+        availableCaptions: err.message.split(","),
+      });
     });
 };
 

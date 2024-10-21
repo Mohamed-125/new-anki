@@ -25,7 +25,6 @@ const useToasts = () => {
   };
 
   const deleteToast = (title: string) => {
-    "title", title;
     setToasts((pre) => pre.filter((toastItem) => toastItem.title !== title));
   };
 
