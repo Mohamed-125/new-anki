@@ -1,10 +1,7 @@
-import React, { useContext, useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import NavLinks from "./NavLinks";
 import { FaHamburger } from "react-icons/fa";
-import useGetCurrentUser from "../hooks/useGetCurrentUser";
-import { useQueryClient } from "@tanstack/react-query";
 
 export type LinkType = {
   name: string;
@@ -17,16 +14,6 @@ type NavbarProps = {
 };
 
 const Navbar = ({ links, gap = 1 }: NavbarProps) => {
-  const { user, setUser } = useGetCurrentUser();
-  const queryClient = useQueryClient();
-
-  const logoutHandler = () => {
-    axios.post("auth/logout").then((res) => {
-      setUser(null);
-      queryClient.clear(); // Completely clears the query cache
-    });
-  };
-
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   return (
@@ -48,11 +35,9 @@ const Navbar = ({ links, gap = 1 }: NavbarProps) => {
 
           <NavLinks
             gap={gap}
-            user={user}
             links={links}
             setIsNavOpen={setIsNavOpen}
             isNavOpen={isNavOpen}
-            logoutHandler={logoutHandler}
           />
         </div>
       </nav>

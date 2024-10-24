@@ -1,28 +1,33 @@
 import { twMerge } from "tailwind-merge";
 import Button from "./Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { userContext } from "../context/UserContext";
 import { LinkType } from "./Navbar";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
+import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 
 type NavLinkProps = {
   links: LinkType[];
-  logoutHandler: () => void;
   isNavOpen: boolean;
   setIsNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
   gap: number;
-  user: any;
 };
 
-function NavLinks({
-  links,
-  logoutHandler,
-  isNavOpen,
-  setIsNavOpen,
-  gap,
-  user,
-}: NavLinkProps) {
+function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { user, setUser } = useGetCurrentUser();
+  const logoutHandler = () => {
+    axios.post("auth/logout").then(() => {
+      setUser(null);
+      queryClient.clear(); // Completely clears the query cache
+      navigate("/login");
+    });
+  };
+
   return (
     <div
       style={{ gap: `${gap}px` }}

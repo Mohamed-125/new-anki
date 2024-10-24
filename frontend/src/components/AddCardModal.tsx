@@ -83,7 +83,7 @@ export function AddCardModal({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const cardData = {
-      collectionId: defaultValues.collectionId || selectedCollection || null,
+      collectionId: defaultValues?.collectionId || selectedCollection || null,
       videoId,
       content,
     };
