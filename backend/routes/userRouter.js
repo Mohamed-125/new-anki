@@ -18,7 +18,7 @@ router
     const data = await fetch(`https://www.youtube.com/watch?v=f4k3TzvT10E`);
     const html = data.text();
     console.log("User:", user);
-    console.log("HTML:", HTML);
+    console.log("HTML:", html);
 
     return res.status(200).send(user);
   });
