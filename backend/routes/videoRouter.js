@@ -5,9 +5,8 @@ const {
   getUserVideos,
   getVideo,
   updateVideo,
-  getVideoTitle,
+  getVideoData,
   deleteVideo,
-  getVideoAvailavailableCaptions,
   getTranscript,
   batchDelete,
   batchMove,
@@ -16,14 +15,14 @@ const {
 const Authorization = require("../middleware/Authorization");
 
 router
-  .post(
-    "/getVideoAvailavailableCaptions",
-    Authorization,
-    getVideoAvailavailableCaptions
-  )
+  // .post(
+  //   "/getVideoAvailavailableCaptions",
+  //   Authorization,
+  //   getVideoAvailavailableCaptions
+  // )
   .post("/", Authorization, createVideo)
   .get("/", Authorization, getUserVideos)
-  .get("/getVideoTitle/:id", Authorization, getVideoTitle)
+  .get("/getVideoData/:videoId", Authorization, getVideoData)
   .get("/getTranscript", Authorization, getTranscript)
   .get("/:id", Authorization, getVideo)
   .put("/:id", Authorization, updateVideo)

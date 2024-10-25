@@ -12,24 +12,18 @@ const VideoSchema = mongoose.Schema(
     thumbnail: {
       type: String,
     },
-    transcript: [
-      {
-        text: { type: String },
-        duration: { type: Number },
-        offset: { type: Number },
-        lang: { type: String },
-      },
-    ],
+
     translatedTranscript: [
       {
         type: String,
       },
     ],
-
-    availableCaptions: {
-      type: [String],
-      default: [],
-    },
+    availableCaptions: [
+      {
+        value: { type: String },
+        text: { type: String },
+      },
+    ],
     defaultCaption: {
       type: String,
     },

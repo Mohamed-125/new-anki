@@ -19,15 +19,23 @@ const Authorization = async (req, res, next) => {
     }
 
     try {
-      const { id: userId } = verify(refreshToken, process.env.JWT_KEY);
-      const user = await setReqUser(userId, req);
-      user.generateNewToken(res);
+      try {
+        const { id: userId } = verify(refreshToken, process.env.JWT_KEY);
+        const user = await setReqUser(userId, req);
+        user.generateNewToken(res);
+      } catch (err) {
+        return res.status(401).send("unathroized you have to login");
+      }
     } catch (err) {}
 
     return next();
   }
-  const { id: userId } = verify(token, process.env.JWT_KEY);
-  await setReqUser(userId, req);
+
+  try {
+    const { id: userId } = verify(token, process.env.JWT_KEY);
+    await setReqUser(userId, req);
+  } catch (err) {}
+
   next();
 };
 

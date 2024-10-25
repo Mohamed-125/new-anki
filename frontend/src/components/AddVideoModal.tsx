@@ -6,6 +6,8 @@ import Modal from "./Modal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Select, { SingleValue } from "react-select";
+import getYouTubeVideoId from "../utils/getYoutubeVideoId";
+import AvailableCaptionsSelect from "./AvailableCaptionsSelect";
 
 type playlistType = {
   name: string;
@@ -21,10 +23,11 @@ export type OptionType = {
 type dataType = {
   id?: string;
   url?: string;
+  videoId?: string;
   selectedSubtitle: string;
   videoTitle: string;
   thumbnail: string;
-  availableCaptions: string[];
+  availableCaptions: availableCaption[];
   playlistId: string;
   defaultCaption: string;
 };
@@ -32,22 +35,26 @@ type dataType = {
 type AddVideoModalProps = {
   setIsVideoModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   defaultValues?: any;
-  setAvailavailableCaptions: React.Dispatch<React.SetStateAction<string[]>>;
-  availableCaptions: string[];
   isVideoModalOpen: boolean;
   className?: string;
   style?: React.CSSProperties;
 };
 
+export type availableCaption = {
+  value: string;
+  text: string;
+};
+
 const AddVideoModal = ({
   setIsVideoModalOpen,
   defaultValues,
-  setAvailavailableCaptions,
-  availableCaptions,
   className,
   style,
   isVideoModalOpen,
 }: AddVideoModalProps) => {
+  const [availableCaptions, setAvailavailableCaptions] = useState<
+    availableCaption[]
+  >([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [thumbnail, setThumbnail] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
@@ -96,40 +103,49 @@ const AddVideoModal = ({
     }
   }, [playlists]);
 
-  const getVideoAvailavailableCaptions = (url: string) => {
+  const getVideoData = (url: string) => {
     setModalLoading(true);
-    axios
-      .post("/video/getVideoAvailavailableCaptions", { url })
-      .catch((err) => {
-        if (err.response.data.availableCaptions) {
-          setAvailavailableCaptions(err.response.data.availableCaptions);
-        }
-
-        setModalLoading(false);
-      });
-  };
-
-  const getVideoTitleAndThumbnail = (url: string) => {
-    setModalLoading(true);
-    const videoId = url
-      ?.replace("/watch?v=", "/embed/")
-      .split("&")[0]
-      .split("embed/")[1];
+    const videoId = getYouTubeVideoId(url);
 
     axios
-      .get("/video/getVideoTitle/" + videoId)
+      .get("/video/getVideoData/" + videoId)
       .then((res) => {
-        res.data;
-        setVideoTitle(res.data.title);
-        setThumbnail(res.data.thumbnail);
+        const json = res.data.json;
+        const videoData = JSON.parse(json);
+        console.log(videoData);
+
+        videoData.captions.playerCaptionsTracklistRenderer.captionTracks.map(
+          (track: any) =>
+            setAvailavailableCaptions((pre) => {
+              console.log("pre", pre);
+              return [
+                ...pre,
+                {
+                  value: track.languageCode + " " + track.kind,
+                  text: track.name.simpleText,
+                },
+              ];
+            })
+        );
+
+        setVideoTitle(videoData.videoDetails.title);
+        setThumbnail(
+          videoData.videoDetails.thumbnail.thumbnails[
+            videoData.videoDetails.thumbnail.thumbnails.length - 1
+          ].url
+        );
       })
       .catch((err) => {
-        err;
+        console.log("err", err);
       })
       .finally(() => {
         setModalLoading(false);
       });
   };
+
+  useEffect(() => {
+    console.log("availableCaptions", availableCaptions);
+  }, [availableCaptions]);
 
   const addVideo = (url: string) => {
     setModalLoading(true);
@@ -142,9 +158,15 @@ const AddVideoModal = ({
       availableCaptions,
       playlistId: selectedPlaylist,
       defaultCaption:
-        availableCaptions.indexOf(defaultCaption) === -1
-          ? availableCaptions[0]
-          : availableCaptions[availableCaptions.indexOf(defaultCaption)],
+        availableCaptions.findIndex(
+          (caption) => caption.value === defaultCaption
+        ) === -1
+          ? availableCaptions[0].value
+          : availableCaptions[
+              availableCaptions.findIndex(
+                (caption) => caption.value === defaultCaption
+              )
+            ].value,
     }).then(() => {
       setIsVideoModalOpen(false);
     });
@@ -190,9 +212,9 @@ const AddVideoModal = ({
       const url = formData.get("video_url") as string;
 
       const selectedSubtitle = formData.get("video_subtitle");
+
       if (!availableCaptions?.length) {
-        getVideoAvailavailableCaptions(url);
-        getVideoTitleAndThumbnail(url);
+        getVideoData(url);
         return;
       }
 
@@ -206,7 +228,7 @@ const AddVideoModal = ({
   useEffect(() => {
     // ("defaultValues", defaultValues);
     setVideoUrl(defaultValues?.videoUrl);
-    setAvailavailableCaptions(defaultValues?.videoAvailableCaptions);
+    setAvailavailableCaptions(defaultValues?.videoAvailableCaptions || []);
     setDefaultCaption(defaultValues?.videoDefaultCaption);
     setVideoTitle(defaultValues?.videoTitle);
     setThumbnail(defaultValues?.videoThumbnail);
@@ -277,18 +299,11 @@ const AddVideoModal = ({
               <Form.Field>
                 <Form.Label>Choose your default caption</Form.Label>
 
-                <select
-                  name="video_subtitle"
+                <AvailableCaptionsSelect
+                  availableCaptions={availableCaptions}
                   value={defaultCaption}
-                  onChange={(e) => {
-                    setDefaultCaption(e.target.value);
-                  }}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                >
-                  {availableCaptions.map((caption) => (
-                    <option value={caption}>{caption}</option>
-                  ))}
-                </select>
+                  setValue={setDefaultCaption}
+                />
               </Form.Field>
 
               <Form.Field>

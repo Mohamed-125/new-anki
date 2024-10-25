@@ -7,6 +7,8 @@ import Button from "../../components/Button";
 import { MdVerticalAlignCenter } from "react-icons/md";
 import { Virtuoso } from "react-virtuoso";
 import { CaptionType } from "./Video";
+import getYouTubeVideoId from "../../utils/getYoutubeVideoId";
+import AvailableCaptionsSelect from "../../components/AvailableCaptionsSelect";
 
 type subtitleProps = {
   selectionData: { ele: any; text: string };
@@ -29,7 +31,6 @@ function Subtitles({
 }: subtitleProps) {
   const [selectedCaption, setSelectedCaption] = useState("");
   const [isCaptionLoading, setIsCaptionLoading] = useState(true);
-  const [allText, setAllText] = useState([]);
 
   const scrollToSubtitle = () => {
     const activeSubtitle = document.querySelector(".subtitle-active");
@@ -39,46 +40,38 @@ function Subtitles({
   };
 
   useEffect(() => {
-    video;
-    if (video?.availableCaptions.length) {
-      ("getting the transcript");
-      axios
-        .get(
-          "/video/getTranscript?url=" +
-            video.url +
-            "&lang=" +
-            video?.defaultCaption
-        )
-        .then((res) => {
-          "res.data.caption", res.data.caption;
+    if (!video?.url) return;
+    const videoId = getYouTubeVideoId(video.url);
 
-          setCaption(res.data.caption);
-        })
-        .finally(() => setIsCaptionLoading(false));
-    }
+    axios
+      .get(
+        "/video/getTranscript?videoId=" +
+          videoId +
+          "&lang=" +
+          video?.defaultCaption
+      )
+      .then((res) => {
+        setCaption(res.data);
+      })
+      .finally(() => setIsCaptionLoading(false));
 
     setSelectedCaption(video?.defaultCaption);
   }, [video]);
 
-  useEffect(() => {
-    "isCaptionLoading", isCaptionLoading;
-  }, [isCaptionLoading]);
-
   const handleCaptionChange = (e: any) => {
-    ("caption changed");
     setIsCaptionLoading(true);
     setSelectedCaption(e.target.value);
 
+    const videoId = getYouTubeVideoId(video.url);
+
     axios
       .get(
-        `/video/getTranscript?url=${video.url}&lang=${e.target.value.trim()}`
+        `/video/getTranscript?videoId=${videoId}&lang=${e.target.value.trim()}`
       )
       .then((res) => {
-        setCaption(res.data.caption);
+        setCaption(res.data);
       })
-      .catch((err) => {
-        "err", err;
-      })
+      .catch((err) => {})
       .finally(() => setIsCaptionLoading(false));
   };
 
@@ -94,17 +87,11 @@ function Subtitles({
           <label className="block mb-2 text-xl text-black">
             available captions
           </label>
-          <select
-            onChange={handleCaptionChange}
+          <AvailableCaptionsSelect
+            availableCaptions={video?.availableCaptions}
             value={selectedCaption}
-            className="w-full px-3 py-3 border border-gray-300 rounded-md "
-          >
-            {video?.availableCaptions?.map((caption: any) => (
-              <option key={caption} value={caption}>
-                {caption}
-              </option>
-            ))}
-          </select>
+            setValue={setSelectedCaption}
+          />
         </div>
         <div className="grow">
           <Button
@@ -116,7 +103,7 @@ function Subtitles({
           </Button>
           {isCaptionLoading && <Loading />}
 
-          {caption.map((subtitle: CaptionType, _) => {
+          {caption?.map((subtitle: CaptionType, _) => {
             return (
               <Subtitle
                 key={_}
@@ -171,13 +158,9 @@ function Subtitle({
   selectionData,
   playerRef,
   handleSelection,
-  caption,
-  video,
 }: SubtitleProps) {
-  const [selectedIndex, setSelectedIndex] = useState({ start: 0, end: 0 });
   // const [isTranslationLoading, setIsTranslationLoading] = useState(true);
   const [translatedText, setTranslatedText] = useState("");
-  const [isTranslatedLoading, setIsTranslatedLoading] = useState(true);
 
   // useEffect(() => {
   //   caption.forEach((caption, index) => {
@@ -196,7 +179,6 @@ function Subtitle({
       setTranslatedText(translatedText);
       return translatedText;
     };
-    setIsTranslatedLoading(false);
     translateText(subtitle.text);
   }, []);
 
@@ -209,7 +191,7 @@ function Subtitle({
         onMouseUp={selectionData.text ? () => {} : handleSelection}
         onClick={(e) => {
           if (playerRef?.current) {
-            playerRef.current.seekTo(subtitle.offset);
+            playerRef.current.seekTo(subtitle.start);
           }
         }}
       >

@@ -32,7 +32,6 @@ const ImportantChannelsAndVideos = () => {
     useState<SelecetedChannelType>();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
-  const [availableCaptions, setAvailavailableCaptions] = useState<string[]>([]);
   const [openedVideo, setOpenedVideo] = useState("");
 
   const {
@@ -74,8 +73,6 @@ const ImportantChannelsAndVideos = () => {
         isVideoModalOpen={isVideoModalOpen}
         setIsVideoModalOpen={setIsVideoModalOpen}
         defaultValues={defaultValues}
-        setAvailavailableCaptions={setAvailavailableCaptions}
-        availableCaptions={availableCaptions}
         className={` fixed z-[1000]  w-[95%] max-w-[800px] inset-[unset] left2/4 right-2/4 translate-x-2/4 -translate-y-2/4`}
         style={{
           // top: `calc(${

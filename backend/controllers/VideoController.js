@@ -2,36 +2,33 @@ const { default: axios } = require("axios");
 const VideoModel = require("../models/VideoModel");
 const { YoutubeTranscript } = require("youtube-transcript");
 const cheerio = require("cheerio");
-const { default: translate } = require("google-translate-api-x");
+const getSubtitles = require("youtube-captions-scraper").getSubtitles;
 
-module.exports.getVideoAvailavailableCaptions = async (req, res, next) => {
-  const { url } = req.body;
-
-  if (!url) return res.status(400).send("you have to enter the video url");
-
-  YoutubeTranscript.fetchTranscript(url, { lang: "1" })
-    .then((response) => {})
-    .catch((err) => {
-      console.log(err.message);
-      return res.status(400).send({
-        availableCaptions: err.message.split(","),
-      });
-    });
-};
-
-module.exports.getVideoTitle = async (req, res, next) => {
-  const videoId = req.params.id;
+module.exports.getVideoData = async (req, res, next) => {
+  const videoId = req.params.videoId;
 
   axios
     .get(`https://www.youtube.com/watch?v=${videoId}`)
     .then((response) => {
       const $ = cheerio.load(response.data);
-      const title = $("title").text();
-      const thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-      res.send({ title, thumbnail });
+      let title = $("title").text();
+      let thembnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+      const regex = /{[^]*}/; // This regex tries to match anything within curly braces
+
+      let script = $("body div + script").text().slice(29);
+      let stepOneJson = script;
+      let json = stepOneJson.match(/{.*}/)[0];
+
+      json = json.slice(0, json.indexOf("function") - 2);
+
+      res.send({
+        title,
+        thembnail,
+        json,
+      });
     })
     .catch((err) => {
-      err;
       return res.status(400).send(err.message);
     });
 };
@@ -70,13 +67,15 @@ module.exports.createVideo = async (req, res, next) => {
 };
 
 module.exports.getTranscript = async (req, res, next) => {
-  const { url, lang } = req.query;
+  const { videoId, lang } = req.query;
 
-  YoutubeTranscript.fetchTranscript(url, { lang })
-    .then((response) => {
-      res.status(200).send({ caption: response });
-    })
-    .catch((err) => res.status(400).send(err.message));
+  console.log(videoId, lang.slice(0, 2));
+  getSubtitles({
+    videoID: videoId, // youtube video id
+    lang: lang.slice(0, 2), // default: `en`
+  }).then((captions) => {
+    res.send(captions);
+  });
 };
 
 module.exports.getUserVideos = async (req, res, next) => {

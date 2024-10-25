@@ -15,9 +15,8 @@ import { CardType } from "../../hooks/useGetCards";
 import useGetCurrentUser from "../../hooks/useGetCurrentUser";
 
 export type CaptionType = {
-  duration: number;
-  lang: string;
-  offset: number;
+  dur: number;
+  start: number;
   text: string;
 };
 
