@@ -14,8 +14,6 @@ module.exports.getVideoData = async (req, res, next) => {
       let title = $("title").text();
       let thembnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-      const regex = /{[^]*}/; // This regex tries to match anything within curly braces
-
       let script = $("body div + script").text().slice(29);
       let stepOneJson = script;
       let json = stepOneJson.match(/{.*}/)[0];
@@ -23,6 +21,7 @@ module.exports.getVideoData = async (req, res, next) => {
       json = json.slice(0, json.indexOf("function") - 2);
 
       res.send({
+        response,
         title,
         thembnail,
         json,
