@@ -36,7 +36,8 @@ var corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow specific HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
   credentials: true, // Allow credentials (cookies, headers, etc.)
 };
 
