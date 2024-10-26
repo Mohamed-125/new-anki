@@ -7,8 +7,10 @@ const getSubtitles = require("youtube-captions-scraper").getSubtitles;
 module.exports.getVideoData = async (req, res, next) => {
   const videoId = req.params.videoId;
 
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+
   axios
-    .get(`https://www.youtube.com/watch?v=${videoId}`)
+    .get(url)
     .then((response) => {
       const $ = cheerio.load(response.data);
       let title = $("title").text();
@@ -24,7 +26,7 @@ module.exports.getVideoData = async (req, res, next) => {
 
       res.send({
         response: response.data,
-        title,
+        url: url,
         thembnail,
         json,
       });
