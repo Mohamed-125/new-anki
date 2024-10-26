@@ -117,25 +117,6 @@ function Subtitles({
               />
             );
           })}
-
-          {/* <Virtuoso
-          style={{ height: "100%" }}
-          data={caption}
-          itemContent={(_, subtitle) => {
-            return (
-              <Subtitle
-                key={_}
-                n={_}
-                caption={caption}
-                video={video}
-                handleSelection={handleSelection}
-                subtitle={subtitle}
-                selectionData={selectionData}
-                playerRef={playerRef}
-              />
-            );
-          }}
-        /> */}
         </div>
       </div>
     </div>
@@ -159,16 +140,7 @@ function Subtitle({
   playerRef,
   handleSelection,
 }: SubtitleProps) {
-  // const [isTranslationLoading, setIsTranslationLoading] = useState(true);
   const [translatedText, setTranslatedText] = useState("");
-
-  // useEffect(() => {
-  //   caption.forEach((caption, index) => {
-  //     if (caption.includes(video.videoCards)) {
-  //       setSelectedIndex({ start: index, end: index });
-  //     }
-  //   });
-  // }, [video])
 
   useEffect(() => {
     const translateText = async (text: string) => {
@@ -207,18 +179,6 @@ function Subtitle({
               <p>{subtitle.text}</p>
             </div>
           </div>
-          {/* <div className="flex items-center gap-2 ">
-            {isTranslatedLoading ? (
-              <Loading loaderClassName="absolute py-2 !w-10 !h-10" />
-            ) : (
-              <div className="select-none">
-                <FaPlay className="invisible p-1 text-2xl text-gray-700 border border-gray-700 rounded-full " />
-                <p className="mt-2 text-gray-500 select-none">
-                  {translatedText}
-                </p>
-              </div>
-            )}
-          </div> */}
         </div>
       </div>
     </div>
