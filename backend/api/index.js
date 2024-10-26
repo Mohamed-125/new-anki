@@ -47,6 +47,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.options("*", cors(corsOptions)); // Enable pre-flight requests for all routes
 
 // Routes
 app.use("/api/v1/auth", userRouter);
