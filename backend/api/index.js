@@ -27,22 +27,24 @@ mongoose
     "Error in DB connection: " + error;
   });
 
-var whitelist = ["https://new-anki-one.vercel.app", "http://localhost:5173"];
-var corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow specific HTTP methods
-  allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
-  credentials: true, // Allow credentials (cookies, headers, etc.)
-};
+// var whitelist = ["https://new-anki-one.vercel.app", "http://localhost:5173"];
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow specific HTTP methods
+//   allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+//   credentials: true, // Allow credentials (cookies, headers, etc.)
+// };
 
-// Middleware Connections
-app.use(cors(corsOptions));
+// // Middleware Connections
+// app.use(cors(corsOptions));
+
+app.use(cors({ origin: "*", credentials: true }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
