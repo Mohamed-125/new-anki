@@ -12,7 +12,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://new-anki-one.vercel.app"
+          "value": ["https://new-anki-one.vercel.app", "http://localhost:5173"]
         },
         {
           "key": "Access-Control-Allow-Methods",

@@ -59,11 +59,4 @@ Content-Type: application/json
     "password": "123"
  }
 ###
-
-GET https://new-anki-server.vercel.app/api/v1/card
-Content-Type: application/json
-
- { 
-    "email": "kingmforgaming@gmail.com", 
-    "password": "123"
- }
+ 
