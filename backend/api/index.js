@@ -37,8 +37,8 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  // allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // Allow credentials (cookies, headers, etc.)
 };
 
@@ -46,12 +46,11 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Preflight request handler
-app.options("*", cors(corsOptions));
+// app.options("*", cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.options("*", cors(corsOptions)); // Enable pre-flight requests for all routes
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
