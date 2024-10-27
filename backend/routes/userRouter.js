@@ -16,12 +16,12 @@ router
   .get("/me", Authorization, async (req, res) => {
     // const user = req.user;
     // console.log("User:", user);
+    // return res.status(200).send(user);
 
-    axios
-      .get("https://www.youtube.com/watch?v=aX8gZAyo5ss&ab_channel=DavidAndrew")
-      .then((res) => {
-        return res.status(200).send(res.data);
-      });
+    const res = await axios.get(
+      "https://www.youtube.com/watch?v=aX8gZAyo5ss&ab_channel=DavidAndrew"
+    );
+    return res.status(200).send(res.data);
   });
 
 module.exports = router;
