@@ -84,6 +84,28 @@ module.exports.getVideoData = async (req, res, next) => {
   }
 };
 
+const getTranscript = async (videoId, lang, res) => {
+  console.log(videoId, lang.slice(0, 2));
+
+  try {
+    const subtitle = await getSubtitles({
+      videoID: videoId, // youtube video id
+      lang: lang.slice(0, 2), // default: `en`
+    });
+    return subtitle;
+  } catch (err) {
+    return res
+      .status(400)
+      .send({ msg: "error geting the subtitle", error: err });
+  }
+};
+
+module.exports.getTranscript = async (req, res) => {
+  const { videoId, lang } = req.query;
+  const caption = await getTranscript(videoId, lang, res);
+  return res.status(200).send(caption);
+};
+
 module.exports.createVideo = async (req, res, next) => {
   const {
     url,
@@ -95,10 +117,6 @@ module.exports.createVideo = async (req, res, next) => {
   } = req.body;
 
   if (!url) return res.status(400).send("you have to enter the video url");
-  const caption = await YoutubeTranscript.fetchTranscript(url, {
-    defaultCaption,
-  });
-
   try {
     const createdVideo = await VideoModel.create({
       url,
@@ -115,18 +133,6 @@ module.exports.createVideo = async (req, res, next) => {
     err.message;
     res.status(400).send(err);
   }
-};
-
-module.exports.getTranscript = async (req, res, next) => {
-  const { videoId, lang } = req.query;
-
-  console.log(videoId, lang.slice(0, 2));
-  getSubtitles({
-    videoID: videoId, // youtube video id
-    lang: lang.slice(0, 2), // default: `en`
-  }).then((captions) => {
-    res.send(captions);
-  });
 };
 
 module.exports.getUserVideos = async (req, res, next) => {
