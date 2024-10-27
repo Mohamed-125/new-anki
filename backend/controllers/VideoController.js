@@ -96,7 +96,7 @@ const getTranscript = async (videoId, lang, res) => {
   } catch (err) {
     return res
       .status(400)
-      .send({ msg: "error geting the subtitle", error: err });
+      .send({ msg: "error geting the subtitle", error: err.message });
   }
 };
 
