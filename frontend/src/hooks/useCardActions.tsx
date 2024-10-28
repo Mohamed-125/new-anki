@@ -31,7 +31,6 @@ const useCardActions = () => {
     },
     mutationFn: (data: CardType) => {
       return axios.put(`/card/${data._id}`, data).then((res) => {
-        " card updated successfully !!!", res.data;
         return res.data;
       });
     },
@@ -53,9 +52,8 @@ const useCardActions = () => {
       front: formData.get("card_word") as string,
       back: formData.get("card_translation") as string,
       _id: editId || "",
-      collectionId: collectionId,
+      collectionId: collectionId || undefined,
     }).then((res) => {
-      "res", res;
       setIsAddCardModalOpen(false);
     });
   };
@@ -63,7 +61,6 @@ const useCardActions = () => {
   const deleteHandler = async (id: string) => {
     try {
       const res = await axios.delete(`/card/${id}`);
-      "res", res;
       addToast("Card Deleted Successfly", "success");
     } catch {
       addToast("Failed to delete the card ", "error");

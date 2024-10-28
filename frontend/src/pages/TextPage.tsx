@@ -91,7 +91,9 @@ const TextPage = () => {
     });
   };
 
-  if (isLoading) <Loading />;
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="container p-4 w-[90%] rounded-lg mt-5 mb-8 bg-white !text-xl">

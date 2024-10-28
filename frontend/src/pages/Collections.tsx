@@ -2,14 +2,12 @@ import axios from "axios";
 import Collection from "../components/Collection";
 import React, { FormEvent, useEffect, useState } from "react";
 import Button from "../components/Button";
-import Loading from "../components/Loading";
 import Modal from "../components/Modal";
 import Form from "../components/Form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import useGetCollections, { CollectionType } from "../hooks/useGetCollections";
-import ChangeItemsParent from "../components/ChangeItemsParent";
 
 const Collections = () => {
   const [isCollectionsModalOpen, setIsCollectionModalOpen] = useState(false);
@@ -22,8 +20,9 @@ const Collections = () => {
 
   const [acionsDivId, setActionsDivId] = useState("");
 
-  const { data: collections, isLoading } = useGetCollections();
-  if (isLoading) <Loading />;
+  const { data: collections } = useGetCollections() as {
+    data: CollectionType[];
+  };
 
   // the mutation logic for adding a collection and optimistic updates
   const queryClient = useQueryClient();
@@ -32,23 +31,17 @@ const Collections = () => {
     axios
       .delete(`collection/${collectionId}`)
       .then((res) => {
-        "collection deleted !!!", res.data;
         queryClient.invalidateQueries(["collections"] as any);
       })
       .catch((err) => err);
   };
 
   useEffect(() => {
-    "isCollectionsModalOpen", isCollectionsModalOpen;
     if (!isCollectionsModalOpen) {
       ("tsrtarstr");
       setDefaultValues({});
     }
   }, [isCollectionsModalOpen]);
-
-  useEffect(() => {
-    "defaultValues", defaultValues;
-  }, [defaultValues]);
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [changeItemsParent, setChangeItemsParent] = useState(false);
@@ -178,7 +171,6 @@ const AddNewCollectionModal = ({
 
     mutationFn: async (data) => {
       return await axios.post("collection", data).then((res) => {
-        "new collection created !!!", res.data;
         return res.data;
       });
     },
@@ -190,7 +182,6 @@ const AddNewCollectionModal = ({
     const name = formData.get("collection_name") as string;
 
     const publicCollection = formData.get("collection_public") as string;
-    "pub", publicCollection;
     if (name) {
       const data = {
         name,

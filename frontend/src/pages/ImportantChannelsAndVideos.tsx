@@ -59,7 +59,9 @@ const ImportantChannelsAndVideos = () => {
   const buttonIndex = selectedChannel?.channelThumbnail.lastIndexOf("/");
   const buttonLink = selectedChannel?.channelThumbnail.slice(buttonIndex);
 
-  if (isLoading) <Loading />;
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 

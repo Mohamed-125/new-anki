@@ -6,11 +6,13 @@ const ReactQuillComponent = ({
   setContent,
   className,
   style,
+  readOnly,
 }: {
   content: string;
-  setContent: React.Dispatch<React.SetStateAction<string>>;
+  setContent?: React.Dispatch<React.SetStateAction<string>>;
   className?: string;
   style?: React.CSSProperties;
+  readOnly?: boolean;
 }) => {
   const quillRef = useRef(null);
 
@@ -76,8 +78,7 @@ const ReactQuillComponent = ({
 
   const changeHandler = useCallback(
     (content: any) => {
-      "content", content;
-      setContent(content);
+      setContent?.(content);
     },
     [setContent]
   );
@@ -90,6 +91,7 @@ const ReactQuillComponent = ({
       modules={modules}
       style={style}
       value={content}
+      readOnly={readOnly}
       onChange={changeHandler}
       ref={quillRef}
     />

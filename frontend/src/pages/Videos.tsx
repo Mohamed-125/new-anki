@@ -38,7 +38,9 @@ const Videos = () => {
 
   videos;
 
-  if (isLoading) <Loading />;
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const queryClient = useQueryClient();
   return (

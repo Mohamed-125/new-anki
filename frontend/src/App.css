@@ -1,6 +1,18 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --grayColor: rgb(153, 153, 155);
+  --dark-primary: rgb(46, 46, 46);
+  --light-gray: rgb(235, 235, 235);
+  --off-white: rgb(245, 245, 245);
+  --primary: rgb(37, 99, 235); /* bg-blue-500 */
+  --danger: rgb(220, 38, 38); /* bg-red-500 */
+  --greenColor: rgb(58, 216, 116); /* bg-green-500 */
+}
 
 @layer utilities {
   .openNav {
@@ -14,6 +26,10 @@
   }
 }
 
+.title {
+  @apply text-4xl font-semibold mb-7;
+}
+
 .container {
   max-width: 1300px;
   margin-inline: auto;
@@ -21,10 +37,12 @@
 }
 
 body {
-  background-color: rgb(245, 245, 245);
+  background-color: var(--off-white);
   font-size: 15px;
   zoom: 0.96;
-  font-family: "Bahnschrift";
+  /* font-family: "Bahnschrift"; */
+
+  font-family: "Inter", sans-serif;
 }
 
 .grid-container {
@@ -255,4 +273,12 @@ iframe {
 
 .translate-text h3 {
   font-size: 1rem !important;
+}
+
+.progress__bar::before {
+  width: var(--width);
+}
+
+.study-cards__div .ql-toolbar {
+  display: none;
 }

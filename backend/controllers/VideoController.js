@@ -84,57 +84,26 @@ module.exports.getVideoData = async (req, res, next) => {
   }
 };
 
-// const getTranscript = async (videoId, lang, res) => {
-//   console.log(videoId, lang.slice(0, 2));
+const getTranscript = async (videoId, lang, res) => {
+  console.log(videoId, lang.slice(0, 2));
 
-//   try {
-//     const subtitle = await getSubtitles({
-//       videoID: videoId, // youtube video id
-//       lang: lang.slice(0, 2), // default: `en`
-//     });
-//     return subtitle;
-//   } catch (err) {
-//     return res
-//       .status(400)
-//       .send({ msg: "error geting the subtitle", error: err.message });
-//   }
-// };
+  try {
+    const subtitle = await getSubtitles({
+      videoID: videoId, // youtube video id
+      lang: lang.slice(0, 2), // default: `en`
+    });
+    return subtitle;
+  } catch (err) {
+    return res
+      .status(400)
+      .send({ msg: "error geting the subtitle", error: err.message });
+  }
+};
 
-// module.exports.getTranscript = async (req, res) => {
-//   const { videoId, lang } = req.query;
-//   const caption = await getTranscript(videoId, lang, res);
-//   return res.status(200).send(caption);
-// };
-
-const { exec } = require("child_process");
-
-// Endpoint to fetch transcript from Python script
-module.exports.getTranscript = (req, res) => {
-  const videoId = req.query.videoId;
-  const lang = req.query.lang || "de"; // Optional language parameter
-
-  // Call Python script with the video ID
-  exec(
-    `python transcript_fetcher.py ${videoId} ${lang}`,
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error fetching transcript: ${error.message}`);
-        return res.status(500).send("Error fetching transcript.");
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return res.status(500).send(stderr);
-      }
-
-      // Send the Python script's output as JSON
-      try {
-        const transcript = JSON.parse(stdout);
-        res.json(transcript);
-      } catch (e) {
-        res.status(500).send("Error parsing transcript.");
-      }
-    }
-  );
+module.exports.getTranscript = async (req, res) => {
+  const { videoId, lang } = req.query;
+  const caption = await getTranscript(videoId, lang, res);
+  return res.status(200).send(caption);
 };
 
 module.exports.createVideo = async (req, res, next) => {

@@ -25,6 +25,7 @@ type AddCardModalProps = {
     setOptimistic: React.Dispatch<React.SetStateAction<any[]>>;
   };
   videoId?: string;
+  refetch?: any;
 };
 
 export function AddCardModal({
@@ -38,6 +39,7 @@ export function AddCardModal({
   setDefaultValues,
   optimistic,
   videoId,
+  refetch,
 }: AddCardModalProps) {
   const isEdit = !!editId;
 
@@ -48,6 +50,10 @@ export function AddCardModal({
       setContent("");
     }
   }, [isAddCardModalOpen]);
+
+  useEffect(() => {
+    console.log(defaultValues);
+  }, [defaultValues]);
 
   useEffect(() => {
     if (defaultValues?.content) {
@@ -99,6 +105,10 @@ export function AddCardModal({
     } else {
       createCardHandler(e, cardData, setIsAddCardModalOpen);
     }
+
+    refetch();
+    //@ts-ignore
+    e.target.reset();
   };
 
   return (

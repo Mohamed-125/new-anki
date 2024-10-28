@@ -1,6 +1,3 @@
-import { useContext, useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -21,11 +18,11 @@ import TextPage from "./pages/TextPage";
 import MyTexts from "./pages/MyTexts";
 import AddNewText from "./pages/AddNewText";
 import WordArticle from "./pages/WordArticle.tsx";
-import useToasts from "./hooks/useToasts";
 import Library from "./pages/Library.tsx";
-import ProtectedRoute from "./components/ProtectedRoute";
-import useGetCurrentUser from "./hooks/useGetCurrentUser.tsx";
 import PageNotFound from "./pages/PageNotFound.tsx";
+import StudyCards from "./pages/StudyCards.tsx";
+import Congrats from "./pages/Congrats.tsx";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const links = [
@@ -175,11 +172,30 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/article"
             element={
               <ProtectedRoute>
                 <WordArticle />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/study-cards/:collectionId?"
+            element={
+              <ProtectedRoute>
+                <StudyCards />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/congrats"
+            element={
+              <ProtectedRoute>
+                <Congrats />
               </ProtectedRoute>
             }
           />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Card from "../components/Card";
 import axios from "axios";
 import Loading from "../components/Loading";
@@ -45,9 +45,11 @@ const CollectionPage = ({}) => {
   }, [collection]);
 
   const isLoading = collectionLoading;
-  if (isLoading) <Loading />;
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  if (isLoading) {
+    return <Loading />;
+  }
   return (
     <div className="container">
       <div className="px-6 max-w-[850px] mx-auto bg-white py-9 rounded-xl ">
@@ -86,15 +88,20 @@ const CollectionPage = ({}) => {
           {localCollectionCards?.length ? (
             <div className="container">
               {user?._id === collection.userId ? (
-                <Button
-                  className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-                  onClick={() => {
-                    setDefaultValues({ collectionId: id });
-                    setIsAddCardModalOpen(true);
-                  }}
-                >
-                  Add new card to this collection
-                </Button>
+                <>
+                  <Button variant="primary-outline">
+                    <Link to={"/study-cards/" + id}>Study Your Cards</Link>
+                  </Button>
+                  <Button
+                    className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
+                    onClick={() => {
+                      setDefaultValues({ collectionId: id });
+                      setIsAddCardModalOpen(true);
+                    }}
+                  >
+                    Add new card to this collection
+                  </Button>
+                </>
               ) : (
                 <>
                   {user?.collections?.find(

@@ -23,7 +23,7 @@ const Toasts = () => {
 
   return (
     <AnimatePresence mode="popLayout">
-      <div className="fixed top-[95px] right-4 w-full max-w-[300px] space-y-3">
+      <div className="fixed top-[95px] z-50 right-4 w-full max-w-[300px] space-y-3">
         {toasts.reverse().map((toast, i) => {
           return (
             <motion.div

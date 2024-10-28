@@ -10,6 +10,7 @@ import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent";
 import { CardType } from "../hooks/useGetCards";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const {
@@ -36,7 +37,9 @@ const Home = () => {
   const [changeItemsParent, setChangeItemsParent] = useState(false);
 
   const isLoading = userCardsIsLoading;
-  isLoading && <Loading />;
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="container">
@@ -63,12 +66,16 @@ const Home = () => {
         items={userCards}
         filter={"front"}
       />
-      <Button
-        className={"my-7 ml-auto"}
-        onClick={() => setIsAddCardModalOpen(true)}
-      >
-        Create a new card
-      </Button>
+
+      <div className="flex items-center justify-between mt-2">
+        <Button variant="primary-outline">
+          <Link to={"/study-cards"}>Study Your Cards</Link>
+        </Button>
+
+        <Button className={"my-7 "} onClick={() => setIsAddCardModalOpen(true)}>
+          Create a new card
+        </Button>
+      </div>
 
       <SelectedItemsController
         setChangeItemsParent={setChangeItemsParent}

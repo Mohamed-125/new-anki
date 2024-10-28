@@ -42,24 +42,24 @@ module.exports.getCard = async (req, res, next) => {
 };
 
 module.exports.updateCard = async (req, res, next) => {
-  const { front, back, content, collectionId } = req.body;
+  const { front, back, content, collectionId, easeFactor } = req.body;
 
-  "body", req.body;
   try {
     const updatedCard = await CardModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { front, back, content, collectionId, userId: req.user._id },
+      { front, back, content, collectionId, userId: req.user._id, easeFactor },
       {
         new: true,
       }
     );
 
-    "updatedCard", updatedCard;
     res.status(200).send(updatedCard);
   } catch (err) {
+    ي;
     res.status(400).send(err);
   }
 };
+
 module.exports.deleteCard = async (req, res, next) => {
   try {
     const deletedTodo = await CardModel.findByIdAndDelete({

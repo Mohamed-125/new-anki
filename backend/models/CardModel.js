@@ -20,7 +20,12 @@ const CardSchema = mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "Video",
   },
-
+  easeFactor: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 1,
+  },
   collectionId: {
     type: mongoose.Types.ObjectId,
     ref: "Collection",

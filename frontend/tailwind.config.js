@@ -11,9 +11,14 @@ export default {
     },
     extend: {
       colors: {
-        textGray: "var(--gray)",
+        grayColor: "var(--grayColor)",
         primary: "var(--primary)",
         "dark-primary": "var(--dark-primary)",
+        "light-gray": "var(--light-gray)",
+        "off-white": "var(--off-white)",
+        primary: "var(--primary)",
+        danger: "var(--danger)",
+        greenColor: "var(--greenColor)",
       },
     },
   },

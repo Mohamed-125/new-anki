@@ -27,7 +27,9 @@ const useGetCollections = ({
         .then((res) => res.data as CollectionType[]),
   });
 
-  if (isLoading) <Loading />;
+  if (isLoading) {
+    return <Loading />;
+  }
   return { data, isLoading, isError };
 };
 

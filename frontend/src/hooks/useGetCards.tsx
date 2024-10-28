@@ -8,13 +8,16 @@ export type CardType = {
   back: string;
   content?: string;
   collectionId?: string;
-  userId: string;
+  userId?: string;
+  easeFactor: number;
 };
 
-const useGetCards = () => {
+const useGetCards = (enabled = true) => {
+  console.log("enabled or not", enabled);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["cards"],
     queryFn: () => axios.get("card").then((res) => res.data),
+    enabled,
   });
 
   return { data, isLoading, isError };

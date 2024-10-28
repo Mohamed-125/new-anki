@@ -13,12 +13,12 @@ const FormButtons = ({
       <Button
         onClick={() => setIsOpen(false)}
         size="parent"
-        type="button"
+        type="reset"
         variant={"danger"}
         className={"mt-8"}
       >
         Cancel
-      </Button>{" "}
+      </Button>
       <Button size="parent" className={"mt-8"}>
         {isEdit ? "Save Changes" : "Add Card"}
       </Button>

@@ -25,6 +25,7 @@ const Video = () => {
   const {
     data: video,
     isLoading,
+    refetch,
     isError,
   } = useQuery({
     queryKey: ["video", id],
@@ -32,7 +33,9 @@ const Video = () => {
   });
 
   const { user } = useGetCurrentUser();
-  if (isLoading) <Loading />;
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const { createCardHandler } = useCreateNewCard();
 
@@ -116,6 +119,7 @@ const Video = () => {
           setDefaultValues={setDefaultValues}
           videoId={id}
           content={content}
+          refetch={refetch}
         />
 
         <ReactYoutubeComponent
