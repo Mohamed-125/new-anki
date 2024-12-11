@@ -11,8 +11,19 @@ import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
 import { VideoType } from "./Playlist.tsx";
 
 const Videos = () => {
+  const {
+    data: videos,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["videos"],
+    queryFn: () => axios.get("video").then((res) => res.data),
+  });
+
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [filteredVideos, setFilteredVideos] = useState<VideoType[]>([]);
+  const [filteredVideos, setFilteredVideos] = useState<VideoType[]>(
+    videos || []
+  );
   const [acionsDivId, setActionsDivId] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [defaultValues, setDefaultValues] = useState({});
@@ -27,17 +38,6 @@ const Videos = () => {
     }
   }, [isVideoModalOpen]);
 
-  const {
-    data: videos,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["videos"],
-    queryFn: () => axios.get("video").then((res) => res.data),
-  });
-
-  videos;
-
   if (isLoading) {
     return <Loading />;
   }
@@ -48,9 +48,7 @@ const Videos = () => {
       <AddVideoModal
         setIsVideoModalOpen={setIsVideoModalOpen}
         defaultValues={defaultValues}
-        availableCaptions={availableCaptions}
         isVideoModalOpen={isVideoModalOpen}
-        setAvailavailableCaptions={setAvailavailableCaptions}
       />
 
       <ChangeItemsParent

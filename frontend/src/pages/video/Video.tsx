@@ -33,9 +33,6 @@ const Video = () => {
   });
 
   const { user } = useGetCurrentUser();
-  if (isLoading) {
-    return <Loading />;
-  }
 
   const { createCardHandler } = useCreateNewCard();
 
@@ -103,6 +100,10 @@ const Video = () => {
   };
 
   const subtitleContainerRef = useRef<HTMLDivElement | null>(null);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="container flex gap-2 videoContainer ">

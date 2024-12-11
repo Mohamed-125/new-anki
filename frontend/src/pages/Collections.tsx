@@ -8,21 +8,24 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import useGetCollections, { CollectionType } from "../hooks/useGetCollections";
+import Loading from "../components/Loading";
 
 const Collections = () => {
+  const { data: collections, isLoading } = useGetCollections() as {
+    data: CollectionType[];
+    isLoading: boolean;
+  };
   const [isCollectionsModalOpen, setIsCollectionModalOpen] = useState(false);
   // const [collectionCards, setCollectionsCards] = useState([]);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
   const [filteredCollections, setFilteredCollections] = useState<
     CollectionType[]
-  >([]);
+  >(collections || []);
 
   const [acionsDivId, setActionsDivId] = useState("");
 
-  const { data: collections } = useGetCollections() as {
-    data: CollectionType[];
-  };
+  console.log(collections);
 
   // the mutation logic for adding a collection and optimistic updates
   const queryClient = useQueryClient();
@@ -46,6 +49,9 @@ const Collections = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [changeItemsParent, setChangeItemsParent] = useState(false);
 
+  if (isLoading || !collections) {
+    return <Loading />;
+  }
   return (
     <div className="container">
       <AddNewCollectionModal

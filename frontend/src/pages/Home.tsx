@@ -20,14 +20,13 @@ const Home = () => {
   } = useQuery({
     queryKey: ["cards"],
     queryFn: () => {
-      console.log("fetcing cards");
       return axios.get("card").then((res) => res.data);
     },
   });
 
   const { user } = useGetCurrentUser();
 
-  const [filteredCards, setFilteredCards] = useState<CardType[]>([]);
+  const [filteredCards, setFilteredCards] = useState<CardType[]>(userCards);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
@@ -37,7 +36,7 @@ const Home = () => {
   const [changeItemsParent, setChangeItemsParent] = useState(false);
 
   const isLoading = userCardsIsLoading;
-  if (isLoading) {
+  if (isLoading || !userCards) {
     return <Loading />;
   }
 
@@ -68,9 +67,9 @@ const Home = () => {
       />
 
       <div className="flex items-center justify-between mt-2">
-        <Button variant="primary-outline">
-          <Link to={"/study-cards"}>Study Your Cards</Link>
-        </Button>
+        <Link to="/study-cards">
+          <Button variant="primary-outline">Study Your Cards</Button>
+        </Link>
 
         <Button className={"my-7 "} onClick={() => setIsAddCardModalOpen(true)}>
           Create a new card
@@ -82,8 +81,7 @@ const Home = () => {
         selectedItems={selectedItems}
         setSelectedItems={setSelectedItems}
       />
-
-      {userCards?.length ? (
+      {userCards.length ? (
         <>
           {filteredCards?.map((card) => {
             return (

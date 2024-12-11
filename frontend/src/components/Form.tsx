@@ -1,5 +1,5 @@
 import { PasswordInput } from "./PasswordInput";
-import React, { useState, ReactNode } from "react";
+import React, { useState, ReactNode, forwardRef } from "react";
 import Button from "./Button";
 import { Link } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -98,31 +98,43 @@ Form.Message = ({
   );
 };
 
-Form.Input = ({
-  type,
-  className,
-  ...attributes
-}: {
+// : {
+//   type?: string;
+//   ref?: any;
+//   className?: string;
+// } & React.InputHTMLAttributes<HTMLInputElement>
+
+type InputProps = {
   type?: string;
   className?: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) => {
-  const [isPassword, setIsPassword] = useState(true);
-  return type === "password" ? (
-    <PasswordInput
-      isPassword={isPassword}
-      setIsPassword={setIsPassword}
-      {...attributes}
-    />
-  ) : (
-    <input
-      className={twMerge(
-        "w-full px-3 py-2 border  border-neutral-300   rounded-lg",
-        className
-      )}
-      {...attributes}
-    />
-  );
-};
+  isInputLoading?: boolean;
+} & React.InputHTMLAttributes<HTMLInputElement>;
+
+Form.Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ type, className, isInputLoading, ...attributes }, ref) => {
+    const [isPassword, setIsPassword] = useState(true);
+    return type === "password" ? (
+      <PasswordInput
+        isPassword={isPassword}
+        setIsPassword={setIsPassword}
+        {...attributes}
+      />
+    ) : (
+      <div className="relative">
+        <input
+          ref={ref}
+          className={twMerge(
+            "w-full px-3 py-2 border  border-neutral-300   rounded-lg",
+            className,
+            isInputLoading && "inputLoading"
+          )}
+          {...attributes}
+        />
+        {isInputLoading && <i className="loader loader-input"></i>}
+      </div>
+    );
+  }
+);
 
 Form.Textarea = ({
   type,

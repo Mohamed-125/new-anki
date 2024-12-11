@@ -58,13 +58,10 @@ const SelectedItemsController = ({
             selectedItems.forEach((item) => {
               const itemElement = document.getElementById(item);
 
-              "itemElement", itemElement;
               itemElement?.remove();
             });
 
             // Call the API to delete the selected items
-
-            "selectedItems", selectedItems;
 
             await axios.post(url, { ids: selectedItems }); // Pass the item IDs in the request body for DELETE
             setItemsState?.((pre: string[]) =>

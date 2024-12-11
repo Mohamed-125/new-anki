@@ -59,13 +59,12 @@ const ImportantChannelsAndVideos = () => {
   const buttonIndex = selectedChannel?.channelThumbnail.lastIndexOf("/");
   const buttonLink = selectedChannel?.channelThumbnail.slice(buttonIndex);
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   console.log(document.documentElement.scrollTop);
+  if (isLoading) {
+    return <Loading />;
+  }
   return (
     <div className="container " ref={containerRef}>
       <h1 className="my-6 text-3xl font-bold text-black mb-11">

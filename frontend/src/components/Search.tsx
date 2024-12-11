@@ -19,7 +19,6 @@ function Search<T extends { [key: string]: any }>({
   const debouncedQuery = useDebounce(query, 400);
 
   useEffect(() => {
-    "debounced ", debouncedQuery;
     if (debouncedQuery) {
       setState(
         items?.filter((item) => {

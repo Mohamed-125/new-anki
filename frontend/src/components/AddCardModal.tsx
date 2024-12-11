@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Modal from "./Modal";
 import Form from "./Form";
 import Button from "./Button";
@@ -10,6 +10,7 @@ import { OptionType } from "./AddVideoModal";
 import useGetCollections from "../hooks/useGetCollections";
 import FormButtons from "./FormButtons";
 import useCreateNewCard from "../hooks/useCreateNewCardMutation";
+import axios from "axios";
 
 type AddCardModalProps = {
   isAddCardModalOpen: boolean;
@@ -111,6 +112,35 @@ export function AddCardModal({
     e.target.reset();
   };
 
+  const [front, setFront] = useState("");
+  const backRef = useRef<HTMLInputElement>(null);
+
+  const [isTranslationLoading, setIsTranslationLoading] = useState(false);
+  const [examples, setExamples] = useState<string[]>([]);
+
+  const translateHandler = async () => {
+    if (front) {
+      setIsTranslationLoading(true);
+      const { data } = await axios.post("/translate?examples=true", {
+        text: front,
+      });
+      setIsTranslationLoading(false);
+
+      console.log(data);
+      const translations = data.translations as string[];
+
+      // Step 2: Remove duplicates using Set
+      const uniqueTranslations = [...new Set(translations)];
+
+      // Step 3: Display or use unique translations
+      console.log("Unique Translations:", data.context.examples);
+      setExamples(data.context.examples);
+
+      if (backRef.current)
+        backRef.current.value = uniqueTranslations.splice(0, 4).join(",");
+    }
+  };
+
   return (
     <Modal setIsOpen={setIsAddCardModalOpen} isOpen={isAddCardModalOpen}>
       <Form className="w-[100%] max-w-[unset]" onSubmit={handleSubmit}>
@@ -119,6 +149,7 @@ export function AddCardModal({
           <Form.Field>
             <Form.Label>Card Frontside</Form.Label>
             <Form.Input
+              onChange={(e) => setFront(e.target.value)}
               defaultValue={defaultValues?.front}
               type="text"
               name="card_word"
@@ -147,17 +178,51 @@ export function AddCardModal({
             <Form.Label>Card backside</Form.Label>
             <Form.Input
               defaultValue={defaultValues?.back}
+              isInputLoading={isTranslationLoading}
+              disabled={isTranslationLoading}
+              ref={backRef}
               type="text"
               name="card_translation"
               required
             />
+            <Button
+              variant="primary"
+              className="mt-3"
+              type="button"
+              onClick={translateHandler}
+            >
+              Auto Translate{" "}
+            </Button>
           </Form.Field>
-
           <Form.Field>
             <Form.Label>Content</Form.Label>
-          </Form.Field>
+            <ReactQuillComponent setContent={setContent} content={content} />
+            <Button
+              variant="primary"
+              className="mt-3"
+              type="button"
+              onClick={() => {
+                console.log(examples);
+                const sources = examples.map(
+                  (example: any) =>
+                    ` <strong>
 
-          <ReactQuillComponent setContent={setContent} content={content} />
+                  ${example.source.replace(
+                    example.source_phrases[0].phrase,
+                    `<strong style="color: rgb(230, 0, 0);">${example.source_phrases[0].phrase}</strong>`
+                  )}
+                    
+                    </strong>
+                     <br />
+                     ${example.target} `
+                );
+                console.log("sources", sources);
+                setContent((pre) => pre + sources.join("<br /> "));
+              }}
+            >
+              Generate Examples
+            </Button>
+          </Form.Field>
         </Form.FieldsContainer>
         <FormButtons isEdit={isEdit} setIsOpen={setIsAddCardModalOpen} />
       </Form>
