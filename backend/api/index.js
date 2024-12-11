@@ -31,35 +31,23 @@ const whitelist = ["https://new-anki-one.vercel.app", "http://localhost:5173"];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.indexOf(origin) !== -1) {
-      // Allow requests with no origin (like mobile apps or curl requests)
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  // allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow OPTIONS method
+  allowedHeaders: ["Content-Type", "Authorization"], // Specify allowed headers
   credentials: true, // Allow credentials (cookies, headers, etc.)
 };
 
-// Middleware Connections
 app.use(cors(corsOptions));
 
-// Preflight request handler
-// app.options("*", cors(corsOptions));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.options("*", cors(corsOptions)); // Handle preflight requests for all routes
 
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-
   if (req.method === "OPTIONS") {
-    res.sendStatus(200); // Handle preflight requests
+    res.sendStatus(204); // Respond to OPTIONS preflight with 'No Content'
   } else {
     next();
   }
