@@ -8,6 +8,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Toasts from "./components/Toasts.js";
 import ToastContext from "./context/ToastContext.js";
 import CollectionsContext from "./context/CollectionsContext.js";
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
 const queryClient = new QueryClient({
   defaultOptions: {

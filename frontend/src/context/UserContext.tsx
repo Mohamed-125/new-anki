@@ -18,12 +18,6 @@ type ContextType = {
 
 export const userContext = createContext<ContextType | null>(null);
 
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL =
-  import.meta.env.MODE === "production"
-    ? import.meta.env.VITE_BACKEND_URL
-    : "http://localhost:5000/api/v1/";
-
 const UserContext = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null);
 
