@@ -41,7 +41,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
+app.use(express.json());
+app.use(cookieParser());
 // Ensure OPTIONS requests are handled properly
 app.options("*", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
