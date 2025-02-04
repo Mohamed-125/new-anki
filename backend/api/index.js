@@ -33,14 +33,6 @@ mongoose
     "Error in DB connection: " + error;
   });
 
-const whitelist = [
-  "https://new-anki-one.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://192.168.1.5:5173",
-  "http://192.168.1.5:5174",
-];
-
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {
@@ -51,12 +43,12 @@ const corsOptions = {
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+  credentials: true, // Allow credentials like cookies
 };
 
 app.use(cors(corsOptions));
 
-// Handle preflight OPTIONS requests properly
+// Ensure OPTIONS requests are handled properly
 app.options("*", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.setHeader(
