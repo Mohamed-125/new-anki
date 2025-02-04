@@ -6,7 +6,6 @@
       "destination": "/api"
     }
   ],
-
   "headers": [
     {
       "source": "/api/v1/(.*)",
@@ -14,7 +13,7 @@
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": ["https://new-anki-one.vercel.app", "http://localhost:5173"]
+          "value": "https://new-anki-one.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -23,10 +22,6 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization"
-        },
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
         }
       ]
     }
