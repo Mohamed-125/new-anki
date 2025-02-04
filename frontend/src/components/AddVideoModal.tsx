@@ -176,6 +176,7 @@ const AddVideoModal = ({
 
         const translatedTranscript = await batchTranslate(transcript, 20);
 
+        console.log("translatedTranscript", translatedTranscript);
         const addVideoData = {
           url,
           selectedSubtitle,
