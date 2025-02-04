@@ -193,6 +193,12 @@ const AddVideoModal = ({
         addVideoMutation(addVideoData).then(() => {
           setIsVideoModalOpen(false);
         });
+      })
+      .catch((err) => {
+        console.log("err", err);
+      })
+      .finally(() => {
+        setModalLoading(false);
       });
   };
 
