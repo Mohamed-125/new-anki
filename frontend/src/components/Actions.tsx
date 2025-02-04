@@ -57,24 +57,23 @@ const Actions = ({
           <Button
             variant={"primary-outline"}
             size="parent"
-            className={"items-center flex gap-3 mb-3 leading-normal text-black"}
+            className={
+              "items-center flex gap-3 mb-3 leading-normal text-black border-transparent rounded-none border-b-gray-300 border-b-2 "
+            }
             onClick={() => {
               navigateTo?.();
               setDefaultValues({
-                front: card?.front,
-                back: card?.back,
-                content: card?.content,
                 collectionName: collection?.name,
                 collectionPublic: collection?.public,
                 playlistName,
                 collectionId: card?.collectionId,
                 playlistId: video?.playlistId || id,
+                isASubCollection: collection?.parentCollectionId,
                 videoUrl: video?.url,
-                defaultCaption: video?.defaultCaption,
+                defaultCaption: video?.defaultCaptionData?.name,
                 videoTitle: video?.title,
                 videoThumbnail: video?.thumbnail,
                 videoAvailableCaptions: video?.availableCaptions,
-                videoDefaultCaption: video?.defaultCaption,
                 videoId: video?._id,
                 noteId: note?._id,
                 noteContent: note?.content,
@@ -106,7 +105,7 @@ const Actions = ({
         <Button
           variant={"primary-outline"}
           size="fit"
-          className={"text-black "}
+          className={"text-black rounded-lg border-gray-400"}
           onClick={() => {
             setActionsDivId((pre) => {
               if (pre === id) {

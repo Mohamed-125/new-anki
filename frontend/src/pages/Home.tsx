@@ -10,7 +10,8 @@ import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent";
 import { CardType } from "../hooks/useGetCards";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import MoveCollectionModal from "../components/MoveCollectionModal";
 
 const Home = () => {
   const {
@@ -34,8 +35,12 @@ const Home = () => {
   const [editId, setEditId] = useState("");
   const [actionsDivId, setActionsDivId] = useState("");
   const [changeItemsParent, setChangeItemsParent] = useState(false);
-
+  const [isMoveToCollectionOpen, setIsMoveTooCollectionOpen] = useState(false);
+  const [targetCollectionId, setTargetCollectionId] = useState("");
   const isLoading = userCardsIsLoading;
+  useEffect(() => {
+    console.log("editId", editId);
+  }, [editId]);
   if (isLoading || !userCards) {
     return <Loading />;
   }
@@ -43,6 +48,7 @@ const Home = () => {
   return (
     <div className="container">
       <AddCardModal
+        setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
         isAddCardModalOpen={isAddCardModalOpen}
         setIsAddCardModalOpen={setIsAddCardModalOpen}
         defaultValues={defaultValues}
@@ -51,6 +57,15 @@ const Home = () => {
         setContent={setContent}
         setEditId={setEditId}
         editId={editId}
+        targetCollectionId={targetCollectionId}
+      />
+      <MoveCollectionModal
+        isMoveToCollectionOpen={isMoveToCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
+        editId={editId}
+        setEditId={setEditId}
+        setTargetCollectionId={setTargetCollectionId}
+        cards={userCards}
       />
       <ChangeItemsParent
         changeItemsParent={changeItemsParent}
@@ -64,7 +79,12 @@ const Home = () => {
         label={"Search your cards"}
         items={userCards}
         filter={"front"}
+        filter2={"back"}
       />
+
+      <h6 className="mt-4 text-lg font-bold text-gray-400">
+        Your Cards : {userCards?.length}
+      </h6>
 
       <div className="flex items-center justify-between mt-2">
         <Link to="/study-cards">
@@ -86,6 +106,7 @@ const Home = () => {
           {filteredCards?.map((card) => {
             return (
               <Card
+                setIsModalOpen={setIsAddCardModalOpen}
                 isSameUser={card.userId === user?._id}
                 setEditId={setEditId}
                 setContent={setContent}
@@ -96,6 +117,7 @@ const Home = () => {
                 setActionsDivId={setActionsDivId}
                 setSelectedItems={setSelectedItems}
                 selectedItems={selectedItems}
+                setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
                 isActionDivOpen={actionsDivId === card._id}
                 id={card._id}
               />
@@ -106,6 +128,7 @@ const Home = () => {
             state={filteredCards}
             searchFor={"cards"}
             filter={"front"}
+            filter2={"back"}
           />
         </>
       ) : (

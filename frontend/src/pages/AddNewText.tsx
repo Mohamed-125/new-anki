@@ -25,7 +25,6 @@ const AddNewText = () => {
       return response.data;
     },
   });
-
   const queryClient = useQueryClient();
 
   const navigate = useNavigate();
@@ -38,7 +37,6 @@ const AddNewText = () => {
 
     response.data;
 
-    queryClient.invalidateQueries({ queryKey: ["texts"] });
     //@ts-ignore
     navigate("/myTexts/" + response.data._id, {
       replace: true,

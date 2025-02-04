@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import Card from "../components/Card";
 import axios from "axios";
 import Loading from "../components/Loading";
 import Button from "../components/Button";
 import AddCardModal from "../components/AddCardModal";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
 import { CardType } from "../hooks/useGetCards.tsx";
 import Search from "../components/Search.tsx";
 import useGetCurrentUser from "../hooks/useGetCurrentUser.tsx";
+import AddNewCollectionModal from "../components/AddNewCollectionModal.tsx";
+import Collection from "../components/Collection.tsx";
+import MoveCollectionModal from "../components/MoveCollectionModal.tsx";
+import { CollectionType } from "../context/CollectionsContext.tsx";
 
 const CollectionPage = ({}) => {
-  const id = useParams().id;
+  const location = useLocation();
+  const pathArray = location.pathname.split("/").filter(Boolean); // Split and remove empty segments
+  const id = pathArray[pathArray.length - 1]; // Get the last segment
   const { user } = useGetCurrentUser();
-
-  user;
 
   const {
     data: collection,
@@ -24,10 +28,11 @@ const CollectionPage = ({}) => {
     isError,
   } = useQuery({
     queryKey: ["collection", id],
+    refetchOnWindowFocus: false,
+
     queryFn: () => axios.get("collection/" + id).then((res) => res.data),
   });
 
-  user?._id, collection?.userId;
   const [localCollectionCards, setLocalCollectionCards] = useState(
     (collection?.collectionCards as CardType[]) ?? []
   );
@@ -47,16 +52,47 @@ const CollectionPage = ({}) => {
   const isLoading = collectionLoading;
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  const [isCollectionsModalOpen, setIsCollectionModalOpen] = useState(false);
+
+  const queryClient = useQueryClient();
+  const deleteCollectionHandler = (collectionId: string) => {
+    axios
+      .delete(`collection/${collectionId}`)
+      .then((res) => {
+        queryClient.invalidateQueries({ queryKey: ["collections"] });
+        queryClient.invalidateQueries({ queryKey: ["collection", id] });
+      })
+      .catch((err) => err);
+  };
+
+  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
+
   if (isLoading) {
     return <Loading />;
   }
+
   return (
     <div className="container">
-      <div className="px-6 max-w-[850px] mx-auto bg-white py-9 rounded-xl ">
+      <div className="">
         <h4 className="mt-4 text-5xl font-bold text-"> {collection?.name}</h4>
 
         <>
+          <AddNewCollectionModal
+            setIsCollectionModalOpen={setIsCollectionModalOpen}
+            isCollectionsModalOpen={isCollectionsModalOpen}
+            defaultValues={defaultValues}
+            editId={editId}
+            parentCollectionId={id}
+          />
+          <MoveCollectionModal
+            isMoveToCollectionOpen={isMoveToCollectionOpen}
+            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+            editId={editId}
+            cards={localCollectionCards}
+          />
           <AddCardModal
+            collectionId={collection?._id}
             isAddCardModalOpen={isAddCardModalOpen}
             setIsAddCardModalOpen={setIsAddCardModalOpen}
             defaultValues={defaultValues}
@@ -85,6 +121,41 @@ const CollectionPage = ({}) => {
             filter={"front"}
           />
 
+          <h6 className="mt-4 text-lg font-bold text-gray-400">
+            Sub colleciton in this collection :{" "}
+            {collection?.subCollections?.length}
+          </h6>
+          <Button
+            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
+            onClick={() => {
+              setDefaultValues({ parentCollectionId: id });
+              setIsCollectionModalOpen(true);
+            }}
+          >
+            Create New Sub Collection
+          </Button>
+          <div>
+            <div className="grid gap-2 grid-container">
+              {collection?.subCollections.map((collection: CollectionType) => (
+                <Collection
+                  collection={collection}
+                  key={collection._id}
+                  defaultValues={defaultValues}
+                  deleteHandler={deleteCollectionHandler}
+                  setDefaultValues={setDefaultValues}
+                  setIsCollectionModalOpen={setIsCollectionModalOpen}
+                  selectedItems={selectedItems}
+                  setSelectedItems={setSelectedItems}
+                  setEditId={setEditId}
+                  setActionsDivId={setActionsDivId}
+                  isActionDivOpen={actionsDivId === collection._id}
+                />
+              ))}{" "}
+            </div>
+          </div>
+          <h6 className="mt-4 text-lg font-bold text-gray-400">
+            Cards in collection : {localCollectionCards?.length}
+          </h6>
           {localCollectionCards?.length ? (
             <div className="container">
               {user?._id === collection.userId ? (
@@ -141,6 +212,8 @@ const CollectionPage = ({}) => {
               <div className="">
                 {filteredCards?.map((card) => (
                   <Card
+                    setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+                    setIsModalOpen={setIsAddCardModalOpen}
                     key={card._id}
                     card={card}
                     setContent={setContent}
@@ -153,6 +226,7 @@ const CollectionPage = ({}) => {
                     setEditId={setEditId}
                     isSameUser={user?._id === collection.userId}
                     isActionDivOpen={actionsDivId === card._id}
+                    collectionId={collection?._id}
                   />
                 ))}
               </div>

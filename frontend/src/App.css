@@ -10,6 +10,7 @@
   --light-gray: rgb(235, 235, 235);
   --off-white: rgb(245, 245, 245);
   --primary: rgb(37, 99, 235); /* bg-blue-500 */
+  --lightPrimary: rgb(37, 99, 235); /* bg-blue-500 */
   --danger: rgb(220, 38, 38); /* bg-red-500 */
   --greenColor: rgb(58, 216, 116); /* bg-green-500 */
 }
@@ -223,8 +224,16 @@ iframe {
   display: block;
 }
 
+.ql-editor {
+  user-select: text; /* Allows selection of text */
+}
+
+.text-div * {
+  position: relative;
+}
+
 .quill.text .ql-editor {
-  min-height: 90vh;
+  height: 90vh;
 }
 
 .ql-disabled {
@@ -232,6 +241,16 @@ iframe {
 }
 .ql-disabled .ql-editor {
   padding: 0 !important;
+}
+
+.text-div h1,
+.text-div h2,
+.text-div h3,
+.text-div h4,
+.text-div h5,
+.text-div h6 {
+  margin-block: 35px !important;
+  font-weight: 600 !important;
 }
 
 .ql-editor h1,
@@ -244,12 +263,13 @@ iframe {
   font-weight: 600 !important;
 }
 
-/* .ql-active {
-  font-weight: bold;
-  border: 2px solid #393939 !important;
-  width: 30px !important;
-  height: 30px !important;
-} */
+.ql-editor h2 {
+  font-size: 2rem !important;
+}
+
+.ql-editor h3 {
+  font-size: 1.5rem !important;
+}
 
 * {
   text-wrap: wrap;
@@ -264,15 +284,28 @@ iframe {
   margin-block: 15px !important;
 }
 
-.translate-text h1 {
-  font-size: 1.56rem !important;
-}
-.translate-text h2 {
-  font-size: 1.2rem !important;
+.highlight {
+  background-color: rgb(67, 125, 242);
+  padding: 3px 5px;
+  border-radius: 3px;
+  display: inline-flex;
+  margin-right: 3.2px;
+  color: white;
+
+  cursor: pointer;
 }
 
-.translate-text h3 {
-  font-size: 1rem !important;
+.ql-editor p {
+  font-size: 17px;
+}
+
+.text-div h2 {
+  font-size: 2.2rem !important;
+}
+
+.text-div h3 {
+  font-size: 1.7rem !important;
+  margin-top: 30px !important;
 }
 
 .progress__bar::before {
@@ -324,4 +357,7 @@ iframe {
 .loader::after {
   animation: around 0.7s ease-in-out 0.1s infinite;
   background: transparent;
+}
+.translationWindow {
+  font-weight: normal !important;
 }

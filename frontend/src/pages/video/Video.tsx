@@ -1,6 +1,6 @@
 import AddCardModal from "../../components/AddCardModal";
 import axios from "axios";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import Loading from "../../components/Loading";
 import TranslationWindow from "../../components/TranslationWindow";
@@ -13,10 +13,11 @@ import ReactYoutubeComponent from "./ReactYoutubeComponent";
 import Subtitles from "./Subtitles";
 import { CardType } from "../../hooks/useGetCards";
 import useGetCurrentUser from "../../hooks/useGetCurrentUser";
+import ReactDOM from "react-dom/client";
 
 export type CaptionType = {
-  dur: number;
-  start: number;
+  dur: string;
+  start: string;
   text: string;
 };
 
@@ -82,6 +83,30 @@ const Video = () => {
     }
   };
 
+  useEffect(() => {
+    const container = document.createElement("div");
+    //@ts-ignore
+    const root = ReactDOM.createRoot(container);
+    if (selectionData.ele && selectionData.text.length) {
+      selectionData.ele.insertBefore(container, null);
+      root.render(
+        <TranslationWindow
+          selectionData={selectionData}
+          setContent={setContent}
+          setDefaultValues={setDefaultValues}
+          setIsAddCardModalOpen={setIsAddCardModalOpen}
+        />
+      );
+    }
+    return () => {
+      // Defer the unmount to avoid unmounting during the render cycle
+      setTimeout(() => {
+        root.unmount();
+        container.remove(); // Remove the container from the DOM
+      }, 0);
+    };
+  }, [selectionData]);
+
   const [defaultValues, setDefaultValues] = useState({
     front: "",
     back: "",
@@ -90,7 +115,6 @@ const Video = () => {
   const [content, setContent] = useState("");
   const [editId, setEditId] = useState("");
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
   const [caption, setCaption] = useState<CaptionType[]>([]);
   const [actionsDivId, setActionsDivId] = useState("");
   const playerRef = useRef<any | null>(null);
@@ -101,12 +125,22 @@ const Video = () => {
 
   const subtitleContainerRef = useRef<HTMLDivElement | null>(null);
 
+  const windowRef = useCallback((window: HTMLDivElement) => {
+    if (window == null) return;
+    setHeight(window.scrollHeight);
+  }, []);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    setCaption(video?.defaultCaptionData.transcript);
+  }, [video]);
+
   if (isLoading) {
     return <Loading />;
   }
 
   return (
-    <div className="container flex gap-2 videoContainer ">
+    <div ref={windowRef} className="container flex gap-2 videoContainer ">
       <div className="w-full grow ">
         {/* add Modal */}
 
@@ -133,6 +167,7 @@ const Video = () => {
         <div className="mt-5">
           {video?.videoCards?.map((card: CardType) => (
             <Card
+              setIsModalOpen={setIsAddCardModalOpen}
               isSameUser={user?._id === card.userId}
               setEditId={setEditId}
               setContent={setContent}
@@ -148,16 +183,9 @@ const Video = () => {
         </div>
       </div>
 
-      {selectionData.text.trim()?.length ? (
-        <TranslationWindow
-          setDefaultValues={setDefaultValues}
-          selectionData={selectionData}
-          setIsAddCardModalOpen={setIsAddCardModalOpen}
-        />
-      ) : null}
-
       <div className="relative w-full grow">
         <Subtitles
+          setEditId={setEditId}
           selectionData={selectionData}
           video={video}
           playerRef={playerRef}
@@ -165,6 +193,9 @@ const Video = () => {
           setCaption={setCaption}
           handleSelection={handleSelection}
           subtitleContainerRef={subtitleContainerRef}
+          setContent={setContent}
+          setDefaultValues={setDefaultValues}
+          setIsAddCardModalOpen={setIsAddCardModalOpen}
         />
       </div>
     </div>

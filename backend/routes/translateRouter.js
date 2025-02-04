@@ -11,7 +11,10 @@ router.post("/", async (req, res, next) => {
   if (examples) {
     const reverso = new Reverso();
     reverso.getTranslation(text, "german", "english", (err, response) => {
-      if (err) throw new Error(err.message);
+      if (err) {
+        res.send(err.message);
+        return;
+      }
       res.send(response);
     });
   } else {

@@ -3,7 +3,7 @@ const VideoModel = require("../models/VideoModel");
 const { YoutubeTranscript } = require("youtube-transcript");
 const cheerio = require("cheerio");
 const getSubtitles = require("youtube-captions-scraper").getSubtitles;
-
+const flatted = require("flatted");
 // module.exports.getVideoData = async (req, res, next) => {
 //   const videoId = req.params.videoId;
 
@@ -84,7 +84,7 @@ module.exports.getVideoData = async (req, res, next) => {
   }
 };
 
-const getTranscript = async (videoId, lang, res) => {
+const getTranscript = async (videoId, lang) => {
   console.log(videoId, lang.slice(0, 2));
 
   try {
@@ -94,16 +94,24 @@ const getTranscript = async (videoId, lang, res) => {
     });
     return subtitle;
   } catch (err) {
-    return res
-      .status(400)
-      .send({ msg: "error geting the subtitle", error: err.message });
+    throw new Error(err.message);
   }
 };
 
 module.exports.getTranscript = async (req, res) => {
   const { videoId, lang } = req.query;
-  const caption = await getTranscript(videoId, lang, res);
-  return res.status(200).send(caption);
+
+  try {
+    const caption = await getTranscript(videoId, lang);
+
+    // Use flatted.stringify to handle circular references
+    return res.status(200).send(caption);
+  } catch (err) {
+    // Send error response if something went wrong
+    return res
+      .status(400)
+      .send({ msg: "Error getting the subtitle", error: err.message });
+  }
 };
 
 module.exports.createVideo = async (req, res, next) => {
@@ -112,7 +120,7 @@ module.exports.createVideo = async (req, res, next) => {
     videoTitle: title,
     thumbnail,
     availableCaptions,
-    defaultCaption,
+    defaultCaptionData,
     playlistId,
   } = req.body;
 
@@ -124,7 +132,7 @@ module.exports.createVideo = async (req, res, next) => {
       title,
       thumbnail,
       availableCaptions,
-      defaultCaption,
+      defaultCaptionData,
       playlistId,
     });
 
@@ -157,12 +165,13 @@ module.exports.getVideo = async (req, res, next) => {
 };
 
 module.exports.updateVideo = async (req, res, next) => {
-  const { playlistId, defaultCaption } = req.body;
+  const { playlistId, defaultCaptionData } = req.body;
 
+  console.log(req.body);
   try {
     const updatedVideo = await VideoModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { playlistId, defaultCaption },
+      { playlistId, defaultCaptionData },
       {
         new: true,
       }

@@ -10,13 +10,30 @@ export default {
       sm: { max: "650px" },
     },
     extend: {
+      animation: {
+        "slide-in": "slide-in 0.5s ease-in-out forwards",
+        "slide-out": "slide-out 0.5s ease-in-out forwards",
+      },
+      keyframes: {
+        "slide-in": {
+          "0%": { opacity: "0", transform: "translate(-50%, 0)" },
+          "100%": {
+            opacity: "1",
+            transform: "translate(-50%, -50%)",
+          },
+        },
+        "slide-out": {
+          "0%": { opacity: "1", transform: "translate(-50%, -50%)" },
+          "100%": { opacity: "0", transform: "translate(-50%, 0)" },
+        },
+      },
       colors: {
         grayColor: "var(--grayColor)",
         primary: "var(--primary)",
+        lightPrimary: "var(--lightPrimary)",
         "dark-primary": "var(--dark-primary)",
         "light-gray": "var(--light-gray)",
         "off-white": "var(--off-white)",
-        primary: "var(--primary)",
         danger: "var(--danger)",
         greenColor: "var(--greenColor)",
       },
@@ -24,3 +41,4 @@ export default {
   },
   plugins: [],
 };
+5;

@@ -3,16 +3,7 @@ import React from "react";
 import { CardType } from "./useGetCards";
 import axios from "axios";
 import Loading from "../components/Loading";
-
-export type CollectionType = {
-  collectionCards: CardType[];
-  id: string;
-  name: string;
-  slug: string;
-  userId: string;
-  public: boolean;
-  _id: string;
-};
+import { CollectionType } from "../context/CollectionsContext";
 
 const useGetCollections = ({
   publicCollections,
@@ -21,6 +12,7 @@ const useGetCollections = ({
 } = {}) => {
   const { data, isLoading, isError } = useQuery({
     queryKey: publicCollections ? ["collections", "public"] : ["collections"],
+    refetchOnWindowFocus: false,
     queryFn: () =>
       axios
         .get(publicCollections ? "collection/public" : "collection")

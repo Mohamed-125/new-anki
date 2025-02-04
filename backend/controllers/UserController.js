@@ -22,6 +22,7 @@ module.exports.registerUserController = async (req, res, next) => {
 };
 
 module.exports.loginUserController = async (req, res, next) => {
+  console.log(req.body);
   const { password, email } = req.body;
   if (!password || !email) {
     return res.status(400).send("you have to enter email and password");
@@ -41,6 +42,7 @@ module.exports.loginUserController = async (req, res, next) => {
 
     res.status(201).send(userFound);
   } catch (err) {
+    console.log("login error", err.message);
     res.status(400).send(err.message);
   }
 };

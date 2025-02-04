@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Actions from "./Actions";
 import { CollectionType } from "../hooks/useGetCollections";
 
@@ -29,6 +29,7 @@ const Collection = ({
 }: CollectionProps) => {
   const id = collection._id;
   const isSelected = selectedItems.includes(id);
+  const location = useLocation(); // Get the current path
 
   return (
     <div
@@ -49,7 +50,7 @@ const Collection = ({
           });
         }}
       />{" "}
-      <Link className="grow" to={`/collections/${id}`}>
+      <Link className="grow" to={`${location.pathname}/${id}`}>
         {collection.name}
       </Link>
       <Actions

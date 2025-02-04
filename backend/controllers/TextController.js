@@ -15,7 +15,7 @@ module.exports.createText = async (req, res) => {
     return res.status(400).send("Title and content are required");
   }
   const createdText = await TextModel.create({
-    userId: req.user._id,
+    userId: req.user?._id,
     ...req.body,
   });
   res.send(createdText);

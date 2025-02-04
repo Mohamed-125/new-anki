@@ -36,9 +36,6 @@ const MyTexts = () => {
     const deleteRes = await axios.delete(`text/${id}`);
   };
 
-  useEffect(() => {
-    "filteredTexts", filteredTexts;
-  }, [filteredTexts]);
   const navigate = useNavigate();
 
   if (isLoading) return <Loading />;
@@ -55,6 +52,11 @@ const MyTexts = () => {
             items={texts}
             filter={"title"}
           />
+
+          <h6 className="mt-4 text-lg font-bold text-gray-400">
+            Number of texts : {texts?.length}
+          </h6>
+
           <Link to="/add-text">
             <Button className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none ">
               Add new text

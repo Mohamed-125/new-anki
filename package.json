@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "backend": "nodemon ./backend/api/index.js",
-    "start": "  concurrently \"npm run backend \" \" cd frontend && npm run dev \"    "
+    "start": "concurrently \"npm run backend\" \"cd frontend && npm run dev --host\""
   },
   "dependencies": {
     "concurrently": "^9.0.1",

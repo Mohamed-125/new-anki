@@ -5,10 +5,10 @@ import Loading from "../../components/Loading";
 import { FaPlay } from "react-icons/fa";
 import Button from "../../components/Button";
 import { MdVerticalAlignCenter } from "react-icons/md";
-import { Virtuoso } from "react-virtuoso";
 import { CaptionType } from "./Video";
 import getYouTubeVideoId from "../../utils/getYoutubeVideoId";
 import AvailableCaptionsSelect from "../../components/AvailableCaptionsSelect";
+import useGetCards from "../../hooks/useGetCards";
 
 type subtitleProps = {
   selectionData: { ele: any; text: string };
@@ -18,6 +18,10 @@ type subtitleProps = {
   handleSelection: any;
   caption: CaptionType[];
   subtitleContainerRef: any;
+  setContent: any;
+  setDefaultValues: any;
+  setIsAddCardModalOpen: any;
+  setEditId: any;
 };
 
 function Subtitles({
@@ -28,9 +32,12 @@ function Subtitles({
   handleSelection,
   caption,
   subtitleContainerRef,
+  setEditId,
+  setDefaultValues,
+  setIsAddCardModalOpen,
 }: subtitleProps) {
   const [selectedCaption, setSelectedCaption] = useState("");
-  const [isCaptionLoading, setIsCaptionLoading] = useState(true);
+  const [isCaptionLoading, setIsCaptionLoading] = useState(false);
 
   const scrollToSubtitle = () => {
     const activeSubtitle = document.querySelector(".subtitle-active");
@@ -41,44 +48,16 @@ function Subtitles({
 
   useEffect(() => {
     if (!video?.url) return;
-    const videoId = getYouTubeVideoId(video.url);
-
-    axios
-      .get(
-        "/video/getTranscript?videoId=" +
-          videoId +
-          "&lang=" +
-          video?.defaultCaption
-      )
-      .then((res) => {
-        setCaption(res.data);
-      })
-      .finally(() => setIsCaptionLoading(false));
-
-    setSelectedCaption(video?.defaultCaption);
+    setSelectedCaption(video?.defaultCaptionData.name);
   }, [video]);
 
-  const handleCaptionChange = (e: any) => {
-    setIsCaptionLoading(true);
-    setSelectedCaption(e.target.value);
-
-    const videoId = getYouTubeVideoId(video.url);
-
-    axios
-      .get(
-        `/video/getTranscript?videoId=${videoId}&lang=${e.target.value.trim()}`
-      )
-      .then((res) => {
-        setCaption(res.data);
-      })
-      .catch((err) => {})
-      .finally(() => setIsCaptionLoading(false));
-  };
-
+  useEffect(() => {
+    console.log(caption);
+  }, [caption]);
   return (
     // Render your list
 
-    <div className="flex gap-1 py-8 bg-white rounded-r-md  h-[85vh] overflow-hidden">
+    <div className="flex relative gap-1 py-8 bg-white rounded-r-md  h-[85vh] overflow-hidden">
       <div
         ref={subtitleContainerRef}
         className="flex flex-col w-full px-3 overflow-auto select-text grow"
@@ -88,9 +67,12 @@ function Subtitles({
             available captions
           </label>
           <AvailableCaptionsSelect
+            setCaption={setCaption}
+            setIsCaptionLoading={setIsCaptionLoading}
+            setSelectedCaption={setSelectedCaption}
+            video={video}
             availableCaptions={video?.availableCaptions}
             value={selectedCaption}
-            setValue={setSelectedCaption}
           />
         </div>
         <div className="grow">
@@ -108,11 +90,15 @@ function Subtitles({
               <Subtitle
                 key={_}
                 n={_}
+                setDefaultValues={setDefaultValues}
+                selectedCaption={selectedCaption}
                 caption={caption}
+                setIsAddCardModalOpen={setIsAddCardModalOpen}
                 video={video}
                 handleSelection={handleSelection}
                 subtitle={subtitle}
                 selectionData={selectionData}
+                setEditId={setEditId}
                 playerRef={playerRef}
               />
             );
@@ -132,6 +118,10 @@ type SubtitleProps = {
   handleSelection: any;
   caption: any;
   video: any;
+  setDefaultValues: any;
+  setIsAddCardModalOpen: any;
+  selectedCaption: any;
+  setEditId: any;
 };
 function Subtitle({
   n,
@@ -139,20 +129,52 @@ function Subtitle({
   selectionData,
   playerRef,
   handleSelection,
+  selectedCaption,
+  setEditId,
+  video,
+  setIsAddCardModalOpen,
+  setDefaultValues,
 }: SubtitleProps) {
   const [translatedText, setTranslatedText] = useState("");
 
   useEffect(() => {
     const translateText = async (text: string) => {
-      const { data: translatedText } = await axios.post("/translate", {
-        text,
-      });
-
-      setTranslatedText(translatedText);
-      return translatedText;
+      console.log(
+        video.defaultCaptionData.name === selectedCaption,
+        video.defaultCaptionData.name,
+        selectedCaption
+      );
+      if (video.defaultCaptionData.name === selectedCaption) {
+        setTranslatedText(video.defaultCaptionData.translatedTranscript[n]);
+      }
     };
-    translateText(subtitle.text);
+    translateText(subtitle);
   }, []);
+
+  useEffect(() => {
+    console.log(translatedText);
+  }, [translatedText]);
+
+  const { data: userCards } = useGetCards();
+  let modifiedText = subtitle.text;
+
+  userCards?.forEach((card) => {
+    const regex = new RegExp(`\\b(${card.front})\\b`, "gi"); // Use \b for word boundaries
+    modifiedText = modifiedText.replace(
+      regex,
+      `<span class="highlight"  data-id=${card._id}>$1</span>` // Use "class" for raw HTML
+    );
+  });
+
+  const onCardClick = (card: any) => {
+    setDefaultValues({
+      front: card.front,
+      back: card.back,
+      content: card?.content,
+    });
+    setEditId(card._id);
+    setIsAddCardModalOpen(true);
+  };
 
   return (
     <div>
@@ -176,7 +198,17 @@ function Subtitle({
               <FaPlay
                 className={`invisible p-1 text-2xl text-gray-700   rounded-full group-hover:visible  `}
               />
-              <p>{subtitle.text}</p>
+              <p
+                dangerouslySetInnerHTML={{ __html: modifiedText }}
+                onClick={(e) => {
+                  const target = e.target;
+                  if (target.classList.contains("highlight")) {
+                    const cardId = target.getAttribute("data-id");
+                    const card = userCards.find((c) => c._id === cardId);
+                    if (card) onCardClick(card);
+                  }
+                }}
+              ></p>
             </div>
           </div>
         </div>

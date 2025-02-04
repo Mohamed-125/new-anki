@@ -10,20 +10,19 @@ type Optimistic = {
 
 type Params = {
   optimistic?: Optimistic;
+  collectionId?: string;
 };
 
-const useCreateNewCard = ({ optimistic }: Params = {}) => {
+const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
 
   const { mutateAsync, data, isPending } = useMutation({
     onMutate: async (newCard) => {
-      optimistic?.isOptimistic;
       if (optimistic?.isOptimistic === true) {
-        ("opatimtic is true");
         optimistic?.setOptimistic((pre: CardType[]) => [
-          ...(pre as CardType[]),
           newCard,
+          ...(pre as CardType[]),
         ]);
       }
     },
@@ -34,11 +33,23 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
       }
     },
 
-    onSuccess: (res, data) => {
-      queryClient.invalidateQueries({ queryKey: ["cards"] });
+    onSuccess: async (res, data) => {
+      if (collectionId) {
+        console.log(queryClient.getQueryCache().findAll());
+
+        console.log("collectionId", collectionId);
+        queryClient.invalidateQueries({ queryKey: ["cards"] });
+        await queryClient.refetchQueries({ queryKey: ["cards"] });
+        queryClient.invalidateQueries({
+          queryKey: [`collection`, collectionId],
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["cards"] });
+      }
     },
     mutationFn: (data) => {
       return axios.post("/card/", data).then((res) => {
+        console.log(res);
         return res.data;
       });
     },

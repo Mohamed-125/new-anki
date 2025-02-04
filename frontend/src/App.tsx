@@ -1,5 +1,6 @@
 import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -23,6 +24,7 @@ import PageNotFound from "./pages/PageNotFound.tsx";
 import StudyCards from "./pages/StudyCards.tsx";
 import Congrats from "./pages/Congrats.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
+import BreadCramps from "./components/BreadCramps.tsx";
 
 function App() {
   const links = [
@@ -41,7 +43,10 @@ function App() {
     <Router>
       <div className="flex flex-col min-h-screen">
         <Navbar links={links} gap={7} />
-
+        <div className="container mt-8 mb-[-20px]">
+          {" "}
+          <BreadCramps />
+        </div>
         <Routes>
           <Route
             path="/"
@@ -61,7 +66,7 @@ function App() {
           />
 
           <Route
-            path={`/collections/:id`}
+            path={`/collections/*`}
             element={
               <ProtectedRoute>
                 <CollectionPage />
@@ -96,7 +101,7 @@ function App() {
           />
 
           <Route
-            path="/playlist/:id"
+            path="/playlists/:id"
             element={
               <ProtectedRoute>
                 <Playlist />

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import YouTube from "react-youtube"; // Assuming you have a YouTube player library
 import { CaptionType } from "./Video";
+import getYouTubeVideoId from "../../utils/getYoutubeVideoId";
 
 type Props = {
   playerRef: MutableRefObject<any>;
@@ -89,10 +90,7 @@ function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
     };
   }, []);
 
-  const videoId = video?.url
-    ?.replace("/watch?v=", "/embed/")
-    .split("&")[0]
-    .split("embed/")[1];
+  const videoId = getYouTubeVideoId(video?.url);
 
   return (
     <YouTube

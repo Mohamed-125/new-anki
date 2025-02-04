@@ -68,7 +68,9 @@ const Videos = () => {
               items={videos}
               filter={"title"}
             />
-
+            <h6 className="mt-4 text-lg font-bold text-gray-400">
+              Number of videos : {videos?.length}
+            </h6>
             <Button
               className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
               onClick={() => setIsVideoModalOpen(true)}

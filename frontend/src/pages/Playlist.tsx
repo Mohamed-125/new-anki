@@ -9,13 +9,26 @@ import Search from "../components/Search";
 import VideoCard from "../components/VideoCard";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
+import { CaptionType } from "./video/Video.tsx";
 
 export type VideoType = {
   _id: string;
   title: string;
   url: string;
   availableCaptions: string[];
-  defaultCaption: string;
+  defaultCaptionData: {
+    name: string;
+    transcript?: {
+      dur: string;
+      start: string;
+      text: string;
+    };
+    translatedTranscript?: {
+      dur: string;
+      start: string;
+      text: string;
+    };
+  };
   playlistId: string;
   thumbnail: string;
   userId: string;
@@ -61,8 +74,6 @@ const Playlist = () => {
     <div className="container">
       {isVideoModalOpen && (
         <AddVideoModal
-          availableCaptions={availableCaptions}
-          setAvailavailableCaptions={setAvailavailableCaptions}
           setIsVideoModalOpen={setIsVideoModalOpen}
           defaultValues={defaultValues}
           isVideoModalOpen={isVideoModalOpen}

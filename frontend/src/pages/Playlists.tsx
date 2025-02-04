@@ -31,15 +31,12 @@ const Playlists = () => {
     },
   });
 
-  "playlists", playlists;
-
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
     mutationFn: async (data: PlaylistType) => {
       ("mutation ran");
       return axios.post("playlist", data).then((res) => {
-        "new playlist created !!!", res.data;
         return res.data;
       });
     },
@@ -48,7 +45,6 @@ const Playlists = () => {
 
       const previousPlaylists = queryClient.getQueryData(["playlists"]);
       queryClient.setQueryData(["playlists"], (old: PlaylistType[]) => {
-        "old", old, newPlaylist, [...old, newPlaylist];
         return [...old, newPlaylist];
       });
 
@@ -93,7 +89,6 @@ const Playlists = () => {
     axios
       .delete(`playlist/${playlistId}`)
       .then((res) => {
-        "playlist deleted !!!", res.data;
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
       })
       .catch((err) => err);
@@ -144,7 +139,9 @@ const Playlists = () => {
             items={playlists}
             filter={"name"}
           />
-
+          <h6 className="mt-4 text-lg font-bold text-gray-400">
+            Cards in collection : {playlists?.length}
+          </h6>
           <Button
             className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
             onClick={() => setIsPlayListModalOpen(true)}
@@ -188,7 +185,7 @@ const Playlists = () => {
                       });
                     }}
                   />{" "}
-                  <Link to={`/playlist/${playlist._id}`}>
+                  <Link to={`/playlists/${playlist._id}`}>
                     <h2>{playlist.name}</h2>
                     <p className="mt-3 text-sm font-medium text-gray-500">
                       {playlist?.videosCount} Videos in this playlist

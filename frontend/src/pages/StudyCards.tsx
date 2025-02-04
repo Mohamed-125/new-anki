@@ -48,6 +48,7 @@ const StudyCards = () => {
 
   const cards = useMemo(() => {
     return unorderedCards?.sort(
+      //@ts-ignore
       (a: CardType, b: CardType) => a?.easeFactor - b?.easeFactor
     );
   }, [unorderedCards]);
@@ -87,6 +88,25 @@ const StudyCards = () => {
       setVoice(voices[0]); // Set the first available voice as default
     }
   }, [voices]);
+
+  //  add the space event listener to show the answer when pressing space
+
+  useEffect(() => {
+    const checkSpace = (e: KeyboardEvent) => {
+      console.log(e);
+      if (e.code === "Space") {
+        if (!showAnswer) {
+        }
+        setShowAnswer(true);
+      }
+    };
+
+    document.body.addEventListener("keypress", checkSpace);
+
+    return () => {
+      document.body.removeEventListener("keypress", checkSpace);
+    };
+  }, []);
 
   if (isLoading) {
     return <Loading />;
@@ -158,28 +178,32 @@ const StudyCards = () => {
       <div className="flex justify-center gap-2 mt-auto">
         {showAnswer ? (
           <>
-            <Button
+            <Button //@ts-ignore
+              tabIndex="-1"
               className="block text-green-500 border-green-500 hover:bg-green-500"
               variant="primary-outline"
               onClick={() => submitAnswer("easy")}
             >
               Easy
             </Button>
-            <Button
+            <Button //@ts-ignore
+              tabIndex="-1"
               className="block text-yellow-500 border-yellow-500 text hover:bg-yellow-500"
               variant="primary-outline"
               onClick={() => submitAnswer("medium")}
             >
               Medium
             </Button>
-            <Button
+            <Button //@ts-ignore
+              tabIndex="-1"
               className="block"
               variant="danger-outline"
               onClick={() => submitAnswer("hard")}
             >
               Hard
             </Button>
-            <Button
+            <Button //@ts-ignore
+              tabIndex="-1"
               className="block text-black border-black text hover:bg-black "
               variant="primary-outline"
               onClick={() => submitAnswer(`Couldn't Remember`)}
@@ -190,6 +214,8 @@ const StudyCards = () => {
         ) : (
           <Button
             className="block mx-auto mt-auto"
+            //@ts-ignore
+            tabIndex="-1"
             onClick={() => setShowAnswer(true)}
           >
             Show Answer

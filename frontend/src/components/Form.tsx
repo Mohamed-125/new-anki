@@ -124,7 +124,7 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={twMerge(
-            "w-full px-3 py-2 border  border-neutral-300   rounded-lg",
+            "w-full px-3 focus-visible:outline-lightPrimary py-2 focus-visible:border border  border-neutral-300  rounded-lg",
             className,
             isInputLoading && "inputLoading"
           )}

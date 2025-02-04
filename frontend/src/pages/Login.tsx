@@ -17,10 +17,13 @@ const Login = () => {
       email: formData.get("email"),
       password: formData.get("password"),
     };
+
     axios
       .post("auth/login", data)
       .then((res) => {
         setUser(res.data);
+
+        console.log(res.data);
         navigate("/");
       })
       .catch((err) => err);

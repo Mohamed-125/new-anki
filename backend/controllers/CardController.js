@@ -55,7 +55,6 @@ module.exports.updateCard = async (req, res, next) => {
 
     res.status(200).send(updatedCard);
   } catch (err) {
-    ي;
     res.status(400).send(err);
   }
 };

@@ -76,44 +76,42 @@ const ChangeItemsParent = ({
   };
 
   return (
-    changeItemsParent && (
-      <Modal setIsOpen={setChangeItemsParent}>
-        <Form onSubmit={handleSubmit} className={"max-w-none"}>
-          <Form.FieldsContainer>
-            <Form.Field>
-              <Form.Label>
-                Move {itemsType}s to {parentName}
-              </Form.Label>
-              <Select
-                onChange={(e: SingleValue<OptionType>) => {
-                  if (e) {
-                    setSelectedParent(e.value);
-                  }
-                }}
-                options={options}
-                placeholder={`Select the move to ${parentName}`}
-                defaultValue={options[0]}
-              />
-            </Form.Field>
-          </Form.FieldsContainer>
+    <Modal isOpen={changeItemsParent} setIsOpen={setChangeItemsParent}>
+      <Form onSubmit={handleSubmit} className={"max-w-none"}>
+        <Form.FieldsContainer>
+          <Form.Field>
+            <Form.Label>
+              Move {itemsType}s to {parentName}
+            </Form.Label>
+            <Select
+              onChange={(e: SingleValue<OptionType>) => {
+                if (e) {
+                  setSelectedParent(e.value);
+                }
+              }}
+              options={options}
+              placeholder={`Select the move to ${parentName}`}
+              defaultValue={options?.[0]}
+            />
+          </Form.Field>
+        </Form.FieldsContainer>
 
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setChangeItemsParent(false)}
-              size="parent"
-              type="button"
-              variant={"danger"}
-              className={"mt-8"}
-            >
-              Cancel
-            </Button>{" "}
-            <Button size="parent" className={"mt-8"}>
-              Move{" "}
-            </Button>
-          </div>
-        </Form>
-      </Modal>
-    )
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setChangeItemsParent(false)}
+            size="parent"
+            type="button"
+            variant={"danger"}
+            className={"mt-8"}
+          >
+            Cancel
+          </Button>{" "}
+          <Button size="parent" className={"mt-8"}>
+            Move{" "}
+          </Button>
+        </div>
+      </Form>
+    </Modal>
   );
 };
 

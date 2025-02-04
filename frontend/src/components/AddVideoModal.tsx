@@ -8,6 +8,8 @@ import axios from "axios";
 import Select, { SingleValue } from "react-select";
 import getYouTubeVideoId from "../utils/getYoutubeVideoId";
 import AvailableCaptionsSelect from "./AvailableCaptionsSelect";
+import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
+import { CaptionType } from "../pages/video/Video";
 
 type playlistType = {
   name: string;
@@ -29,7 +31,11 @@ type dataType = {
   thumbnail: string;
   availableCaptions: availableCaption[];
   playlistId: string;
-  defaultCaption: string;
+  defaultCaptionData: {
+    name: string;
+    transcript?: CaptionType[];
+    translatedTranscript?: CaptionType[];
+  };
 };
 
 type AddVideoModalProps = {
@@ -70,23 +76,22 @@ const AddVideoModal = ({
   );
 
   const { mutateAsync: addVideoMutation } = useMutation({
-    mutationFn: (data: dataType) => axios.post("video", data),
+    mutationFn: (data: dataType) => {
+      return axios.post("video", data);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["videos"] }),
   });
 
   const { mutateAsync: updateVideoMutation } = useMutation({
-    mutationFn: (data: dataType) => axios.put(`video/${data.id}`, data),
+    mutationFn: (data: any) => axios.put(`video/${data.id}`, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["videos"] });
     },
   });
 
-  const {
-    data: playlists,
-    isLoading: isLoading,
-    isError,
-    error,
-  } = useQuery({
+  useAddModalShortcuts(setIsVideoModalOpen);
+
+  const { data: playlists } = useQuery({
     queryKey: ["playlists"],
     queryFn: () =>
       axios.get("playlist").then((res) => res.data as playlistType[]),
@@ -128,53 +133,137 @@ const AddVideoModal = ({
       });
   };
 
-  useEffect(() => {
-    console.log("availableCaptions", availableCaptions);
-  }, [availableCaptions]);
-
   const addVideo = (url: string) => {
     setModalLoading(true);
 
-    addVideoMutation({
-      url,
-      selectedSubtitle,
-      videoTitle,
-      thumbnail,
-      availableCaptions,
-      playlistId: selectedPlaylist,
-      defaultCaption:
-        availableCaptions.findIndex(
-          (caption) => caption.language === defaultCaption
-        ) === -1
-          ? availableCaptions[0].language
-          : availableCaptions[
-              availableCaptions.findIndex(
-                (caption) => caption.language === defaultCaption
-              )
-            ].language,
-    }).then(() => {
-      setIsVideoModalOpen(false);
-    });
+    const videoId = getYouTubeVideoId(url);
+
+    const defaultCaptionName =
+      availableCaptions.findIndex(
+        (caption) => caption.language === defaultCaption
+      ) === -1
+        ? availableCaptions[0].language
+        : availableCaptions[
+            availableCaptions.findIndex(
+              (caption) => caption.language === defaultCaption
+            )
+          ].language;
+
+    axios
+      .get(`/video/getTranscript?videoId=${videoId}&lang=${defaultCaptionName}`)
+      .then(async (res) => {
+        const transcript = res.data;
+
+        const translateText = async (text: string) => {
+          const { data: translatedText } = await axios.post("/translate", {
+            text,
+          });
+
+          return translatedText;
+        };
+
+        const batchTranslate = async (texts: any, batchSize: number) => {
+          const batchedResults = [];
+          for (let i = 0; i < texts.length; i += batchSize) {
+            const batch = texts.slice(i, i + batchSize);
+            const translatedBatch = await Promise.all(
+              batch.map((text: any) => translateText(text.text))
+            );
+            batchedResults.push(...translatedBatch);
+          }
+          return batchedResults;
+        };
+
+        const translatedTranscript = await batchTranslate(transcript, 20);
+
+        const addVideoData = {
+          url,
+          selectedSubtitle,
+          videoTitle,
+          thumbnail,
+          availableCaptions,
+          playlistId: selectedPlaylist,
+          defaultCaptionData: {
+            name: defaultCaptionName,
+            transcript: transcript,
+            translatedTranscript: translatedTranscript,
+          },
+        };
+
+        addVideoMutation(addVideoData).then(() => {
+          setIsVideoModalOpen(false);
+        });
+      });
   };
 
   const updateVideoHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    defaultValues?.videoId;
-    const data = {
-      videoUrl,
-      selectedSubtitle,
-      videoTitle,
-      thumbnail,
-      availableCaptions,
-      playlistId: selectedPlaylist,
-      defaultCaption: defaultCaption,
-      id: defaultValues?.videoId,
-    };
+    if (defaultValues?.defaultCaption === defaultCaption) {
+      console.log("default caption is not changed");
 
-    updateVideoMutation(data).then(() => {
-      setIsVideoModalOpen(false);
-    });
+      updateVideoMutation({
+        playlistId: selectedPlaylist,
+        defaultCaptionData: {
+          name: defaultCaption,
+        },
+        id: defaultValues?.videoId,
+      }).then(() => {
+        setIsVideoModalOpen(false);
+      });
+    } else {
+      console.log("default caption is changed", defaultCaption);
+
+      const videoId = getYouTubeVideoId(videoUrl);
+
+      axios
+        .get(
+          "/video/getTranscript?videoId=" + videoId + "&lang=" + defaultCaption
+        )
+
+        .then(async (res) => {
+          const transcript = res.data;
+
+          const translateText = async (text: string) => {
+            const { data: translatedText } = await axios.post("/translate", {
+              text,
+            });
+
+            return translatedText;
+          };
+
+          const batchTranslate = async (texts: any, batchSize: number) => {
+            const batchedResults = [];
+            for (let i = 0; i < texts.length; i += batchSize) {
+              const batch = texts.slice(i, i + batchSize);
+              const translatedBatch = await Promise.all(
+                batch.map((text: any) => translateText(text.text))
+              );
+              batchedResults.push(...translatedBatch);
+            }
+            return batchedResults;
+          };
+
+          const translatedTranscript = await batchTranslate(transcript, 20);
+
+          updateVideoMutation({
+            url: videoUrl,
+            selectedSubtitle,
+            videoTitle,
+            thumbnail,
+            availableCaptions,
+            playlistId: selectedPlaylist,
+            defaultCaptionData: {
+              name: defaultCaption,
+              transcript,
+              translatedTranscript,
+            },
+            id: defaultValues?.videoId,
+          }).then(() => {
+            setIsVideoModalOpen(false);
+          });
+        });
+    }
   };
 
   const createVideoHandler = (e: React.FormEvent<HTMLFormElement>) => {
@@ -214,7 +303,7 @@ const AddVideoModal = ({
     // ("defaultValues", defaultValues);
     setVideoUrl(defaultValues?.videoUrl);
     setAvailavailableCaptions(defaultValues?.videoAvailableCaptions || []);
-    setDefaultCaption(defaultValues?.videoDefaultCaption);
+    setDefaultCaption(defaultValues?.defaultCaption);
     setVideoTitle(defaultValues?.videoTitle);
     setThumbnail(defaultValues?.videoThumbnail);
 
@@ -227,6 +316,11 @@ const AddVideoModal = ({
   //   (selectedPlaylist);
   // }, [selectedPlaylist]);
 
+  useEffect(() => {
+    setModalLoading(false);
+  }, [isVideoModalOpen]);
+
+  console.log(defaultValues?.defaultCaption);
   return (
     <Modal
       setIsOpen={setIsVideoModalOpen}
@@ -287,7 +381,7 @@ const AddVideoModal = ({
                 <AvailableCaptionsSelect
                   availableCaptions={availableCaptions}
                   value={defaultCaption}
-                  setValue={setDefaultCaption}
+                  setSelectedCaption={setDefaultCaption}
                 />
               </Form.Field>
 
@@ -329,7 +423,7 @@ const AddVideoModal = ({
           <Button size="parent" className={"mt-8"}>
             {availableCaptions?.length
               ? defaultValues?.defaultCaption
-                ? "Save video"
+                ? "Edit video"
                 : "Add video"
               : "Get video availableCaptions"}
           </Button>

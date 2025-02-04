@@ -17,6 +17,12 @@ const cookieParser = require("cookie-parser");
 const puppeteer = require("puppeteer");
 
 // Mongo DB Connections
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+app.use(express.json()); // To parse JSON data
+app.use(express.urlencoded({ extended: true })); // To parse URL-encoded data
+app.use(cookieParser()); // For parsing cookies
 
 mongoose
   .connect(process.env.MONGO_DB_URL)
@@ -27,7 +33,14 @@ mongoose
     "Error in DB connection: " + error;
   });
 
-const whitelist = ["https://new-anki-one.vercel.app", "http://localhost:5173"];
+const whitelist = [
+  "https://new-anki-one.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://192.168.1.5:5173",
+  "http://192.168.1.5:5174",
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.indexOf(origin) !== -1) {
@@ -66,6 +79,6 @@ app.use("/api/v1/text", textRouter);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   "App running in port: " + PORT;
 });

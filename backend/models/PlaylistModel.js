@@ -2,27 +2,34 @@ const mongoose = require("mongoose");
 const { default: slugify } = require("slugify");
 const VideoModel = require("./VideoModel");
 
-const PlaylistSchema = mongoose.Schema({
-  name: {
-    type: String,
-    require: [true, "Playlist name is required"],
+const PlaylistSchema = mongoose.Schema(
+  {
+    name: {
+      type: String,
+      require: [true, "Playlist name is required"],
+    },
+    slug: {
+      type: String,
+    },
+    // playlistVideos: [
+    //   {
+    //     type: mongoose.Types.ObjectId,
+    //     ref: "Video",
+    //     default: [],
+    //   },
+    // ],
+    userId: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+    },
   },
-  slug: {
-    type: String,
-  },
-  // playlistVideos: [
-  //   {
-  //     type: mongoose.Types.ObjectId,
-  //     ref: "Video",
-  //     default: [],
-  //   },
-  // ],
-  userId: {
-    type: mongoose.Types.ObjectId,
-    ref: "User",
-  },
-});
+  { timestamps: true }
+);
 
+PlaylistSchema.pre("find", function (next) {
+  this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
+  next();
+});
 PlaylistSchema.set("toObject", { virtuals: true });
 PlaylistSchema.set("toJSON", { virtuals: true });
 

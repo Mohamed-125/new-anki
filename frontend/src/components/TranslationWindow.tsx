@@ -3,41 +3,43 @@ import Button from "./Button";
 import axios from "axios";
 import Loading from "./Loading";
 import Form from "./Form";
+import { px } from "framer-motion";
 
 const TranslationWindow = ({
   selectionData,
   setIsAddCardModalOpen,
   setDefaultValues,
+  setContent,
+  text = false,
 }: {
   selectionData: {
     ele: any;
     text: string;
   };
+  text?: boolean;
   setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setDefaultValues: any;
+  setContent?: React.Dispatch<React.SetStateAction<string>>;
 }) => {
-  const rect = selectionData?.ele?.getBoundingClientRect?.();
-  const [height, setHeight] = useState(0);
+  
+  const parent =
+    selectionData?.ele?.parentElement?.parentElement?.parentElement;
+  const rect = parent.getBoundingClientRect();
   const [eleHeight, setEleHeight] = useState(0);
   const [translatedText, setTranslatedText] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("en"); // Default to Spanish
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
-
-  const windowRef = useCallback((window: HTMLDivElement) => {
-    if (window == null) return;
-    setHeight(window.scrollHeight);
-  }, []);
 
   useEffect(() => {
     setEleHeight(rect?.bottom - rect?.top);
   }, []);
 
   const caculateTop = () => {
-    return rect?.top + eleHeight;
+    return !text ? eleHeight - 15 : 1;
+    // return rect.top;
   };
 
   useEffect(() => {
-    selectionData.text, targetLanguage, selectionData.text && targetLanguage;
     if (selectionData.text && targetLanguage) {
       setIsTranslationLoading(true);
       const text = selectionData.text.replaceAll("\n", " ");
@@ -54,13 +56,12 @@ const TranslationWindow = ({
 
   return (
     <div
-      ref={windowRef}
       style={{
         top: `${caculateTop()}px`,
-        left: `${rect?.left}px`,
+        // left: `${rect?.left}px`,
       }}
       id="translationWindow"
-      className={`absolute z-50 max-w-[400px] text-wrap px-4 bg-white border border-gray-200 py-7 rounded-xl bordrer min-w-[200px]`}
+      className={`translationWindow  absolute z-50 max-w-[400px] text-wrap px-4 bg-white border border-gray-200 py-7 rounded-xl bordrer min-w-[200px]`}
     >
       <Form.Label>Choose the target language :</Form.Label>
       <Form.Select
@@ -153,11 +154,16 @@ const TranslationWindow = ({
         className={"text-base mt-3 "}
         disabled={isTranslationLoading}
         onClick={() => {
+          
           setIsAddCardModalOpen(true);
+
           setDefaultValues({
             front: selectionData.text,
             back: translatedText,
+            content: "",
           });
+
+          setContent?.("");
         }}
       >
         Save to your cards

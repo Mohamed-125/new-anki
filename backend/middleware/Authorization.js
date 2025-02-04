@@ -10,8 +10,8 @@ const setReqUser = async (_id, req) => {
 };
 
 const Authorization = async (req, res, next) => {
-  const token = req.cookies.token;
-  const refreshToken = req.cookies.refreshToken;
+  const token = req.cookies?.token;
+  const refreshToken = req.cookies?.refreshToken;
 
   if (!token) {
     if (!refreshToken) {
