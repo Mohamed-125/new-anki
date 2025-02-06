@@ -149,6 +149,7 @@ const AddVideoModal = ({
             )
           ].language;
 
+    console.log("axios wworking");
     axios
       .get(`/video/getTranscript?videoId=${videoId}&lang=${defaultCaptionName}`)
       .then(async (res) => {
@@ -190,15 +191,18 @@ const AddVideoModal = ({
             translatedTranscript: translatedTranscript,
           },
         };
-
-        addVideoMutation(addVideoData).then(() => {
-          setIsVideoModalOpen(false);
-        });
+        try {
+          await addVideoMutation(addVideoData);
+        } catch (err) {
+          console.log(err);
+          // throw new Error(err);
+        }
       })
       .catch((err) => {
         console.log("err", err);
       })
       .finally(() => {
+        setIsVideoModalOpen(false);
         setModalLoading(false);
       });
   };
