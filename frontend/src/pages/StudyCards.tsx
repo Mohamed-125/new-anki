@@ -3,14 +3,14 @@ import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
-import { CollectionType } from "../hooks/useGetCollections";
+import { CollectionType } from "../context/CollectionsContext";
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import Button from "../components/Button";
 import { useWindowSize } from "react-use";
 import Confetti from "react-confetti";
 import { HiMiniSpeakerWave } from "react-icons/hi2";
 // @ts-ignore
-import { useSpeechSynthesis } from "react-speech-kit";
+import { useSpeech, useVoices } from "react-text-to-speech";
 import Form from "../components/Form";
 import ReactQuillComponent from "../components/ReactQuillComponent";
 
@@ -78,10 +78,17 @@ const StudyCards = () => {
       }
     });
   };
-
-  const { speak, voices, speaking, cancel } = useSpeechSynthesis();
-
   const [voice, setVoice] = useState<any>();
+
+  const {
+    Text, // Component that returns the modified text property
+    speechStatus, // String that stores current speech status
+    isInQueue, // Boolean that stores whether a speech utterance is either being spoken or present in queue
+    start, // Function to start the speech or put it in queue
+    pause, // Function to pause the speech
+    stop, // Function to stop the speech or remove it from queue
+  } = useSpeech({ text: cards[currentCard].front, voiceURI: voice });
+  const { languages, voices } = useVoices();
 
   useEffect(() => {
     if (voices.length > 0) {
@@ -139,27 +146,25 @@ const StudyCards = () => {
           <Form.Field className="flex gap-2 mt-11">
             <label>Voice:</label>
             <Form.Select
-              value={voice?.name}
-              onChange={(e) => {
-                setVoice(() =>
-                  voices.find((voice: any) => voice.name === e.target.value)
-                );
-              }}
+              value={voice}
+              onChange={(e) => setVoice(e.target.value)}
             >
-              {voices.map((voice: any) => (
-                <option key={voice.name} value={voice.name}>
-                  {voice.name}
-                </option>
-              ))}
+              {voices
+                // .filter((voice) => !lang || voice.lang === lang)
+                .map(({ voiceURI }) => (
+                  <option key={voiceURI} value={voiceURI}>
+                    {voiceURI}
+                  </option>
+                ))}
             </Form.Select>
           </Form.Field>
           <HiMiniSpeakerWave
             className="mb-6 text-5xl cursor-pointer hover:scale-110 "
             onClick={() => {
-              if (speaking) {
-                cancel();
+              if (speechStatus) {
+                stop();
               }
-              speak({ text: cards[currentCard].front, voice });
+              start();
             }}
           />
         </div>
