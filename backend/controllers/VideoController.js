@@ -102,10 +102,17 @@ module.exports.getTranscript = async (req, res) => {
   const { videoId, lang } = req.query;
 
   try {
-    const caption = await getTranscript(videoId, lang);
+    // const caption = await getTranscript(videoId, lang);
+    // return res.status(200).send(caption);
 
-    // Use flatted.stringify to handle circular references
-    return res.status(200).send(caption);
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+
+    const newArray = transcript.map((item) => ({
+      dur: item.duration.toString(), // Convert to string
+      start: item.offset.toString(), // Convert to string
+      text: item.text,
+    }));
+    return res.json(newArray);
   } catch (err) {
     // Send error response if something went wrong
     return res
