@@ -174,6 +174,7 @@ const AddVideoModal = ({
           }
           return batchedResults;
         };
+        //
 
         const translatedTranscript = await batchTranslate(transcript, 20);
 
