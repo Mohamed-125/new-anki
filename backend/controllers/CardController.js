@@ -24,6 +24,7 @@ module.exports.createCard = async (req, res, next) => {
 };
 
 module.exports.getUserCards = async (req, res, next) => {
+  console.log(req.user._id);
   try {
     const cards = await CardModel.find({ userId: req.user._id });
     res.status(200).send(cards);

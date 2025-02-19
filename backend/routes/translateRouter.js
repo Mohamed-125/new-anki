@@ -10,13 +10,17 @@ router.post("/", async (req, res, next) => {
   console.log(targetLanguage);
   if (examples) {
     const reverso = new Reverso();
-    reverso.getTranslation(text, "german", "english", (err, response) => {
-      if (err) {
-        res.send(err.message);
-        return;
-      }
-      res.send(response);
-    });
+    try {
+      reverso.getTranslation(text, "german", "english", (err, response) => {
+        if (err) {
+          res.send(err.message);
+          return;
+        }
+        res.send(response);
+      });
+    } catch (err) {
+      res.status(400).send(err);
+    }
   } else {
     try {
       const encodedText = encodeURIComponent(text);

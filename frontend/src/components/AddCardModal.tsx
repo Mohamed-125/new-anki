@@ -96,17 +96,19 @@ export function AddCardModal({
     e.target.reset();
   };
 
-  const backRef = useRef<HTMLInputElement>(null);
+  const backRef = useRef<HTMLTextAreaElement>(null);
+  const frontRef = useRef<HTMLTextAreaElement>(null);
 
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
   const [examples, setExamples] = useState<string[]>([]);
 
   const translateHandler = async () => {
-    if (defaultValues?.front) {
+    console.log(frontRef.current?.value);
+    if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
         const { data } = await axios.post("/translate?examples=true", {
-          text: defaultValues?.front,
+          text: frontRef.current?.value,
         });
 
         const translations = data.translations as string[];
@@ -155,10 +157,11 @@ export function AddCardModal({
         <Form.FieldsContainer>
           <Form.Field>
             <Form.Label>Card Frontside</Form.Label>
-            <Form.Input
+            <Form.Textarea
               defaultValue={defaultValues?.front}
               type="text"
               name="card_word"
+              ref={frontRef}
               required
             />
           </Form.Field>
@@ -174,12 +177,12 @@ export function AddCardModal({
 
           <Form.Field>
             <Form.Label>Card backside</Form.Label>
-            <Form.Input
+            <Form.Textarea
               defaultValue={defaultValues?.back}
-              isInputLoading={isTranslationLoading}
+              isLoading={isTranslationLoading}
               disabled={isTranslationLoading}
-              ref={backRef}
               type="text"
+              ref={backRef}
               name="card_translation"
               required
             />

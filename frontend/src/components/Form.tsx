@@ -107,11 +107,11 @@ Form.Message = ({
 type InputProps = {
   type?: string;
   className?: string;
-  isInputLoading?: boolean;
+  isLoading?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>;
 
 Form.Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ type, className, isInputLoading, ...attributes }, ref) => {
+  ({ type, className, isLoading, ...attributes }, ref) => {
     const [isPassword, setIsPassword] = useState(true);
     return type === "password" ? (
       <PasswordInput
@@ -126,34 +126,41 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
           className={twMerge(
             "w-full px-3 focus-visible:outline-lightPrimary py-2 focus-visible:border border  border-neutral-300  rounded-lg",
             className,
-            isInputLoading && "inputLoading"
+            isLoading && "inputLoading"
           )}
           {...attributes}
         />
-        {isInputLoading && <i className="loader loader-input"></i>}
+        {isLoading && <i className="loader loader-input"></i>}
       </div>
     );
   }
 );
 
-Form.Textarea = ({
-  type,
-  className,
-  ...attributes
-}: {
+type TextareaProps = {
   type?: string;
   className?: string;
-} & React.TextareaHTMLAttributes<HTMLTextAreaElement>) => {
-  return (
-    <textarea
-      className={twMerge(
-        "w-full px-3 py-4 sm:text-sm border border-gray-400 rounded-lg",
-        className
-      )}
-      {...attributes}
-    />
-  );
-};
+  isLoading: boolean;
+} & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+
+Form.Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ type, className, isLoading, ...attributes }, ref) => {
+    return (
+      <>
+        {" "}
+        <textarea
+          ref={ref} // Forward the ref to the <textarea> element
+          className={twMerge(
+            "w-full px-3 py-4 sm:text-sm border border-gray-400 rounded-lg",
+            className,
+            isLoading && "inputLoading"
+          )}
+          {...attributes}
+        />
+        {isLoading && <i className="loader loader-input"></i>}
+      </>
+    );
+  }
+);
 
 Form.Select = ({
   type,
