@@ -3,21 +3,30 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../components/Button";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
-import { FormEvent } from "react";
-
+import {} from "react";
+import { useForm } from "react-hook-form";
+import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 const Login = () => {
   const { setUser } = useGetCurrentUser();
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(AuthFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
   const navigate = useNavigate();
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    };
-
+  console.log("errors", errors);
+  const onSubmit = (values: AuthFormSchemaType) => {
+    console.log(values);
+    let data = values;
     axios
       .post("auth/login", data)
       .then((res) => {
@@ -28,28 +37,29 @@ const Login = () => {
       })
       .catch((err) => err);
   };
+
   return (
-    <div className="flex items-center justify-center flex-grow ">
-      <Form onSubmit={onSubmit}>
+    <div className="flex flex-grow justify-center items-center">
+      <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
         <Form.Title> Login </Form.Title>
-        <Form.FieldsContainer>
+        <Form.FieldsContainer gap={12}>
           <Form.Field>
             <Form.Label>Email</Form.Label>
             <Form.Input
-              required
               placeholder="JohnDeo@gmail.com"
               type="text"
-              name="email"
+              {...register("email")}
             />
+            <Form.Message error={true}>{errors.email?.message}</Form.Message>
           </Form.Field>
           <Form.Field>
             <Form.Label>Password</Form.Label>
             <Form.Input
-              required
-              placeholder="12345678"
+              placeholder="Enter your password"
               type="password"
-              name="password"
+              {...register("password")}
             />
+            <Form.Message error={true}>{errors.password?.message}</Form.Message>
           </Form.Field>
         </Form.FieldsContainer>
 

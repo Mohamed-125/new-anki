@@ -57,6 +57,7 @@ UserSchema.virtual("collections", {
   foreignField: "user", // The field in the Todo schema that references the User
 });
 
-const UserModel = mongoose.model("User", UserSchema);
+UserSchema.index({ email: 1 });
 
+const UserModel = mongoose.model("User", UserSchema);
 module.exports = UserModel;

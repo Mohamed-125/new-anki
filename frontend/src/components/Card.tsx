@@ -84,7 +84,7 @@ const Card = ({
 
   return (
     <div
-      className="flex items-center max-w-full px-8 py-6 mb-4 bg-white border shadow-md cursor-pointer border-neutral-300 rounded-2xl"
+      className="flex items-center px-8 py-6 mb-4 max-w-full bg-white rounded-2xl border shadow-md cursor-pointer border-neutral-300"
       id={id}
     >
       <input
@@ -105,7 +105,7 @@ const Card = ({
         <HiSwitchHorizontal />
       </div>
       <div
-        className="overflow-hidden break-words whitespace-normal grow text-ellipsis"
+        className="overflow-hidden whitespace-normal break-words grow text-ellipsis"
         onClick={() => {
           navigateTo?.();
           setDefaultValues({
@@ -135,7 +135,7 @@ const Card = ({
         }}
       >
         <p className="text-lg sm:text-base">{front}</p>
-        <small className="text-base text-gray-500 truncate ">{back}</small>
+        <small className="text-base text-gray-500 truncate">{back}</small>
       </div>
       {isSameUser ? (
         <>
@@ -167,7 +167,7 @@ function DropdownMenuDemo({
   const deleteHandlerFunc = useCardActions().deleteHandler;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="text-2xl">
         <BsThreeDotsVertical />
       </DropdownMenuTrigger>
@@ -178,23 +178,23 @@ function DropdownMenuDemo({
             setEditId(id);
           }}
           className={
-            "items-center leading-normal  flex gap-3 outline-none  text-gray-700 bg-transparent border-none"
+            "flex gap-3 items-center leading-normal text-gray-700 bg-transparent border-none outline-none"
           }
         >
-          <LuMoveUpRight className="text-xl " />
+          <LuMoveUpRight className="text-xl" />
           Move
         </Button>
         <DropdownMenuSeparator />
 
         <Button
           className={
-            "items-center leading-normal  flex gap-3 outline-none  text-red-600 bg-transparent border-none"
+            "flex gap-3 items-center leading-normal text-red-600 bg-transparent border-none outline-none"
           }
           onClick={() => {
             deleteHandlerFunc(id, collectionId);
           }}
         >
-          <FaTrashCan className="text-xl " />
+          <FaTrashCan className="text-xl" />
           Delete
         </Button>
       </DropdownMenuContent>

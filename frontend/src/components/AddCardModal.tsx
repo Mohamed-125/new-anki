@@ -33,6 +33,7 @@ type AddCardModalProps = {
   targetCollectionId?: string;
   setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
   setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isMoveToCollectionOpen: boolean;
 };
 
 export function AddCardModal({
@@ -51,6 +52,7 @@ export function AddCardModal({
   targetCollectionId,
   setTargetCollectionId,
   setIsMoveToCollectionOpen,
+  isMoveToCollectionOpen,
 }: AddCardModalProps) {
   const isEdit = !!editId;
   useAddModalShortcuts(setIsAddCardModalOpen);
@@ -91,7 +93,7 @@ export function AddCardModal({
       createCardHandler(e, cardData, setIsAddCardModalOpen);
     }
 
-    refetch();
+    refetch?.();
     //@ts-ignore
     e.target.reset();
   };
@@ -103,7 +105,6 @@ export function AddCardModal({
   const [examples, setExamples] = useState<string[]>([]);
 
   const translateHandler = async () => {
-    console.log(frontRef.current?.value);
     if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
@@ -129,16 +130,18 @@ export function AddCardModal({
     }
   };
 
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   const onAnimationEnd = useCallback(() => {
-    //@ts-ignore
     if (!isAddCardModalOpen) {
+      formRef.current?.reset();
       setIsAddCardModalOpen(false);
       setContent("");
       setDefaultValues(null);
       setEditId?.("");
       setTargetCollectionId?.("");
     }
-  }, []);
+  }, [isAddCardModalOpen, isMoveToCollectionOpen]);
 
   useEffect(() => {
     if (!isAddCardModalOpen) {
@@ -148,11 +151,16 @@ export function AddCardModal({
 
   return (
     <Modal
+      className={isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
-      <Form className="w-[100%] max-w-[unset]" onSubmit={handleSubmit}>
+      <Form
+        formRef={formRef}
+        className="w-[100%] max-w-[unset]"
+        onSubmit={handleSubmit}
+      >
         <Form.Title>{isEdit ? "Edit Card" : " Add New Card"} </Form.Title>
         <Form.FieldsContainer>
           <Form.Field>
@@ -169,7 +177,9 @@ export function AddCardModal({
             <Form.Label>Card Collection</Form.Label>
             <Button
               type="button"
-              onClick={() => setIsMoveToCollectionOpen?.(true)}
+              onClick={() => {
+                setIsMoveToCollectionOpen?.(true);
+              }}
             >
               Choose Collection
             </Button>

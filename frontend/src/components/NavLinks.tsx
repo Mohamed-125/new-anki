@@ -1,12 +1,17 @@
 import { twMerge } from "tailwind-merge";
 import Button from "./Button";
 import { Link, useNavigate } from "react-router-dom";
-import { useContext } from "react";
-import { userContext } from "../context/UserContext";
 import { LinkType } from "./Navbar";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
+import { UserType } from "@/context/UserContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type NavLinkProps = {
   links: LinkType[];
@@ -16,17 +21,7 @@ type NavLinkProps = {
 };
 
 function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-
   const { user, setUser } = useGetCurrentUser();
-  const logoutHandler = () => {
-    axios.post("auth/logout").then(() => {
-      setUser(null);
-      queryClient.clear(); // Completely clears the query cache
-      navigate("/login");
-    });
-  };
 
   return (
     <div
@@ -51,36 +46,72 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
         );
       })}
       {user ? (
-        <>
-          <Button onClick={logoutHandler} variant="danger">
-            Logout
-          </Button>
-          {/* <p>{user.email}</p>
-          <p>{user._id}</p> */}
-        </>
+        <ProfileDropdown user={user} setUser={setUser} />
       ) : (
         <>
           <div style={{ gap: `${gap}px` }} className="flex md:hidden">
-            <Button variant="primary-outline">Login</Button>
+            <Link to={"/login"}>
+              <Button variant="primary-outline">Login</Button>
+            </Link>
             <Button>Sign Up</Button>
           </div>
 
           <div className="hidden w-full md:block">
-            <Button
-              variant="primary-outline"
-              className={"mt-4"}
-              size={"parent"}
-            >
-              Login
-            </Button>
-            <Button size={"parent"} className={"mt-4"}>
-              Sign Up
-            </Button>
+            <Link to={"/login"} onClick={() => setIsNavOpen(false)}>
+              <Button
+                variant="primary-outline"
+                className={"mt-4"}
+                size={"parent"}
+              >
+                Login
+              </Button>{" "}
+            </Link>
+            <Link to={"/register"} onClick={() => setIsNavOpen(false)}>
+              <Button size={"parent"} className={"mt-4"}>
+                Sign Up
+              </Button>
+            </Link>
           </div>
         </>
       )}
     </div>
   );
 }
+
+const ProfileDropdown = ({
+  user,
+  setUser,
+}: {
+  user: UserType | null;
+  setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
+}) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const logoutHandler = () => {
+    axios.post("auth/logout").then(() => {
+      setUser(null);
+      queryClient.clear(); // Completely clears the query cache
+      navigate("/login");
+    });
+  };
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger className="ml-1 text-2xl">
+        <div className="flex justify-center items-center w-11 h-11 font-bold text-white bg-sky-900 rounded-full">
+          {user?.email?.[0]}
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="px-4 py-5 mt-6 font-semibold bg-popover">
+        <strong>{user?.email}</strong>
+        <DropdownMenuSeparator className="my-3 h-[2px]" />
+        <Button onClick={logoutHandler} variant="danger">
+          Logout
+        </Button>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export default NavLinks;

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { default: slugify } = require("slugify");
 const CardModel = require("./CardModel");
 
-const CollectionSchema = mongoose.Schema(
+const CollectionSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -33,6 +33,9 @@ const CollectionSchema = mongoose.Schema(
   { timestamps: true }
 );
 
+CollectionSchema.index({ parentCollectionId: 1, userId: 1 });
+CollectionSchema.indexes();
+
 CollectionSchema.set("toObject", { virtuals: true });
 CollectionSchema.set("toJSON", { virtuals: true });
 
@@ -50,10 +53,7 @@ CollectionSchema.post(["find", "findOne"], async function (docs) {
       });
 
       // Log and update the document
-      doc.collectionCards = [
-        ...doc.collectionCards,
-        ...cardsBelongsToThisCollection,
-      ];
+      doc.collectionCards = cardsBelongsToThisCollection;
     }
   } else if (docs) {
     // If docs is a single document (findOne)
@@ -62,11 +62,8 @@ CollectionSchema.post(["find", "findOne"], async function (docs) {
     });
 
     // Log and update the document
-    docs.collectionCards, docs.name;
-    docs.collectionCards = [
-      ...docs.collectionCards,
-      ...cardsBelongsToThisCollection,
-    ];
+
+    docs.collectionCards = cardsBelongsToThisCollection;
   }
 });
 
@@ -82,6 +79,40 @@ CollectionSchema.virtual("subCollections", {
   ref: "Collection",
   foreignField: "parentCollectionId", // Foreign field of subcollections (parentCollectionId)
   localField: "_id", // Local field of parent collection (_id)
+});
+
+CollectionSchema.pre(["findOneAndDelete", "deleteMany"], async function (next) {
+  const query = this.getQuery(); // Get the query used for deletion
+  const CollectionModel = this.model; // Access model inside middleware
+
+  if (this.op === "findOneAndDelete") {
+    // Find the document before it gets deleted
+    this._docToDelete = await CollectionModel.findOne(query);
+  } else if (this.op === "deleteMany") {
+    // Fetch all documents that match the query before deletion
+    this._docsToDelete = await CollectionModel.find(query).lean();
+  }
+
+  next();
+});
+
+CollectionSchema.post(["findOneAndDelete", "deleteMany"], async function () {
+  const CollectionModel = this.model;
+
+  if (this.op === "findOneAndDelete" && this._docToDelete) {
+    console.log("Deleted doc:", this._docToDelete);
+    await CollectionModel.deleteMany({
+      parentCollectionId: this._docToDelete._id,
+    });
+  }
+
+  if (this.op === "deleteMany" && this._docsToDelete.length > 0) {
+    console.log("Deleted docs:", this._docsToDelete);
+    const idsToDelete = this._docsToDelete.map((doc) => doc._id);
+    await CollectionModel.deleteMany({
+      parentCollectionId: { $in: idsToDelete },
+    });
+  }
 });
 
 const CollectionModel = mongoose.model("Collection", CollectionSchema);

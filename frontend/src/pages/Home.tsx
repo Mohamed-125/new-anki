@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, {
+  FormEvent,
   useContext,
   useDeferredValue,
   useEffect,
@@ -10,32 +11,24 @@ import Card from "../components/Card";
 import AddCardModal from "../components/AddCardModal";
 import Button from "../components/Button";
 import Loading from "../components/Loading";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent";
-import { CardType } from "../hooks/useGetCards";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import { Link, useLocation } from "react-router-dom";
 import MoveCollectionModal from "../components/MoveCollectionModal";
 import { toastContext } from "../context/ToastContext";
 import useToasts from "../hooks/useToasts";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import CardsSkeleton from "@/components/CardsSkeleton";
+import useDebounce from "@/hooks/useDebounce";
+import Form from "@/components/Form";
+import { useGetCards } from "@/hooks/Queries/CardQeries";
 
 const Home = () => {
-  const {
-    data: userCards,
-    isLoading: userCardsIsLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["cards"],
-    queryFn: () => {
-      return axios.get("card").then((res) => res.data);
-    },
-  });
-
   const { user } = useGetCurrentUser();
 
-  const [filteredCards, setFilteredCards] = useState<CardType[]>(userCards);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
@@ -45,16 +38,27 @@ const Home = () => {
   const [changeItemsParent, setChangeItemsParent] = useState(false);
   const [isMoveToCollectionOpen, setIsMoveTooCollectionOpen] = useState(false);
   const [targetCollectionId, setTargetCollectionId] = useState("");
-  const isLoading = userCardsIsLoading;
+  const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    console.log("editId", editId);
-  }, [editId]);
+  const debouncedQuery = useDebounce(query);
+
+  const {
+    userCards,
+    fetchNextPage,
+    isFetchingNextPage,
+    isIntialLoading,
+    cardsCount,
+  } = useGetCards({ query: debouncedQuery }); // Pass the query here
+
+  const {} = useInfiniteScroll(fetchNextPage);
+  useEffect(() => {}, [editId]);
 
   const CardsJSX = useMemo(() => {
-    if (!filteredCards) return null;
+    if (!userCards) return null;
 
-    return filteredCards.map((card) => (
+    // Set loading state while computing cards
+
+    const cards = userCards.map((card) => (
       <Card
         key={card._id}
         card={card}
@@ -72,14 +76,16 @@ const Home = () => {
         setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
       />
     ));
-  }, [filteredCards, user?._id, actionsDivId, selectedItems]); // Ensure minimal dependencies
-  if (isLoading || !userCards) {
-    return <Loading />;
-  }
+
+    // Reset loading state after computation is complete
+
+    return cards;
+  }, [userCards, user?._id, selectedItems]); // Ensure minimal dependencies
 
   return (
     <div className="container">
       <AddCardModal
+        isMoveToCollectionOpen={isMoveToCollectionOpen}
         setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
         isAddCardModalOpen={isAddCardModalOpen}
         setIsAddCardModalOpen={setIsAddCardModalOpen}
@@ -106,57 +112,83 @@ const Home = () => {
         itemsIds={selectedItems}
         parentName="collection"
       />
-      <Search
-        setState={setFilteredCards}
-        label={"Search your cards"}
-        items={userCards}
-        filter={"front"}
-        filter2={"back"}
-      />
 
+      <SearchCards query={query} setQuery={setQuery} />
       <h6 className="mt-4 text-lg font-bold text-gray-400">
-        Your Cards : {userCards?.length}
+        Your Cards : {cardsCount}
       </h6>
-
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex justify-between items-center mt-2">
         <Link to="/study-cards">
           <Button variant="primary-outline" className="">
             Study Your Cards
           </Button>
         </Link>
 
-        <Button className={"my-7 "} onClick={() => setIsAddCardModalOpen(true)}>
+        <Button className={"my-7"} onClick={() => setIsAddCardModalOpen(true)}>
           Create a new card
         </Button>
       </div>
-
       <SelectedItemsController
         setChangeItemsParent={setChangeItemsParent}
         selectedItems={selectedItems}
         setSelectedItems={setSelectedItems}
       />
-      {userCards.length ? (
-        <>
-          {CardsJSX}
-
-          <Search.NotFound
-            state={filteredCards}
-            searchFor={"cards"}
-            filter={"front"}
-            filter2={"back"}
-          />
-        </>
+      {isIntialLoading || !userCards ? (
+        <CardsSkeleton />
       ) : (
-        <Button
-          center={true}
-          className={"mt-11"}
-          onClick={() => setIsAddCardModalOpen(true)}
-        >
-          There is not any card yet. Click to Add a new card
-        </Button>
+        <>
+          {userCards.length ? (
+            <div>
+              {CardsJSX}
+              {isFetchingNextPage && <CardsSkeleton />}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center min-h-[40vh]">
+              <Button
+                center={true}
+                className="mt-11"
+                onClick={() => setIsAddCardModalOpen(true)}
+              >
+                There is not any card yet. Click to Add a new card
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
-export default Home;
+export default React.memo(Home);
+
+type SearchCardsProps = {
+  query: string;
+  setQuery: (query: string) => void;
+};
+
+const SearchCards = React.memo(function SearchCards({
+  query,
+  setQuery,
+}: SearchCardsProps) {
+  return (
+    <>
+      <Form
+        className={
+          "flex px-0 py-0 mb-8 w-full max-w-none text-lg bg-transparent rounded-xl"
+        }
+      >
+        <div className="grow">
+          <Form.Label>Search Your Cards</Form.Label>
+          <Form.Input
+            className="py-2 text-black bg-gray-200 rounded-xl"
+            value={query}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setQuery(e.target.value)
+            }
+            name="query"
+          />
+        </div>
+      </Form>
+    </>
+  );
+});

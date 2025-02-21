@@ -48,7 +48,7 @@ module.exports.forkCollection = async (req, res, next) => {
 module.exports.getCollections = async (req, res, next) => {
   try {
     const collections = await CollectionModel.find({
-      userId: req.user._id,
+      userId: req.user?._id,
       // $or: [
       //   { parentCollectionId: { $exists: false } }, // parentCollectionId doesn't exist
       //   { parentCollectionId: null }, // parentCollectionId is null
@@ -88,6 +88,8 @@ module.exports.getCollection = async (req, res, next) => {
 };
 module.exports.updateCollection = async (req, res, next) => {
   const { name, cards, public, parentCollectionId } = req.body;
+
+  console.log(req.body);
   try {
     const updateCollection = await CollectionModel.findByIdAndUpdate(
       { _id: req.params.id },
@@ -103,7 +105,7 @@ module.exports.updateCollection = async (req, res, next) => {
 };
 module.exports.deleteCollection = async (req, res, next) => {
   try {
-    const deletedTodo = await CollectionModel.findByIdAndDelete({
+    const deletedCollection = await CollectionModel.findOneAndDelete({
       _id: req.params.id,
     });
     res.status(200).send("deleted!!");

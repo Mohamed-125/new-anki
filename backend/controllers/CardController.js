@@ -22,13 +22,36 @@ module.exports.createCard = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
-
 module.exports.getUserCards = async (req, res, next) => {
-  console.log(req.user._id);
+  const { page: pageNumber, searchQuery = "" } = req.query;
+  const limit = 5;
+  let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
   try {
-    const cards = await CardModel.find({ userId: req.user._id });
-    res.status(200).send(cards);
+    const cardsCount = await CardModel.countDocuments({
+      userId: req.user._id,
+      $or: [
+        { front: { $regex: searchQuery, $options: "i" } },
+        { back: { $regex: searchQuery, $options: "i" } },
+      ],
+    });
+
+    const skipNumber = page * limit;
+    const remaining = Math.max(0, cardsCount - limit * (page + 1));
+    const nextPage = remaining > 0 ? page + 1 : null;
+
+    const cards = await CardModel.find({
+      userId: req.user._id,
+      $or: [
+        { front: { $regex: searchQuery, $options: "i" } },
+        { back: { $regex: searchQuery, $options: "i" } },
+      ],
+    })
+      .skip(skipNumber)
+      .limit(limit);
+
+    res.status(200).send({ cards, nextPage, cardsCount: cardsCount });
   } catch (err) {
+    console.log(err);
     res.status(400).send(err);
   }
 };

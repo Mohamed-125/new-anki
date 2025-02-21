@@ -44,7 +44,9 @@ const CollectionPage = ({}) => {
   const [actionsDivId, setActionsDivId] = useState("");
   const [changeItemsParent, setChangeItemsParent] = useState(false);
   const [filteredCards, setFilteredCards] = useState(localCollectionCards);
+  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
 
+  const [toMoveCollectionId, setToMoveCollectionId] = useState("");
   useEffect(() => {
     setLocalCollectionCards(collection?.collectionCards);
   }, [collection]);
@@ -66,186 +68,199 @@ const CollectionPage = ({}) => {
       .catch((err) => err);
   };
 
-  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-
   if (isLoading) {
     return <Loading />;
   }
 
   return (
-    <div className="container">
+    <div className="">
       <div className="">
-        <h4 className="mt-4 text-5xl font-bold text-"> {collection?.name}</h4>
+        <AddNewCollectionModal
+          setIsCollectionModalOpen={setIsCollectionModalOpen}
+          isCollectionsModalOpen={isCollectionsModalOpen}
+          defaultValues={defaultValues}
+          editId={editId}
+          parentCollectionId={id}
+        />
+        <MoveCollectionModal
+          setEditId={setEditId}
+          toMoveCollectionId={toMoveCollectionId}
+          isMoveToCollectionOpen={isMoveToCollectionOpen}
+          setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+          editId={editId}
+          cards={localCollectionCards}
+        />
+        <AddCardModal
+          collectionId={collection?._id}
+          isAddCardModalOpen={isAddCardModalOpen}
+          setIsAddCardModalOpen={setIsAddCardModalOpen}
+          defaultValues={defaultValues}
+          content={content}
+          setDefaultValues={setDefaultValues}
+          setContent={setContent}
+          editId={editId}
+          setEditId={setEditId}
+          optimistic={{
+            isOptimistic: true,
+            setOptimistic: setLocalCollectionCards,
+          }}
+        />
+        <ChangeItemsParent
+          changeItemsParent={changeItemsParent}
+          setChangeItemsParent={setChangeItemsParent}
+          itemsType={"card"}
+          itemsIds={selectedItems}
+          parentName="collection"
+        />
 
-        <>
-          <AddNewCollectionModal
-            setIsCollectionModalOpen={setIsCollectionModalOpen}
-            isCollectionsModalOpen={isCollectionsModalOpen}
-            defaultValues={defaultValues}
-            editId={editId}
-            parentCollectionId={id}
-          />
-          <MoveCollectionModal
-            isMoveToCollectionOpen={isMoveToCollectionOpen}
-            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-            editId={editId}
-            cards={localCollectionCards}
-          />
-          <AddCardModal
-            collectionId={collection?._id}
-            isAddCardModalOpen={isAddCardModalOpen}
-            setIsAddCardModalOpen={setIsAddCardModalOpen}
-            defaultValues={defaultValues}
-            content={content}
-            setDefaultValues={setDefaultValues}
-            setContent={setContent}
-            editId={editId}
-            setEditId={setEditId}
-            optimistic={{
-              isOptimistic: true,
-              setOptimistic: setLocalCollectionCards,
-            }}
-          />
-          <ChangeItemsParent
-            changeItemsParent={changeItemsParent}
-            setChangeItemsParent={setChangeItemsParent}
-            itemsType={"card"}
-            itemsIds={selectedItems}
-            parentName="collection"
-          />
+        <div className="py-8 min-h-screen">
+          <div className="mt-6 space-y-6">
+            <div className="space-y-8">
+              <div className="bg-white rounded-xl mx-auto py-9 !w-[90%]">
+                <div className="container">
+                  {/* Header Section */}
+                  <div className="flex flex-col gap-4 pb-6 border-b border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <h1 className="text-3xl font-bold text-gray-800">
+                        {collection?.name}
+                      </h1>
+                      {user?._id === collection.userId && (
+                        <div className="flex gap-3">
+                          <Button
+                            variant="primary-outline"
+                            className="flex gap-2 items-center hover:bg-blue-50"
+                          >
+                            <Link to={"/study-cards/" + id}>
+                              <span className="flex gap-2 items-center">
+                                📚 Study Now
+                              </span>
+                            </Link>
+                          </Button>
+                          <Button
+                            className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                            onClick={() => {
+                              setDefaultValues({ collectionId: id });
+                              setIsAddCardModalOpen(true);
+                            }}
+                          >
+                            <span>+</span> Add Card
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Search Section */}
+                  <div className="rounded-lg white">
+                    <Search
+                      setState={setFilteredCards}
+                      label="Search cards"
+                      items={localCollectionCards}
+                      filter="front"
+                    />
+                  </div>
+                  {/* Sub Collections Section */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-xl font-medium text-gray-700">
+                        Sub Collections
+                        <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
+                          {collection?.subCollections?.length || 0}
+                        </span>
+                      </h2>
+                      <Button
+                        className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                        onClick={() => {
+                          setDefaultValues({ parentCollectionId: id });
+                          setIsCollectionModalOpen(true);
+                        }}
+                      >
+                        <span>+</span> New Sub Collection
+                      </Button>
+                    </div>
 
-          <Search
-            setState={setFilteredCards}
-            label={"Search your cards"}
-            items={localCollectionCards}
-            filter={"front"}
-          />
+                    <div className="grid grid-cols-3 gap-4 md:grid-cols-2 sm:grid-cols-1">
+                      {collection?.subCollections.map(
+                        (collection: CollectionType) => (
+                          <Collection
+                            setIsMoveToCollectionOpen={
+                              setIsMoveToCollectionOpen
+                            }
+                            setToMoveCollectionId={setToMoveCollectionId}
+                            collection={collection}
+                            key={collection._id}
+                            setDefaultValues={setDefaultValues}
+                            setIsCollectionModalOpen={setIsCollectionModalOpen}
+                            selectedItems={selectedItems}
+                            setSelectedItems={setSelectedItems}
+                            setEditId={setEditId}
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>{" "}
+                </div>
+              </div>
+              {/* Cards Section */}
+              <div className="container space-y-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-medium text-gray-700">
+                    Cards
+                    <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
+                      {localCollectionCards?.length || 0}
+                    </span>
+                  </h2>
+                </div>
 
-          <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Sub colleciton in this collection :{" "}
-            {collection?.subCollections?.length}
-          </h6>
-          <Button
-            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-            onClick={() => {
-              setDefaultValues({ parentCollectionId: id });
-              setIsCollectionModalOpen(true);
-            }}
-          >
-            Create New Sub Collection
-          </Button>
-          <div>
-            <div className="grid gap-2 grid-container">
-              {collection?.subCollections.map((collection: CollectionType) => (
-                <Collection
-                  collection={collection}
-                  key={collection._id}
-                  defaultValues={defaultValues}
-                  deleteHandler={deleteCollectionHandler}
-                  setDefaultValues={setDefaultValues}
-                  setIsCollectionModalOpen={setIsCollectionModalOpen}
-                  selectedItems={selectedItems}
-                  setSelectedItems={setSelectedItems}
-                  setEditId={setEditId}
-                  setActionsDivId={setActionsDivId}
-                  isActionDivOpen={actionsDivId === collection._id}
-                />
-              ))}{" "}
-            </div>
-          </div>
-          <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Cards in collection : {localCollectionCards?.length}
-          </h6>
-          {localCollectionCards?.length ? (
-            <div className="container">
-              {user?._id === collection.userId ? (
-                <>
-                  <Button variant="primary-outline">
-                    <Link to={"/study-cards/" + id}>Study Your Cards</Link>
-                  </Button>
-                  <Button
-                    className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-                    onClick={() => {
-                      setDefaultValues({ collectionId: id });
-                      setIsAddCardModalOpen(true);
-                    }}
-                  >
-                    Add new card to this collection
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {user?.collections?.find(
-                    (userCollection) => userCollection === collection?.id
-                  ) ? (
-                    <Button
-                      className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-                      onClick={async () => {
-                        await axios.post(
-                          "collection/forkCollection/" + collection?.id
-                        );
-                      }}
-                    >
-                      this collection is already forked
-                    </Button>
-                  ) : (
-                    <Button
-                      className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-                      onClick={async () => {
-                        await axios.post(
-                          "collection/forkCollection/" + collection?.id
-                        );
-                      }}
-                    >
-                      Add This Collection to your collections
-                    </Button>
-                  )}
-                </>
-              )}
+                {selectedItems.length > 0 && (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <SelectedItemsController {...controllerProps} />
+                  </div>
+                )}
 
-              <SelectedItemsController
-                selectedItems={selectedItems}
-                setChangeItemsParent={setChangeItemsParent}
-                setSelectedItems={setSelectedItems}
-              />
-
-              <div className="">
-                {filteredCards?.map((card) => (
-                  <Card
-                    setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-                    setIsModalOpen={setIsAddCardModalOpen}
-                    key={card._id}
-                    card={card}
-                    setContent={setContent}
-                    setDefaultValues={setDefaultValues}
-                    id={card._id}
-                    setActionsDivId={setActionsDivId}
-                    setSelectedItems={setSelectedItems}
-                    setIsAddCardModalOpen={setIsAddCardModalOpen}
-                    selectedItems={selectedItems}
-                    setEditId={setEditId}
-                    isSameUser={user?._id === collection.userId}
-                    isActionDivOpen={actionsDivId === card._id}
-                    collectionId={collection?._id}
-                  />
-                ))}
+                {localCollectionCards?.length ? (
+                  <div className="grid">
+                    {filteredCards?.map((card) => (
+                      <Card
+                        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+                        setIsModalOpen={setIsAddCardModalOpen}
+                        key={card._id}
+                        card={card}
+                        setContent={setContent}
+                        setDefaultValues={setDefaultValues}
+                        id={card._id}
+                        setActionsDivId={setActionsDivId}
+                        setSelectedItems={setSelectedItems}
+                        setIsAddCardModalOpen={setIsAddCardModalOpen}
+                        selectedItems={selectedItems}
+                        setEditId={setEditId}
+                        isSameUser={user?._id === collection.userId}
+                        isActionDivOpen={actionsDivId === card._id}
+                        collectionId={collection?._id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col justify-center items-center py-16 bg-white rounded-lg border-gray-200 border-dashed mt-6border-2 ed-xl white">
+                    <p className="mb-4 text-gray-500">
+                      Start by adding your first card
+                    </p>
+                    {user?._id === collection?.userId && (
+                      <Button
+                        className="flex gap-2 items-center px-6 py-3 text-white rounded-lg transition-all"
+                        onClick={() => {
+                          setDefaultValues({ collectionId: id });
+                          setIsAddCardModalOpen(true);
+                        }}
+                      >
+                        <span>+</span> Create Card
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-          ) : user?._id === collection?.userId ? (
-            <Button
-              className="mt-11"
-              onClick={() => {
-                setDefaultValues({ collectionId: id });
-                setIsAddCardModalOpen(true);
-              }}
-            >
-              There is not cards in this collection. Click to create Your First
-              Now{" "}
-            </Button>
-          ) : (
-            <p className="mt-11"> There is not cards in this collection</p>
-          )}
-        </>
+          </div>
+        </div>
       </div>
     </div>
   );

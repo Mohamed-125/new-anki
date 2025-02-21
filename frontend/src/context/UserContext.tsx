@@ -3,7 +3,7 @@ import React, { createContext, useEffect, useState } from "react";
 import Loading from "../components/Loading";
 import { useQuery } from "@tanstack/react-query";
 
-type UserType = {
+export type UserType = {
   _id: string;
   email: string;
   password: string;

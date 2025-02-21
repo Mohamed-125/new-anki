@@ -31,7 +31,7 @@ body * {
 }
 
 .title {
-  @apply text-4xl font-semibold mb-7;
+  @apply mb-7 text-4xl font-semibold;
 }
 
 .container {

@@ -43,7 +43,7 @@ function App() {
     <Router>
       <div className="flex flex-col min-h-screen">
         <Navbar links={links} gap={7} />
-        <div className="container mt-4 mb-[-40px]">
+        <div className="container mt-4">
           {" "}
           <BreadCramps />
         </div>

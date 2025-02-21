@@ -28,7 +28,7 @@ const TextPage = () => {
     },
   });
 
-  const { data: userCards } = useGetCards();
+  const { userCards } = useGetCards({});
 
   useEffect(() => {}, [text?.content]);
   const navigate = useNavigate();
@@ -123,9 +123,9 @@ const TextPage = () => {
         setContent={setContent}
       />
 
-      <h1 className="my-8 text-4xl font-bold ">{text?.title}</h1>
-      <div className="flex items-center justify-end gap-4 my-4">
-        <Link to={`/edit-text/${id}`} className="flex items-center gap-2">
+      <h1 className="my-8 text-4xl font-bold">{text?.title}</h1>
+      <div className="flex gap-4 justify-end items-center my-4">
+        <Link to={`/edit-text/${id}`} className="flex gap-2 items-center">
           <FaEdit className="text-3xl text-blue-600 cursor-pointer" /> Edit
         </Link>
         <Button
@@ -133,7 +133,7 @@ const TextPage = () => {
           onClick={() => {
             deleteTextHandler();
           }}
-          className="flex items-center gap-2"
+          className="flex gap-2 items-center"
         >
           <FaTrashCan className="text-3xl text-white cursor-pointer" /> Delete
         </Button>

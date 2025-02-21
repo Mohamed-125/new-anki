@@ -9,6 +9,7 @@ import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import AddNewCollectionModal from "../components/AddNewCollectionModal";
 import useGetCollectionsContext from "../hooks/useGetCollectionsContext";
 import { CollectionType } from "../context/CollectionsContext";
+import MoveCollectionModal from "@/components/MoveCollectionModal";
 
 const Collections = () => {
   const { collections, notParentCollections } = useGetCollectionsContext();
@@ -19,20 +20,8 @@ const Collections = () => {
   const [filteredCollections, setFilteredCollections] = useState<
     CollectionType[]
   >(collections || []);
-
-  const [actionsDivId, setActionsDivId] = useState("");
-
-  // the mutation logic for adding a collection and optimistic updates
-  const queryClient = useQueryClient();
-
-  const deleteCollectionHandler = (collectionId: string) => {
-    axios
-      .delete(`collection/${collectionId}`)
-      .then((res) => {
-        queryClient.invalidateQueries({ queryKey: ["collections"] });
-      })
-      .catch((err) => err);
-  };
+  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
+  const [toMoveCollectionId, setToMoveCollectionId] = useState("");
 
   useEffect(() => {
     if (!isCollectionsModalOpen) {
@@ -50,7 +39,7 @@ const Collections = () => {
   // }
 
   return (
-    <div className="container">
+    <div className="container px-6 py-8 mx-auto max-w-7xl">
       <AddNewCollectionModal
         setIsCollectionModalOpen={setIsCollectionModalOpen}
         isCollectionsModalOpen={isCollectionsModalOpen}
@@ -58,71 +47,91 @@ const Collections = () => {
         editId={editId}
       />
 
+      <MoveCollectionModal
+        editId={editId}
+        setEditId={setEditId}
+        toMoveCollectionId={toMoveCollectionId}
+        isMoveToCollectionOpen={isMoveToCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+      />
+
       {notParentCollections?.length ? (
-        <div>
-          <Search
-            setState={setFilteredCollections}
-            label={"Search your collections"}
-            items={notParentCollections}
-            filter={"name"}
-          />
-          <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Number of collections : {notParentCollections?.length}
-          </h6>
-          <SelectedItemsController
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
-            isItemsCollections={true}
-          />
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
+            <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
+            <Button
+              className="flex items-center gap-2 px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+              onClick={() => setIsCollectionModalOpen(true)}
+            >
+              <span className="text-xl">+</span>
+              Create new collection
+            </Button>
+          </div>
 
-          <Button
-            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-            onClick={() => setIsCollectionModalOpen(true)}
-          >
-            Create new collection
-          </Button>
+          <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <Search
+              setState={setFilteredCollections}
+              label="Search your collections"
+              items={notParentCollections}
+              filter="name"
+            />
 
-          {/* <SelectedItemsController
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
-            isItemsCollections={true}
-          /> */}
+            <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:flex-row sm:items-center">
+              <h6 className="text-sm font-medium text-gray-500">
+                {notParentCollections?.length} collections
+              </h6>
+              {selectedItems.length > 0 && (
+                <SelectedItemsController
+                  selectedItems={selectedItems}
+                  setSelectedItems={setSelectedItems}
+                  isItemsCollections={true}
+                />
+              )}
+            </div>
+          </div>
 
-          <div className="grid gap-2 grid-container">
+          <div className="grid grid-cols-3 gap-2 md:grid-cols-2 sm:grid-cols-1">
             {filteredCollections
               .filter((collection) => !collection?.parentCollectionId)
               .map((collection) => (
                 <Collection
+                  setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+                  setToMoveCollectionId={setToMoveCollectionId}
                   collection={collection}
                   key={collection._id}
-                  defaultValues={defaultValues}
-                  deleteHandler={deleteCollectionHandler}
                   setDefaultValues={setDefaultValues}
                   setIsCollectionModalOpen={setIsCollectionModalOpen}
                   selectedItems={selectedItems}
                   setSelectedItems={setSelectedItems}
                   setEditId={setEditId}
-                  setActionsDivId={setActionsDivId}
-                  isActionDivOpen={actionsDivId === collection._id}
                 />
               ))}
           </div>
 
           <Search.NotFound
             state={filteredCollections}
-            searchFor={"collection"}
-            filter={"name"}
+            searchFor="collection"
+            filter="name"
           />
         </div>
       ) : (
-        <Button
-          className="mt-11"
-          size="fit"
-          center={true}
-          onClick={() => setIsCollectionModalOpen(true)}
-        >
-          There is not collections Create Your First Now{" "}
-        </Button>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+          <div className="space-y-2 text-center">
+            <h2 className="text-2xl font-bold text-gray-900">
+              No Collections Yet
+            </h2>
+            <p className="text-gray-500">
+              Create your first collection to get started
+            </p>
+          </div>
+          <Button
+            className="flex gap-2 items-center px-6 py-3 text-white bg-blue-600 rounded-lg shadow-sm transition-colors hover:bg-blue-700"
+            onClick={() => setIsCollectionModalOpen(true)}
+          >
+            <span className="text-xl">+</span>
+            Create your first collection
+          </Button>
+        </div>
       )}
     </div>
   );

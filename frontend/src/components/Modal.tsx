@@ -21,8 +21,6 @@ const Modal = React.memo(
 
     useEffect(() => {
       if (isOpen) {
-        const form = document.querySelector(".modal form")! as HTMLFormElement;
-        form?.reset();
         const firstInput = document.querySelector(
           ".modal input"
         ) as HTMLInputElement;

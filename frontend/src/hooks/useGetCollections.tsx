@@ -12,10 +12,9 @@ const useGetCollections = ({
 } = {}) => {
   const { data, isLoading, isError } = useQuery({
     queryKey: publicCollections ? ["collections", "public"] : ["collections"],
-    refetchOnWindowFocus: false,
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       axios
-        .get(publicCollections ? "collection/public" : "collection")
+        .get(publicCollections ? "collection/public" : "collection", { signal })
         .then((res) => res.data as CollectionType[]),
   });
 

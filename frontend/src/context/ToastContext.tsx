@@ -5,7 +5,7 @@ export type ToastType = {
   title: string;
   duration: number;
   id: number;
-  type: "error" | "success" | "info";
+  type: "error" | "success" | "info" | "promise";
 };
 
 type ContextType = {
@@ -17,15 +17,6 @@ export const toastContext = createContext<ContextType | null>(null);
 
 const ToastContext = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<ToastType[]>([]);
-
-  // useEffect(() => {
-  //   if (toasts.length === 0) return;
-
-  //   let lastToast = toasts[toasts.length - 1];
-  //   setTimeout(() => {
-  //     setToasts((pre) => pre.filter((toast) => toast.id !== lastToast.id));
-  //   }, lastToast.duration);
-  // }, [toasts]);
 
   return (
     <toastContext.Provider value={{ toasts, setToasts }}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import useDebounce from "../hooks/useDebounced";
+import useDebounce from "../hooks/useDebounce";
 import Form from "./Form";
 
 type SearchProps<T extends { [key: string]: any }, K> = {
@@ -51,7 +51,7 @@ function Search<T extends { [key: string]: any }, K>({
   return (
     <Form
       className={
-        "w-full flex max-w-none py-0 px-0 text-lg  rounded-xl my-8 bg-transparent"
+        "flex px-0 py-0 my-8 w-full max-w-none text-lg bg-transparent rounded-xl"
       }
     >
       <div className="grow">

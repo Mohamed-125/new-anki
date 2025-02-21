@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "./Modal";
 import useGetCollectionsContext from "../hooks/useGetCollectionsContext";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { all } from "axios";
 import { CollectionType } from "../context/CollectionsContext";
 import Loading from "./Loading";
@@ -14,17 +14,18 @@ import { CardType } from "../hooks/useGetCards";
 type MoveCollectionModalProps = {
   editId: string;
   setEditId: React.Dispatch<React.SetStateAction<string>>;
-  cards: CardType[];
   isMoveToCollectionOpen: boolean;
-  setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
   setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  cards?: CardType[];
+  toMoveCollectionId?: string;
+  setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
 };
 
 const MoveCollectionModal = ({
   editId,
   setEditId,
-
   cards,
+  toMoveCollectionId,
   isMoveToCollectionOpen,
   setIsMoveToCollectionOpen,
   setTargetCollectionId,
@@ -35,7 +36,7 @@ const MoveCollectionModal = ({
     []
   );
   useEffect(() => {
-    if (!isMoveToCollectionOpen) return;
+    if (!isMoveToCollectionOpen || !cards) return;
 
     const card = cards.find((card) => card._id === editId);
     let cardCollectionId = card?.collectionId;
@@ -95,6 +96,18 @@ const MoveCollectionModal = ({
     }
   }, [selectedCollectionsIds]);
 
+  let currentCollectionParentId = useMemo(() => {
+    let toMoveCollection = collections?.find((c) => {
+      return c._id === toMoveCollectionId;
+    });
+
+    if (!toMoveCollection?.parentCollectionId) return false;
+    return collections?.find(
+      (c) => c._id === toMoveCollection.parentCollectionId
+    )?._id;
+  }, [toMoveCollectionId]);
+  const queryClient = useQueryClient();
+
   return (
     <Modal
       onAnimationEnd={() => {
@@ -106,18 +119,41 @@ const MoveCollectionModal = ({
     >
       <div className="py-10">
         <h3 className="mb-4 text-2xl font-bold">Move To Collection</h3>
-        <h6 className="mb-6 text-lg font-semibold ">
+        <h6 className="mb-2 text-lg font-semibold">
           Current collection:{" "}
-          {collections?.find(
-            (collection) =>
-              collection._id ===
-              cards?.find((card) => card._id === editId)?.collectionId
-          )?.name || "No Collection"}{" "}
+          {toMoveCollectionId
+            ? collections?.find((c) => c._id === currentCollectionParentId)
+                ?.name || "No Collection"
+            : cards
+            ? collections?.find(
+                (collection) =>
+                  collection._id ===
+                  cards?.find((card) => card._id === editId)?.collectionId
+              )?.name
+            : "No Collection"}{" "}
         </h6>
+        {toMoveCollectionId && (
+          <Button
+            className="mt-1 mb-4"
+            onClick={() => {
+              axios
+                .put(`collection/${toMoveCollectionId}`, {
+                  parentCollectionId: null,
+                })
+                .then((res) => {
+                  queryClient.invalidateQueries({ queryKey: ["collections"] });
+                  queryClient.invalidateQueries({ queryKey: ["collection"] });
+                })
+                .catch((err) => err);
+            }}
+          >
+            Move To Collections
+          </Button>
+        )}
         <div className="relative">
           {collectionLoading && <Loading />}
           {lastSelectedCollectionId && (
-            <div className="flex items-center gap-3 my-6">
+            <div className="flex gap-3 items-center my-6">
               <button
                 className="text-2xl text-gray-600"
                 onClick={() =>
@@ -135,13 +171,16 @@ const MoveCollectionModal = ({
             (collection) => {
               return (
                 <CollectionOption
-                  cards={cards}
+                  setTargetCollectionId={setTargetCollectionId}
+                  collections={collections}
+                  toMoveCollectionId={toMoveCollectionId}
                   parentCollections={parentCollections}
                   key={collection._id} // Ensures React can efficiently update the DOM
                   setSelectedCollectionIds={setSelectedCollectionIds}
                   collection={collection}
+                  queryClient={queryClient}
                   editId={editId}
-                  setTargetCollectionId={setTargetCollectionId}
+                  cards={cards}
                   setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
                 />
               );
@@ -153,7 +192,7 @@ const MoveCollectionModal = ({
   );
 };
 
-export default MoveCollectionModal;
+export default React.memo(MoveCollectionModal);
 
 const CollectionOption = ({
   collection,
@@ -162,21 +201,35 @@ const CollectionOption = ({
   editId,
   cards,
   parentCollections,
+  toMoveCollectionId,
+  queryClient,
+  collections,
   setTargetCollectionId,
 }: {
-  collection: CollectionType | undefined;
+  collection: CollectionType;
   setSelectedCollectionIds: React.Dispatch<React.SetStateAction<string[]>>;
   setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
   editId: string;
-  setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
-  cards: CardType[];
+  cards?: CardType[] | undefined;
   parentCollections: CollectionType[] | undefined;
+  toMoveCollectionId?: string | undefined;
+  collections?: CollectionType[];
+  queryClient: QueryClient;
+  setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
 }) => {
   const { updateCardHandler } = useCardActions();
 
   const isParentCollection = parentCollections?.find(
     (parentCollection) => parentCollection._id === collection?._id
   );
+
+  let disabled = toMoveCollectionId
+    ? collections?.find((c) => c._id === toMoveCollectionId)
+        ?.parentCollectionId === collection._id ||
+      collection?.parentCollectionId === toMoveCollectionId ||
+      collection?._id === toMoveCollectionId
+    : cards?.find((card) => card._id === editId)?.collectionId ===
+      collection?._id;
 
   return (
     <div
@@ -185,10 +238,10 @@ const CollectionOption = ({
       style={{
         cursor: isParentCollection ? "pointer" : "default",
       }}
-      className="flex items-center justify-between px-2 py-3 border-b-2 border-gray-300 hover:bg-gray-200"
+      className="flex justify-between items-center px-2 py-3 border-b-2 border-gray-300 hover:bg-gray-200"
     >
       <span
-        className="flex items-center justify-between flex-1 "
+        className="flex flex-1 justify-between items-center"
         onClick={() => {
           isParentCollection &&
             setSelectedCollectionIds((pre) => [
@@ -205,25 +258,33 @@ const CollectionOption = ({
         )}
       </span>
       <Button
-        disabled={
-          cards?.find((card) => card._id === editId)?.collectionId ===
-          collection?._id
-        }
+        disabled={disabled}
         onClick={() => {
-          if (editId) {
-            updateCardHandler(
-              undefined,
-              setIsMoveToCollectionOpen,
-              undefined,
-              editId,
-              collection?._id,
-              undefined,
-              undefined
-            );
+          if (!toMoveCollectionId) {
+            if (editId) {
+              updateCardHandler(
+                undefined,
+                undefined,
+                undefined,
+                editId,
+                collection?._id,
+                undefined,
+                undefined
+              );
+            } else {
+              setTargetCollectionId(collection._id);
+            }
           } else {
-            setTargetCollectionId?.(collection?._id);
-            setIsMoveToCollectionOpen(false);
+            axios
+              .put(`collection/${toMoveCollectionId}`, {
+                parentCollectionId: collection._id,
+              })
+              .then((res) => {
+                queryClient.invalidateQueries({ queryKey: ["collections"] });
+              })
+              .catch((err) => err);
           }
+          setIsMoveToCollectionOpen(false);
         }}
       >
         Move

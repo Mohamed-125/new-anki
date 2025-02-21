@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import useGetCollectionsContext from "../hooks/useGetCollectionsContext";
+import path from "path";
 
 const BreadCramps = () => {
   const location = useLocation().pathname;
-  const pathArray = location.split("/");
-
+  let pathArray = location.split("/");
+  if (pathArray[1] === "") {
+    pathArray = [""];
+  }
   let breadCramps = [] as string[];
 
   const { collections } = useGetCollectionsContext();
@@ -23,22 +26,26 @@ const BreadCramps = () => {
   }
 
   return (
-    <div className="flex gap-1 sm:text-sm">
+    <div className="flex relative gap-1 sm:text-sm">
       {pathArray.map((path, index) => {
         return (
-          <button key={path} className="text-gray-500 hover:text-gray-700">
-            {index !== 0 ? "/ " : null}
-            <Link
-              to={`${pathArray
-                .slice(
-                  0,
-                  pathArray.findIndex((pathName) => pathName === path) + 1
-                )
-                .join("/")}`}
-            >
-              {index !== 0 ? breadCramps[index] || path : "Home"}
-            </Link>
-          </button>
+          <Link
+            key={path}
+            to={`${pathArray
+              .slice(
+                0,
+                pathArray.findIndex((pathName) => pathName === path) + 1
+              )
+              .join("/")}`}
+            className="text-gray-500 !cursor-pointer hover:text-gray-700"
+          >
+            {index !== 0 ? breadCramps[index] || path : "Home"}
+            {index !== pathArray.length - 1
+              ? " / "
+              : pathArray.length === 1
+              ? " / "
+              : null}
+          </Link>
         );
       })}
     </div>

@@ -3,7 +3,7 @@ import axios from "axios";
 import React, { FormEvent } from "react";
 import Form from "./Form";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
-import { CollectionType } from "../hooks/useGetCollections";
+import { CollectionType } from "../context/CollectionsContext";
 import Button from "./Button";
 import Modal from "./Modal";
 
@@ -31,8 +31,8 @@ const AddNewCollectionModal = ({
 
       // Optimistically update to the new value
       queryClient.setQueryData(["collections"], (old: CollectionType[]) => [
-        ...old,
         newCollection,
+        ...old,
       ]);
 
       // Return a context object with the snapshotted value
@@ -136,7 +136,7 @@ const AddNewCollectionModal = ({
             />
           </Form.Field>
 
-          <Form.Field className="flex items-center gap-2">
+          <Form.Field className="flex gap-2 items-center">
             <label>Collection Public</label>
             <input
               name="collection_public"
@@ -144,16 +144,6 @@ const AddNewCollectionModal = ({
               type="checkbox"
             />
           </Form.Field>
-          {defaultValues?.isASubCollection && (
-            <Form.Field className="flex items-center gap-2">
-              <label>Is a Sub Collection</label>
-              <input
-                name="is_sub_collection"
-                defaultChecked={true}
-                type="checkbox"
-              />
-            </Form.Field>
-          )}
         </Form.FieldsContainer>
 
         <div className="flex gap-2">
