@@ -105,6 +105,7 @@ export function AddCardModal({
   const [examples, setExamples] = useState<string[]>([]);
 
   const translateHandler = async () => {
+    console.log(frontRef.current?.value);
     if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
@@ -130,11 +131,8 @@ export function AddCardModal({
     }
   };
 
-  const formRef = useRef<HTMLFormElement | null>(null);
-
   const onAnimationEnd = useCallback(() => {
     if (!isAddCardModalOpen) {
-      formRef.current?.reset();
       setIsAddCardModalOpen(false);
       setContent("");
       setDefaultValues(null);
@@ -144,10 +142,13 @@ export function AddCardModal({
   }, [isAddCardModalOpen, isMoveToCollectionOpen]);
 
   useEffect(() => {
+    console.log("isAddCardModalOpen", isAddCardModalOpen);
     if (!isAddCardModalOpen) {
       setIsTranslationLoading(false);
     }
   }, [isAddCardModalOpen]);
+
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   return (
     <Modal
@@ -178,6 +179,7 @@ export function AddCardModal({
             <Button
               type="button"
               onClick={() => {
+                console.log(frontRef);
                 setIsMoveToCollectionOpen?.(true);
               }}
             >

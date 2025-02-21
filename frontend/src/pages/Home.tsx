@@ -15,6 +15,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent";
+import useGetCards, { CardType } from "../hooks/useGetCards";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import { Link, useLocation } from "react-router-dom";
 import MoveCollectionModal from "../components/MoveCollectionModal";
@@ -24,7 +25,6 @@ import useInfiniteScroll from "@/hooks/useInfiniteScroll";
 import CardsSkeleton from "@/components/CardsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import Form from "@/components/Form";
-import { useGetCards } from "@/hooks/Queries/CardQeries";
 
 const Home = () => {
   const { user } = useGetCurrentUser();
@@ -49,7 +49,9 @@ const Home = () => {
     isIntialLoading,
     cardsCount,
   } = useGetCards({ query: debouncedQuery }); // Pass the query here
+  const [isLoading, setIsLoading] = useState(isFetchingNextPage);
 
+  console.log("usercards", userCards);
   const {} = useInfiniteScroll(fetchNextPage);
   useEffect(() => {}, [editId]);
 
@@ -81,11 +83,11 @@ const Home = () => {
 
     return cards;
   }, [userCards, user?._id, selectedItems]); // Ensure minimal dependencies
+  useEffect(() => {}, [userCards]);
 
   return (
     <div className="container">
       <AddCardModal
-        isMoveToCollectionOpen={isMoveToCollectionOpen}
         setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
         isAddCardModalOpen={isAddCardModalOpen}
         setIsAddCardModalOpen={setIsAddCardModalOpen}
@@ -96,13 +98,14 @@ const Home = () => {
         setEditId={setEditId}
         editId={editId}
         targetCollectionId={targetCollectionId}
+        isMoveToCollectionOpen={isMoveToCollectionOpen}
       />
       <MoveCollectionModal
+        setTargetCollectionId={setTargetCollectionId}
         isMoveToCollectionOpen={isMoveToCollectionOpen}
         setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
         editId={editId}
         setEditId={setEditId}
-        setTargetCollectionId={setTargetCollectionId}
         cards={userCards}
       />
       <ChangeItemsParent
@@ -140,7 +143,7 @@ const Home = () => {
           {userCards.length ? (
             <div>
               {CardsJSX}
-              {isFetchingNextPage && <CardsSkeleton />}
+              {(isLoading || isFetchingNextPage) && <CardsSkeleton />}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[40vh]">
@@ -159,7 +162,7 @@ const Home = () => {
   );
 };
 
-export default React.memo(Home);
+export default Home;
 
 type SearchCardsProps = {
   query: string;
@@ -174,7 +177,7 @@ const SearchCards = React.memo(function SearchCards({
     <>
       <Form
         className={
-          "flex px-0 py-0 mb-8 w-full max-w-none text-lg bg-transparent rounded-xl"
+          "flex px-0 py-0 w-full max-w-none text-lg bg-transparent rounded-xl"
         }
       >
         <div className="grow">
