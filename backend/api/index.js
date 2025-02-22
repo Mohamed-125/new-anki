@@ -3,7 +3,9 @@ const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../../config.env") });
+require("dotenv").config({
+  path: path.resolve(__dirname, "../config.env"),
+});
 const userRouter = require("../routes/userRouter");
 const collectionRouter = require("../routes/collectionRouter");
 const cardRouter = require("../routes/cardRouter");
@@ -16,6 +18,8 @@ const textRouter = require("../routes/textRouter");
 const cookieParser = require("cookie-parser");
 
 // Mongo DB Connections
+
+console.log(process.env.MONGO_DB_URL);
 mongoose
   .connect(process.env.MONGO_DB_URL)
   .then((response) => {
