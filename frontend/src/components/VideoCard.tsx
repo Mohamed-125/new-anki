@@ -41,7 +41,6 @@ const VideoCard = ({
     axios
       .delete(`video/${id}`)
       .then((res) => {
-        res.data;
         queryClient.invalidateQueries({ queryKey: ["videos"] });
       })
       .catch((err) => err);
@@ -85,7 +84,7 @@ const VideoCard = ({
         />
       </Link>
 
-      <div className="flex justify-between gap-2 px-4 mt-4 grow">
+      <div className="flex gap-2 justify-between px-4 mt-4 grow">
         <Link to={"/video/" + video._id}>{video.title}</Link>
         <Actions
           id={video._id}

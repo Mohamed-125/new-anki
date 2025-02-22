@@ -9,7 +9,7 @@ type SelectedItemsControllerProps = {
   isItemsTexts?: boolean;
   isItemsCards?: boolean;
   setItemsState?: React.Dispatch<React.SetStateAction<any>>;
-  setIsMoveTooCollectionOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsMoveToCollectionOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 import React from "react";
 import Button from "./Button";
@@ -30,7 +30,7 @@ const SelectedItemsController = ({
   isItemsTexts,
   isItemsCards,
   setItemsState,
-  setIsMoveTooCollectionOpen,
+  setIsMoveToCollectionOpen,
 }: SelectedItemsControllerProps) => {
   return selectedItems.length ? (
     <div className="flex fixed right-0 bottom-0 left-0 z-50 gap-4 justify-between px-6 py-7 w-full bg-white bg-opacity-90 border-t shadow-lg backdrop-blur-sm py-4items-center border-neutral-200">
@@ -55,7 +55,7 @@ const SelectedItemsController = ({
             className="flex gap-2 items-center transition-colors text-primary hover:text-primary/80"
             onClick={() => {
               isItemsCollections || isItemsCards
-                ? setIsMoveTooCollectionOpen?.(true)
+                ? setIsMoveToCollectionOpen?.(true)
                 : setChangeItemsParent(true);
             }}
           >

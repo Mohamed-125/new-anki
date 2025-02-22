@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
         return failureCount < 3; // Retry up to 3 times for other errors
       },
       refetchOnWindowFocus: false, // Disable refetching globally
-      refetchOnMount: false, // Don't refetch on component mount
+      // refetchOnMount: false, // Don't refetch on component mount
     },
 
     mutations: {

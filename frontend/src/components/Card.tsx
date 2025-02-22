@@ -137,7 +137,7 @@ const Card = ({
         <p className="text-lg sm:text-base">{front}</p>
         <small className="text-base text-gray-500 truncate">{back}</small>
       </div>
-      {isSameUser ? (
+      {isSameUser && !isSelected ? (
         <>
           <DropdownMenuDemo
             setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}

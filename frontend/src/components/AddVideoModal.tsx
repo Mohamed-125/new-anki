@@ -79,13 +79,19 @@ const AddVideoModal = ({
     mutationFn: (data: dataType) => {
       return axios.post("video", data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["videos"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
+      queryClient.refetchQueries({ queryKey: ["videos"] });
+    },
   });
 
   const { mutateAsync: updateVideoMutation } = useMutation({
     mutationFn: (data: any) => axios.put(`video/${data.id}`, data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["videos"] });
+      {
+        queryClient.invalidateQueries({ queryKey: ["videos"] });
+        queryClient.refetchQueries({ queryKey: ["videos"] });
+      }
     },
   });
 

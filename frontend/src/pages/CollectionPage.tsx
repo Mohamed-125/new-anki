@@ -45,7 +45,6 @@ const CollectionPage = ({}) => {
   const [changeItemsParent, setChangeItemsParent] = useState(false);
   const [filteredCards, setFilteredCards] = useState(localCollectionCards);
   const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-
   const [toMoveCollectionId, setToMoveCollectionId] = useState("");
   useEffect(() => {
     setLocalCollectionCards(collection?.collectionCards);
@@ -109,13 +108,13 @@ const CollectionPage = ({}) => {
             setOptimistic: setLocalCollectionCards,
           }}
         />
-        <ChangeItemsParent
+        {/* <ChangeItemsParent
           changeItemsParent={changeItemsParent}
           setChangeItemsParent={setChangeItemsParent}
           itemsType={"card"}
           itemsIds={selectedItems}
           parentName="collection"
-        />
+        /> */}
 
         <div className="py-8 min-h-screen">
           <div className="mt-6 space-y-6">
@@ -216,14 +215,13 @@ const CollectionPage = ({}) => {
                 </div>
 
                 {selectedItems.length > 0 && (
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <SelectedItemsController
-                      selectedItems={selectedItems}
-                      setSelectedItems={setSelectedItems}
-                      setChangeItemsParent={setChangeItemsParent}
-                      isItemsCards={true}
-                    />
-                  </div>
+                  <SelectedItemsController
+                    selectedItems={selectedItems}
+                    setSelectedItems={setSelectedItems}
+                    setChangeItemsParent={setChangeItemsParent}
+                    isItemsCards={true}
+                    setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+                  />
                 )}
 
                 {localCollectionCards?.length ? (

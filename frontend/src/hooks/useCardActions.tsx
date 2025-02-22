@@ -18,7 +18,6 @@ const useCardActions = () => {
         queryClient.invalidateQueries({
           queryKey: ["collection", data.collectionId],
         });
-        await queryClient.refetchQueries({ queryKey: ["collection"] });
       }
       // console.log("context", context, d, c);
     },
@@ -52,6 +51,8 @@ const useCardActions = () => {
       collectionId: collectionId || undefined,
     }).then((res) => {
       setIsAddCardModalOpen?.(false);
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["collection"] });
     });
   };
 
@@ -62,15 +63,8 @@ const useCardActions = () => {
     } catch {
       addToast("Failed to delete the card ", "error");
     } finally {
-      if (collectionId) {
-        queryClient.invalidateQueries({
-          queryKey: [`collection`, collectionId],
-        });
-        queryClient.invalidateQueries({ queryKey: ["cards"] });
-        await queryClient.refetchQueries({ queryKey: ["cards"] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["cards"] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["collection"] });
     }
   };
 

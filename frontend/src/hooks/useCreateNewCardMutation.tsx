@@ -39,7 +39,6 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
 
         console.log("collectionId", collectionId);
         queryClient.invalidateQueries({ queryKey: ["cards"] });
-        await queryClient.refetchQueries({ queryKey: ["cards"] });
         queryClient.invalidateQueries({
           queryKey: [`collection`, collectionId],
         });

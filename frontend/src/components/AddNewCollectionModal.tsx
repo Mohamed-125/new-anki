@@ -61,6 +61,11 @@ const AddNewCollectionModal = ({
       queryClient.invalidateQueries({
         queryKey: ["collection", parentCollectionId],
       });
+      queryClient.refetchQueries({ queryKey: ["collections"] });
+      queryClient.refetchQueries({
+        queryKey: ["collection", parentCollectionId],
+      });
+
       setIsCollectionModalOpen(false);
     },
     mutationFn: async (data) => {
@@ -102,9 +107,7 @@ const AddNewCollectionModal = ({
 
     axios
       .put(`collection/${editId}`, data)
-      .then((res) => {
-        queryClient.invalidateQueries({ queryKey: ["collections"] });
-      })
+      .then((res) => {})
       .catch((err) => err)
       .finally(() => {
         setIsCollectionModalOpen(false);

@@ -19,10 +19,9 @@ type MoveCollectionModalProps = {
   setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
   cards?: CardType[];
   toMoveCollectionId?: string;
-  setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
+  setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
   selectedItems: string[];
-  targetCollectionId: string;
 };
 
 const MoveCollectionModal = ({
@@ -35,7 +34,6 @@ const MoveCollectionModal = ({
   setTargetCollectionId,
   selectedItems,
   setSelectedItems,
-  targetCollectionId,
 }: MoveCollectionModalProps) => {
   const { collections, parentCollections, notParentCollections, isLoading } =
     useGetCollectionsContext();
@@ -188,7 +186,6 @@ const MoveCollectionModal = ({
                   selectedItems={selectedItems}
                   setSelectedItems={setSelectedItems}
                   cards={cards}
-                  targetCollectionId={targetCollectionId}
                   setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
                 />
               );
@@ -215,7 +212,6 @@ const CollectionOption = ({
   setTargetCollectionId,
   selectedItems,
   setSelectedItems,
-  targetCollectionId,
 }: {
   collection: CollectionType;
   setSelectedCollectionIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -226,10 +222,9 @@ const CollectionOption = ({
   toMoveCollectionId?: string | undefined;
   collections?: CollectionType[];
   queryClient: QueryClient;
-  setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
+  setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
   selectedItems: string[];
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
-  targetCollectionId: string;
 }) => {
   const { updateCardHandler } = useCardActions();
 
@@ -282,8 +277,14 @@ const CollectionOption = ({
                   selectedParent: collection._id,
                 })
                 .then(() => {
-                  queryClient.invalidateQueries({ queryKey: ["cards"] });
                   queryClient.invalidateQueries({ queryKey: ["collections"] });
+                  queryClient.invalidateQueries({
+                    queryKey: ["collection"],
+                  });
+                  queryClient.refetchQueries({ queryKey: ["collections"] });
+                  queryClient.refetchQueries({
+                    queryKey: ["collection"],
+                  });
                   setSelectedItems?.([]);
                 });
             }
@@ -298,7 +299,7 @@ const CollectionOption = ({
                 undefined
               );
             } else {
-              setTargetCollectionId(collection._id);
+              setTargetCollectionId?.(collection._id);
             }
           } else {
             axios
@@ -308,11 +309,11 @@ const CollectionOption = ({
               .then((res) => {
                 queryClient.invalidateQueries({ queryKey: ["collections"] });
                 queryClient.invalidateQueries({
-                  queryKey: ["collection", collection._id],
+                  queryKey: ["collection"],
                 });
                 queryClient.refetchQueries({ queryKey: ["collections"] });
                 queryClient.refetchQueries({
-                  queryKey: ["collection", collection._id],
+                  queryKey: ["collection"],
                 });
               })
               .catch((err) => err);

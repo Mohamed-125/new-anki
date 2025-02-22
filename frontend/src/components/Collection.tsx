@@ -47,6 +47,7 @@ const Collection = ({
       .delete(`collection/${collectionId}`)
       .then((res) => {
         queryClient.invalidateQueries({ queryKey: ["collections"] });
+        queryClient.refetchQueries({ queryKey: ["collections"] });
       })
       .catch((err) => err);
   };

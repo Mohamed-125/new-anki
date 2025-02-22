@@ -36,7 +36,7 @@ const Home = () => {
   const [editId, setEditId] = useState("");
   const [actionsDivId, setActionsDivId] = useState("");
   const [changeItemsParent, setChangeItemsParent] = useState(false);
-  const [isMoveToCollectionOpen, setIsMoveTooCollectionOpen] = useState(false);
+  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
   const [targetCollectionId, setTargetCollectionId] = useState("");
   const [query, setQuery] = useState("");
 
@@ -75,7 +75,7 @@ const Home = () => {
         setDefaultValues={setDefaultValues}
         setActionsDivId={setActionsDivId}
         setSelectedItems={setSelectedItems}
-        setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
       />
     ));
 
@@ -88,7 +88,7 @@ const Home = () => {
   return (
     <div className="container">
       <AddCardModal
-        setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
         isAddCardModalOpen={isAddCardModalOpen}
         setIsAddCardModalOpen={setIsAddCardModalOpen}
         defaultValues={defaultValues}
@@ -103,11 +103,10 @@ const Home = () => {
       <MoveCollectionModal
         setTargetCollectionId={setTargetCollectionId}
         isMoveToCollectionOpen={isMoveToCollectionOpen}
-        setIsMoveToCollectionOpen={setIsMoveTooCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
         editId={editId}
         setEditId={setEditId}
         cards={userCards}
-        targetCollectionId={targetCollectionId}
         setSelectedItems={setSelectedItems}
         selectedItems={selectedItems}
       />
@@ -138,7 +137,7 @@ const Home = () => {
         isItemsCards={true}
         setChangeItemsParent={setChangeItemsParent}
         selectedItems={selectedItems}
-        setIsMoveTooCollectionOpen={setIsMoveTooCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
         setSelectedItems={setSelectedItems}
       />
       {isIntialLoading || !userCards ? (
