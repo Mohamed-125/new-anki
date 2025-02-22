@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const VideoSchema = mongoose.Schema(
+const VideoSchema = new mongoose.Schema(
   {
     url: {
       type: String,
@@ -41,6 +41,7 @@ const VideoSchema = mongoose.Schema(
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
+      index: true,
     },
     playlistId: {
       type: mongoose.Types.ObjectId,
@@ -54,15 +55,34 @@ const VideoSchema = mongoose.Schema(
   }
 );
 
-VideoSchema.pre("find", function (next) {
-  this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
-  next();
-});
+// ... rest of the schema remains the same ...
 
 VideoSchema.virtual("videoCards", {
   ref: "Card",
   localField: "_id",
   foreignField: "videoId",
+  options: {
+    sort: { createdAt: -1 },
+    lean: true,
+  },
+  justOne: false, // Indicates this is a one-to-many relationship
+});
+
+// Ensure proper population behavior
+VideoSchema.set("toJSON", {
+  virtuals: true,
+  transform: function (doc, ret) {
+    ret.id = ret._id;
+    return ret;
+  },
+});
+
+VideoSchema.set("toObject", {
+  virtuals: true,
+  transform: function (doc, ret) {
+    ret.id = ret._id;
+    return ret;
+  },
 });
 
 const VideoModel = mongoose.model("Video", VideoSchema);

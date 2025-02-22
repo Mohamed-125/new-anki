@@ -62,7 +62,7 @@ const Modal = React.memo(
             transition: "transform 520ms ease, opacity 420ms ease",
           }}
           className={twMerge(
-            "bg-white px-4 modal-content translate-y-[-30%] translate-x-[-50%] z-[1500] fixed max-h-[90%] overflow-y-auto inset-2/4 min-h-[80vh] h-fit rounded-xl w-[90%] max-w-[730px] opacity-0",
+            "bg-white  px-4 modal-content translate-y-[-30%] translate-x-[-50%] z-[1500] fixed max-h-[90%] overflow-y-auto inset-2/4 min-h-[80vh] h-fit rounded-xl w-[90%] max-w-[730px] opacity-0",
             isOpen
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",

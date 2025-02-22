@@ -8,22 +8,22 @@ import Button from "./Button";
 import Modal from "./Modal";
 
 const AddNewCollectionModal = ({
-  isCollectionsModalOpen,
+  isCollectionModalOpen,
   setIsCollectionModalOpen,
   defaultValues,
   editId,
   parentCollectionId,
 }: {
-  isCollectionsModalOpen: boolean;
+  isCollectionModalOpen: boolean;
   setIsCollectionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  defaultValues: any;
-  editId: string;
+  defaultValues?: any;
+  editId?: string;
   parentCollectionId?: string;
 }) => {
   const queryClient = useQueryClient();
   useAddModalShortcuts(setIsCollectionModalOpen, true);
 
-  const { mutate, data } = useMutation({
+  const { mutateAsync } = useMutation({
     onMutate: async (newCollection: Partial<CollectionType>) => {
       await queryClient.cancelQueries({ queryKey: ["collections"] });
 
@@ -41,8 +41,6 @@ const AddNewCollectionModal = ({
       };
     },
     onError: (
-      error,
-      data,
       context: undefined | { previousCollections: CollectionType[] }
     ) => {
       if (context) {
@@ -56,13 +54,11 @@ const AddNewCollectionModal = ({
       }
     },
 
-    onSuccess(data, variables, context) {
+    onSuccess() {
       queryClient.invalidateQueries({ queryKey: ["collections"] });
+
+      console.log("parentCollectionId", parentCollectionId);
       queryClient.invalidateQueries({
-        queryKey: ["collection", parentCollectionId],
-      });
-      queryClient.refetchQueries({ queryKey: ["collections"] });
-      queryClient.refetchQueries({
         queryKey: ["collection", parentCollectionId],
       });
 
@@ -87,8 +83,7 @@ const AddNewCollectionModal = ({
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
       };
-      //@ts-ignore
-      mutate(data);
+      mutateAsync(data).then(() => (e.target as HTMLFormElement).reset());
     }
   };
 
@@ -111,11 +106,12 @@ const AddNewCollectionModal = ({
       .catch((err) => err)
       .finally(() => {
         setIsCollectionModalOpen(false);
+        (e.target as HTMLFormElement).reset();
       });
   };
 
   return (
-    <Modal setIsOpen={setIsCollectionModalOpen} isOpen={isCollectionsModalOpen}>
+    <Modal setIsOpen={setIsCollectionModalOpen} isOpen={isCollectionModalOpen}>
       <Form
         className="w-[100%] max-w-[unset]"
         onSubmit={(e) =>
@@ -168,4 +164,4 @@ const AddNewCollectionModal = ({
   );
 };
 
-export default AddNewCollectionModal;
+export default React.memo(AddNewCollectionModal);

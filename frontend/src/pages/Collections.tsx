@@ -13,7 +13,7 @@ import MoveCollectionModal from "@/components/MoveCollectionModal";
 
 const Collections = () => {
   const { collections, notParentCollections } = useGetCollectionsContext();
-  const [isCollectionsModalOpen, setIsCollectionModalOpen] = useState(false);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   // const [collectionCards, setCollectionsCards] = useState([]);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
@@ -22,13 +22,14 @@ const Collections = () => {
   >(collections || []);
   const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
   const [toMoveCollectionId, setToMoveCollectionId] = useState("");
+  const [parentCollectionId, setParentCollectionId] = useState("");
 
   useEffect(() => {
-    if (!isCollectionsModalOpen) {
+    if (!isCollectionModalOpen) {
       ("tsrtarstr");
       setDefaultValues({});
     }
-  }, [isCollectionsModalOpen]);
+  }, [isCollectionModalOpen]);
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -40,21 +41,25 @@ const Collections = () => {
 
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
-      <AddNewCollectionModal
-        setIsCollectionModalOpen={setIsCollectionModalOpen}
-        isCollectionsModalOpen={isCollectionsModalOpen}
-        defaultValues={defaultValues}
-        editId={editId}
-      />
-
       <MoveCollectionModal
+        isMoveToCollectionOpen={isMoveToCollectionOpen}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
         editId={editId}
         setEditId={setEditId}
         toMoveCollectionId={toMoveCollectionId}
-        isMoveToCollectionOpen={isMoveToCollectionOpen}
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+        setParentCollectionId={setParentCollectionId}
+        setSelectedItems={setSelectedItems}
+        selectedItems={selectedItems}
+        isCollectionModalOpen={isCollectionModalOpen}
+        setisCollectionModalOpen={setIsCollectionModalOpen}
       />
-
+      <AddNewCollectionModal
+        setIsCollectionModalOpen={setIsCollectionModalOpen}
+        isCollectionModalOpen={isCollectionModalOpen}
+        defaultValues={defaultValues}
+        parentCollectionId={parentCollectionId}
+        editId={editId}
+      />
       {notParentCollections?.length ? (
         <div className="space-y-6">
           <div className="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">

@@ -12,34 +12,29 @@ export type UserType = {
 
 type ContextType = {
   user: UserType | null;
-  setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
   isLoading: boolean;
 };
 
 export const userContext = createContext<ContextType | null>(null);
 
 const UserContext = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<UserType | null>(null);
-
-  const { isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: () =>
       axios
         .get("auth/me")
         .then((res) => {
-          setUser(res.data);
           return res.data;
         })
         .catch(() => {
-          setUser(null);
           return null;
         }),
-    staleTime: 0, // Data is always considered stale
+    staleTime: Infinity, // Data is always considered stale
     refetchOnWindowFocus: false,
   });
 
   return (
-    <userContext.Provider value={{ user, setUser, isLoading }}>
+    <userContext.Provider value={{ user, isLoading }}>
       {isLoading ? <Loading /> : children}
     </userContext.Provider>
   );

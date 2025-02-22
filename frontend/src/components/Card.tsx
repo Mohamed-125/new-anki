@@ -28,8 +28,6 @@ type CardProps = {
   content?: string;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   id: string;
-  setActionsDivId: React.Dispatch<React.SetStateAction<string>>;
-  isActionDivOpen: boolean;
   playlistName?: string;
   isSelected?: boolean;
   card?: any;
@@ -84,7 +82,7 @@ const Card = ({
 
   return (
     <div
-      className="flex items-center px-8 py-6 mb-4 max-w-full bg-white rounded-2xl border shadow-md cursor-pointer border-neutral-300"
+      className="flex items-center px-8 py-6 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-2xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
       id={id}
     >
       <input

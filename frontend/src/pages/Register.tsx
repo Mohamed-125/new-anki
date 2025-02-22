@@ -9,12 +9,12 @@ import useToasts from "../hooks/useToasts";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Register = () => {
-  const { user, setUser } = useGetCurrentUser();
   const { addToast } = useToasts();
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const {
     register,
     handleSubmit,
@@ -30,7 +30,9 @@ const Register = () => {
     axios
       .post("auth/register", values)
       .then((res) => {
-        setUser(res.data);
+        queryClient.setQueryData(["me"], () => {
+          return res.data;
+        });
         navigate("/");
         addToast("account created succefuly", "success");
       })

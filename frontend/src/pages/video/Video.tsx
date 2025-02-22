@@ -11,9 +11,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Card from "../../components/Card";
 import ReactYoutubeComponent from "./ReactYoutubeComponent";
 import Subtitles from "./Subtitles";
-import { CardType } from "../../hooks/useGetCards";
+import useGetCards, { CardType } from "../../hooks/useGetCards";
 import useGetCurrentUser from "../../hooks/useGetCurrentUser";
 import ReactDOM from "react-dom/client";
+import MoveCollectionModal from "@/components/MoveCollectionModal";
+import SelectedItemsController from "@/components/SelectedItemsController";
+import CardsSkeleton from "@/components/CardsSkeleton";
+import AddNewCollectionModal from "@/components/AddNewCollectionModal";
 
 export type CaptionType = {
   dur: string;
@@ -33,6 +37,17 @@ const Video = () => {
     queryFn: () => axios.get("video/" + id).then((res) => res.data),
   });
 
+  const {
+    cardsCount,
+    fetchNextPage,
+    isIntialLoading,
+    isFetchingNextPage,
+    userCards: videoCards,
+  } = useGetCards({
+    enabled: Boolean(video?._id),
+    videoId: video?._id,
+  });
+
   const { user } = useGetCurrentUser();
 
   const [defaultValues, setDefaultValues] = useState({
@@ -44,7 +59,11 @@ const Video = () => {
   const [editId, setEditId] = useState("");
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [caption, setCaption] = useState<CaptionType[]>([]);
-  const [actionsDivId, setActionsDivId] = useState("");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
+  const [parentCollectionId, setParentCollectionId] = useState("");
+
   const playerRef = useRef<any | null>(null);
 
   const onReady = (event: any) => {
@@ -52,12 +71,6 @@ const Video = () => {
   };
 
   const subtitleContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const windowRef = useCallback((window: HTMLDivElement) => {
-    if (window == null) return;
-    setHeight(window.scrollHeight);
-  }, []);
-  const [height, setHeight] = useState(0);
 
   useEffect(() => {
     setCaption(video?.defaultCaptionData.transcript);
@@ -68,22 +81,57 @@ const Video = () => {
   }
 
   return (
-    <div ref={windowRef} className="container flex gap-2 videoContainer ">
-      <div className="w-full grow ">
+    <div className="container flex gap-2 videoContainer">
+      <div className="w-full grow">
         {/* add Modal */}
+        {videoCards && (
+          <>
+            <MoveCollectionModal
+              selectedItems={selectedItems}
+              setSelectedItems={setSelectedItems}
+              setEditId={setEditId}
+              isMoveToCollectionOpen={isMoveToCollectionOpen}
+              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+              editId={editId}
+              isCollectionModalOpen={isCollectionModalOpen}
+              setisCollectionModalOpen={setIsCollectionModalOpen}
+              cards={videoCards}
+              setParentCollectionId={setParentCollectionId}
+              // moving={moving}
+            />
 
-        <AddCardModal
-          isAddCardModalOpen={isAddCardModalOpen}
-          defaultValues={defaultValues}
-          setIsAddCardModalOpen={setIsAddCardModalOpen}
-          setContent={setContent}
-          editId={editId}
-          setEditId={setEditId}
-          setDefaultValues={setDefaultValues}
-          videoId={id}
-          content={content}
-          refetch={refetch}
-        />
+            <AddNewCollectionModal
+              setIsCollectionModalOpen={setIsCollectionModalOpen}
+              isCollectionModalOpen={isCollectionModalOpen}
+              defaultValues={defaultValues}
+              editId={editId}
+              parentCollectionId={parentCollectionId}
+            />
+
+            <AddCardModal
+              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+              isMoveToCollectionOpen={isMoveToCollectionOpen}
+              isAddCardModalOpen={isAddCardModalOpen}
+              defaultValues={defaultValues}
+              setIsAddCardModalOpen={setIsAddCardModalOpen}
+              setContent={setContent}
+              editId={editId}
+              setEditId={setEditId}
+              setDefaultValues={setDefaultValues}
+              videoId={id}
+              content={content}
+              refetch={refetch}
+            />
+          </>
+        )}
+        {selectedItems.length > 0 && (
+          <SelectedItemsController
+            selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems}
+            isItemsCards={true}
+            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+          />
+        )}
 
         <ReactYoutubeComponent
           playerRef={playerRef}
@@ -93,8 +141,12 @@ const Video = () => {
           subtitleContainerRef={subtitleContainerRef}
         />
         <div className="mt-5">
-          {video?.videoCards?.map((card: CardType) => (
+          {isIntialLoading && <CardsSkeleton />}
+          {videoCards?.map((card: CardType) => (
             <Card
+              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+              setSelectedItems={setSelectedItems}
+              selectedItems={selectedItems}
               setIsModalOpen={setIsAddCardModalOpen}
               isSameUser={user?._id === card.userId}
               setEditId={setEditId}
@@ -104,10 +156,10 @@ const Video = () => {
               key={card._id}
               card={card}
               id={card._id}
-              setActionsDivId={setActionsDivId}
-              isActionDivOpen={actionsDivId === card._id}
             />
           ))}
+
+          {isFetchingNextPage && <CardsSkeleton />}
         </div>
       </div>
 

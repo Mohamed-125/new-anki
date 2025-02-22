@@ -22,32 +22,37 @@ module.exports.createCard = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
+
 module.exports.getUserCards = async (req, res, next) => {
-  const { page: pageNumber, searchQuery = "" } = req.query;
+  const { page: pageNumber, searchQuery, collectionId, videoId } = req.query;
+
+  const query = { userId: req.user?._id };
+
+  if (searchQuery) {
+    query.$or = [
+      { front: { $regex: searchQuery, $options: "i" } },
+      { back: { $regex: searchQuery, $options: "i" } },
+    ];
+  }
+
+  if (collectionId) {
+    query.collectionId = collectionId;
+  }
+  if (videoId) {
+    query.videoId = videoId;
+  }
+
   const limit = 5;
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
   try {
-    const cardsCount = await CardModel.countDocuments({
-      userId: req.user._id,
-      $or: [
-        { front: { $regex: searchQuery, $options: "i" } },
-        { back: { $regex: searchQuery, $options: "i" } },
-      ],
-    });
+    const cardsCount = await CardModel.countDocuments(query);
 
+    console.log(cardsCount);
     const skipNumber = page * limit;
     const remaining = Math.max(0, cardsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
-    const cards = await CardModel.find({
-      userId: req.user._id,
-      $or: [
-        { front: { $regex: searchQuery, $options: "i" } },
-        { back: { $regex: searchQuery, $options: "i" } },
-      ],
-    })
-      .skip(skipNumber)
-      .limit(limit);
+    const cards = await CardModel.find(query).skip(skipNumber).limit(limit);
 
     res.status(200).send({ cards, nextPage, cardsCount: cardsCount });
   } catch (err) {

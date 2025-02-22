@@ -23,6 +23,7 @@ const queryClient = new QueryClient({
         return failureCount < 3; // Retry up to 3 times for other errors
       },
       refetchOnWindowFocus: false, // Disable refetching globally
+      staleTime: 1000 * 60,
       // refetchOnMount: false, // Don't refetch on component mount
     },
 

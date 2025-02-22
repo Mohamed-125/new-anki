@@ -24,6 +24,7 @@ const useInfiniteScroll = (
     // Call the check on the first render
     setTimeout(() => checkInitialLoad(), 1500);
     const handleScroll = () => {
+      console.log("strst");
       const scrollHeight = document.documentElement.scrollHeight;
       const scrollTop = document.documentElement.scrollTop;
       const windowHeight = document.documentElement.clientHeight;
@@ -36,9 +37,11 @@ const useInfiniteScroll = (
     };
 
     document.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll);
 
     return () => {
       document.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
     };
   }, [fetchNextPage]);
 

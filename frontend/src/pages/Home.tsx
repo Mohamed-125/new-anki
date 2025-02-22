@@ -25,6 +25,7 @@ import useInfiniteScroll from "@/hooks/useInfiniteScroll";
 import CardsSkeleton from "@/components/CardsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import Form from "@/components/Form";
+import AddNewCollectionModal from "@/components/AddNewCollectionModal";
 
 const Home = () => {
   const { user } = useGetCurrentUser();
@@ -34,12 +35,12 @@ const Home = () => {
   const [defaultValues, setDefaultValues] = useState({});
   const [content, setContent] = useState("");
   const [editId, setEditId] = useState("");
-  const [actionsDivId, setActionsDivId] = useState("");
   const [changeItemsParent, setChangeItemsParent] = useState(false);
   const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
   const [targetCollectionId, setTargetCollectionId] = useState("");
   const [query, setQuery] = useState("");
-
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
+  const [parentCollectionId, setParentCollectionId] = useState("");
   const debouncedQuery = useDebounce(query);
 
   const {
@@ -51,9 +52,7 @@ const Home = () => {
   } = useGetCards({ query: debouncedQuery }); // Pass the query here
   const [isLoading, setIsLoading] = useState(isFetchingNextPage);
 
-  console.log("usercards", userCards);
-  const {} = useInfiniteScroll(fetchNextPage);
-  useEffect(() => {}, [editId]);
+  useInfiniteScroll(fetchNextPage);
 
   const CardsJSX = useMemo(() => {
     if (!userCards) return null;
@@ -66,14 +65,12 @@ const Home = () => {
         card={card}
         id={card._id}
         isSameUser={card.userId === user?._id}
-        isActionDivOpen={actionsDivId === card._id}
         selectedItems={selectedItems}
         setIsModalOpen={setIsAddCardModalOpen}
         setEditId={setEditId}
         setContent={setContent}
         setIsAddCardModalOpen={setIsAddCardModalOpen}
         setDefaultValues={setDefaultValues}
-        setActionsDivId={setActionsDivId}
         setSelectedItems={setSelectedItems}
         setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
       />
@@ -109,6 +106,14 @@ const Home = () => {
         cards={userCards}
         setSelectedItems={setSelectedItems}
         selectedItems={selectedItems}
+        setisCollectionModalOpen={setIsCollectionModalOpen}
+        isCollectionModalOpen={isCollectionModalOpen}
+        setParentCollectionId={setParentCollectionId}
+      />{" "}
+      <AddNewCollectionModal
+        isCollectionModalOpen={isCollectionModalOpen}
+        setIsCollectionModalOpen={setIsCollectionModalOpen}
+        parentCollectionId={parentCollectionId}
       />
       <ChangeItemsParent
         changeItemsParent={changeItemsParent}
@@ -117,7 +122,6 @@ const Home = () => {
         itemsIds={selectedItems}
         parentName="collection"
       />
-
       <SearchCards query={query} setQuery={setQuery} />
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}

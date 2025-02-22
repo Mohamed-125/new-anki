@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Card from "../components/Card";
 import axios from "axios";
@@ -8,13 +8,16 @@ import AddCardModal from "../components/AddCardModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
-import { CardType } from "../hooks/useGetCards.tsx";
+import useGetCards, { CardType } from "../hooks/useGetCards.tsx";
 import Search from "../components/Search.tsx";
 import useGetCurrentUser from "../hooks/useGetCurrentUser.tsx";
 import AddNewCollectionModal from "../components/AddNewCollectionModal.tsx";
 import Collection from "../components/Collection.tsx";
 import MoveCollectionModal from "../components/MoveCollectionModal.tsx";
 import { CollectionType } from "../context/CollectionsContext.tsx";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll.tsx";
+import CardsSkeleton from "@/components/CardsSkeleton.tsx";
+import SearchCards from "@/components/SearchCards.tsx";
 
 const CollectionPage = ({}) => {
   const location = useLocation();
@@ -28,33 +31,35 @@ const CollectionPage = ({}) => {
     isError,
   } = useQuery({
     queryKey: ["collection", id],
-    refetchOnWindowFocus: false,
-
-    queryFn: () => axios.get("collection/" + id).then((res) => res.data),
+    queryFn: () =>
+      axios.get("collection/" + id).then((res) => res.data as CollectionType),
   });
 
-  const [localCollectionCards, setLocalCollectionCards] = useState(
-    (collection?.collectionCards as CardType[]) ?? []
-  );
+  const {
+    cardsCount,
+    fetchNextPage,
+    isIntialLoading,
+    isFetchingNextPage,
+    userCards: collectionCards,
+  } = useGetCards({
+    enabled: Boolean(collection?._id),
+    collectionId: collection?._id,
+  });
+
+  console.log("collectionCards", collectionCards);
+  const {} = useInfiniteScroll(fetchNextPage);
 
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [content, setContent] = useState("");
   const [editId, setEditId] = useState("");
-  const [actionsDivId, setActionsDivId] = useState("");
-  const [changeItemsParent, setChangeItemsParent] = useState(false);
-  const [filteredCards, setFilteredCards] = useState(localCollectionCards);
+  const [query, setQuery] = useState("");
   const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
   const [toMoveCollectionId, setToMoveCollectionId] = useState("");
-  useEffect(() => {
-    setLocalCollectionCards(collection?.collectionCards);
-  }, [collection]);
-
+  const [parentCollectionId, setParentCollectionId] = useState<string>("");
   const isLoading = collectionLoading;
-
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-  const [isCollectionsModalOpen, setIsCollectionModalOpen] = useState(false);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const deleteCollectionHandler = (collectionId: string) => {
@@ -67,47 +72,66 @@ const CollectionPage = ({}) => {
       .catch((err) => err);
   };
 
+  let moving = useMemo(() => {
+    const isCollections = collection?.subCollections.find(
+      (c) => c._id === selectedItems[0]
+    );
+    if (isCollections) {
+      return "collections";
+    } else {
+      return "cards";
+    }
+  }, [selectedItems]);
+
+  console.log(moving);
   if (isLoading) {
     return <Loading />;
   }
 
+  console.log(parentCollectionId);
   return (
     <div className="">
       <div className="">
-        <AddNewCollectionModal
-          setIsCollectionModalOpen={setIsCollectionModalOpen}
-          isCollectionsModalOpen={isCollectionsModalOpen}
-          defaultValues={defaultValues}
-          editId={editId}
-          parentCollectionId={id}
-        />
-        <MoveCollectionModal
-          selectedItems={selectedItems}
-          setSelectedItems={setSelectedItems}
-          setEditId={setEditId}
-          toMoveCollectionId={toMoveCollectionId}
-          isMoveToCollectionOpen={isMoveToCollectionOpen}
-          setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-          editId={editId}
-          cards={localCollectionCards}
-        />
-        <AddCardModal
-          isMoveToCollectionOpen={isMoveToCollectionOpen}
-          setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-          collectionId={collection?._id}
-          isAddCardModalOpen={isAddCardModalOpen}
-          setIsAddCardModalOpen={setIsAddCardModalOpen}
-          defaultValues={defaultValues}
-          content={content}
-          setDefaultValues={setDefaultValues}
-          setContent={setContent}
-          editId={editId}
-          setEditId={setEditId}
-          optimistic={{
-            isOptimistic: true,
-            setOptimistic: setLocalCollectionCards,
-          }}
-        />
+        {collectionCards && (
+          <>
+            <AddNewCollectionModal
+              setIsCollectionModalOpen={setIsCollectionModalOpen}
+              isCollectionModalOpen={isCollectionModalOpen}
+              defaultValues={defaultValues}
+              editId={editId}
+              parentCollectionId={parentCollectionId === "home" ? "" : id}
+            />
+            <MoveCollectionModal
+              selectedItems={selectedItems}
+              setSelectedItems={setSelectedItems}
+              setEditId={setEditId}
+              toMoveCollectionId={toMoveCollectionId}
+              isMoveToCollectionOpen={isMoveToCollectionOpen}
+              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+              editId={editId}
+              isCollectionModalOpen={isCollectionModalOpen}
+              setisCollectionModalOpen={setIsCollectionModalOpen}
+              cards={collectionCards}
+              setParentCollectionId={setParentCollectionId}
+              // moving={moving}
+            />
+
+            <AddCardModal
+              isMoveToCollectionOpen={isMoveToCollectionOpen}
+              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+              collectionId={collection?._id}
+              isAddCardModalOpen={isAddCardModalOpen}
+              setIsAddCardModalOpen={setIsAddCardModalOpen}
+              defaultValues={defaultValues}
+              content={content}
+              setDefaultValues={setDefaultValues}
+              setContent={setContent}
+              editId={editId}
+              setEditId={setEditId}
+            />
+          </>
+        )}
+
         {/* <ChangeItemsParent
           changeItemsParent={changeItemsParent}
           setChangeItemsParent={setChangeItemsParent}
@@ -154,12 +178,11 @@ const CollectionPage = ({}) => {
                   </div>
                   {/* Search Section */}
                   <div className="rounded-lg white">
-                    <Search
-                      setState={setFilteredCards}
+                    {/* <Search
                       label="Search cards"
-                      items={localCollectionCards}
                       filter="front"
-                    />
+                    /> */}
+                    <SearchCards query={query} setQuery={setQuery} />
                   </div>
                   {/* Sub Collections Section */}
                   <div className="space-y-4">
@@ -209,7 +232,7 @@ const CollectionPage = ({}) => {
                   <h2 className="text-xl font-medium text-gray-700">
                     Cards
                     <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
-                      {localCollectionCards?.length || 0}
+                      {cardsCount || 0}
                     </span>
                   </h2>
                 </div>
@@ -218,15 +241,17 @@ const CollectionPage = ({}) => {
                   <SelectedItemsController
                     selectedItems={selectedItems}
                     setSelectedItems={setSelectedItems}
-                    setChangeItemsParent={setChangeItemsParent}
-                    isItemsCards={true}
+                    isItemsCards={moving === "cards" && true}
+                    isItemsCollections={moving === "collections" && true}
+                    moving={moving}
                     setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
                   />
                 )}
 
-                {localCollectionCards?.length ? (
+                {isIntialLoading && <CardsSkeleton />}
+                {collectionCards?.length ? (
                   <div className="">
-                    {filteredCards?.map((card) => (
+                    {collectionCards?.map((card) => (
                       <Card
                         setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
                         setIsModalOpen={setIsAddCardModalOpen}
@@ -235,16 +260,15 @@ const CollectionPage = ({}) => {
                         setContent={setContent}
                         setDefaultValues={setDefaultValues}
                         id={card._id}
-                        setActionsDivId={setActionsDivId}
                         setSelectedItems={setSelectedItems}
                         setIsAddCardModalOpen={setIsAddCardModalOpen}
                         selectedItems={selectedItems}
                         setEditId={setEditId}
-                        isSameUser={user?._id === collection.userId}
-                        isActionDivOpen={actionsDivId === card._id}
+                        isSameUser={user?._id === collection?.userId}
                         collectionId={collection?._id}
                       />
                     ))}
+                    {isFetchingNextPage && <CardsSkeleton />}
                   </div>
                 ) : (
                   <div className="flex flex-col justify-center items-center py-16 bg-white rounded-lg border-gray-200 border-dashed mt-6border-2 ed-xl white">

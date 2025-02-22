@@ -7,9 +7,8 @@ import {} from "react";
 import { useForm } from "react-hook-form";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 const Login = () => {
-  const { setUser } = useGetCurrentUser();
-
   const {
     register,
     handleSubmit,
@@ -22,6 +21,7 @@ const Login = () => {
     },
   });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   console.log("errors", errors);
   const onSubmit = (values: AuthFormSchemaType) => {
@@ -30,8 +30,9 @@ const Login = () => {
     axios
       .post("auth/login", data)
       .then((res) => {
-        setUser(res.data);
-
+        queryClient.setQueryData(["me"], () => {
+          return res.data;
+        });
         console.log(res.data);
         navigate("/");
       })

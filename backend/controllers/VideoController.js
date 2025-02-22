@@ -152,7 +152,11 @@ module.exports.createVideo = async (req, res, next) => {
 
 module.exports.getUserVideos = async (req, res, next) => {
   try {
-    const videos = await VideoModel.find({ userId: req.user._id });
+    const videos = await VideoModel.find(
+      { userId: req.user._id },
+      {},
+      { sort: { createdAt: -1 } }
+    );
     res.status(200).send(videos);
   } catch (err) {
     res.status(400).send(err);
@@ -166,7 +170,7 @@ module.exports.getVideo = async (req, res, next) => {
     );
     res.status(200).send(video[0]);
   } catch (err) {
-    "err", err;
+    console.log("err", err);
     res.status(400).send(err);
   }
 };

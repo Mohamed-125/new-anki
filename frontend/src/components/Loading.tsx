@@ -16,7 +16,7 @@ const Loading = ({
   return (
     <div
       className={twMerge(
-        "bg-white grid items-center absolute justify-center content-center inset-0",
+        "grid absolute inset-0 z-50 justify-center content-center items-center bg-white",
         className
       )}
     >

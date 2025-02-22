@@ -18,7 +18,25 @@ type GetCardsResponse = {
   nextPage: number;
 };
 
-const useGetCards = ({ enabled = true, query = "" }) => {
+const useGetCards = ({
+  enabled = true,
+  query,
+  collectionId,
+  videoId,
+}: {
+  enabled?: boolean;
+  query?: string;
+  collectionId?: string;
+  videoId?: string;
+} = {}) => {
+  let queryKey = query
+    ? ["cards", query]
+    : collectionId
+    ? ["cards", collectionId]
+    : videoId
+    ? ["cards", videoId]
+    : ["cards"];
+
   const {
     data,
     error,
@@ -30,12 +48,15 @@ const useGetCards = ({ enabled = true, query = "" }) => {
     status,
     refetch,
   } = useInfiniteQuery({
-    queryKey: query ? ["cards", query] : ["cards"],
+    queryKey,
     queryFn: async ({ signal, pageParam, meta }) => {
-      const cards = await axios.get(
-        `card/?page=${pageParam}&searchQuery=${query || ""}`,
-        { signal }
-      );
+      let url = `card/?page=${pageParam}`;
+
+      if (query) url += `&searchQuery=${query}`;
+      if (collectionId) url += `&collectionId=${collectionId}`;
+      if (videoId) url += `&videoId=${videoId}`;
+
+      const cards = await axios.get(url, { signal });
 
       if (cards.data) return cards.data as GetCardsResponse;
     },
@@ -43,8 +64,10 @@ const useGetCards = ({ enabled = true, query = "" }) => {
     getNextPageParam: (lastPage, pages) => {
       return lastPage?.nextPage;
     },
+    enabled: enabled,
   });
 
+  console.log(enabled);
   let userCards = useMemo(() => {
     return data?.pages.flatMap((page) => (page as GetCardsResponse).cards);
   }, [data]);
@@ -55,6 +78,7 @@ const useGetCards = ({ enabled = true, query = "" }) => {
     fetchNextPage,
     isIntialLoading,
     refetch,
+    hasNextPage,
     isFetchingNextPage,
   };
 };

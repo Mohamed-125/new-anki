@@ -9,8 +9,8 @@
   --dark-primary: rgb(46, 46, 46);
   --light-gray: rgb(235, 235, 235);
   --off-white: rgb(245, 245, 245);
-  --primary: rgb(37, 99, 235); /* bg-blue-500 */
-  --lightPrimary: rgb(37, 99, 235); /* bg-blue-500 */
+  --primary: rgb(59 130 246); /* bg-blue-500 */
+  --lightPrimary: rgb(95, 145, 255); /* bg-blue-500 */
   --danger: rgb(220, 38, 38); /* bg-red-500 */
   --greenColor: rgb(58, 216, 116); /* bg-green-500 */
 }
@@ -28,6 +28,7 @@
 }
 body * {
   white-space: pre-line;
+  will-change: contents;
 }
 
 .title {
@@ -48,12 +49,13 @@ body * {
   }
 }
 body {
-  background-color: var(--off-white);
+  background-color: #f8f9fa;
   font-size: 15px;
   zoom: 0.96;
   /* font-family: "Bahnschrift"; */
-
-  font-family: "Inter", sans-serif;
+  font-size: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+  /* font-family: "Inter", sans-serif; */
 }
 
 .grid-container {

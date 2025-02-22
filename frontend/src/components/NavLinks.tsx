@@ -21,7 +21,7 @@ type NavLinkProps = {
 };
 
 function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
-  const { user, setUser } = useGetCurrentUser();
+  const { user } = useGetCurrentUser();
 
   return (
     <div
@@ -46,7 +46,7 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
         );
       })}
       {user ? (
-        <ProfileDropdown user={user} setUser={setUser} />
+        <ProfileDropdown user={user} />
       ) : (
         <>
           <div style={{ gap: `${gap}px` }} className="flex md:hidden">
@@ -78,19 +78,12 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
   );
 }
 
-const ProfileDropdown = ({
-  user,
-  setUser,
-}: {
-  user: UserType | null;
-  setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
-}) => {
+const ProfileDropdown = ({ user }: { user: UserType | null }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const logoutHandler = () => {
     axios.post("auth/logout").then(() => {
-      setUser(null);
       queryClient.clear(); // Completely clears the query cache
       navigate("/login");
     });

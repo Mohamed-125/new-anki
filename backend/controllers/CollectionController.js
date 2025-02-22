@@ -1,5 +1,6 @@
 const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
+const { getUserCards } = require("./CardController");
 
 module.exports.createCollection = async (req, res, next) => {
   const { name, public = false, parentCollectionId } = req.body;
@@ -49,7 +50,7 @@ module.exports.forkCollection = async (req, res, next) => {
 module.exports.getCollections = async (req, res, next) => {
   try {
     const collections = await CollectionModel.find({
-      userId: req.user?._id,
+      userId: req.user._id,
       // $or: [
       //   { parentCollectionId: { $exists: false } }, // parentCollectionId doesn't exist
       //   { parentCollectionId: null }, // parentCollectionId is null
@@ -77,10 +78,6 @@ module.exports.getCollection = async (req, res, next) => {
     })
       .populate("subCollections")
       .lean();
-
-    collection.collectionCards = await CardModel.find({
-      collectionId: collection._id,
-    });
 
     res.status(200).send(collection);
   } catch (err) {
