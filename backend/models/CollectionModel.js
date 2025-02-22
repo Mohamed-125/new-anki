@@ -18,23 +18,15 @@ const CollectionSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "Collection",
     },
-    collectionCards: [
-      {
-        type: mongoose.Types.ObjectId,
-        ref: "Card",
-        default: [],
-      },
-    ],
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
   },
-  { timestamps: true }
+  { timestamps: true, lean: true }
 );
 
 CollectionSchema.index({ parentCollectionId: 1, userId: 1 });
-CollectionSchema.indexes();
 
 CollectionSchema.set("toObject", { virtuals: true });
 CollectionSchema.set("toJSON", { virtuals: true });
@@ -42,29 +34,6 @@ CollectionSchema.set("toJSON", { virtuals: true });
 CollectionSchema.pre("find", function (next) {
   this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
   next();
-});
-
-CollectionSchema.post(["find", "findOne"], async function (docs) {
-  if (Array.isArray(docs)) {
-    // If docs is an array (find)
-    for (let doc of docs) {
-      const cardsBelongsToThisCollection = await CardModel.find({
-        collectionId: doc._id,
-      });
-
-      // Log and update the document
-      doc.collectionCards = cardsBelongsToThisCollection;
-    }
-  } else if (docs) {
-    // If docs is a single document (findOne)
-    const cardsBelongsToThisCollection = await CardModel.find({
-      collectionId: docs._id,
-    });
-
-    // Log and update the document
-
-    docs.collectionCards = cardsBelongsToThisCollection;
-  }
 });
 
 CollectionSchema.pre("save", function (next) {
@@ -79,6 +48,22 @@ CollectionSchema.virtual("subCollections", {
   ref: "Collection",
   foreignField: "parentCollectionId", // Foreign field of subcollections (parentCollectionId)
   localField: "_id", // Local field of parent collection (_id)
+  options: {
+    sort: { createdAt: -1 }, // Sort subcollections by createdAt in descending order (newest first)
+    lean: true,
+    projection: { _id: 1, name: 1, public: 1 },
+  },
+});
+
+CollectionSchema.virtual("collectionCards", {
+  ref: "Card",
+  foreignField: "collectionId",
+  localField: "_id",
+  options: {
+    sort: { createdAt: -1 },
+    lean: true,
+    projection: { _id: 1 },
+  },
 });
 
 CollectionSchema.pre(["findOneAndDelete", "deleteMany"], async function (next) {

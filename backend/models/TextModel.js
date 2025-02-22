@@ -17,7 +17,7 @@ const textSchema = new mongoose.Schema(
       ref: "Collection",
     },
   },
-  { timestamps: true }
+  { timestamps: true, lean: true }
 );
 
 textSchema.pre("find", function (next) {

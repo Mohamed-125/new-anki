@@ -83,6 +83,8 @@ const CollectionPage = ({}) => {
           parentCollectionId={id}
         />
         <MoveCollectionModal
+          selectedItems={selectedItems}
+          setSelectedItems={setSelectedItems}
           setEditId={setEditId}
           toMoveCollectionId={toMoveCollectionId}
           isMoveToCollectionOpen={isMoveToCollectionOpen}
@@ -91,6 +93,8 @@ const CollectionPage = ({}) => {
           cards={localCollectionCards}
         />
         <AddCardModal
+          isMoveToCollectionOpen={isMoveToCollectionOpen}
+          setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
           collectionId={collection?._id}
           isAddCardModalOpen={isAddCardModalOpen}
           setIsAddCardModalOpen={setIsAddCardModalOpen}
@@ -124,7 +128,7 @@ const CollectionPage = ({}) => {
                       <h1 className="text-3xl font-bold text-gray-800">
                         {collection?.name}
                       </h1>
-                      {user?._id === collection.userId && (
+                      {user?._id === collection?.userId && (
                         <div className="flex gap-3">
                           <Button
                             variant="primary-outline"
@@ -213,12 +217,17 @@ const CollectionPage = ({}) => {
 
                 {selectedItems.length > 0 && (
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <SelectedItemsController {...controllerProps} />
+                    <SelectedItemsController
+                      selectedItems={selectedItems}
+                      setSelectedItems={setSelectedItems}
+                      setChangeItemsParent={setChangeItemsParent}
+                      isItemsCards={true}
+                    />
                   </div>
                 )}
 
                 {localCollectionCards?.length ? (
-                  <div className="grid">
+                  <div className="">
                     {filteredCards?.map((card) => (
                       <Card
                         setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}

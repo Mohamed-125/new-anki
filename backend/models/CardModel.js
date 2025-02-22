@@ -1,14 +1,16 @@
 const mongoose = require("mongoose");
 
-const CardSchema = mongoose.Schema(
+const CardSchema = new mongoose.Schema(
   {
     front: {
       type: String,
       require: [true, "front is required"],
+      index: true,
     },
     back: {
       type: String,
       require: [true, "back name is required"],
+      index: true,
     },
     content: {
       type: String,
@@ -16,10 +18,12 @@ const CardSchema = mongoose.Schema(
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
+      index: true,
     },
     videoId: {
       type: mongoose.Types.ObjectId,
       ref: "Video",
+      index: true,
     },
     easeFactor: {
       type: Number,
@@ -31,9 +35,13 @@ const CardSchema = mongoose.Schema(
     collectionId: {
       type: mongoose.Types.ObjectId,
       ref: "Collection",
+      index: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    lean: true,
+  }
 );
 
 CardSchema.pre("find", function (next) {

@@ -10,6 +10,7 @@ import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import Button from "./Button";
 import useCardActions from "../hooks/useCardActions";
 import { CardType } from "../hooks/useGetCards";
+import { url } from "inspector";
 
 type MoveCollectionModalProps = {
   editId: string;
@@ -19,6 +20,9 @@ type MoveCollectionModalProps = {
   cards?: CardType[];
   toMoveCollectionId?: string;
   setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedItems: string[];
+  targetCollectionId: string;
 };
 
 const MoveCollectionModal = ({
@@ -29,8 +33,11 @@ const MoveCollectionModal = ({
   isMoveToCollectionOpen,
   setIsMoveToCollectionOpen,
   setTargetCollectionId,
+  selectedItems,
+  setSelectedItems,
+  targetCollectionId,
 }: MoveCollectionModalProps) => {
-  const { collections, parentCollections, notParentCollections } =
+  const { collections, parentCollections, notParentCollections, isLoading } =
     useGetCollectionsContext();
   const [selectedCollectionsIds, setSelectedCollectionIds] = useState<string[]>(
     []
@@ -78,11 +85,9 @@ const MoveCollectionModal = ({
   const {
     data: selectedCollection,
     isLoading: collectionLoading,
-    isError,
     refetch,
   } = useQuery({
     queryKey: ["collection", lastSelectedCollectionId],
-    refetchOnWindowFocus: false,
     enabled: false, // disable this query from automatically running
     queryFn: () =>
       axios
@@ -151,7 +156,7 @@ const MoveCollectionModal = ({
           </Button>
         )}
         <div className="relative">
-          {collectionLoading && <Loading />}
+          {collectionLoading || (isLoading && <Loading />)}
           {lastSelectedCollectionId && (
             <div className="flex gap-3 items-center my-6">
               <button
@@ -180,7 +185,10 @@ const MoveCollectionModal = ({
                   collection={collection}
                   queryClient={queryClient}
                   editId={editId}
+                  selectedItems={selectedItems}
+                  setSelectedItems={setSelectedItems}
                   cards={cards}
+                  targetCollectionId={targetCollectionId}
                   setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
                 />
               );
@@ -205,6 +213,9 @@ const CollectionOption = ({
   queryClient,
   collections,
   setTargetCollectionId,
+  selectedItems,
+  setSelectedItems,
+  targetCollectionId,
 }: {
   collection: CollectionType;
   setSelectedCollectionIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -216,6 +227,9 @@ const CollectionOption = ({
   collections?: CollectionType[];
   queryClient: QueryClient;
   setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
+  selectedItems: string[];
+  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  targetCollectionId: string;
 }) => {
   const { updateCardHandler } = useCardActions();
 
@@ -261,6 +275,18 @@ const CollectionOption = ({
         disabled={disabled}
         onClick={() => {
           if (!toMoveCollectionId) {
+            if (selectedItems.length) {
+              axios
+                .post("card/batch-move", {
+                  ids: selectedItems,
+                  selectedParent: collection._id,
+                })
+                .then(() => {
+                  queryClient.invalidateQueries({ queryKey: ["cards"] });
+                  queryClient.invalidateQueries({ queryKey: ["collections"] });
+                  setSelectedItems?.([]);
+                });
+            }
             if (editId) {
               updateCardHandler(
                 undefined,
@@ -281,6 +307,13 @@ const CollectionOption = ({
               })
               .then((res) => {
                 queryClient.invalidateQueries({ queryKey: ["collections"] });
+                queryClient.invalidateQueries({
+                  queryKey: ["collection", collection._id],
+                });
+                queryClient.refetchQueries({ queryKey: ["collections"] });
+                queryClient.refetchQueries({
+                  queryKey: ["collection", collection._id],
+                });
               })
               .catch((err) => err);
           }

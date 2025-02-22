@@ -8,7 +8,7 @@ const NoteSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     content: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true, lean: true }
 );
 
 NoteSchema.pre("find", function (next) {

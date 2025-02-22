@@ -20,6 +20,7 @@ export type CollectionType = {
 
 type CollectionsContextType = {
   collections: CollectionType[] | undefined;
+  isLoading: boolean;
   parentCollections: CollectionType[] | undefined;
   subCollections: CollectionType[] | undefined;
   notParentCollections: CollectionType[] | undefined;
@@ -73,13 +74,14 @@ const CollectionsContext = ({ children }: { children: React.ReactNode }) => {
   return (
     <collectionsContext.Provider
       value={{
+        isLoading,
         collections: data,
         parentCollections,
         subCollections,
         notParentCollections,
       }}
     >
-      {isLoading ? <Loading /> : children}
+      {children}
     </collectionsContext.Provider>
   );
 };

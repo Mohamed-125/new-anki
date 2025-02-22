@@ -1,3 +1,4 @@
+const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
 
 module.exports.createCollection = async (req, res, next) => {
@@ -53,7 +54,8 @@ module.exports.getCollections = async (req, res, next) => {
       //   { parentCollectionId: { $exists: false } }, // parentCollectionId doesn't exist
       //   { parentCollectionId: null }, // parentCollectionId is null
       // ],
-    });
+    }).populate("collectionCards");
+
     res.status(200).send(collections);
   } catch (err) {
     res.status(400).send(err);
@@ -70,19 +72,19 @@ module.exports.getPublicCollections = async (req, res, next) => {
 
 module.exports.getCollection = async (req, res, next) => {
   try {
-    const collection = await CollectionModel.findOne({
+    let collection = await CollectionModel.findOne({
       _id: req.params.id,
-    }).populate("subCollections");
+    })
+      .populate("subCollections")
+      .lean();
 
-    const subCollections = await CollectionModel.find({
-      parentCollectionId: collection._id,
+    collection.collectionCards = await CardModel.find({
+      collectionId: collection._id,
     });
 
-    collection.subCollections = subCollections; // Manually assign subCollections
-
-    console.log(collection);
     res.status(200).send(collection);
   } catch (err) {
+    console.log("", err);
     res.status(400).send(err);
   }
 };

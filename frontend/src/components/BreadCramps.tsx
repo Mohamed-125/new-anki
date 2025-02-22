@@ -19,7 +19,7 @@ const BreadCramps = () => {
         return;
       }
       //@ts-ignore
-      breadCramps[index] = collections.find((collection) => {
+      breadCramps[index] = collections?.find((collection) => {
         return collection._id === path;
       })?.name;
     });

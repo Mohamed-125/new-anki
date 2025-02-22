@@ -107,6 +107,9 @@ const Home = () => {
         editId={editId}
         setEditId={setEditId}
         cards={userCards}
+        targetCollectionId={targetCollectionId}
+        setSelectedItems={setSelectedItems}
+        selectedItems={selectedItems}
       />
       <ChangeItemsParent
         changeItemsParent={changeItemsParent}
@@ -132,8 +135,10 @@ const Home = () => {
         </Button>
       </div>
       <SelectedItemsController
+        isItemsCards={true}
         setChangeItemsParent={setChangeItemsParent}
         selectedItems={selectedItems}
+        setIsMoveTooCollectionOpen={setIsMoveTooCollectionOpen}
         setSelectedItems={setSelectedItems}
       />
       {isIntialLoading || !userCards ? (
