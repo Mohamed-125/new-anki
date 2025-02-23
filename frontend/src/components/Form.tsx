@@ -23,10 +23,7 @@ const Form = ({
 }: FormProps) => {
   return (
     <form
-      className={twMerge(
-        "bg-white py-12 px-7 rounded-2xl w-[90%] max-w-[430px]",
-        className
-      )}
+      className={twMerge("bg-white py-12 px-7 rounded-2xl  ", className)}
       ref={formRef}
       onSubmit={(e) => {
         e.preventDefault();
@@ -41,7 +38,7 @@ const Form = ({
 
 Form.Title = ({ children }: { children: React.ReactNode }) => {
   return (
-    <h2 className="mb-8 text-3xl font-bold text-center sm:text-3xl text-slate-700">
+    <h2 className="mb-8 text-4xl font-bold text-center sm:text-3xl text-slate-700">
       {children}
     </h2>
   );
@@ -126,7 +123,7 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
         <Button
           type="button"
           variant="ghost"
-          className="absolute right-2 top-1/2 p-0 h-auto -translate-y-1/2"
+          className="absolute h-auto p-0 -translate-y-1/2 right-2 top-1/2"
           onClick={() => setIsPassword(!isPassword)}
         >
           {isPassword ? (
@@ -191,7 +188,7 @@ Form.Select = ({
   return (
     <select
       className={twMerge(
-        "px-3 py-2 mb-4 w-full rounded-lg border border-gray-400",
+        "px-3 mb-4 w-full rounded-lg border border-gray-400 py-2",
         className
       )}
       {...attributes}

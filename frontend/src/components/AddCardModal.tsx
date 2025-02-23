@@ -73,6 +73,7 @@ export function AddCardModal({
         : () => {},
     },
   });
+  console.log("tsrtrst", isEdit);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const cardData = {
@@ -87,7 +88,9 @@ export function AddCardModal({
         setIsAddCardModalOpen,
         content,
         editId,
-        targetCollectionId
+        targetCollectionId,
+        frontValue,
+        backValue
       );
     } else {
       createCardHandler(e, cardData, setIsAddCardModalOpen);
@@ -103,6 +106,8 @@ export function AddCardModal({
 
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
   const [examples, setExamples] = useState<string[]>([]);
+  const [frontValue, setFrontValue] = useState("");
+  const [backValue, setBackValue] = useState("");
 
   const translateHandler = async () => {
     console.log(frontRef.current?.value);
@@ -132,17 +137,20 @@ export function AddCardModal({
   };
 
   const onAnimationEnd = useCallback(() => {
-    if (!isAddCardModalOpen) {
-      setIsAddCardModalOpen(false);
-      setContent("");
-      setDefaultValues(null);
-      setEditId?.("");
-      setTargetCollectionId?.("");
+    setIsAddCardModalOpen(false);
+    setContent("");
+    setDefaultValues(null);
+    setEditId?.("");
+    setTargetCollectionId?.("");
+    setFrontValue("");
+    setBackValue("");
+    if (backRef.current && frontRef.current) {
+      backRef.current.value = "";
+      frontRef.current.value = "";
     }
   }, [isAddCardModalOpen, isMoveToCollectionOpen]);
 
   useEffect(() => {
-    console.log("isAddCardModalOpen", isAddCardModalOpen);
     if (!isAddCardModalOpen) {
       setIsTranslationLoading(false);
     }
@@ -152,87 +160,101 @@ export function AddCardModal({
 
   return (
     <Modal
-      className={isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}
+      className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
+        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
+      }`}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
-      <Form
-        formRef={formRef}
-        className="w-[100%] max-w-[unset] py-4"
-        onSubmit={handleSubmit}
-      >
-        <Form.Title>{isEdit ? "Edit Card" : " Add New Card"} </Form.Title>
-        <Form.FieldsContainer>
+      <Modal.Header
+        setIsOpen={setIsAddCardModalOpen}
+        title={isEdit ? "Edit Card" : "Add New Card"}
+      />
+      <Form formRef={formRef} className="px-0 py-0" onSubmit={handleSubmit}>
+        <Form.FieldsContainer className="space-y-4">
           <Form.Field>
-            <Form.Label>Card Frontside</Form.Label>
+            <Form.Label>Card Front Side</Form.Label>
             <Form.Textarea
-              defaultValue={defaultValues?.front}
+              value={defaultValues?.front || frontValue}
+              onChange={(e) => {
+                setFrontValue(e.target.value);
+                setDefaultValues((pre: {}) => {
+                  return { ...pre, front: null };
+                });
+              }}
               type="text"
               name="card_word"
               ref={frontRef}
               required
+              className="w-full px-4 py-2 text-gray-900 transition-all border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter the front side content"
             />
           </Form.Field>
           <Form.Field>
             <Form.Label>Card Collection</Form.Label>
             <Button
               type="button"
-              onClick={() => {
-                console.log(frontRef);
-                setIsMoveToCollectionOpen?.(true);
-              }}
+              onClick={() => setIsMoveToCollectionOpen?.(true)}
+              className="w-full px-4 py-2 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
             >
               Choose Collection
             </Button>
           </Form.Field>
-
           <Form.Field>
-            <Form.Label>Card backside</Form.Label>
+            <Form.Label>Card Back Side</Form.Label>
             <Form.Textarea
               defaultValue={defaultValues?.back}
               isLoading={isTranslationLoading}
               disabled={isTranslationLoading}
               type="text"
               ref={backRef}
+              value={defaultValues?.back || backValue}
+              onChange={(e) => {
+                setBackValue(e.target.value);
+                setDefaultValues((pre: {}) => {
+                  return { ...pre, back: null };
+                });
+              }}
               name="card_translation"
               required
+              className="w-full px-4 py-2 text-gray-900 transition-all border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter the back side content"
             />
             <Button
               variant="primary"
-              className="mt-3"
+              className="w-full px-4 py-2 mt-3 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
               type="button"
               onClick={translateHandler}
             >
-              Auto Translate{" "}
+              Auto Translate
             </Button>
           </Form.Field>
           <Form.Field>
             <Form.Label>Content</Form.Label>
-            <ReactQuillComponent
-              className="my-editor"
-              setContent={setContent}
-              content={content}
-            />
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <ReactQuillComponent
+                className="min-h-[200px]"
+                setContent={setContent}
+                content={content}
+              />
+            </div>
             <Button
               variant="primary"
-              className="mt-3"
+              className="w-full px-4 py-2 mt-3 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
               type="button"
               onClick={() => {
                 const sources = examples.map(
                   (example: any) =>
                     ` <strong>
-
-                  ${example.source.replace(
-                    example.source_phrases[0].phrase,
-                    `<strong style="color: rgb(230, 0, 0);">${example.source_phrases[0].phrase}</strong>`
-                  )}
-
+                      ${example.source.replace(
+                        example.source_phrases[0].phrase,
+                        `<strong style="color: rgb(230, 0, 0);">${example.source_phrases[0].phrase}</strong>`
+                      )}
                     </strong>
-                     <br />
-                     ${example.target} `
+                    <br />
+                    ${example.target} `
                 );
-
                 setContent((pre) => pre + sources.join("<br /> "));
               }}
             >
@@ -240,7 +262,9 @@ export function AddCardModal({
             </Button>
           </Form.Field>
         </Form.FieldsContainer>
-        <FormButtons isEdit={isEdit} setIsOpen={setIsAddCardModalOpen} />
+        <Modal.Footer>
+          <FormButtons isEdit={isEdit} setIsOpen={setIsAddCardModalOpen} />
+        </Modal.Footer>
       </Form>
     </Modal>
   );

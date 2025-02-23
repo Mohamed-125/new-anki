@@ -45,31 +45,25 @@ const CollectionsContext = ({ children }: { children: React.ReactNode }) => {
     },
   });
 
-  let allUserCollections = data;
-
   const subCollections = useMemo(
-    () =>
-      allUserCollections?.filter((collection) => collection.parentCollectionId),
-    [allUserCollections]
+    () => data?.filter((collection) => collection.parentCollectionId),
+    [data]
   );
 
   const parentCollections = useMemo(
     () =>
-      allUserCollections?.filter((parentCollection) =>
+      data?.filter((parentCollection) =>
         subCollections?.some(
           (subCollection) =>
             subCollection.parentCollectionId === parentCollection._id
         )
       ),
-    [allUserCollections, subCollections]
+    [data, subCollections]
   );
 
   const notParentCollections = useMemo(
-    () =>
-      allUserCollections?.filter(
-        (collection) => !collection.parentCollectionId
-      ),
-    [allUserCollections]
+    () => data?.filter((collection) => !collection.parentCollectionId),
+    [data]
   );
   return (
     <collectionsContext.Provider

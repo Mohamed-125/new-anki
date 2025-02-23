@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Actions from "./Actions";
+import Actions from "./ActionsDropdown";
 import { twMerge } from "tailwind-merge";
 import { useQueryClient } from "@tanstack/react-query";
 

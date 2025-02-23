@@ -111,6 +111,8 @@ const Home = () => {
         setParentCollectionId={setParentCollectionId}
       />{" "}
       <AddNewCollectionModal
+        editId={editId}
+        setDefaultValues={setDefaultValues}
         isCollectionModalOpen={isCollectionModalOpen}
         setIsCollectionModalOpen={setIsCollectionModalOpen}
         parentCollectionId={parentCollectionId}

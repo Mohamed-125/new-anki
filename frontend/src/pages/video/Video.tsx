@@ -101,6 +101,7 @@ const Video = () => {
             />
 
             <AddNewCollectionModal
+              setDefaultValues={setDefaultValues}
               setIsCollectionModalOpen={setIsCollectionModalOpen}
               isCollectionModalOpen={isCollectionModalOpen}
               defaultValues={defaultValues}

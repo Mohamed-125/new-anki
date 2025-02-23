@@ -23,22 +23,22 @@ const Button = (props: ButtonProps) => {
   const { children, className, variant, size, center, ...attributes } = props;
 
   const buttonVariants = cva(
-    "cursor-pointer py-2 px-4 sm:zoom-[90%] sm:text-sm disabled:opacity-30 text-white transition-all border rounded-3xl block",
+    "cursor-pointer py-2.5 px-6 sm:zoom-[90%] sm:text-sm disabled:opacity-30 text-white transition-all duration-200 ease-in-out border rounded-lg shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2 font-medium",
     {
       variants: {
         variant: {
-          primary: "bg-blue-500 hover:opacity-80",
-          dark: "bg-dark-primary hover:opacity-80",
+          primary: "bg-blue-500 hover:bg-blue-600",
+          dark: "bg-dark-primary hover:bg-opacity-90",
           "primary-outline":
-            "border-blue-500 hover:bg-blue-400 text-blue-700 hover:text-white",
-          danger: "bg-red-600 hover:bg-red-400",
+            "border-blue-500 bg-transparent hover:bg-blue-50 text-blue-700",
+          danger: "bg-red-600 hover:bg-red-700",
           "danger-outline":
-            "border-red-600 text-red-600 hover:bg-red-400 hover:text-white",
+            "border-red-600 bg-transparent hover:bg-red-50 text-red-600",
         },
         size: {
-          large: "py-3 w-full max-w-[200px]", // w-screen applies for large
-          parent: "w-full",
-          fit: "w-fit", // fit applies w-fit correctly
+          large: "py-3 px-8 w-full max-w-[200px] text-base",
+          parent: "w-full justify-center",
+          fit: "w-fit justify-center"
         },
       },
       defaultVariants: {

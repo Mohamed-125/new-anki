@@ -5,7 +5,7 @@ import axios from "axios";
 import Search from "../components/Search";
 import Button from "../components/Button";
 import SelectedItemsController from "../components/SelectedItemsController";
-import Actions from "../components/Actions";
+import Actions from "../components/ActionsDropdown";
 import { Link, useNavigate } from "react-router-dom";
 
 export type TextType = {

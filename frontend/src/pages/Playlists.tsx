@@ -7,7 +7,7 @@ import Modal from "../components/Modal";
 import Form from "../components/Form";
 import Search from "../components/Search";
 import { Link } from "react-router-dom";
-import Actions from "../components/Actions";
+import Actions from "../components/ActionsDropdown";
 import SelectedItemsController from "../components/SelectedItemsController";
 import { VideoType } from "./Playlist";
 

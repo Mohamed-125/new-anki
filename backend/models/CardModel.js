@@ -31,7 +31,10 @@ const CardSchema = new mongoose.Schema(
       min: 0,
       max: 1,
     },
-
+    easeFactorDate: {
+      type: Date,
+      default: Date.now,
+    },
     collectionId: {
       type: mongoose.Types.ObjectId,
       ref: "Collection",
@@ -46,8 +49,13 @@ const CardSchema = new mongoose.Schema(
 
 CardSchema.pre("find", function (next) {
   this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
-
   next();
+});
+CardSchema.post("find", function (docs) {
+  if (!docs) return;
+  docs.forEach((card) => {
+    card.easeFactorDate;
+  });
 });
 
 const CardModel = mongoose.model("Card", CardSchema);

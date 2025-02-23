@@ -51,7 +51,7 @@ function Search<T extends { [key: string]: any }, K>({
   return (
     <Form
       className={
-        "flex px-0 py-0 my-8 w-full max-w-none text-lg bg-transparent rounded-xl"
+        "flex px-0 py-0  w-full max-w-none text-lg bg-transparent rounded-xl"
       }
     >
       <div className="grow">

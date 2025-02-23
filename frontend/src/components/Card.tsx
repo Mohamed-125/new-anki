@@ -20,6 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ActionsDropdown from "./ActionsDropdown";
 
 type CardProps = {
   setDefaultValues: React.Dispatch<React.SetStateAction<any>>;
@@ -80,6 +81,16 @@ const Card = ({
     );
   };
 
+  const deleteHandlerFunc = useCardActions().deleteHandler;
+
+  const moveHandler = () => {
+    setIsMoveToCollectionOpen?.(true);
+    setEditId(id);
+  };
+  const deleteHandler = () => {
+    deleteHandlerFunc(id, collectionId);
+  };
+
   return (
     <div
       className="flex items-center px-8 py-6 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-2xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
@@ -103,7 +114,7 @@ const Card = ({
         <HiSwitchHorizontal />
       </div>
       <div
-        className="overflow-hidden whitespace-normal break-words grow text-ellipsis"
+        className="overflow-hidden break-words whitespace-normal grow text-ellipsis"
         onClick={() => {
           navigateTo?.();
           setDefaultValues({
@@ -137,11 +148,9 @@ const Card = ({
       </div>
       {isSameUser && !isSelected ? (
         <>
-          <DropdownMenuDemo
-            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-            collectionId={collectionId}
-            id={id}
-            setEditId={setEditId}
+          <ActionsDropdown
+            moveHandler={moveHandler}
+            deleteHandler={deleteHandler}
           />
         </>
       ) : null}
@@ -150,52 +159,3 @@ const Card = ({
 };
 
 export default Card;
-
-function DropdownMenuDemo({
-  setIsMoveToCollectionOpen,
-  collectionId,
-  setEditId,
-  id,
-}: {
-  setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  collectionId: string | undefined;
-  setEditId: React.Dispatch<React.SetStateAction<string>>;
-  id: string;
-}) {
-  const deleteHandlerFunc = useCardActions().deleteHandler;
-
-  return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="text-2xl">
-        <BsThreeDotsVertical />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-6 font-semibold">
-        <Button
-          onClick={() => {
-            setIsMoveToCollectionOpen?.(true);
-            setEditId(id);
-          }}
-          className={
-            "flex gap-3 items-center leading-normal text-gray-700 bg-transparent border-none outline-none"
-          }
-        >
-          <LuMoveUpRight className="text-xl" />
-          Move
-        </Button>
-        <DropdownMenuSeparator />
-
-        <Button
-          className={
-            "flex gap-3 items-center leading-normal text-red-600 bg-transparent border-none outline-none"
-          }
-          onClick={() => {
-            deleteHandlerFunc(id, collectionId);
-          }}
-        >
-          <FaTrashCan className="text-xl" />
-          Delete
-        </Button>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}

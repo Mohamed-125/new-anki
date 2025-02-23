@@ -23,20 +23,27 @@ const useGetCards = ({
   query,
   collectionId,
   videoId,
+  study,
 }: {
   enabled?: boolean;
   query?: string;
   collectionId?: string;
   videoId?: string;
+  study?: boolean;
 } = {}) => {
   let queryKey = query
     ? ["cards", query]
     : collectionId
-    ? ["cards", collectionId]
+    ? study
+      ? ["cards", "study", collectionId]
+      : ["cards", collectionId]
     : videoId
     ? ["cards", videoId]
+    : study
+    ? ["cards", "study"]
     : ["cards"];
 
+  console.log(queryKey);
   const {
     data,
     error,
@@ -55,6 +62,7 @@ const useGetCards = ({
       if (query) url += `&searchQuery=${query}`;
       if (collectionId) url += `&collectionId=${collectionId}`;
       if (videoId) url += `&videoId=${videoId}`;
+      if (study) url += `&study=true`;
 
       const cards = await axios.get(url, { signal });
 

@@ -12,7 +12,6 @@ import useCardActions from "../hooks/useCardActions";
 import { CardType } from "../hooks/useGetCards";
 import { url } from "inspector";
 import CollectionSkeleton from "./CollectionsSkeleton";
-import { PlusCircle } from "lucide-react";
 
 type MoveCollectionModalProps = {
   editId: string;
@@ -52,11 +51,14 @@ const MoveCollectionModal = ({
     if (!isMoveToCollectionOpen || !cards) return;
 
     const card = cards.find((card) => card._id === editId);
+
+    console.log(card);
     let cardCollectionId = card?.collectionId;
     let cardCollection = collections?.find(
       (collection) => collection._id === cardCollectionId
     );
 
+    console.log(cardCollection);
     const getParentCollection = (childCollection: CollectionType) => {
       setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
 
@@ -75,7 +77,6 @@ const MoveCollectionModal = ({
       getParentCollection(cardCollection);
       setSelectedCollectionIds((prev) => {
         let editPrev = prev.reverse();
-        editPrev = prev.slice(0, -1);
         return editPrev;
       });
     }
@@ -94,8 +95,8 @@ const MoveCollectionModal = ({
   });
 
   useEffect(() => {
+    console.log(selectedCollectionsIds);
     if (lastSelectedCollectionId) {
-      console.log("lastSelectedCollectionId", lastSelectedCollectionId);
       setParentCollectionId(lastSelectedCollectionId);
     }
   }, [selectedCollectionsIds]);
@@ -110,6 +111,7 @@ const MoveCollectionModal = ({
       (c) => c._id === toMoveCollection.parentCollectionId
     )?._id;
   }, [toMoveCollectionId]);
+
   const queryClient = useQueryClient();
 
   const openCollectionModal = useCallback(
@@ -130,22 +132,16 @@ const MoveCollectionModal = ({
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >
-      <div className="p-6">
-        <div className="flex justify-between items-center pb-4 mb-1 border-b border-gray-100">
-          <h3 className="text-2xl font-bold text-gray-800">
-            Move To Collection
-          </h3>
-          <PlusCircle
-            className={
-              "p-1 w-8 h-8 text-sm font-medium text-white text-blue-600 rounded-lg transition-colors cursor-pointer bg-lightPrimary hover:bg-blue-400"
-            }
-            onClick={openCollectionModal}
-          />
-        </div>
+      <div className="pt-3 ">
+        <Modal.Header
+          title={"Move To Collection"}
+          setIsOpen={setIsMoveToCollectionOpen}
+          openCollectionModal={openCollectionModal}
+        />
 
-        <div className="p-4 mb-6 bg-gray-50 rounded-xl border border-gray-100">
+        <div className="p-4 mb-6 border border-gray-100 bg-gray-50 rounded-xl">
           <h6 className="mb-2 text-sm font-medium text-gray-600">
-            Current Collection
+            Card Collection
           </h6>
           <p className="text-lg font-medium text-gray-800">
             {toMoveCollectionId
@@ -160,9 +156,9 @@ const MoveCollectionModal = ({
               : "No Collection"}
           </p>
         </div>
-        {toMoveCollectionId && (
+        {toMoveCollectionId ? (
           <Button
-            className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-lightPrimary text-white hover:bg-blue-400 rounded-lg transition-colors"
+            className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
             onClick={() => {
               axios
                 .put(`collection/${toMoveCollectionId}`, {
@@ -171,11 +167,30 @@ const MoveCollectionModal = ({
                 .then((res) => {
                   queryClient.invalidateQueries({ queryKey: ["collections"] });
                   queryClient.invalidateQueries({ queryKey: ["collection"] });
+                  setIsMoveToCollectionOpen(false);
                 })
                 .catch((err) => err);
             }}
           >
             Move To Root Collections
+          </Button>
+        ) : (
+          <Button
+            className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+            onClick={() => {
+              axios
+                .put(`card/${editId}`, {
+                  collectionId: null,
+                })
+                .then((res) => {
+                  queryClient.invalidateQueries({ queryKey: ["collections"] });
+                  queryClient.invalidateQueries({ queryKey: ["collection"] });
+                  setIsMoveToCollectionOpen(false);
+                })
+                .catch((err) => err);
+            }}
+          >
+            Remove From Collections
           </Button>
         )}
 
@@ -185,9 +200,9 @@ const MoveCollectionModal = ({
           ) : (
             <>
               {lastSelectedCollectionId && (
-                <div className="flex gap-3 items-center p-3 mb-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 mb-4 rounded-lg bg-gray-50">
                   <button
-                    className="p-2 text-gray-600 rounded-full transition-colors hover:bg-gray-200"
+                    className="p-2 text-gray-600 transition-colors rounded-full hover:bg-gray-200"
                     onClick={() =>
                       setSelectedCollectionIds((pre) => pre.slice(0, -1))
                     }
@@ -337,20 +352,17 @@ const CollectionOption = React.memo(function CollectionOption({
         key={collection?._id}
         id={collection?._id}
         onClick={() => {
-          if (isParentCollection) {
-            setSelectedCollectionIds((pre) => [
-              ...pre,
-              collection?._id as string,
-            ]);
-          }
+          setSelectedCollectionIds((pre) => [
+            ...pre,
+            collection?._id as string,
+          ]);
         }}
         className={`
-        flex justify-between items-center p-3 rounded-lg
-        ${isParentCollection ? "cursor-pointer hover:bg-gray-50" : ""}
-        transition-all duration-200 ease-in-out
-        ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        flex justify-between items-center p-3  cursor-pointer hover:bg-gray-50 
+        transition-colors duration-200 ease-in-out border-b border-light-gray
+         `}
       >
-        <span className="flex flex-1 gap-3 items-center">
+        <span className="flex items-center flex-1 gap-3">
           <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
             {collection?.name}
           </p>
@@ -361,7 +373,7 @@ const CollectionOption = React.memo(function CollectionOption({
         <Button
           disabled={disabled}
           onClick={moveHandler}
-          className="px-4 py-1.5 text-sm font-medium  bg-lightPrimary text-white hover:bg-blue-400 rounded-lg transition-colors"
+          className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
         >
           Move
         </Button>

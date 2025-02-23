@@ -435,7 +435,7 @@ iframe {
 }
 
 .modalScroll::-webkit-scrollbar {
-  width: 10px !important;
+  width: 11px !important;
 }
 
 .modalScroll::-webkit-scrollbar-track {

@@ -8,7 +8,7 @@ import SelectedItemsController from "../components/SelectedItemsController";
 import Modal from "../components/Modal";
 import Form from "../components/Form";
 import ReactQuillComponent from "../components/ReactQuillComponent";
-import Actions from "../components/Actions";
+import Actions from "../components/ActionsDropdown";
 
 type NoteType = {
   title: string;

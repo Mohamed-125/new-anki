@@ -94,13 +94,6 @@ const CollectionPage = ({}) => {
       <div className="">
         {collectionCards && (
           <>
-            <AddNewCollectionModal
-              setIsCollectionModalOpen={setIsCollectionModalOpen}
-              isCollectionModalOpen={isCollectionModalOpen}
-              defaultValues={defaultValues}
-              editId={editId}
-              parentCollectionId={parentCollectionId === "home" ? "" : id}
-            />
             <MoveCollectionModal
               selectedItems={selectedItems}
               setSelectedItems={setSelectedItems}
@@ -115,7 +108,14 @@ const CollectionPage = ({}) => {
               setParentCollectionId={setParentCollectionId}
               // moving={moving}
             />
-
+            <AddNewCollectionModal
+              setDefaultValues={setDefaultValues}
+              setIsCollectionModalOpen={setIsCollectionModalOpen}
+              isCollectionModalOpen={isCollectionModalOpen}
+              defaultValues={defaultValues}
+              editId={editId}
+              parentCollectionId={parentCollectionId === "home" ? "" : id}
+            />
             <AddCardModal
               isMoveToCollectionOpen={isMoveToCollectionOpen}
               setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
@@ -140,14 +140,14 @@ const CollectionPage = ({}) => {
           parentName="collection"
         /> */}
 
-        <div className="py-8 min-h-screen">
+        <div className="min-h-screen py-8">
           <div className="mt-6 space-y-6">
             <div className="space-y-8">
               <div className="bg-white rounded-xl mx-auto py-9 !w-[90%]">
                 <div className="container">
                   {/* Header Section */}
                   <div className="flex flex-col gap-4 pb-6 border-b border-gray-200">
-                    <div className="flex justify-between items-start">
+                    <div className="flex items-start justify-between">
                       <h1 className="text-3xl font-bold text-gray-800">
                         {collection?.name}
                       </h1>
@@ -155,16 +155,16 @@ const CollectionPage = ({}) => {
                         <div className="flex gap-3">
                           <Button
                             variant="primary-outline"
-                            className="flex gap-2 items-center hover:bg-blue-50"
+                            className="flex items-center gap-2 hover:bg-blue-50"
                           >
                             <Link to={"/study-cards/" + id}>
-                              <span className="flex gap-2 items-center">
+                              <span className="flex items-center gap-2">
                                 📚 Study Now
                               </span>
                             </Link>
                           </Button>
                           <Button
-                            className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                            className="flex items-center gap-2 px-4 py-2 text-white transition-all rounded-lg"
                             onClick={() => {
                               setDefaultValues({ collectionId: id });
                               setIsAddCardModalOpen(true);
@@ -177,7 +177,7 @@ const CollectionPage = ({}) => {
                     </div>
                   </div>
                   {/* Search Section */}
-                  <div className="rounded-lg white">
+                  <div className="mt-6 rounded-lg white">
                     {/* <Search
                       label="Search cards"
                       filter="front"
@@ -185,16 +185,16 @@ const CollectionPage = ({}) => {
                     <SearchCards query={query} setQuery={setQuery} />
                   </div>
                   {/* Sub Collections Section */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-xl font-medium text-gray-700">
+                  <div className="mt-8 ">
+                    <div className="flex items-center justify-between mb-5">
+                      <h2 className="text-xl font-medium text-gray-700 ">
                         Sub Collections
                         <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
                           {collection?.subCollections?.length || 0}
                         </span>
                       </h2>
                       <Button
-                        className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                        className="flex items-center gap-2 px-4 py-2 text-white transition-all rounded-lg"
                         onClick={() => {
                           setDefaultValues({ parentCollectionId: id });
                           setIsCollectionModalOpen(true);
@@ -204,7 +204,7 @@ const CollectionPage = ({}) => {
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 md:grid-cols-2 sm:grid-cols-1">
+                    <div className="grid grid-cols-3 gap-4 lg:grid-cols-2 md:grid-cols-1">
                       {collection?.subCollections.map(
                         (collection: CollectionType) => (
                           <Collection
@@ -228,7 +228,7 @@ const CollectionPage = ({}) => {
               </div>
               {/* Cards Section */}
               <div className="container space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <h2 className="text-xl font-medium text-gray-700">
                     Cards
                     <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
@@ -271,13 +271,13 @@ const CollectionPage = ({}) => {
                     {isFetchingNextPage && <CardsSkeleton />}
                   </div>
                 ) : (
-                  <div className="flex flex-col justify-center items-center py-16 bg-white rounded-lg border-gray-200 border-dashed mt-6border-2 ed-xl white">
+                  <div className="flex flex-col items-center justify-center py-16 bg-white border-gray-200 border-dashed rounded-lg mt-6border-2 ed-xl white">
                     <p className="mb-4 text-gray-500">
                       Start by adding your first card
                     </p>
                     {user?._id === collection?.userId && (
                       <Button
-                        className="flex gap-2 items-center px-6 py-3 text-white rounded-lg transition-all"
+                        className="flex items-center gap-2 px-6 py-3 text-white transition-all rounded-lg"
                         onClick={() => {
                           setDefaultValues({ collectionId: id });
                           setIsAddCardModalOpen(true);

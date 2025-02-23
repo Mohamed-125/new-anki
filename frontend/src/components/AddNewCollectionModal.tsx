@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import React, { FormEvent } from "react";
+import React, { FormEvent, useRef } from "react";
 import Form from "./Form";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import { CollectionType } from "../context/CollectionsContext";
@@ -11,6 +11,7 @@ const AddNewCollectionModal = ({
   isCollectionModalOpen,
   setIsCollectionModalOpen,
   defaultValues,
+  setDefaultValues,
   editId,
   parentCollectionId,
 }: {
@@ -18,6 +19,7 @@ const AddNewCollectionModal = ({
   setIsCollectionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   defaultValues?: any;
   editId?: string;
+  setDefaultValues: any;
   parentCollectionId?: string;
 }) => {
   const queryClient = useQueryClient();
@@ -83,7 +85,10 @@ const AddNewCollectionModal = ({
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
       };
-      mutateAsync(data).then(() => (e.target as HTMLFormElement).reset());
+      mutateAsync(data).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["collections"] });
+        queryClient.invalidateQueries({ queryKey: ["collection"] });
+      });
     }
   };
 
@@ -106,59 +111,88 @@ const AddNewCollectionModal = ({
       .catch((err) => err)
       .finally(() => {
         setIsCollectionModalOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["collections"] });
         (e.target as HTMLFormElement).reset();
       });
   };
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  const onAnimationEnd = () => {
+    formRef.current?.reset();
+    setDefaultValues(null);
+  };
 
   return (
-    <Modal setIsOpen={setIsCollectionModalOpen} isOpen={isCollectionModalOpen}>
+    <Modal
+      onAnimationEnd={onAnimationEnd}
+      setIsOpen={setIsCollectionModalOpen}
+      isOpen={isCollectionModalOpen}
+      className="w-full max-w-lg"
+    >
+      <Modal.Header
+        setIsOpen={setIsCollectionModalOpen}
+        title={
+          defaultValues?.collectionName
+            ? "Edit This Collection"
+            : "Add New Collection"
+        }
+      />
       <Form
-        className="w-[100%] max-w-[unset]"
+        className="p-0 space-y-6"
+        formRef={formRef}
         onSubmit={(e) =>
           defaultValues?.collectionName
             ? updateCollectionHandler(e)
             : createCollectionHandler(e)
         }
       >
-        <Form.Title>
-          {defaultValues?.collectionName
-            ? "Edit This Collection"
-            : "Add New Collection"}
-        </Form.Title>
-        <Form.FieldsContainer>
+        <Form.FieldsContainer className="space-y-4">
           <Form.Field>
             <Form.Label>Collection Name</Form.Label>
             <Form.Input
               defaultValue={defaultValues?.collectionName}
               type="text"
               name="collection_name"
+              className="w-full px-4 py-2 text-gray-900 transition-all border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter collection name"
+              required
             />
           </Form.Field>
-
-          <Form.Field className="flex gap-2 items-center">
-            <label>Collection Public</label>
-            <input
-              name="collection_public"
-              defaultValue={defaultValues?.collecitonPublic}
-              type="checkbox"
-            />
+          <Form.Field className="flex items-center gap-3">
+            <div className="relative flex items-center">
+              <input
+                id="collection_public"
+                name="collection_public"
+                defaultChecked={defaultValues?.collecitonPublic}
+                type="checkbox"
+                className="w-5 h-5 text-blue-600 transition-colors border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="collection_public"
+                className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
+              >
+                Make Collection Public
+              </label>
+            </div>
           </Form.Field>
         </Form.FieldsContainer>
-
-        <div className="flex gap-2">
+        <Modal.Footer className="flex justify-end gap-3 pt-4 border-t border-gray-100">
           <Button
             onClick={() => setIsCollectionModalOpen(false)}
             size="parent"
             type="button"
-            variant={"danger"}
-            className={"mt-8"}
+            variant="danger"
           >
             Cancel
           </Button>
-          <Button size="parent" className={"mt-8"}>
+          <Button
+            size="parent"
+            type="submit"
+            className="px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
             {defaultValues?.collectionName ? "Save Changes" : "Add Collection"}
-          </Button>{" "}
-        </div>
+          </Button>
+        </Modal.Footer>
       </Form>
     </Modal>
   );
