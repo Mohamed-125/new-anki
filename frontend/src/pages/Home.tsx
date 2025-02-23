@@ -130,12 +130,15 @@ const Home = () => {
       </h6>
       <div className="flex items-center justify-between mt-2">
         <Link to="/study-cards">
-          <Button variant="primary-outline" className="">
+          <Button variant="primary-outline" className="px-3 py-3 sm:text-sm">
             Study Your Cards
           </Button>
         </Link>
 
-        <Button className={"my-7"} onClick={() => setIsAddCardModalOpen(true)}>
+        <Button
+          className={"my-7 sm:text-sm py-3 px-2"}
+          onClick={() => setIsAddCardModalOpen(true)}
+        >
           Create a new card
         </Button>
       </div>

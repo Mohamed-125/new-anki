@@ -182,12 +182,12 @@ const StudyCards = () => {
             )}
           </div>
 
-          <div className="flex justify-center gap-2 ">
+          <div className="flex flex-wrap justify-center gap-2 ">
             {showAnswer ? (
               <>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block text-green-500 border-green-500 hover:bg-green-500"
+                  className="block text-green-500 border-green-500 hover:text-white sm:w-full hover:bg-green-500"
                   variant="primary-outline"
                   onClick={() => submitAnswer("easy")}
                 >
@@ -195,7 +195,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block text-yellow-500 border-yellow-500 text hover:bg-yellow-500"
+                  className="block text-yellow-500 border-yellow-500 hover:text-white sm:w-full text hover:bg-yellow-500"
                   variant="primary-outline"
                   onClick={() => submitAnswer("medium")}
                 >
@@ -203,7 +203,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block"
+                  className="block hover:text-white sm:w-full"
                   variant="danger-outline"
                   onClick={() => submitAnswer("hard")}
                 >
@@ -211,7 +211,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block text-black border-black text hover:bg-black "
+                  className="block text-black border-black hover:text-white sm:w-full text hover:bg-black "
                   variant="primary-outline"
                   onClick={() => submitAnswer(`Couldn't Remember`)}
                 >
@@ -220,7 +220,7 @@ const StudyCards = () => {
               </>
             ) : (
               <Button
-                className="block mx-auto mt-auto"
+                className="block mx-auto mt-auto sm:w-full"
                 //@ts-ignore
                 tabIndex="-1"
                 onClick={() => setShowAnswer(true)}

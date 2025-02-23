@@ -33,12 +33,12 @@ const Button = (props: ButtonProps) => {
             "border-blue-500 bg-transparent hover:bg-blue-50 text-blue-700",
           danger: "bg-red-600 hover:bg-red-700",
           "danger-outline":
-            "border-red-600 bg-transparent hover:bg-red-50 text-red-600",
+            "border-red-600 bg-transparent hover:bg-red-500 text-red-600",
         },
         size: {
           large: "py-3 px-8 w-full max-w-[200px] text-base",
           parent: "w-full justify-center",
-          fit: "w-fit justify-center"
+          fit: "w-fit justify-center",
         },
       },
       defaultVariants: {
