@@ -147,8 +147,8 @@ const CollectionPage = ({}) => {
                 <div className="container">
                   {/* Header Section */}
                   <div className="flex flex-col gap-4 pb-6 border-b border-gray-200">
-                    <div className="flex items-start justify-between">
-                      <h1 className="text-3xl font-bold text-gray-800">
+                    <div className="flex items-start justify-between md:block">
+                      <h1 className="text-3xl font-bold text-gray-800 md:mb-3">
                         {collection?.name}
                       </h1>
                       {user?._id === collection?.userId && (
@@ -186,10 +186,10 @@ const CollectionPage = ({}) => {
                   </div>
                   {/* Sub Collections Section */}
                   <div className="mt-8 ">
-                    <div className="flex items-center justify-between mb-5">
+                    <div className="flex flex-wrap items-center justify-between mb-5">
                       <h2 className="text-xl font-medium text-gray-700 ">
                         Sub Collections
-                        <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
+                        <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 mt-3 text-gray-600 rounded-full">
                           {collection?.subCollections?.length || 0}
                         </span>
                       </h2>
