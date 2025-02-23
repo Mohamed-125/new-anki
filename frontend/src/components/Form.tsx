@@ -1,6 +1,9 @@
 import React, { useState, ReactNode, forwardRef } from "react";
 import { twMerge } from "tailwind-merge";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
 
 type FormProps = React.HTMLAttributes<HTMLFormElement> & {
   onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -21,7 +24,7 @@ const Form = ({
   return (
     <form
       className={twMerge(
-        "bg-white  py-12 px-7  rounded-2xl w-[90%] max-w-[430px]",
+        "bg-white py-12 px-7 rounded-2xl w-[90%] max-w-[430px]",
         className
       )}
       ref={formRef}
@@ -38,7 +41,7 @@ const Form = ({
 
 Form.Title = ({ children }: { children: React.ReactNode }) => {
   return (
-    <h2 className="mb-8 text-4xl font-bold text-center sm:text-3xl text-slate-700">
+    <h2 className="mb-8 text-3xl font-bold text-center sm:text-3xl text-slate-700">
       {children}
     </h2>
   );
@@ -62,6 +65,7 @@ Form.FieldsContainer = ({
     </div>
   );
 };
+
 Form.Field = ({
   children,
   className,
@@ -90,7 +94,7 @@ Form.Message = ({
   return (
     <p
       className={twMerge(
-        "mt-4 mb- font-medium  text-slate-700",
+        "mt-4 mb- font-medium text-slate-700",
         className,
         center && "text-center",
         error && "text-red-600 mt-1"
@@ -100,12 +104,6 @@ Form.Message = ({
     </p>
   );
 };
-
-// : {
-//   type?: string;
-//   ref?: any;
-//   className?: string;
-// } & React.InputHTMLAttributes<HTMLInputElement>
 
 type InputProps = {
   type?: string;
@@ -119,40 +117,31 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
 
     return type === "password" ? (
       <span className="relative">
-        <input
+        <Input
           ref={ref}
-          className={twMerge(
-            "px-3 py-2 w-full rounded-lg border focus-visible:outline-lightPrimary focus-visible:border border-neutral-300",
-            className
-          )}
+          className={twMerge("focus-visible:ring-lightPrimary", className)}
           type={isPassword ? "password" : "text"}
           {...attributes}
         />
-
-        <button type="button">
+        <Button
+          type="button"
+          variant="ghost"
+          className="absolute right-2 top-1/2 p-0 h-auto -translate-y-1/2"
+          onClick={() => setIsPassword(!isPassword)}
+        >
           {isPassword ? (
-            <FaEye
-              onClick={() => {
-                setIsPassword(false);
-              }}
-              className="absolute text-2xl right-3 top-[50%] bottom-2/4 -translate-y-2/4 cursor-pointer"
-            />
+            <FaEye className="text-2xl" />
           ) : (
-            <FaEyeSlash
-              onClick={() => {
-                setIsPassword(true);
-              }}
-              className="absolute text-2xl right-3 top-[50%] bottom-2/4 -translate-y-2/4 cursor-pointer"
-            />
-          )}{" "}
-        </button>
+            <FaEyeSlash className="text-2xl" />
+          )}
+        </Button>
       </span>
     ) : (
       <div className="relative">
-        <input
+        <Input
           ref={ref}
           className={twMerge(
-            "w-full px-3 focus-visible:outline-lightPrimary py-2 focus-visible:border border  border-neutral-300  rounded-lg",
+            "focus-visible:ring-lightPrimary",
             className,
             isLoading && "inputLoading"
           )}
@@ -174,16 +163,15 @@ Form.Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ type, className, isLoading, ...attributes }, ref) => {
     return (
       <div className="relative">
-        {" "}
-        <textarea
-          ref={ref} // Forward the ref to the <textarea> element
+        <Textarea
+          ref={ref}
           className={twMerge(
-            "w-full px-3   py-4 sm:text-sm border border-gray-400 rounded-lg",
+            "focus-visible:ring-lightPrimary sm:text-sm",
             className,
             isLoading && "inputLoading"
           )}
           {...attributes}
-        ></textarea>
+        />
         {isLoading && <i className="loader loader-input"></i>}
       </div>
     );
@@ -203,7 +191,7 @@ Form.Select = ({
   return (
     <select
       className={twMerge(
-        "px-3 mb-4 w-full rounded-lg border border-gray-400 py-",
+        "px-3 py-2 mb-4 w-full rounded-lg border border-gray-400",
         className
       )}
       {...attributes}

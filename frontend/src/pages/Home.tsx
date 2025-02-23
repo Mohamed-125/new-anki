@@ -126,7 +126,7 @@ const Home = () => {
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>
-      <div className="flex justify-between items-center mt-2">
+      <div className="flex items-center justify-between mt-2">
         <Link to="/study-cards">
           <Button variant="primary-outline" className="">
             Study Your Cards

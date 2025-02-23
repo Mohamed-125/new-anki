@@ -32,7 +32,7 @@ body * {
 }
 
 .title {
-  @apply mb-7 text-4xl font-semibold;
+  @apply text-4xl font-semibold mb-7;
 }
 
 .container {
@@ -432,4 +432,17 @@ iframe {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.modalScroll::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+.modalScroll::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 60px rgba(146, 146, 146, 0.3) !important;
+}
+
+.modalScroll::-webkit-scrollbar-thumb {
+  background-color: rgb(164, 164, 164);
+  border-radius: 20px;
 }

@@ -159,7 +159,7 @@ export function AddCardModal({
     >
       <Form
         formRef={formRef}
-        className="w-[100%] max-w-[unset]"
+        className="w-[100%] max-w-[unset] py-4"
         onSubmit={handleSubmit}
       >
         <Form.Title>{isEdit ? "Edit Card" : " Add New Card"} </Form.Title>

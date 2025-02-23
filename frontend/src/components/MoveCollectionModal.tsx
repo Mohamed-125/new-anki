@@ -12,6 +12,7 @@ import useCardActions from "../hooks/useCardActions";
 import { CardType } from "../hooks/useGetCards";
 import { url } from "inspector";
 import CollectionSkeleton from "./CollectionsSkeleton";
+import { PlusCircle } from "lucide-react";
 
 type MoveCollectionModalProps = {
   editId: string;
@@ -123,30 +124,30 @@ const MoveCollectionModal = ({
         setEditId("");
         setParentCollectionId("");
       }}
-      className={`max-w-2xl w-full ${
+      className={`max-w-lg w-full bg-white rounded-xl shadow-lg ${
         isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
       }`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center pb-4 mb-1 border-b border-gray-100">
           <h3 className="text-2xl font-bold text-gray-800">
             Move To Collection
           </h3>
-          <Button
+          <PlusCircle
+            className={
+              "p-1 w-8 h-8 text-sm font-medium text-white text-blue-600 rounded-lg transition-colors cursor-pointer bg-lightPrimary hover:bg-blue-400"
+            }
             onClick={openCollectionModal}
-            className="p-2 rounded-full hover:bg-gray-100"
-          >
-            <span className="text-xl">+</span>
-          </Button>
+          />
         </div>
 
-        <div className="p-4 mb-6 bg-gray-50 rounded-lg">
+        <div className="p-4 mb-6 bg-gray-50 rounded-xl border border-gray-100">
           <h6 className="mb-2 text-sm font-medium text-gray-600">
             Current Collection
           </h6>
-          <p className="text-lg text-gray-800">
+          <p className="text-lg font-medium text-gray-800">
             {toMoveCollectionId
               ? collections?.find((c) => c._id === currentCollectionParentId)
                   ?.name || "No Collection"
@@ -161,7 +162,7 @@ const MoveCollectionModal = ({
         </div>
         {toMoveCollectionId && (
           <Button
-            className="py-2 mb-6 w-full"
+            className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-lightPrimary text-white hover:bg-blue-400 rounded-lg transition-colors"
             onClick={() => {
               axios
                 .put(`collection/${toMoveCollectionId}`, {
@@ -345,17 +346,23 @@ const CollectionOption = React.memo(function CollectionOption({
         }}
         className={`
         flex justify-between items-center p-3 rounded-lg
-        ${isParentCollection ? "cursor-pointer hover:bg-gray-100" : ""}
-        transition-colors duration-200
-        ${disabled ? "opacity-50" : ""}`}
+        ${isParentCollection ? "cursor-pointer hover:bg-gray-50" : ""}
+        transition-all duration-200 ease-in-out
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <span className="flex flex-1 gap-3 items-center">
-          <p className="font-medium text-gray-700">{collection?.name}</p>
+          <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
+            {collection?.name}
+          </p>
           {isParentCollection && (
-            <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400" />
+            <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400 group-hover:text-gray-600" />
           )}
         </span>
-        <Button disabled={disabled} onClick={moveHandler}>
+        <Button
+          disabled={disabled}
+          onClick={moveHandler}
+          className="px-4 py-1.5 text-sm font-medium  bg-lightPrimary text-white hover:bg-blue-400 rounded-lg transition-colors"
+        >
           Move
         </Button>
       </div>

@@ -12,7 +12,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import Button from "./Button";
 import { FaTrashCan } from "react-icons/fa6";
 import { useQueryClient } from "@tanstack/react-query";
-import { PenBoxIcon } from "lucide-react";
+import { Folder, PenBoxIcon } from "lucide-react";
 import axios from "axios";
 import { LuMoveUpRight } from "react-icons/lu";
 
@@ -64,8 +64,8 @@ const Collection = ({
       className="rounded-lg border  p-6 py-8 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]"
     >
       <div>
-        <div className="flex justify-between items-center">
-          <input
+        <div className="flex items-center ">
+          {/* <input
             checked={isSelected}
             type="checkbox"
             className="!min-w-6 !h-6 "
@@ -78,16 +78,29 @@ const Collection = ({
                 }
               });
             }}
-          />
+          /> */}
           <Link
-            className="py-2 ml-3 font-medium text-gray-700 transition-colors grow hover:text-blue-600"
             to={`${location.pathname}/${id}`}
+            className="flex items-center flex-1 gap-4"
           >
-            {collection.name}
+            <div
+              data-lov-name="div"
+              data-component-line="70"
+              className="p-3 bg-blue-100 rounded-lg dark:bg-indigo-900/30"
+            >
+              <Folder className="w-6 h-6 text-primary " />{" "}
+            </div>
+            <div>
+              <p className="flex-1 font-semibold">{collection.name}</p>
+              <span className="text-sm font-medium text-grayColor">
+                {collection.collectionCards.length} Cards
+              </span>
+            </div>
           </Link>
+
           {collection._id && (
             <DropdownMenu modal={false}>
-              <DropdownMenuTrigger className="text-2xl">
+              <DropdownMenuTrigger className="p-2 text-2xl transition-all rounded-md hover:bg-gray-100">
                 <BsThreeDotsVertical />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="mt-6 font-semibold">

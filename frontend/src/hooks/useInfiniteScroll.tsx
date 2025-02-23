@@ -24,14 +24,13 @@ const useInfiniteScroll = (
     // Call the check on the first render
     setTimeout(() => checkInitialLoad(), 1500);
     const handleScroll = () => {
-      console.log("strst");
       const scrollHeight = document.documentElement.scrollHeight;
       const scrollTop = document.documentElement.scrollTop;
       const windowHeight = document.documentElement.clientHeight;
       const scrollPercentage =
         (Math.round(scrollTop + windowHeight) / Math.round(scrollHeight)) * 100;
 
-      if (scrollPercentage > 97) {
+      if (scrollPercentage > 99) {
         fetchNextPage();
       }
     };
