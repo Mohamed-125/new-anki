@@ -51,11 +51,47 @@ CardSchema.pre("find", function (next) {
   this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
   next();
 });
-CardSchema.post("find", function (docs) {
-  if (!docs) return;
-  docs.forEach((card) => {
-    card.easeFactorDate;
-  });
+
+CardSchema.post("find", async function (docs) {
+  const updatePromises = [];
+
+  const duration = 86400000 * 2;
+
+  for (const card of docs) {
+    if (card.easeFactorDate) {
+      const easeFactor = card.easeFactor;
+
+      const easeFactorChange =
+        easeFactor >= 0.7
+          ? 0.2
+          : easeFactor < 0.7 && easeFactor >= 0.5
+          ? 0.5
+          : 0.9;
+
+      const easeFactorTimestamp = new Date(card.easeFactorDate).getTime();
+      const currentTimestamp = Date.now();
+
+      if (currentTimestamp - easeFactorTimestamp > duration) {
+        updatePromises.push(
+          CardModel.updateOne(
+            { _id: card._id },
+            {
+              $set: {
+                easeFactor: card.easeFactor - easeFactorChange,
+                easeFactorDate: Date.now(),
+              },
+            }
+          )
+        );
+        card.easeFactor = card.easeFactor - easeFactorChange;
+        card.easeFactorDate = new Date();
+      }
+    }
+  }
+
+  if (updatePromises.length > 0) {
+    await Promise.all(updatePromises);
+  }
 });
 
 const CardModel = mongoose.model("Card", CardSchema);

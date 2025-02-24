@@ -23,7 +23,6 @@ const Login = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  console.log("errors", errors);
   const onSubmit = (values: AuthFormSchemaType) => {
     console.log(values);
     let data = values;
@@ -40,7 +39,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-grow justify-center items-center">
+    <div className="flex items-center justify-center flex-grow">
       <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
         <Form.Title> Login </Form.Title>
         <Form.FieldsContainer gap={12}>

@@ -1,12 +1,21 @@
-import { useContext } from "react";
-import { userContext } from "../context/UserContext";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 
 const useGetCurrentUser = () => {
-  const user = useContext(userContext);
-  if (!user) {
-    throw new Error("User context must be used within a UserProvider");
-  }
-  return user;
+  type UserType = {
+    email: string;
+    _id: string;
+  };
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const { data } = await axios.get("auth/me");
+      return data as UserType;
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  return { user, isLoading };
 };
 
 export default useGetCurrentUser;

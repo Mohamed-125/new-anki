@@ -56,7 +56,7 @@ module.exports.getUserCards = async (req, res, next) => {
   try {
     const cardsCount = await CardModel.countDocuments(query);
 
-    console.log(cardsCount);
+    console.log(query);
     const skipNumber = page * limit;
     const remaining = Math.max(0, cardsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;

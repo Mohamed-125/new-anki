@@ -1,19 +1,16 @@
 import axios from "axios";
 import Collection from "../components/Collection";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Button from "../components/Button";
-import { useQueryClient } from "@tanstack/react-query";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import AddNewCollectionModal from "../components/AddNewCollectionModal";
-import useGetCollectionsContext from "../hooks/useGetCollectionsContext";
-import { CollectionType } from "../context/CollectionsContext";
+import useGetCollections, { CollectionType } from "../hooks/useGetCollections";
 import MoveCollectionModal from "@/components/MoveCollectionModal";
-import useGetCards from "@/hooks/useGetCards";
 
 const Collections = () => {
-  const { collections, notParentCollections } = useGetCollectionsContext();
+  const { collections, notParentCollections } = useGetCollections();
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   // const [collectionCards, setCollectionsCards] = useState([]);
   const [defaultValues, setDefaultValues] = useState({});

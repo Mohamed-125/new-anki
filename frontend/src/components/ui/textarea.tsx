@@ -6,7 +6,6 @@ export interface TextareaProps
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {
-    console.log(props);
     return (
       <textarea
         className={cn(

@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "./Modal";
-import useGetCollectionsContext from "../hooks/useGetCollectionsContext";
 import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { all } from "axios";
-import { CollectionType } from "../context/CollectionsContext";
 import Loading from "./Loading";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
@@ -12,6 +10,7 @@ import useCardActions from "../hooks/useCardActions";
 import { CardType } from "../hooks/useGetCards";
 import { url } from "inspector";
 import CollectionSkeleton from "./CollectionsSkeleton";
+import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 
 type MoveCollectionModalProps = {
   editId: string;
@@ -43,7 +42,7 @@ const MoveCollectionModal = ({
   setParentCollectionId,
 }: MoveCollectionModalProps) => {
   const { collections, parentCollections, notParentCollections, isLoading } =
-    useGetCollectionsContext();
+    useGetCollections();
   const [selectedCollectionsIds, setSelectedCollectionIds] = useState<string[]>(
     []
   );

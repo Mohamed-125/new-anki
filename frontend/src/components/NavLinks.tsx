@@ -5,7 +5,6 @@ import { LinkType } from "./Navbar";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserType } from "@/context/UserContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,8 +44,8 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
           </Link>
         );
       })}
-      {user ? (
-        <ProfileDropdown user={user} />
+      {user?._id ? (
+        <ProfileDropdown setIsNavOpen={setIsNavOpen} user={user} />
       ) : (
         <>
           <div style={{ gap: `${gap}px` }} className="flex md:hidden">
@@ -78,21 +77,28 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
   );
 }
 
-const ProfileDropdown = ({ user }: { user: UserType | null }) => {
+const ProfileDropdown = ({
+  user,
+  setIsNavOpen,
+}: {
+  user: UserType | null;
+  setIsNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const logoutHandler = () => {
     axios.post("auth/logout").then(() => {
-      queryClient.clear(); // Completely clears the query cache
+      queryClient.clear();
       navigate("/login");
     });
+    setIsNavOpen(false);
   };
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="ml-1 text-2xl">
-        <div className="flex justify-center items-center w-11 h-11 font-bold text-white bg-sky-900 rounded-full">
+        <div className="flex items-center justify-center font-bold text-white rounded-full w-11 h-11 bg-sky-900">
           {user?.email?.[0]}
         </div>
       </DropdownMenuTrigger>

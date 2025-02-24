@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import useGetCollectionsContext from "../hooks/useGetCollectionsContext";
-import path from "path";
+import useGetCollections from "@/hooks/useGetCollections";
 
 const BreadCramps = () => {
   const location = useLocation().pathname;
@@ -10,7 +9,7 @@ const BreadCramps = () => {
   }
   let breadCramps = [] as string[];
 
-  const { collections } = useGetCollectionsContext();
+  const { collections } = useGetCollections();
 
   if (pathArray.includes("collections")) {
     pathArray.forEach((path, index) => {
@@ -26,7 +25,7 @@ const BreadCramps = () => {
   }
 
   return (
-    <div className="flex relative gap-1 sm:text-sm">
+    <div className="relative flex gap-1 sm:text-sm">
       {pathArray.map((path, index) => {
         return (
           <Link

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { CollectionType } from "@/context/CollectionsContext";
+import { CollectionType } from "@/hooks/useGetCollections";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -1,16 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
-import { CardType } from "./useGetCards";
+import React, { useMemo } from "react";
 import axios from "axios";
-import Loading from "../components/Loading";
-import { CollectionType } from "../context/CollectionsContext";
+import { CardType } from "./useGetCards";
+
+export type CollectionType = {
+  collectionCards: CardType[];
+  subCollections: CollectionType[];
+  parentCollectionId?: string;
+  id: string;
+  name: string;
+  slug: string;
+  userId: string;
+  public: boolean;
+  _id: string;
+};
 
 const useGetCollections = ({
   publicCollections,
 }: {
   publicCollections?: boolean;
 } = {}) => {
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: collections,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: publicCollections ? ["collections", "public"] : ["collections"],
     queryFn: ({ signal }) =>
       axios
@@ -18,7 +32,35 @@ const useGetCollections = ({
         .then((res) => res.data as CollectionType[]),
   });
 
-  return { data, isLoading, isError };
+  const subCollections = useMemo(
+    () => collections?.filter((collection) => collection.parentCollectionId),
+    [collections]
+  );
+
+  const parentCollections = useMemo(
+    () =>
+      collections?.filter((parentCollection) =>
+        subCollections?.some(
+          (subCollection) =>
+            subCollection.parentCollectionId === parentCollection._id
+        )
+      ),
+    [collections, subCollections]
+  );
+
+  const notParentCollections = useMemo(
+    () => collections?.filter((collection) => !collection.parentCollectionId),
+    [collections]
+  );
+
+  return {
+    collections,
+    isLoading,
+    isError,
+    parentCollections,
+    subCollections,
+    notParentCollections,
+  };
 };
 
 export default useGetCollections;
