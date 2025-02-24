@@ -101,6 +101,7 @@ const Home = () => {
         setTargetCollectionId={setTargetCollectionId}
         isMoveToCollectionOpen={isMoveToCollectionOpen}
         setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+        targetCollectionId={targetCollectionId}
         editId={editId}
         setEditId={setEditId}
         cards={userCards}
@@ -116,13 +117,6 @@ const Home = () => {
         isCollectionModalOpen={isCollectionModalOpen}
         setIsCollectionModalOpen={setIsCollectionModalOpen}
         parentCollectionId={parentCollectionId}
-      />
-      <ChangeItemsParent
-        changeItemsParent={changeItemsParent}
-        setChangeItemsParent={setChangeItemsParent}
-        itemsType={"card"}
-        itemsIds={selectedItems}
-        parentName="collection"
       />
       <SelectedItemsController
         isItemsCards={true}

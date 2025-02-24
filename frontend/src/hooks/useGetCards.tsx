@@ -43,7 +43,6 @@ const useGetCards = ({
     ? ["cards", "study"]
     : ["cards"];
 
-  console.log(queryKey);
   const {
     data,
     error,
@@ -75,7 +74,6 @@ const useGetCards = ({
     enabled: enabled,
   });
 
-  console.log(enabled);
   let userCards = useMemo(() => {
     return data?.pages.flatMap((page) => (page as GetCardsResponse).cards);
   }, [data]);

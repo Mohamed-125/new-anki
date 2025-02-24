@@ -14,7 +14,7 @@ import useGetCurrentUser from "../hooks/useGetCurrentUser.tsx";
 import AddNewCollectionModal from "../components/AddNewCollectionModal.tsx";
 import Collection from "../components/Collection.tsx";
 import MoveCollectionModal from "../components/MoveCollectionModal.tsx";
-import { CollectionType } from "../context/CollectionsContext.tsx";
+import { CollectionType } from "@/hooks/useGetCollections.tsx";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll.tsx";
 import CardsSkeleton from "@/components/CardsSkeleton.tsx";
 import SearchCards from "@/components/SearchCards.tsx";
@@ -46,7 +46,6 @@ const CollectionPage = ({}) => {
     collectionId: collection?._id,
   });
 
-  console.log("collectionCards", collectionCards);
   const {} = useInfiniteScroll(fetchNextPage);
 
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
@@ -83,55 +82,60 @@ const CollectionPage = ({}) => {
     }
   }, [selectedItems]);
 
-  console.log(moving);
   if (isLoading) {
     return <Loading />;
   }
 
-  console.log(parentCollectionId);
   return (
     <div className="">
       <div className="">
-        {collectionCards && (
-          <>
-            <MoveCollectionModal
-              selectedItems={selectedItems}
-              setSelectedItems={setSelectedItems}
-              setEditId={setEditId}
-              toMoveCollectionId={toMoveCollectionId}
-              isMoveToCollectionOpen={isMoveToCollectionOpen}
-              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-              editId={editId}
-              isCollectionModalOpen={isCollectionModalOpen}
-              setisCollectionModalOpen={setIsCollectionModalOpen}
-              cards={collectionCards}
-              setParentCollectionId={setParentCollectionId}
-              // moving={moving}
-            />
-            <AddNewCollectionModal
-              setDefaultValues={setDefaultValues}
-              setIsCollectionModalOpen={setIsCollectionModalOpen}
-              isCollectionModalOpen={isCollectionModalOpen}
-              defaultValues={defaultValues}
-              editId={editId}
-              parentCollectionId={parentCollectionId === "home" ? "" : id}
-            />
-            <AddCardModal
-              isMoveToCollectionOpen={isMoveToCollectionOpen}
-              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-              collectionId={collection?._id}
-              isAddCardModalOpen={isAddCardModalOpen}
-              setIsAddCardModalOpen={setIsAddCardModalOpen}
-              defaultValues={defaultValues}
-              content={content}
-              setDefaultValues={setDefaultValues}
-              setContent={setContent}
-              editId={editId}
-              setEditId={setEditId}
-            />
-          </>
-        )}
-
+        <>
+          <MoveCollectionModal
+            selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems}
+            setEditId={setEditId}
+            toMoveCollectionId={toMoveCollectionId}
+            isMoveToCollectionOpen={isMoveToCollectionOpen}
+            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+            editId={editId}
+            isCollectionModalOpen={isCollectionModalOpen}
+            setisCollectionModalOpen={setIsCollectionModalOpen}
+            cards={collectionCards}
+            setParentCollectionId={setParentCollectionId}
+            // moving={moving}
+          />
+          <AddNewCollectionModal
+            setDefaultValues={setDefaultValues}
+            setIsCollectionModalOpen={setIsCollectionModalOpen}
+            isCollectionModalOpen={isCollectionModalOpen}
+            defaultValues={defaultValues}
+            editId={editId}
+            parentCollectionId={parentCollectionId === "home" ? "" : id}
+          />
+          <AddCardModal
+            isMoveToCollectionOpen={isMoveToCollectionOpen}
+            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+            collectionId={collection?._id}
+            isAddCardModalOpen={isAddCardModalOpen}
+            setIsAddCardModalOpen={setIsAddCardModalOpen}
+            defaultValues={defaultValues}
+            content={content}
+            setDefaultValues={setDefaultValues}
+            setContent={setContent}
+            editId={editId}
+            setEditId={setEditId}
+          />
+        </>
+        {selectedItems.length > 0 && (
+          <SelectedItemsController
+            selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems}
+            isItemsCards={moving === "cards" && true}
+            isItemsCollections={moving === "collections" && true}
+            moving={moving}
+            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+          />
+        )}{" "}
         {/* <ChangeItemsParent
           changeItemsParent={changeItemsParent}
           setChangeItemsParent={setChangeItemsParent}
@@ -139,7 +143,6 @@ const CollectionPage = ({}) => {
           itemsIds={selectedItems}
           parentName="collection"
         /> */}
-
         <div className="min-h-screen py-8">
           <div className="mt-6 space-y-6">
             <div className="space-y-8">
@@ -236,17 +239,6 @@ const CollectionPage = ({}) => {
                     </span>
                   </h2>
                 </div>
-
-                {selectedItems.length > 0 && (
-                  <SelectedItemsController
-                    selectedItems={selectedItems}
-                    setSelectedItems={setSelectedItems}
-                    isItemsCards={moving === "cards" && true}
-                    isItemsCollections={moving === "collections" && true}
-                    moving={moving}
-                    setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-                  />
-                )}
 
                 {isIntialLoading && <CardsSkeleton />}
                 {collectionCards?.length ? (

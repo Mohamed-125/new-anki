@@ -111,6 +111,82 @@ const MoveCollectionModal = ({
     )?._id;
   }, [toMoveCollectionId]);
 
+  const { updateCardHandler } = useCardActions();
+
+  // const moveCollectionsHandler = (root = false) => {
+  //   if (selectedItems.length) {
+  //     axios
+  //       .post(
+  //         "collection/batch-move",
+
+  //         {
+  //           ids: selectedItems,
+  //           parentCollectionId: targetCollectionId,
+  //         }
+  //       )
+  //       .then(() => {
+  //         queryClient.invalidateQueries({
+  //           queryKey: ["collections"],
+  //         });
+  //         queryClient.invalidateQueries({
+  //           queryKey: ["collection"],
+  //         });
+
+  //         setSelectedItems?.([]);
+  //       });
+  //   } else {
+  //     axios
+  //       .put(`collection/${toMoveCollectionId}`, {
+  //         parentCollectionId: targetCollectionId,
+  //       })
+  //       .then((res) => {
+  //         queryClient.invalidateQueries({ queryKey: ["collections"] });
+  //         queryClient.invalidateQueries({
+  //           queryKey: ["collection"],
+  //         });
+  //       })
+  //       .catch((err) => err);
+  //   }
+
+  //   const moveCardsHandler = (root = false) => {
+  //     if (selectedItems.length) {
+  //       axios
+  //         .post("card/batch-move", {
+  //           ids: selectedItems,
+  //           collectionId: root ? null : targetCollectionId,
+  //         })
+  //         .then(() => {
+  //           queryClient.invalidateQueries({
+  //             queryKey: ["cards"],
+  //           });
+  //           setSelectedItems?.([]);
+  //         });
+  //     } else {
+  //       updateCardHandler(
+  //         undefined,
+  //         undefined,
+  //         undefined,
+  //         editId,
+  //         targetCollectionId,
+  //         undefined,
+  //         undefined
+  //       );
+  //     }
+  //   };
+
+  //   useEffect(() => {
+  //     if (targetCollectionId) {
+  //       const collection = collections?.find(
+  //         (c) =>
+  //           c._id === editId ||
+  //           toMoveCollectionId ||
+  //           selectedCollectionsIds.includes(c._id)
+  //       );
+
+  //       console.log(collection);
+  //     }
+  //   }, [targetCollectionId]);
+
   const queryClient = useQueryClient();
 
   const openCollectionModal = useCallback(
@@ -258,7 +334,6 @@ const CollectionOption = React.memo(function CollectionOption({
   setTargetCollectionId,
   selectedItems,
   setSelectedItems,
-  moving = "",
 }: {
   collection: CollectionType;
   setSelectedCollectionIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -272,7 +347,6 @@ const CollectionOption = React.memo(function CollectionOption({
   setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
   selectedItems: string[];
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
-  moving?: string;
 }) {
   {
     const { updateCardHandler } = useCardActions();
@@ -290,7 +364,7 @@ const CollectionOption = React.memo(function CollectionOption({
         collection?._id;
 
     const moveHandler = () => {
-      if (moving === "cards") {
+      if (!toMoveCollectionId) {
         if (selectedItems.length) {
           axios
             .post(
@@ -329,41 +403,23 @@ const CollectionOption = React.memo(function CollectionOption({
           setTargetCollectionId?.(collection._id);
         }
       } else {
-        if (selectedItems.length) {
-          axios
-            .post(
-              "collection/batch-move",
-
-              {
-                ids: selectedItems,
-                selectedParent: collection._id,
-              }
-            )
-            .then(() => {
-              queryClient.invalidateQueries({
-                queryKey: ["collections"],
-              });
-              queryClient.invalidateQueries({
-                queryKey: ["collection"],
-              });
-
-              setSelectedItems?.([]);
+        axios
+          .put(`collection/${toMoveCollectionId}`, {
+            parentCollectionId: collection._id,
+          })
+          .then((res) => {
+            queryClient.invalidateQueries({ queryKey: ["collections"] });
+            queryClient.invalidateQueries({
+              queryKey: ["collection"],
             });
-        } else {
-          axios
-            .put(`collection/${toMoveCollectionId}`, {
-              parentCollectionId: collection._id,
-            })
-            .then((res) => {
-              queryClient.invalidateQueries({ queryKey: ["collections"] });
-              queryClient.invalidateQueries({
-                queryKey: ["collection"],
-              });
-            })
-            .catch((err) => err);
-        }
-        setIsMoveToCollectionOpen(false);
+            queryClient.refetchQueries({ queryKey: ["collections"] });
+            queryClient.refetchQueries({
+              queryKey: ["collection"],
+            });
+          })
+          .catch((err) => err);
       }
+      setIsMoveToCollectionOpen(false);
     };
 
     return (

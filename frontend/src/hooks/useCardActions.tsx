@@ -42,7 +42,6 @@ const useCardActions = () => {
 
     updateCardMutation({
       content: content,
-
       //@ts-ignore
       front: (formData.get("card_word") as string) || front,
       //@ts-ignore
