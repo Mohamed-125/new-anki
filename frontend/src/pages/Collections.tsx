@@ -8,23 +8,17 @@ import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import AddNewCollectionModal from "../components/AddNewCollectionModal";
 import useGetCollections, { CollectionType } from "../hooks/useGetCollections";
 import MoveCollectionModal from "@/components/MoveCollectionModal";
+import useModalStates from "@/hooks/useModalsStates";
 
 const Collections = () => {
   const { collections, notParentCollections } = useGetCollections();
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   // const [collectionCards, setCollectionsCards] = useState([]);
-  const [defaultValues, setDefaultValues] = useState({});
-  const [editId, setEditId] = useState("");
   const [filteredCollections, setFilteredCollections] = useState<
     CollectionType[]
   >(collections || []);
-  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-  const [toMoveCollectionId, setToMoveCollectionId] = useState("");
-  const [parentCollectionId, setParentCollectionId] = useState("");
 
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-  useAddModalShortcuts(setIsCollectionModalOpen);
+  const states = useModalStates();
+  useAddModalShortcuts(states.setIsCollectionModalOpen);
 
   // if (isLoading || !collections) {
   //   return <Loading />;
@@ -32,33 +26,10 @@ const Collections = () => {
 
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
-      <MoveCollectionModal
-        isMoveToCollectionOpen={isMoveToCollectionOpen}
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-        editId={editId}
-        setEditId={setEditId}
-        toMoveCollectionId={toMoveCollectionId}
-        setParentCollectionId={setParentCollectionId}
-        setSelectedItems={setSelectedItems}
-        selectedItems={selectedItems}
-        isCollectionModalOpen={isCollectionModalOpen}
-        setisCollectionModalOpen={setIsCollectionModalOpen}
-      />
-      <AddNewCollectionModal
-        setDefaultValues={setDefaultValues}
-        setIsCollectionModalOpen={setIsCollectionModalOpen}
-        isCollectionModalOpen={isCollectionModalOpen}
-        defaultValues={defaultValues}
-        parentCollectionId={parentCollectionId}
-        editId={editId}
-      />
-      {selectedItems.length > 0 && (
-        <SelectedItemsController
-          selectedItems={selectedItems}
-          setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-          setSelectedItems={setSelectedItems}
-          isItemsCollections={true}
-        />
+      <MoveCollectionModal />
+      <AddNewCollectionModal />
+      {states.selectedItems.length > 0 && (
+        <SelectedItemsController isItemsCollections={true} />
       )}
       {notParentCollections?.length ? (
         <div className="space-y-6">
@@ -82,7 +53,7 @@ const Collections = () => {
           </div>
           <Button
             className="flex ml-auto items-center gap-2 px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-            onClick={() => setIsCollectionModalOpen(true)}
+            onClick={() => states.setIsCollectionModalOpen(true)}
           >
             <span className="text-xl">+</span>
             Create new collection
@@ -92,15 +63,9 @@ const Collections = () => {
               .filter((collection) => !collection?.parentCollectionId)
               .map((collection) => (
                 <Collection
-                  setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-                  setToMoveCollectionId={setToMoveCollectionId}
+                  {...states}
                   collection={collection}
                   key={collection._id}
-                  setDefaultValues={setDefaultValues}
-                  setIsCollectionModalOpen={setIsCollectionModalOpen}
-                  selectedItems={selectedItems}
-                  setSelectedItems={setSelectedItems}
-                  setEditId={setEditId}
                 />
               ))}
           </div>
@@ -123,7 +88,7 @@ const Collections = () => {
           </div>
           <Button
             className="flex items-center gap-2 px-6 py-3 text-white transition-colors bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700"
-            onClick={() => setIsCollectionModalOpen(true)}
+            onClick={() => states.setIsCollectionModalOpen(true)}
           >
             <span className="text-xl">+</span>
             Create your first collection

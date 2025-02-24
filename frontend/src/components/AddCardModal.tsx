@@ -13,47 +13,37 @@ import useCreateNewCard from "../hooks/useCreateNewCardMutation";
 import axios from "axios";
 import useAddOpenModal from "../hooks/useAddModalShortcuts";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
+import useModalStates from "@/hooks/useModalsStates";
 
 type AddCardModalProps = {
-  isAddCardModalOpen: boolean;
-  setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  defaultValues: any;
-  content: string;
-  setContent: React.Dispatch<React.SetStateAction<string>>;
-  setEditId?: React.Dispatch<React.SetStateAction<string>>;
-  editId?: string;
-  setDefaultValues: React.Dispatch<React.SetStateAction<any>>;
+  collectionId?: string;
   optimistic?: {
     isOptimistic: boolean;
-    setOptimistic: React.Dispatch<React.SetStateAction<any[]>>;
+    setOptimistic: any;
   };
   videoId?: string;
-  refetch?: any;
-  collectionId?: string;
-  targetCollectionId?: string;
-  setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
-  setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isMoveToCollectionOpen: boolean;
 };
 
 export function AddCardModal({
-  isAddCardModalOpen,
-  setIsAddCardModalOpen,
-  defaultValues,
-  content,
-  setContent,
-  setEditId,
-  editId,
-  setDefaultValues,
+  collectionId,
   optimistic,
   videoId,
-  refetch,
-  collectionId,
-  targetCollectionId,
-  setTargetCollectionId,
-  setIsMoveToCollectionOpen,
-  isMoveToCollectionOpen,
 }: AddCardModalProps) {
+  const {
+    isAddCardModalOpen,
+    setIsAddCardModalOpen,
+    isMoveToCollectionOpen,
+    setIsMoveToCollectionOpen,
+    editId,
+    setEditId,
+    defaultValues,
+    setDefaultValues,
+    targetCollectionId,
+    setTargetCollectionId,
+    content,
+    setContent,
+  } = useModalStates();
+
   const isEdit = !!editId;
   useAddModalShortcuts(setIsAddCardModalOpen);
 
@@ -73,7 +63,6 @@ export function AddCardModal({
         : () => {},
     },
   });
-  console.log("tsrtrst", isEdit);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const cardData = {
@@ -96,7 +85,6 @@ export function AddCardModal({
       createCardHandler(e, cardData, setIsAddCardModalOpen);
     }
 
-    refetch?.();
     //@ts-ignore
     e.target.reset();
   };

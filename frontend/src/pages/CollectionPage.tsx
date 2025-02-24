@@ -18,6 +18,8 @@ import { CollectionType } from "@/hooks/useGetCollections.tsx";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll.tsx";
 import CardsSkeleton from "@/components/CardsSkeleton.tsx";
 import SearchCards from "@/components/SearchCards.tsx";
+import useModalsStates from "@/hooks/useModalsStates.tsx";
+import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery.ts";
 
 const CollectionPage = ({}) => {
   const location = useLocation();
@@ -48,25 +50,23 @@ const CollectionPage = ({}) => {
 
   const {} = useInfiniteScroll(fetchNextPage);
 
-  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
-  const [defaultValues, setDefaultValues] = useState({});
-  const [content, setContent] = useState("");
-  const [editId, setEditId] = useState("");
   const [query, setQuery] = useState("");
-  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-  const [toMoveCollectionId, setToMoveCollectionId] = useState("");
-  const [parentCollectionId, setParentCollectionId] = useState<string>("");
   const isLoading = collectionLoading;
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
+
+  const {
+    selectedItems,
+    setDefaultValues,
+    setIsCollectionModalOpen,
+    setIsAddCardModalOpen,
+  } = useModalsStates();
+  const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
   const queryClient = useQueryClient();
   const deleteCollectionHandler = (collectionId: string) => {
     axios
       .delete(`collection/${collectionId}`)
       .then((res) => {
-        queryClient.invalidateQueries({ queryKey: ["collections"] });
-        queryClient.invalidateQueries({ queryKey: ["collection", id] });
+        invalidateCollectionsQueries();
       })
       .catch((err) => err);
   };
@@ -91,49 +91,17 @@ const CollectionPage = ({}) => {
       <div className="">
         <>
           <MoveCollectionModal
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
-            setEditId={setEditId}
-            toMoveCollectionId={toMoveCollectionId}
-            isMoveToCollectionOpen={isMoveToCollectionOpen}
-            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-            editId={editId}
-            isCollectionModalOpen={isCollectionModalOpen}
-            setisCollectionModalOpen={setIsCollectionModalOpen}
             cards={collectionCards}
-            setParentCollectionId={setParentCollectionId}
             // moving={moving}
           />
-          <AddNewCollectionModal
-            setDefaultValues={setDefaultValues}
-            setIsCollectionModalOpen={setIsCollectionModalOpen}
-            isCollectionModalOpen={isCollectionModalOpen}
-            defaultValues={defaultValues}
-            editId={editId}
-            parentCollectionId={parentCollectionId === "home" ? "" : id}
-          />
-          <AddCardModal
-            isMoveToCollectionOpen={isMoveToCollectionOpen}
-            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-            collectionId={collection?._id}
-            isAddCardModalOpen={isAddCardModalOpen}
-            setIsAddCardModalOpen={setIsAddCardModalOpen}
-            defaultValues={defaultValues}
-            content={content}
-            setDefaultValues={setDefaultValues}
-            setContent={setContent}
-            editId={editId}
-            setEditId={setEditId}
-          />
+          <AddNewCollectionModal />
+          <AddCardModal collectionId={collection?._id} />
         </>
         {selectedItems.length > 0 && (
           <SelectedItemsController
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
             isItemsCards={moving === "cards" && true}
             isItemsCollections={moving === "collections" && true}
             moving={moving}
-            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
           />
         )}{" "}
         {/* <ChangeItemsParent
@@ -211,17 +179,8 @@ const CollectionPage = ({}) => {
                       {collection?.subCollections.map(
                         (collection: CollectionType) => (
                           <Collection
-                            setIsMoveToCollectionOpen={
-                              setIsMoveToCollectionOpen
-                            }
-                            setToMoveCollectionId={setToMoveCollectionId}
                             collection={collection}
                             key={collection._id}
-                            setDefaultValues={setDefaultValues}
-                            setIsCollectionModalOpen={setIsCollectionModalOpen}
-                            selectedItems={selectedItems}
-                            setSelectedItems={setSelectedItems}
-                            setEditId={setEditId}
                           />
                         )
                       )}
@@ -245,18 +204,8 @@ const CollectionPage = ({}) => {
                   <div className="">
                     {collectionCards?.map((card) => (
                       <Card
-                        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-                        setIsModalOpen={setIsAddCardModalOpen}
-                        key={card._id}
-                        card={card}
-                        setContent={setContent}
-                        setDefaultValues={setDefaultValues}
                         id={card._id}
-                        setSelectedItems={setSelectedItems}
-                        setIsAddCardModalOpen={setIsAddCardModalOpen}
-                        selectedItems={selectedItems}
-                        setEditId={setEditId}
-                        isSameUser={user?._id === collection?.userId}
+                        card={card}
                         collectionId={collection?._id}
                       />
                     ))}

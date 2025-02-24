@@ -48,21 +48,8 @@ const Video = () => {
     videoId: video?._id,
   });
 
-  const { user } = useGetCurrentUser();
-
-  const [defaultValues, setDefaultValues] = useState({
-    front: "",
-    back: "",
-  });
-
-  const [content, setContent] = useState("");
-  const [editId, setEditId] = useState("");
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [caption, setCaption] = useState<CaptionType[]>([]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
-  const [parentCollectionId, setParentCollectionId] = useState("");
 
   const playerRef = useRef<any | null>(null);
 
@@ -86,53 +73,14 @@ const Video = () => {
         {/* add Modal */}
         {videoCards && (
           <>
-            <MoveCollectionModal
-              selectedItems={selectedItems}
-              setSelectedItems={setSelectedItems}
-              setEditId={setEditId}
-              isMoveToCollectionOpen={isMoveToCollectionOpen}
-              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-              editId={editId}
-              isCollectionModalOpen={isCollectionModalOpen}
-              setisCollectionModalOpen={setIsCollectionModalOpen}
-              cards={videoCards}
-              setParentCollectionId={setParentCollectionId}
-              // moving={moving}
-            />
+            <MoveCollectionModal />
 
-            <AddNewCollectionModal
-              setDefaultValues={setDefaultValues}
-              setIsCollectionModalOpen={setIsCollectionModalOpen}
-              isCollectionModalOpen={isCollectionModalOpen}
-              defaultValues={defaultValues}
-              editId={editId}
-              parentCollectionId={parentCollectionId}
-            />
+            <AddNewCollectionModal />
 
-            <AddCardModal
-              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-              isMoveToCollectionOpen={isMoveToCollectionOpen}
-              isAddCardModalOpen={isAddCardModalOpen}
-              defaultValues={defaultValues}
-              setIsAddCardModalOpen={setIsAddCardModalOpen}
-              setContent={setContent}
-              editId={editId}
-              setEditId={setEditId}
-              setDefaultValues={setDefaultValues}
-              videoId={id}
-              content={content}
-              refetch={refetch}
-            />
+            <AddCardModal videoId={id} />
           </>
         )}
-        {selectedItems.length > 0 && (
-          <SelectedItemsController
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
-            isItemsCards={true}
-            setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-          />
-        )}
+        <SelectedItemsController />
 
         <ReactYoutubeComponent
           playerRef={playerRef}
@@ -144,20 +92,7 @@ const Video = () => {
         <div className="mt-5">
           {isIntialLoading && <CardsSkeleton />}
           {videoCards?.map((card: CardType) => (
-            <Card
-              setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-              setSelectedItems={setSelectedItems}
-              selectedItems={selectedItems}
-              setIsModalOpen={setIsAddCardModalOpen}
-              isSameUser={user?._id === card.userId}
-              setEditId={setEditId}
-              setContent={setContent}
-              setIsAddCardModalOpen={setIsAddCardModalOpen}
-              setDefaultValues={setDefaultValues}
-              key={card._id}
-              card={card}
-              id={card._id}
-            />
+            <Card key={card._id} card={card} id={card._id} />
           ))}
 
           {isFetchingNextPage && <CardsSkeleton />}
@@ -166,16 +101,11 @@ const Video = () => {
 
       <div className="relative w-full grow">
         <Subtitles
-          setEditId={setEditId}
           video={video}
-          isAddCardModalOpen={isAddCardModalOpen}
-          setContent={setContent}
           playerRef={playerRef}
           caption={caption}
           setCaption={setCaption}
           subtitleContainerRef={subtitleContainerRef}
-          setDefaultValues={setDefaultValues}
-          setIsAddCardModalOpen={setIsAddCardModalOpen}
         />
       </div>
     </div>

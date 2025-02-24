@@ -123,13 +123,12 @@ module.exports.batchDelete = async (req, res) => {
 };
 
 module.exports.batchMove = async (req, res) => {
-  const { ids, selectedParent } = req.body;
+  const { ids, collectionId } = req.body;
 
-  "ids", ids, selectedParent;
   try {
     await CardModel.updateMany(
       { _id: { $in: ids } },
-      { collectionId: selectedParent }
+      { collectionId: collectionId }
     );
 
     res.status(200).send({ message: "cards moved successfully" });

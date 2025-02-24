@@ -22,50 +22,48 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
+import useModalStates from "@/hooks/useModalsStates";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type CardProps = {
-  setDefaultValues: React.Dispatch<React.SetStateAction<any>>;
-  setEditId: React.Dispatch<React.SetStateAction<string>>;
-  setContent: React.Dispatch<React.SetStateAction<string>>;
-  content?: string;
-  setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   id: string;
   playlistName?: string;
   isSelected?: boolean;
-  card?: any;
+  card: any;
   video?: any;
   note?: any;
   deleteHandler?: any;
-  selectedItems: string[];
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
   navigateTo?: any;
-  isSameUser: boolean;
-  updateHandler?: any;
   collectionId?: string;
-  setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
   collection?: CollectionType;
-  setIsAddCardModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const Card = ({
-  setDefaultValues,
-  setContent,
-  setEditId,
   id,
   card,
-  isSameUser,
-  setIsModalOpen,
-  selectedItems,
-  setSelectedItems,
-  collection,
   playlistName,
   video,
-  setIsMoveToCollectionOpen,
   note,
   navigateTo,
   collectionId,
+  collection,
 }: CardProps) => {
+  const {
+    setIsMoveToCollectionOpen,
+    setEditId,
+    setContent,
+    selectedItems,
+    setSelectedItems,
+    setIsAddCardModalOpen,
+    setDefaultValues,
+  } = useModalStates();
+
+  if (!card) return;
   const { back, content, front } = card;
+
+  const { user } = useGetCurrentUser();
+
+  const isSameUser = user?._id === card.userId;
 
   const { updateCardHandler } = useCardActions();
 
@@ -124,7 +122,7 @@ const Card = ({
             noteTitle: note?.title,
           });
 
-          setIsModalOpen?.(true);
+          setIsAddCardModalOpen?.(true);
           setContent?.(content ? content : "");
           setEditId(id);
         }}

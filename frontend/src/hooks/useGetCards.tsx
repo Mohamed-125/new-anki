@@ -1,4 +1,8 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -77,6 +81,8 @@ const useGetCards = ({
   let userCards = useMemo(() => {
     return data?.pages.flatMap((page) => (page as GetCardsResponse).cards);
   }, [data]);
+
+  const queryClient = useQueryClient();
 
   return {
     userCards: userCards,

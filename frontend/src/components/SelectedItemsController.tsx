@@ -1,15 +1,10 @@
 type SelectedItemsControllerProps = {
-  selectedItems: string[];
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
-  setChangeItemsParent?: React.Dispatch<React.SetStateAction<boolean>>;
   isItemsVideos?: boolean;
   isItemsCollections?: boolean;
   isItemsPlaylists?: boolean;
   isItemsNotes?: boolean;
   isItemsTexts?: boolean;
   isItemsCards?: boolean;
-  setItemsState?: React.Dispatch<React.SetStateAction<any>>;
-  setIsMoveToCollectionOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   moving?: string;
 };
 import React from "react";
@@ -19,21 +14,21 @@ import { TextType } from "../pages/MyTexts";
 import { IoClose } from "react-icons/io5";
 import { FaTrash } from "react-icons/fa";
 import { MdDriveFileMove } from "react-icons/md";
+import useModalStates from "@/hooks/useModalsStates";
 
 const SelectedItemsController = ({
-  selectedItems,
-  setSelectedItems,
   isItemsVideos,
   isItemsCollections,
   isItemsPlaylists,
-  setChangeItemsParent,
   isItemsNotes,
   isItemsTexts,
   isItemsCards,
-  setItemsState,
-  setIsMoveToCollectionOpen,
   moving,
 }: SelectedItemsControllerProps) => {
+  const { selectedItems, setSelectedItems, setIsMoveToCollectionOpen } =
+    useModalStates();
+
+  console.log(selectedItems);
   return selectedItems.length ? (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-between w-full gap-4 px-6 bg-white border-t shadow-lg py-7 bg-opacity-90 backdrop-blur-sm py-4items-center border-neutral-200">
       <div className="flex items-center gap-3">
@@ -52,16 +47,14 @@ const SelectedItemsController = ({
       </div>
 
       <div className="flex gap-6 items-center text-[16px]">
-        {setChangeItemsParent ||
+        {isItemsCards ||
         moving === "cards" ||
         isItemsCollections ||
         isItemsVideos ? (
           <button
             className="flex items-center gap-2 transition-colors text-primary hover:text-primary/80"
             onClick={() => {
-              isItemsCollections || isItemsCards
-                ? setIsMoveToCollectionOpen?.(true)
-                : setChangeItemsParent?.(true);
+              setIsMoveToCollectionOpen(true);
             }}
           >
             <MdDriveFileMove className="text-3xl" />
@@ -96,10 +89,10 @@ const SelectedItemsController = ({
               });
 
               await axios.post(url, { ids: selectedItems });
-              setItemsState?.((pre: string[]) =>
-                //@ts-ignore
-                pre.filter((item: TextType) => selectedItems.includes(item._id))
-              );
+              // setItemsState?.((pre: string[]) =>
+              //   //@ts-ignore
+              //   pre.filter((item: TextType) => selectedItems.includes(item._id))
+              // );
               setSelectedItems([]);
             }
           }}

@@ -51,7 +51,6 @@ const useCardActions = () => {
     }).then((res) => {
       setIsAddCardModalOpen?.(false);
       queryClient.invalidateQueries({ queryKey: ["cards"] });
-      queryClient.invalidateQueries({ queryKey: ["collection"] });
     });
   };
 
@@ -63,7 +62,6 @@ const useCardActions = () => {
       addToast("Failed to delete the card ", "error");
     } finally {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
-      queryClient.invalidateQueries({ queryKey: ["collection"] });
     }
   };
 

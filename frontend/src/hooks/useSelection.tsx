@@ -20,7 +20,10 @@ const useSelection = ({
     text: "",
   });
 
-  const [selectionData, setSelectionData] = useState({
+  const [selectionData, setSelectionData] = useState<{
+    ele: HTMLElement | null;
+    text: string;
+  }>({
     ele: null,
     text: "",
   });
@@ -44,7 +47,7 @@ const useSelection = ({
 
       // Update ref (won't trigger re-renders)
       selectionRef.current = {
-        ele: selectedElement,
+        ele: selectedElement as HTMLElement,
         text: selected.toString(),
       };
 
@@ -92,7 +95,8 @@ const useSelection = ({
     container.style.position = "absolute";
 
     const rect = selectionData.ele?.getBoundingClientRect();
-    container.style.top = `${rect?.bottom - rect?.top}px`;
+    if (!rect) return;
+    container.style.top = `${rect.bottom - rect.top}px`;
 
     if (selectionData.ele && selectionData.text.length) {
       selectionData.ele.insertBefore(container, null);

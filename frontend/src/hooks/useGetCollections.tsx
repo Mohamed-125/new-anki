@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import axios from "axios";
 import { CardType } from "./useGetCards";

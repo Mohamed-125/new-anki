@@ -10,6 +10,7 @@ import getYouTubeVideoId from "../../utils/getYoutubeVideoId";
 import AvailableCaptionsSelect from "../../components/AvailableCaptionsSelect";
 import useGetCards from "../../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
+import useModalsStates from "@/hooks/useModalsStates";
 
 type subtitleProps = {
   video: any;
@@ -17,11 +18,6 @@ type subtitleProps = {
   setCaption: React.Dispatch<React.SetStateAction<CaptionType[]>>;
   caption: CaptionType[];
   subtitleContainerRef: any;
-  setContent: React.Dispatch<React.SetStateAction<string>>;
-  setDefaultValues: any;
-  setIsAddCardModalOpen: any;
-  setEditId: any;
-  isAddCardModalOpen: boolean;
 };
 
 const Subtitles = memo(function ({
@@ -30,16 +26,19 @@ const Subtitles = memo(function ({
   setCaption,
   caption,
   subtitleContainerRef,
-  setEditId,
-  setDefaultValues,
-  setIsAddCardModalOpen,
-  isAddCardModalOpen,
-  setContent,
 }: subtitleProps) {
   const [selectedCaption, setSelectedCaption] = useState("");
   const [isCaptionLoading, setIsCaptionLoading] = useState(false);
 
-  const {} = useSelection({
+  const {
+    setEditId,
+    setDefaultValues,
+    setIsAddCardModalOpen,
+    setContent,
+    isAddCardModalOpen,
+  } = useModalsStates();
+
+  const { selectionData } = useSelection({
     isAddCardModalOpen,
     setContent,
     setDefaultValues,
@@ -95,6 +94,7 @@ const Subtitles = memo(function ({
           {caption?.map((subtitle: CaptionType, _) => {
             return (
               <Subtitle
+                selectionData={selectionData}
                 key={_}
                 n={_}
                 setDefaultValues={setDefaultValues}
@@ -120,7 +120,6 @@ type SubtitleProps = {
   subtitle: any;
   selectionData: any;
   playerRef: any;
-  handleSelection: any;
   caption: any;
   video: any;
   setDefaultValues: any;
@@ -158,7 +157,7 @@ const Subtitle = memo(function ({
     console.log(translatedText);
   }, [translatedText]);
 
-  const { data: userCards } = useGetCards();
+  const { userCards } = useGetCards();
   let modifiedText = subtitle.text;
 
   userCards?.forEach((card) => {
@@ -203,10 +202,10 @@ const Subtitle = memo(function ({
               <p
                 dangerouslySetInnerHTML={{ __html: modifiedText }}
                 onClick={(e) => {
-                  const target = e.target;
+                  const target = e.target as HTMLElement;
                   if (target.classList.contains("highlight")) {
                     const cardId = target.getAttribute("data-id");
-                    const card = userCards.find((c) => c._id === cardId);
+                    const card = userCards?.find((c) => c._id === cardId);
                     if (card) onCardClick(card);
                   }
                 }}

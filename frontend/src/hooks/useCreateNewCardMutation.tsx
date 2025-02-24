@@ -34,17 +34,7 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
     },
 
     onSuccess: async (res, data) => {
-      if (collectionId) {
-        console.log(queryClient.getQueryCache().findAll());
-
-        console.log("collectionId", collectionId);
-        queryClient.invalidateQueries({ queryKey: ["cards"] });
-        queryClient.invalidateQueries({
-          queryKey: [`collection`, collectionId],
-        });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["cards"] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
     },
     mutationFn: (data: {}) => {
       return axios.post("/card/", { ...data, collectionId }).then((res) => {

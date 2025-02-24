@@ -15,6 +15,7 @@ import ReactDOM from "react-dom/client";
 import { px } from "framer-motion";
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
+import useModalsStates from "@/hooks/useModalsStates";
 
 const TextPage = () => {
   const id = useParams()?.id;
@@ -43,14 +44,16 @@ const TextPage = () => {
     }
   };
 
-  const [defaultValues, setDefaultValues] = useState({});
-  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
-  const [content, setContent] = useState("");
-
-  const { handleSelection, selectionData } = useSelection({
-    isAddCardModalOpen,
+  const {
     setContent,
+    isAddCardModalOpen,
     setDefaultValues,
+    setIsAddCardModalOpen,
+  } = useModalsStates();
+  const {} = useSelection({
+    isAddCardModalOpen,
+    setDefaultValues,
+    setContent,
     setIsAddCardModalOpen,
   });
 
@@ -62,7 +65,7 @@ const TextPage = () => {
     const doc = parser.parseFromString(text.content, "text/html");
 
     // Recursive function to traverse and modify the text nodes
-    const traverseNodes = (node) => {
+    const traverseNodes = (node: any) => {
       if (node.nodeType === Node.TEXT_NODE) {
         const originalText = node.textContent;
         let modifiedText = originalText;
@@ -112,20 +115,11 @@ const TextPage = () => {
 
   return (
     <div className="container p-4 mt-5 mb-8 text-xl bg-white rounded-lg sm:px-2 sm:text-base">
-      <AddCardModal
-        editId={editId}
-        setEditId={setEditId}
-        isAddCardModalOpen={isAddCardModalOpen}
-        setIsAddCardModalOpen={setIsAddCardModalOpen}
-        defaultValues={defaultValues}
-        setDefaultValues={setDefaultValues}
-        content={content}
-        setContent={setContent}
-      />
+      <AddCardModal />
 
       <h1 className="my-8 text-4xl font-bold">{text?.title}</h1>
-      <div className="flex gap-4 justify-end items-center my-4">
-        <Link to={`/edit-text/${id}`} className="flex gap-2 items-center">
+      <div className="flex items-center justify-end gap-4 my-4">
+        <Link to={`/edit-text/${id}`} className="flex items-center gap-2">
           <FaEdit className="text-3xl text-blue-600 cursor-pointer" /> Edit
         </Link>
         <Button
@@ -133,7 +127,7 @@ const TextPage = () => {
           onClick={() => {
             deleteTextHandler();
           }}
-          className="flex gap-2 items-center"
+          className="flex items-center gap-2"
         >
           <FaTrashCan className="text-3xl text-white cursor-pointer" /> Delete
         </Button>
@@ -148,7 +142,7 @@ const TextPage = () => {
             const target = e.target as HTMLElement;
             if (target?.classList.contains("highlight")) {
               const cardId = target.getAttribute("data-id");
-              const card = userCards.find((c: CardType) => c._id === cardId);
+              const card = userCards?.find((c: CardType) => c._id === cardId);
               if (card) onCardClick(card);
             }
           }}

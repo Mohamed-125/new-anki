@@ -26,21 +26,12 @@ import CardsSkeleton from "@/components/CardsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import Form from "@/components/Form";
 import AddNewCollectionModal from "@/components/AddNewCollectionModal";
+import useModalStates from "@/hooks/useModalsStates";
 
 const Home = () => {
   const { user } = useGetCurrentUser();
 
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
-  const [defaultValues, setDefaultValues] = useState({});
-  const [content, setContent] = useState("");
-  const [editId, setEditId] = useState("");
-  const [changeItemsParent, setChangeItemsParent] = useState(false);
-  const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-  const [targetCollectionId, setTargetCollectionId] = useState("");
   const [query, setQuery] = useState("");
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
-  const [parentCollectionId, setParentCollectionId] = useState("");
   const debouncedQuery = useDebounce(query);
 
   const {
@@ -50,13 +41,14 @@ const Home = () => {
     isIntialLoading,
     cardsCount,
   } = useGetCards({ query: debouncedQuery }); // Pass the query here
-  const [isLoading, setIsLoading] = useState(isFetchingNextPage);
 
   useInfiniteScroll(fetchNextPage);
+  const states = useModalStates();
 
   const CardsJSX = useMemo(() => {
     if (!userCards) return null;
 
+    console.log(userCards);
     // Set loading state while computing cards
 
     const cards = userCards.map((card) => (
@@ -65,66 +57,20 @@ const Home = () => {
         card={card}
         id={card._id}
         isSameUser={card.userId === user?._id}
-        selectedItems={selectedItems}
-        setIsModalOpen={setIsAddCardModalOpen}
-        setEditId={setEditId}
-        setContent={setContent}
-        setIsAddCardModalOpen={setIsAddCardModalOpen}
-        setDefaultValues={setDefaultValues}
-        setSelectedItems={setSelectedItems}
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
       />
     ));
 
     // Reset loading state after computation is complete
 
     return cards;
-  }, [userCards, user?._id, selectedItems]); // Ensure minimal dependencies
-  useEffect(() => {}, [userCards]);
+  }, [userCards, user?._id, states?.selectedItems]); // Ensure minimal dependencies
 
   return (
     <div className="container">
-      <AddCardModal
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-        isAddCardModalOpen={isAddCardModalOpen}
-        setIsAddCardModalOpen={setIsAddCardModalOpen}
-        defaultValues={defaultValues}
-        content={content}
-        setDefaultValues={setDefaultValues}
-        setContent={setContent}
-        setEditId={setEditId}
-        editId={editId}
-        targetCollectionId={targetCollectionId}
-        isMoveToCollectionOpen={isMoveToCollectionOpen}
-      />
-      <MoveCollectionModal
-        setTargetCollectionId={setTargetCollectionId}
-        isMoveToCollectionOpen={isMoveToCollectionOpen}
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-        targetCollectionId={targetCollectionId}
-        editId={editId}
-        setEditId={setEditId}
-        cards={userCards}
-        setSelectedItems={setSelectedItems}
-        selectedItems={selectedItems}
-        setisCollectionModalOpen={setIsCollectionModalOpen}
-        isCollectionModalOpen={isCollectionModalOpen}
-        setParentCollectionId={setParentCollectionId}
-      />{" "}
-      <AddNewCollectionModal
-        editId={editId}
-        setDefaultValues={setDefaultValues}
-        isCollectionModalOpen={isCollectionModalOpen}
-        setIsCollectionModalOpen={setIsCollectionModalOpen}
-        parentCollectionId={parentCollectionId}
-      />
-      <SelectedItemsController
-        isItemsCards={true}
-        setChangeItemsParent={setChangeItemsParent}
-        selectedItems={selectedItems}
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-        setSelectedItems={setSelectedItems}
-      />
+      <AddCardModal />
+      <MoveCollectionModal cards={userCards ?? []} />
+      <AddNewCollectionModal />
+      <SelectedItemsController isItemsCards={true} />
       <SearchCards query={query} setQuery={setQuery} />
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
@@ -138,7 +84,7 @@ const Home = () => {
 
         <Button
           className={"my-7 sm:text-sm py-3 px-2"}
-          onClick={() => setIsAddCardModalOpen(true)}
+          onClick={() => states.setIsAddCardModalOpen(true)}
         >
           Create a new card
         </Button>
@@ -150,14 +96,14 @@ const Home = () => {
           {userCards.length ? (
             <div>
               {CardsJSX}
-              {(isLoading || isFetchingNextPage) && <CardsSkeleton />}
+              {isFetchingNextPage && <CardsSkeleton />}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[40vh]">
               <Button
                 center={true}
                 className="mt-11"
-                onClick={() => setIsAddCardModalOpen(true)}
+                onClick={() => states.setIsAddCardModalOpen(true)}
               >
                 There is not any card yet. Click to Add a new card
               </Button>

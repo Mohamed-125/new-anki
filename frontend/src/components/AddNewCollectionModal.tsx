@@ -3,28 +3,26 @@ import axios from "axios";
 import React, { FormEvent, useRef } from "react";
 import Form from "./Form";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
-import { CollectionType } from "../context/CollectionsContext";
+import { CollectionType } from "@/hooks/useGetCollections";
 import Button from "./Button";
 import Modal from "./Modal";
+import useModalStates from "@/hooks/useModalsStates";
+import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 
-const AddNewCollectionModal = ({
-  isCollectionModalOpen,
-  setIsCollectionModalOpen,
-  defaultValues,
-  setDefaultValues,
-  editId,
-  parentCollectionId,
-}: {
-  isCollectionModalOpen: boolean;
-  setIsCollectionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  defaultValues?: any;
-  editId?: string;
-  setDefaultValues: any;
-  parentCollectionId?: string;
-}) => {
+const AddNewCollectionModal = ({}: {}) => {
+  const {
+    setIsCollectionModalOpen,
+    parentCollectionId,
+    isCollectionModalOpen,
+    editId,
+    defaultValues,
+    setDefaultValues,
+  } = useModalStates();
   const queryClient = useQueryClient();
-  useAddModalShortcuts(setIsCollectionModalOpen, true);
 
+  const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
+
+  useAddModalShortcuts(setIsCollectionModalOpen, true);
   const { mutateAsync } = useMutation({
     onMutate: async (newCollection: Partial<CollectionType>) => {
       await queryClient.cancelQueries({ queryKey: ["collections"] });
@@ -57,13 +55,7 @@ const AddNewCollectionModal = ({
     },
 
     onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ["collections"] });
-
-      console.log("parentCollectionId", parentCollectionId);
-      queryClient.invalidateQueries({
-        queryKey: ["collection", parentCollectionId],
-      });
-
+      invalidateCollectionsQueries();
       setIsCollectionModalOpen(false);
     },
     mutationFn: async (data) => {
@@ -85,10 +77,7 @@ const AddNewCollectionModal = ({
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
       };
-      mutateAsync(data).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["collections"] });
-        queryClient.invalidateQueries({ queryKey: ["collection"] });
-      });
+      mutateAsync(data);
     }
   };
 
@@ -111,7 +100,7 @@ const AddNewCollectionModal = ({
       .catch((err) => err)
       .finally(() => {
         setIsCollectionModalOpen(false);
-        queryClient.invalidateQueries({ queryKey: ["collections"] });
+        invalidateCollectionsQueries();
         (e.target as HTMLFormElement).reset();
       });
   };

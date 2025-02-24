@@ -1,59 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CollectionType } from "@/hooks/useGetCollections";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import Button from "./Button";
-import { FaTrashCan } from "react-icons/fa6";
+
 import { useQueryClient } from "@tanstack/react-query";
-import { Folder, PenBoxIcon } from "lucide-react";
+import { Folder } from "lucide-react";
 import axios from "axios";
-import { LuMoveUpRight } from "react-icons/lu";
 import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
+import useModalsStates from "@/hooks/useModalsStates";
+import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 
 type CollectionProps = {
   collection: CollectionType;
-  setDefaultValues: any;
-  setIsMoveToCollectionOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setEditId: React.Dispatch<React.SetStateAction<string>>;
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedItems: string[];
-  setIsCollectionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setToMoveCollectionId: React.Dispatch<React.SetStateAction<string>>;
-  // setMoving: React.Dispatch<React.SetStateAction<string>>;
 };
 
-const Collection = ({
-  collection,
-  setDefaultValues,
-  setIsMoveToCollectionOpen,
-  setEditId,
-  setIsCollectionModalOpen,
-  setSelectedItems,
-  selectedItems,
-  // setMoving,
-
-  setToMoveCollectionId,
-}: CollectionProps) => {
+const Collection = ({ collection }: CollectionProps) => {
   const id = collection._id;
-  const isSelected = selectedItems.includes(id);
-  const location = useLocation(); // Get the current path
-  const queryClient = useQueryClient();
 
+  const {
+    selectedItems,
+    setSelectedItems,
+    setEditId,
+    setDefaultValues,
+    setIsCollectionModalOpen,
+    setIsMoveToCollectionOpen,
+    setToMoveCollectionId,
+  } = useModalsStates();
+
+  const location = useLocation(); // Get the current path
+  const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
   const deleteHandler = (collectionId: string) => {
     axios
       .delete(`collection/${collectionId}`)
       .then((res) => {
-        queryClient.invalidateQueries({ queryKey: ["collections"] });
-        queryClient.invalidateQueries({
-          queryKey: ["collection", collection.parentCollectionId],
-        });
+        invalidateCollectionsQueries();
       })
       .catch((err) => err);
   };
