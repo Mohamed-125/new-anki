@@ -258,6 +258,7 @@ const CollectionOption = React.memo(function CollectionOption({
   setTargetCollectionId,
   selectedItems,
   setSelectedItems,
+  moving = "",
 }: {
   collection: CollectionType;
   setSelectedCollectionIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -271,6 +272,7 @@ const CollectionOption = React.memo(function CollectionOption({
   setTargetCollectionId?: React.Dispatch<React.SetStateAction<string>>;
   selectedItems: string[];
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  moving?: string;
 }) {
   {
     const { updateCardHandler } = useCardActions();
@@ -288,7 +290,7 @@ const CollectionOption = React.memo(function CollectionOption({
         collection?._id;
 
     const moveHandler = () => {
-      if (!toMoveCollectionId) {
+      if (moving === "cards") {
         if (selectedItems.length) {
           axios
             .post(
@@ -327,23 +329,41 @@ const CollectionOption = React.memo(function CollectionOption({
           setTargetCollectionId?.(collection._id);
         }
       } else {
-        axios
-          .put(`collection/${toMoveCollectionId}`, {
-            parentCollectionId: collection._id,
-          })
-          .then((res) => {
-            queryClient.invalidateQueries({ queryKey: ["collections"] });
-            queryClient.invalidateQueries({
-              queryKey: ["collection"],
+        if (selectedItems.length) {
+          axios
+            .post(
+              "collection/batch-move",
+
+              {
+                ids: selectedItems,
+                selectedParent: collection._id,
+              }
+            )
+            .then(() => {
+              queryClient.invalidateQueries({
+                queryKey: ["collections"],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["collection"],
+              });
+
+              setSelectedItems?.([]);
             });
-            queryClient.refetchQueries({ queryKey: ["collections"] });
-            queryClient.refetchQueries({
-              queryKey: ["collection"],
-            });
-          })
-          .catch((err) => err);
+        } else {
+          axios
+            .put(`collection/${toMoveCollectionId}`, {
+              parentCollectionId: collection._id,
+            })
+            .then((res) => {
+              queryClient.invalidateQueries({ queryKey: ["collections"] });
+              queryClient.invalidateQueries({
+                queryKey: ["collection"],
+              });
+            })
+            .catch((err) => err);
+        }
+        setIsMoveToCollectionOpen(false);
       }
-      setIsMoveToCollectionOpen(false);
     };
 
     return (

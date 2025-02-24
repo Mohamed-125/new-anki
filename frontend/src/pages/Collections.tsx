@@ -52,6 +52,14 @@ const Collections = () => {
         parentCollectionId={parentCollectionId}
         editId={editId}
       />
+      {selectedItems.length > 0 && (
+        <SelectedItemsController
+          selectedItems={selectedItems}
+          setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+          setSelectedItems={setSelectedItems}
+          isItemsCollections={true}
+        />
+      )}
       {notParentCollections?.length ? (
         <div className="space-y-6">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -70,13 +78,6 @@ const Collections = () => {
               <h6 className="text-sm font-medium text-gray-500">
                 {notParentCollections?.length} collections
               </h6>
-              {selectedItems.length > 0 && (
-                <SelectedItemsController
-                  selectedItems={selectedItems}
-                  setSelectedItems={setSelectedItems}
-                  isItemsCollections={true}
-                />
-              )}
             </div>
           </div>
           <Button

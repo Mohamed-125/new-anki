@@ -15,6 +15,7 @@ import { Folder, PenBoxIcon } from "lucide-react";
 import axios from "axios";
 import { LuMoveUpRight } from "react-icons/lu";
 import ActionsDropdown from "./ActionsDropdown";
+import SelectCheckBox from "./SelectCheckBox";
 
 type CollectionProps = {
   collection: CollectionType;
@@ -98,26 +99,35 @@ const Collection = ({
             </div>
           </Link>
 
-          {collection._id && (
-            <ActionsDropdown
-              renameHandler={() => {
-                setEditId(id);
-                setDefaultValues({
-                  collectionName: collection?.name,
-                  collectionPublic: collection?.public,
-                });
-                setIsCollectionModalOpen(true);
-              }}
-              moveHandler={() => {
-                setEditId(id);
-                setIsMoveToCollectionOpen(true);
-                setToMoveCollectionId(collection._id);
-              }}
-              deleteHandler={() => {
-                deleteHandler(id);
-              }}
-            />
-          )}
+          {id &&
+            (!selectedItems.length ? (
+              <ActionsDropdown
+                itemId={id}
+                setSelectedItems={setSelectedItems}
+                renameHandler={() => {
+                  setEditId(id);
+                  setDefaultValues({
+                    collectionName: collection?.name,
+                    collectionPublic: collection?.public,
+                  });
+                  setIsCollectionModalOpen(true);
+                }}
+                moveHandler={() => {
+                  setEditId(id);
+                  setIsMoveToCollectionOpen(true);
+                  setToMoveCollectionId(id);
+                }}
+                deleteHandler={() => {
+                  deleteHandler(id);
+                }}
+              />
+            ) : (
+              <SelectCheckBox
+                id={id}
+                setSelectedItems={setSelectedItems}
+                selectedItems={selectedItems}
+              />
+            ))}
         </div>
       </div>
     </div>

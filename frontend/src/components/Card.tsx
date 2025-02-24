@@ -3,7 +3,7 @@ import { FaTrashCan } from "react-icons/fa6";
 import useCardActions from "../hooks/useCardActions";
 import Button from "./Button";
 import { HiSwitchHorizontal } from "react-icons/hi";
-import { CollectionType } from "../context/CollectionsContext";
+import { CollectionType } from "@/hooks/useGetCollections";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { LuMoveUpRight } from "react-icons/lu";
 import {
@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ActionsDropdown from "./ActionsDropdown";
+import SelectCheckBox from "./SelectCheckBox";
 
 type CardProps = {
   setDefaultValues: React.Dispatch<React.SetStateAction<any>>;
@@ -33,10 +34,10 @@ type CardProps = {
   isSelected?: boolean;
   card?: any;
   video?: any;
-  selectedItems?: string[];
   note?: any;
   deleteHandler?: any;
-  setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedItems: string[];
+  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
   navigateTo?: any;
   isSameUser: boolean;
   updateHandler?: any;
@@ -51,11 +52,11 @@ const Card = ({
   setContent,
   setEditId,
   id,
-  selectedItems,
-  setSelectedItems,
   card,
   isSameUser,
   setIsModalOpen,
+  selectedItems,
+  setSelectedItems,
   collection,
   playlistName,
   video,
@@ -64,7 +65,6 @@ const Card = ({
   navigateTo,
   collectionId,
 }: CardProps) => {
-  const isSelected = selectedItems?.includes(id);
   const { back, content, front } = card;
 
   const { updateCardHandler } = useCardActions();
@@ -96,20 +96,6 @@ const Card = ({
       className="flex items-center px-8 py-6 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-2xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
       id={id}
     >
-      <input
-        checked={isSelected}
-        type="checkbox"
-        className="!min-w-5 !h-5 mr-2 sm:hidden"
-        onChange={(e) => {
-          setSelectedItems?.((pre) => {
-            if (e.target.checked) {
-              return [...pre, id];
-            } else {
-              return [...pre.filter((item) => item !== id)];
-            }
-          });
-        }}
-      />
       <div className="mr-3 text-2xl" onClick={switchHandler}>
         <HiSwitchHorizontal />
       </div>
@@ -146,14 +132,22 @@ const Card = ({
         <p className="text-lg sm:text-base">{front}</p>
         <small className="text-base text-gray-500 truncate">{back}</small>
       </div>
-      {isSameUser && !isSelected ? (
+      {isSameUser && !selectedItems?.length ? (
         <>
           <ActionsDropdown
+            setSelectedItems={setSelectedItems}
+            itemId={id}
             moveHandler={moveHandler}
             deleteHandler={deleteHandler}
           />
         </>
-      ) : null}
+      ) : (
+        <SelectCheckBox
+          id={id}
+          selectedItems={selectedItems}
+          setSelectedItems={setSelectedItems}
+        />
+      )}
     </div>
   );
 };

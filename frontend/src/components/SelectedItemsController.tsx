@@ -35,11 +35,11 @@ const SelectedItemsController = ({
   moving,
 }: SelectedItemsControllerProps) => {
   return selectedItems.length ? (
-    <div className="flex fixed right-0 bottom-0 left-0 z-50 gap-4 justify-between px-6 py-7 w-full bg-white bg-opacity-90 border-t shadow-lg backdrop-blur-sm py-4items-center border-neutral-200">
-      <div className="flex gap-3 items-center">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-between w-full gap-4 px-6 bg-white border-t shadow-lg py-7 bg-opacity-90 backdrop-blur-sm py-4items-center border-neutral-200">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setSelectedItems([])}
-          className="flex gap-2 items-center text-xl text-gray-600 transition-colors hover:text-gray-900"
+          className="flex items-center gap-2 text-xl text-gray-600 transition-colors hover:text-gray-900"
         >
           <IoClose />
         </button>
@@ -52,24 +52,27 @@ const SelectedItemsController = ({
       </div>
 
       <div className="flex gap-6 items-center text-[16px]">
-        {setChangeItemsParent && moving === "cards" && (
+        {setChangeItemsParent ||
+        moving === "cards" ||
+        isItemsCollections ||
+        isItemsVideos ? (
           <button
-            className="flex gap-2 items-center transition-colors text-primary hover:text-primary/80"
+            className="flex items-center gap-2 transition-colors text-primary hover:text-primary/80"
             onClick={() => {
               isItemsCollections || isItemsCards
                 ? setIsMoveToCollectionOpen?.(true)
-                : setChangeItemsParent(true);
+                : setChangeItemsParent?.(true);
             }}
           >
-            <MdDriveFileMove className="text-xl" />
+            <MdDriveFileMove className="text-3xl" />
             <span>
               {isItemsVideos ? "Move to Playlist" : "Move to Collection"}
             </span>
           </button>
-        )}
+        ) : null}
 
         <button
-          className="flex gap-2 items-center text-red-500 transition-colors hover:text-red-600"
+          className="flex items-center gap-2 text-red-500 transition-colors hover:text-red-600"
           onClick={async () => {
             const url = isItemsVideos
               ? `video/batch-delete`

@@ -124,6 +124,13 @@ const Home = () => {
         itemsIds={selectedItems}
         parentName="collection"
       />
+      <SelectedItemsController
+        isItemsCards={true}
+        setChangeItemsParent={setChangeItemsParent}
+        selectedItems={selectedItems}
+        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
+        setSelectedItems={setSelectedItems}
+      />
       <SearchCards query={query} setQuery={setQuery} />
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
@@ -142,13 +149,6 @@ const Home = () => {
           Create a new card
         </Button>
       </div>
-      <SelectedItemsController
-        isItemsCards={true}
-        setChangeItemsParent={setChangeItemsParent}
-        selectedItems={selectedItems}
-        setIsMoveToCollectionOpen={setIsMoveToCollectionOpen}
-        setSelectedItems={setSelectedItems}
-      />
       {isIntialLoading || !userCards ? (
         <CardsSkeleton />
       ) : (
