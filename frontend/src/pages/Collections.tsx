@@ -9,28 +9,30 @@ import AddNewCollectionModal from "../components/AddNewCollectionModal";
 import useGetCollections, { CollectionType } from "../hooks/useGetCollections";
 import MoveCollectionModal from "@/components/MoveCollectionModal";
 import useModalStates from "@/hooks/useModalsStates";
+import CollectionSkeleton from "@/components/CollectionsSkeleton";
+import useDebounce from "@/hooks/useDebounce";
 
 const Collections = () => {
-  const { collections, notParentCollections } = useGetCollections();
-  // const [collectionCards, setCollectionsCards] = useState([]);
-  const [filteredCollections, setFilteredCollections] = useState<
-    CollectionType[]
-  >(collections || []);
+  const { setIsCollectionModalOpen, selectedItems } = useModalStates();
+  useAddModalShortcuts(setIsCollectionModalOpen);
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
+  const { notParentCollections, isLoading } = useGetCollections({
+    query: debouncedQuery,
+  });
 
-  const states = useModalStates();
-  useAddModalShortcuts(states.setIsCollectionModalOpen);
-
-  // if (isLoading || !collections) {
-  //   return <Loading />;
-  // }
-
+  console.log(notParentCollections);
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
       <MoveCollectionModal />
       <AddNewCollectionModal />
-      {states.selectedItems.length > 0 && (
+      {selectedItems.length > 0 && (
         <SelectedItemsController isItemsCollections={true} />
       )}
+
+      <Search query={query} setQuery={setQuery} />
+
+      {isLoading && <CollectionSkeleton />}
       {notParentCollections?.length ? (
         <div className="space-y-6">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -38,13 +40,6 @@ const Collections = () => {
           </div>
 
           <div className="p-4 bg-white border border-gray-200 shadow-sm rounded-xl">
-            <Search
-              setState={setFilteredCollections}
-              label="Search your collections"
-              items={notParentCollections}
-              filter="name"
-            />
-
             <div className="flex flex-col items-start justify-between gap-4 mt-4 sm:flex-row sm:items-center">
               <h6 className="text-sm font-medium text-gray-500">
                 {notParentCollections?.length} collections
@@ -53,28 +48,16 @@ const Collections = () => {
           </div>
           <Button
             className="flex ml-auto items-center gap-2 px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-            onClick={() => states.setIsCollectionModalOpen(true)}
+            onClick={() => setIsCollectionModalOpen(true)}
           >
             <span className="text-xl">+</span>
             Create new collection
           </Button>
           <div className="grid grid-cols-3 gap-2 md:grid-cols-2 sm:grid-cols-1">
-            {filteredCollections
-              .filter((collection) => !collection?.parentCollectionId)
-              .map((collection) => (
-                <Collection
-                  {...states}
-                  collection={collection}
-                  key={collection._id}
-                />
-              ))}
+            {notParentCollections.map((collection) => (
+              <Collection collection={collection} key={collection._id} />
+            ))}
           </div>
-
-          <Search.NotFound
-            state={filteredCollections}
-            searchFor="collection"
-            filter="name"
-          />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -88,7 +71,7 @@ const Collections = () => {
           </div>
           <Button
             className="flex items-center gap-2 px-6 py-3 text-white transition-colors bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700"
-            onClick={() => states.setIsCollectionModalOpen(true)}
+            onClick={() => setIsCollectionModalOpen(true)}
           >
             <span className="text-xl">+</span>
             Create your first collection

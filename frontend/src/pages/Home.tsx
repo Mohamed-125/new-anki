@@ -48,16 +48,10 @@ const Home = () => {
   const CardsJSX = useMemo(() => {
     if (!userCards) return null;
 
-    console.log(userCards);
     // Set loading state while computing cards
 
     const cards = userCards.map((card) => (
-      <Card
-        key={card._id}
-        card={card}
-        id={card._id}
-        isSameUser={card.userId === user?._id}
-      />
+      <Card key={card._id} card={card} id={card._id} />
     ));
 
     // Reset loading state after computation is complete
@@ -71,7 +65,7 @@ const Home = () => {
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
       <SelectedItemsController isItemsCards={true} />
-      <SearchCards query={query} setQuery={setQuery} />
+      <Search query={query} setQuery={setQuery} />
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>

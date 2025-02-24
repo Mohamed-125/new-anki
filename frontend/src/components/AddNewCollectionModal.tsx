@@ -25,34 +25,31 @@ const AddNewCollectionModal = ({}: {}) => {
   useAddModalShortcuts(setIsCollectionModalOpen, true);
   const { mutateAsync } = useMutation({
     onMutate: async (newCollection: Partial<CollectionType>) => {
-      await queryClient.cancelQueries({ queryKey: ["collections"] });
-
-      const previousCollections = queryClient.getQueryData(["collections"]);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(["collections"], (old: CollectionType[]) => [
-        newCollection,
-        ...old,
-      ]);
-
-      // Return a context object with the snapshotted value
-      return { previousCollections } as {
-        previousCollections: CollectionType[];
-      };
+      // await queryClient.cancelQueries({ queryKey: ["collections"] });
+      // const previousCollections = queryClient.getQueryData(["collections"]);
+      // // Optimistically update to the new value
+      // queryClient.setQueryData(["collections"], (old: CollectionType[]) => {
+      //   console.log(old);
+      //   return [newCollection, ...old];
+      // });
+      // // Return a context object with the snapshotted value
+      // return { previousCollections } as {
+      //   previousCollections: CollectionType[];
+      // };
     },
-    onError: (
-      context: undefined | { previousCollections: CollectionType[] }
-    ) => {
-      if (context) {
-        const previousCollections = context.previousCollections;
-        if (previousCollections) {
-          queryClient.setQueryData(["collections"], (old: CollectionType[]) => [
-            ...old,
-            previousCollections,
-          ]);
-        }
-      }
-    },
+    // onError: (
+    //   context: undefined | { previousCollections: CollectionType[] }
+    // ) => {
+    //   if (context) {
+    //     const previousCollections = context.previousCollections;
+    //     if (previousCollections) {
+    //       queryClient.setQueryData(["collections"], (old: CollectionType[]) => [
+    //         ...old,
+    //         previousCollections,
+    //       ]);
+    //     }
+    //   }
+    // },
 
     onSuccess() {
       invalidateCollectionsQueries();

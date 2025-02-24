@@ -80,6 +80,6 @@ app.use("/api/v1/text", textRouter);
 const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => res.send("server is running "));
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log("App running in port: " + PORT);
 });

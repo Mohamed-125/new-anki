@@ -48,23 +48,47 @@ module.exports.forkCollection = async (req, res, next) => {
 };
 
 module.exports.getCollections = async (req, res, next) => {
+  const { searchQuery, public } = req.query;
+  const query = {};
+  if (!public) {
+    query.userId = req.user._id;
+    if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
+  } else {
+    query.public = true;
+  }
   try {
-    const collections = await CollectionModel.find({
-      userId: req.user._id,
-      // $or: [
-      //   { parentCollectionId: { $exists: false } }, // parentCollectionId doesn't exist
-      //   { parentCollectionId: null }, // parentCollectionId is null
-      // ],
-    }).populate("collectionCards");
+    const collections = await CollectionModel.find(query);
 
-    res.status(200).send(collections);
+    const subCollections = collections?.filter(
+      (collection) => collection.parentCollectionId
+    );
+
+    const notParentCollections = collections?.filter(
+      (collection) => !collection.parentCollectionId
+    );
+
+    const parentCollections =
+      collections.find((parentCollection) =>
+        subCollections?.some(
+          (subCollection) =>
+            subCollection.parentCollectionId === parentCollection._id
+        )
+      ) ?? [];
+
+    res.status(200).send({
+      collections,
+      subCollections,
+      parentCollections,
+      notParentCollections,
+    });
   } catch (err) {
     res.status(400).send(err);
   }
 };
+
 module.exports.getPublicCollections = async (req, res, next) => {
   try {
-    const collections = await CollectionModel.find({ public: true });
+    const collections = await CollectionModel.find();
     res.status(200).send(collections);
   } catch (err) {
     res.status(400).send(err);

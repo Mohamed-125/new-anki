@@ -17,49 +17,45 @@ export type CollectionType = {
 
 const useGetCollections = ({
   publicCollections,
+  enabled = true,
+  query,
 }: {
   publicCollections?: boolean;
+  enabled?: boolean;
+  query?: string;
 } = {}) => {
-  const {
-    data: collections,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: publicCollections ? ["collections", "public"] : ["collections"],
-    queryFn: ({ signal }) =>
-      axios
-        .get(publicCollections ? "collection/public" : "collection", { signal })
-        .then((res) => res.data as CollectionType[]),
+  let queryKey = ["collections"];
+
+  if (publicCollections) {
+    queryKey.push("public");
+    if (query) {
+      queryKey.push(query);
+    }
+  } else if (query) {
+    queryKey.push(query);
+  }
+
+  console.log(queryKey);
+
+  let url = `collection/`;
+
+  if (query) url += `?searchQuery=${query}`;
+  if (publicCollections) url += `&public=${true}`;
+
+  console.log(url);
+  const { data, isLoading, isError } = useQuery({
+    queryKey,
+    queryFn: ({ signal }) => axios.get(url, { signal }).then((res) => res.data),
   });
 
-  const subCollections = useMemo(
-    () => collections?.filter((collection) => collection.parentCollectionId),
-    [collections]
-  );
-
-  const parentCollections = useMemo(
-    () =>
-      collections?.filter((parentCollection) =>
-        subCollections?.some(
-          (subCollection) =>
-            subCollection.parentCollectionId === parentCollection._id
-        )
-      ),
-    [collections, subCollections]
-  );
-
-  const notParentCollections = useMemo(
-    () => collections?.filter((collection) => !collection.parentCollectionId),
-    [collections]
-  );
-
+  console.log(data);
   return {
-    collections,
+    collections: data?.collections as CollectionType[],
     isLoading,
     isError,
-    parentCollections,
-    subCollections,
-    notParentCollections,
+    parentCollections: data?.parentCollections as CollectionType[],
+    subCollections: data?.subCollections as CollectionType[],
+    notParentCollections: data?.notParentCollections as CollectionType[],
   };
 };
 

@@ -149,11 +149,7 @@ const Playlists = () => {
             Create new playlist
           </Button>
 
-          <SelectedItemsController
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
-            isItemsPlaylists={true}
-          />
+          <SelectedItemsController isItemsPlaylists={true} />
 
           <div className="grid gap-2 grid-container">
             {filteredPlaylists.map((playlist) => {

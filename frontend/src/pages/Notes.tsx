@@ -9,11 +9,16 @@ import Modal from "../components/Modal";
 import Form from "../components/Form";
 import ReactQuillComponent from "../components/ReactQuillComponent";
 import Actions from "../components/ActionsDropdown";
+import useModalsStates from "@/hooks/useModalsStates";
+import ActionsDropdown from "../components/ActionsDropdown";
+import SelectCheckBox from "@/components/SelectCheckBox";
+import { StickyNote } from "lucide-react";
+import ItemCard from "@/components/ui/ItemCard";
 
 type NoteType = {
   title: string;
   content: string;
-  _id?: string;
+  _id: string;
 };
 const Notes = () => {
   const {
@@ -27,12 +32,10 @@ const Notes = () => {
       return response.data;
     },
   });
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [filteredNotes, setFilteredNotes] = useState<NoteType[]>([]);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
-  const [actionsDivId, setActionsDivId] = useState("");
 
   const deleteNoteHandler = async (id: string) => {
     setFilteredNotes((pre) => pre.filter((item) => item._id !== id));
@@ -76,47 +79,16 @@ const Notes = () => {
             Add new note
           </Button>
 
-          <SelectedItemsController
-            selectedItems={selectedItems}
-            setSelectedItems={setSelectedItems}
-          />
+          <SelectedItemsController isItemsNotes={true} />
 
           <div className="grid gap-4 grid-container">
             {filteredNotes.map((note) => (
-              <div className="bg-white py-4 px-3 min-h-[100px] flex border border-neutral-300 items-center rounded-xl">
-                <input
-                  checked={selectedItems.includes(note._id as string)}
-                  type="checkbox"
-                  className="!min-w-6 !h-6 mr-4"
-                  onChange={(e) => {
-                    //@ts-ignore
-                    setSelectedItems((pre) => {
-                      if (e.target.checked) {
-                        return [...pre, note._id];
-                      } else {
-                        return pre.filter((item) => item !== note._id);
-                      }
-                    });
-                  }}
-                />{" "}
-                <div className="flex justify-between gap-1 grow">
-                  <div key={note._id}>
-                    <h2>{note.title}</h2>
-                  </div>
-                  <div className="ml-auto">
-                    <Actions
-                      setDefaultValues={setDefaultValues}
-                      setIsModalOpen={setIsNotesModalOpen}
-                      setEditId={setEditId}
-                      id={note._id as string}
-                      note={note}
-                      deleteHandler={deleteNoteHandler}
-                      setActionsDivId={setActionsDivId}
-                      isActionDivOpen={actionsDivId === note._id}
-                    />
-                  </div>
-                </div>
-              </div>
+              <ItemCard
+                id={note._id}
+                Icon={<StickyNote />}
+                name={note.title}
+                deleteHandler={deleteNoteHandler}
+              />
             ))}
           </div>
           <Search.NotFound

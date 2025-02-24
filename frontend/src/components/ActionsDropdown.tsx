@@ -11,21 +11,22 @@ import {
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { LuMoveUpRight } from "react-icons/lu";
 import { CheckCircle, PenBoxIcon } from "lucide-react";
+import useModalsStates from "@/hooks/useModalsStates";
 
 type ActionsDropdownProps = {
-  moveHandler?: () => void;
-  renameHandler?: () => void;
-  deleteHandler?: () => void;
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  moveHandler?: any;
+  renameHandler?: any;
+  deleteHandler?: any;
   itemId: string;
+  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
 const ActionsDropdown = ({
   moveHandler,
   renameHandler,
   deleteHandler,
-  setSelectedItems,
   itemId,
+  setSelectedItems,
 }: ActionsDropdownProps) => {
   return (
     <DropdownMenu modal={false}>

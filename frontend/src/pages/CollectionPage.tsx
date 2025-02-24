@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
 import useGetCards, { CardType } from "../hooks/useGetCards.tsx";
-import Search from "../components/Search.tsx";
 import useGetCurrentUser from "../hooks/useGetCurrentUser.tsx";
 import AddNewCollectionModal from "../components/AddNewCollectionModal.tsx";
 import Collection from "../components/Collection.tsx";
@@ -17,7 +16,7 @@ import MoveCollectionModal from "../components/MoveCollectionModal.tsx";
 import { CollectionType } from "@/hooks/useGetCollections.tsx";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll.tsx";
 import CardsSkeleton from "@/components/CardsSkeleton.tsx";
-import SearchCards from "@/components/SearchCards.tsx";
+import Search from "@/components/Search.tsx";
 import useModalsStates from "@/hooks/useModalsStates.tsx";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery.ts";
 
@@ -38,6 +37,18 @@ const CollectionPage = ({}) => {
   });
 
   const {
+    selectedItems,
+    setDefaultValues,
+    setIsCollectionModalOpen,
+    setIsAddCardModalOpen,
+    setParentCollectionId,
+  } = useModalsStates();
+
+  useEffect(() => {
+    if (collection?._id) setParentCollectionId(collection._id);
+  }, [collection]);
+
+  const {
     cardsCount,
     fetchNextPage,
     isIntialLoading,
@@ -53,12 +64,6 @@ const CollectionPage = ({}) => {
   const [query, setQuery] = useState("");
   const isLoading = collectionLoading;
 
-  const {
-    selectedItems,
-    setDefaultValues,
-    setIsCollectionModalOpen,
-    setIsAddCardModalOpen,
-  } = useModalsStates();
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
   const queryClient = useQueryClient();
@@ -153,7 +158,7 @@ const CollectionPage = ({}) => {
                       label="Search cards"
                       filter="front"
                     /> */}
-                    <SearchCards query={query} setQuery={setQuery} />
+                    <Search query={query} setQuery={setQuery} />
                   </div>
                   {/* Sub Collections Section */}
                   <div className="mt-8 ">

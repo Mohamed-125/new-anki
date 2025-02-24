@@ -15,6 +15,7 @@ import { IoClose } from "react-icons/io5";
 import { FaTrash } from "react-icons/fa";
 import { MdDriveFileMove } from "react-icons/md";
 import useModalStates from "@/hooks/useModalsStates";
+import { useQueryClient } from "@tanstack/react-query";
 
 const SelectedItemsController = ({
   isItemsVideos,
@@ -28,7 +29,8 @@ const SelectedItemsController = ({
   const { selectedItems, setSelectedItems, setIsMoveToCollectionOpen } =
     useModalStates();
 
-  console.log(selectedItems);
+  const queryClient = useQueryClient();
+
   return selectedItems.length ? (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-between w-full gap-4 px-6 bg-white border-t shadow-lg py-7 bg-opacity-90 backdrop-blur-sm py-4items-center border-neutral-200">
       <div className="flex items-center gap-3">
@@ -83,16 +85,31 @@ const SelectedItemsController = ({
               "Are you sure you want to delete all selected items?"
             );
             if (confirmation) {
-              selectedItems.forEach((item) => {
-                const itemElement = document.getElementById(item);
-                itemElement?.remove();
-              });
-
               await axios.post(url, { ids: selectedItems });
               // setItemsState?.((pre: string[]) =>
               //   //@ts-ignore
               //   pre.filter((item: TextType) => selectedItems.includes(item._id))
               // );
+              if (isItemsVideos) {
+                queryClient.invalidateQueries({ queryKey: ["videos"] });
+                queryClient.invalidateQueries({ queryKey: ["video"] });
+              } else if (isItemsCollections) {
+                queryClient.invalidateQueries({ queryKey: ["collections"] });
+                queryClient.invalidateQueries({ queryKey: ["collection"] });
+              } else if (isItemsPlaylists) {
+                queryClient.invalidateQueries({ queryKey: ["playlists"] });
+                queryClient.invalidateQueries({ queryKey: ["playlist"] });
+              } else if (isItemsNotes) {
+                queryClient.invalidateQueries({ queryKey: ["notes"] });
+                queryClient.invalidateQueries({ queryKey: ["note"] });
+              } else if (isItemsTexts) {
+                queryClient.invalidateQueries({ queryKey: ["texts"] });
+                queryClient.invalidateQueries({ queryKey: ["text"] });
+              } else {
+                queryClient.invalidateQueries({ queryKey: ["cards"] });
+                queryClient.invalidateQueries({ queryKey: ["card"] });
+              }
+
               setSelectedItems([]);
             }
           }}
