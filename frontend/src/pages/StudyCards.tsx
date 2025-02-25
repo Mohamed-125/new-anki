@@ -1,18 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
-import { CollectionType } from "../context/CollectionsContext";
-import useGetCards, { CardType } from "../hooks/useGetCards";
+import { CollectionType } from "@/hooks/useGetCollections";
+import useGetCards from "../hooks/useGetCards";
 import Button from "../components/Button";
-import { useWindowSize } from "react-use";
-import Confetti from "react-confetti";
 import { HiMiniSpeakerWave } from "react-icons/hi2";
 // @ts-ignore
 import { useSpeech, useVoices } from "react-text-to-speech";
 import Form from "../components/Form";
 import ReactQuillComponent from "../components/ReactQuillComponent";
+
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
 
 const StudyCards = () => {
   const collectionId = useParams()?.collectionId;
@@ -113,13 +121,37 @@ const StudyCards = () => {
     };
   }, []);
 
+  const [studyCardsView, setStudyCardsView] = useState("normal");
+
   if (isLoading) {
     return <Loading />;
   }
 
   return (
-    <div className="container study-cards__div min-h-[90vh] flex justify-center flex-col mt-7">
-      <h3 className="title">{collection?.name || "All cards"}</h3>
+    <div className="container flex flex-col min-h-[calc(100vh-170px)] mt-3 study-cards__div">
+      <div className="flex items-center justify-between mb-7">
+        <h3 className="title">{collection?.name || "All cards"}</h3>
+
+        <SelectGroup>
+          <SelectLabel>Select Study Card Mode</SelectLabel>
+          <Select
+            value={studyCardsView}
+            onValueChange={(value) => {
+              setStudyCardsView(value);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="reversed">Reversed</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </SelectGroup>
+      </div>
 
       {!cards?.length || !cardsCount ? (
         <Loading />
@@ -141,7 +173,9 @@ const StudyCards = () => {
 
           <div>
             <p className="text-xl font-semibold text-center">
-              {cards[currentCard].front}
+              {studyCardsView === "normal"
+                ? cards[currentCard].front
+                : cards[currentCard].back}
             </p>
             <hr className="mt-8" />
             <div className="flex flex-col items-center justify-center gap-2">
@@ -173,7 +207,11 @@ const StudyCards = () => {
 
             {showAnswer && (
               <div className="mt-5 text-lg text-center">
-                <p className="mb-7">{cards[currentCard].back}</p>{" "}
+                <p className="mb-7">
+                  {studyCardsView === "normal"
+                    ? cards[currentCard].back
+                    : cards[currentCard].front}
+                </p>{" "}
                 <ReactQuillComponent
                   readOnly={true}
                   content={cards[currentCard].content || ""}
@@ -182,12 +220,12 @@ const StudyCards = () => {
             )}
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 ">
+          <div className="flex flex-wrap justify-center flex-1 w-full h-full gap-2 ">
             {showAnswer ? (
               <>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block text-green-500 border-green-500 hover:text-white sm:w-full hover:bg-green-500"
+                  className="block mt-auto text-green-500 border-green-500 h-11 hover:text-white sm:w-full hover:bg-green-500"
                   variant="primary-outline"
                   onClick={() => submitAnswer("easy")}
                 >
@@ -195,7 +233,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block text-yellow-500 border-yellow-500 hover:text-white sm:w-full text hover:bg-yellow-500"
+                  className="block mt-auto text-yellow-500 border-yellow-500 h-11 hover:text-white sm:w-full text hover:bg-yellow-500"
                   variant="primary-outline"
                   onClick={() => submitAnswer("medium")}
                 >
@@ -203,7 +241,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block hover:text-white sm:w-full"
+                  className="block mt-auto hover:text-white h-11 sm:w-full"
                   variant="danger-outline"
                   onClick={() => submitAnswer("hard")}
                 >
@@ -211,7 +249,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block text-black border-black hover:text-white sm:w-full text hover:bg-black "
+                  className="block mt-auto text-black border-black h-11 hover:text-white sm:w-full text hover:bg-black "
                   variant="primary-outline"
                   onClick={() => submitAnswer(`Couldn't Remember`)}
                 >
@@ -220,7 +258,7 @@ const StudyCards = () => {
               </>
             ) : (
               <Button
-                className="block mx-auto mt-auto sm:w-full"
+                className="block mx-auto mt-auto h-11 sm:w-full"
                 //@ts-ignore
                 tabIndex="-1"
                 onClick={() => setShowAnswer(true)}

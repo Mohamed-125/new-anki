@@ -23,6 +23,7 @@ const AddNewCollectionModal = ({}: {}) => {
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
   useAddModalShortcuts(setIsCollectionModalOpen, true);
+
   const { mutateAsync } = useMutation({
     onMutate: async (newCollection: Partial<CollectionType>) => {
       // await queryClient.cancelQueries({ queryKey: ["collections"] });

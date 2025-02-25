@@ -55,7 +55,7 @@ const VideoCard = ({ video, sideByside }: VideoCardProps) => {
         />
       </Link>
 
-      <div className="flex justify-between gap-2 px-4 mt-4 ">
+      <div className="flex justify-between gap-3 px-4 mt-4 grow">
         <Link to={"/video/" + video._id}>{video.title}</Link>
         <div>
           {!selectedItems?.length ? (

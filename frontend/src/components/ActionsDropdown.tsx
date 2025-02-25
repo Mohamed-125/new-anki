@@ -15,7 +15,7 @@ import useModalsStates from "@/hooks/useModalsStates";
 
 type ActionsDropdownProps = {
   moveHandler?: any;
-  renameHandler?: any;
+  editHandler?: any;
   deleteHandler?: any;
   itemId: string;
   setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
@@ -23,7 +23,7 @@ type ActionsDropdownProps = {
 
 const ActionsDropdown = ({
   moveHandler,
-  renameHandler,
+  editHandler,
   deleteHandler,
   itemId,
   setSelectedItems,
@@ -49,16 +49,16 @@ const ActionsDropdown = ({
         </Button>
         <DropdownMenuSeparator />
 
-        {renameHandler && (
+        {editHandler && (
           <>
             <Button
-              onClick={renameHandler}
+              onClick={editHandler}
               className={
                 "flex gap-3 items-center leading-normal hover:bg-transparent hover:scale-100 !shadow-none text-gray-700 bg-transparent border-none outline-none"
               }
             >
               <PenBoxIcon className="text-xl" />
-              Rename
+              Edit
             </Button>
             <DropdownMenuSeparator />
           </>

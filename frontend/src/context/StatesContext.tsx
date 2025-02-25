@@ -31,6 +31,12 @@ type StatesType = {
   isItemsCollections: boolean;
   setIsItemsCollections: React.Dispatch<React.SetStateAction<boolean>>;
 
+  setIsVideoModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isVideoModalOpen: boolean;
+
+  setIsTextModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isTextModalOpen: boolean;
+
   isAddCardModalOpen: boolean;
   setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 
@@ -65,6 +71,8 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState("");
   // the collection to move to
   const [targetCollectionId, setTargetCollectionId] = useState("");
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isTextModalOpen, setIsTextModalOpen] = useState(false);
 
   return (
     <statesContext.Provider
@@ -91,6 +99,10 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
         setContent,
         targetCollectionId,
         setTargetCollectionId,
+        setIsVideoModalOpen,
+        isVideoModalOpen,
+        setIsTextModalOpen,
+        isTextModalOpen,
       }}
     >
       {children}

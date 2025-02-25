@@ -346,6 +346,10 @@ const AddVideoModal = ({
       className={className}
       style={style}
     >
+      <Modal.Header
+        title={defaultValues?.defaultCaption ? "Save Video" : "Add New Video"}
+        setIsOpen={setIsVideoModalOpen}
+      />
       {modalLoading && (
         <>
           <Loading />
@@ -360,9 +364,6 @@ const AddVideoModal = ({
             : createVideoHandler(e);
         }}
       >
-        <Form.Title>
-          {defaultValues?.defaultCaption ? "Save Video" : "Add New Video"}
-        </Form.Title>
         <Form.FieldsContainer>
           <Form.Field>
             <Form.Label>Video Url</Form.Label>
@@ -426,7 +427,9 @@ const AddVideoModal = ({
             </>
           ) : null}
         </Form.FieldsContainer>
-        <div className="flex gap-2">
+      </Form>
+      <Modal.Footer>
+        <div className="flex gap-2 sm:flex-wrap">
           <Button
             size="parent"
             type="button"
@@ -434,19 +437,18 @@ const AddVideoModal = ({
               setIsVideoModalOpen(false);
             }}
             variant={"danger"}
-            className={"mt-8"}
           >
             Cancel
           </Button>{" "}
-          <Button size="parent" className={"mt-8"}>
+          <Button size="parent">
             {availableCaptions?.length
               ? defaultValues?.defaultCaption
                 ? "Edit video"
                 : "Add video"
-              : "Get video availableCaptions"}
+              : "Get video Captions"}
           </Button>
         </div>
-      </Form>
+      </Modal.Footer>
     </Modal>
   );
 };

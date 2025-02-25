@@ -10,6 +10,8 @@ import { Link } from "react-router-dom";
 import Actions from "../components/ActionsDropdown";
 import SelectedItemsController from "../components/SelectedItemsController";
 import { VideoType } from "./Playlist";
+import { MdFeaturedPlayList, MdOutlinePlaylistPlay } from "react-icons/md";
+import ItemCard from "@/components/ui/ItemCard";
 
 type PlaylistType = {
   name: string;
@@ -97,9 +99,8 @@ const Playlists = () => {
   const [isPlayListModalOpen, setIsPlayListModalOpen] = React.useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
-  const [filteredPlaylists, setFilteredPlaylists] = useState<PlaylistType[]>(
-    []
-  );
+  const [filteredPlaylists, setFilteredPlaylists] =
+    useState<PlaylistType[]>(playlists);
   const [actionsDivId, setActionsDivId] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -133,14 +134,8 @@ const Playlists = () => {
 
       {playlists?.length ? (
         <>
-          <Search
-            setState={setFilteredPlaylists}
-            label={"Search your playlists"}
-            items={playlists}
-            filter={"name"}
-          />
           <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Cards in collection : {playlists?.length}
+            Playlists in collection : {playlists?.length}
           </h6>
           <Button
             className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
@@ -152,62 +147,22 @@ const Playlists = () => {
           <SelectedItemsController isItemsPlaylists={true} />
 
           <div className="grid gap-2 grid-container">
-            {filteredPlaylists.map((playlist) => {
+            {playlists?.map((playlist) => {
               const id = playlist._id;
 
               if (!id) return;
               const isSelected = selectedItems.includes(id);
               return (
-                <div
+                <ItemCard
+                  Icon={<MdOutlinePlaylistPlay />}
+                  name={playlist.name}
+                  deleteHandler={() => deletePlaylistHandler(id)}
+                  subText={`${playlist?.videosCount} Videos in this playlist`}
                   id={id}
-                  className="flex items-center px-4 py-5 bg-white border shadow-lg rounded-xl border-neutral-300 "
-                  key={id}
-                >
-                  <input
-                    checked={isSelected}
-                    type="checkbox"
-                    className="!min-w-6 !h-6 mr-4"
-                    onChange={(e) => {
-                      setSelectedItems((pre) => {
-                        if (pre.length) {
-                          if (e.target.checked) {
-                            return [...pre, id];
-                          } else {
-                            return [...pre.filter((item) => item !== id)];
-                          }
-                        } else {
-                          return pre;
-                        }
-                      });
-                    }}
-                  />{" "}
-                  <Link to={`/playlists/${playlist._id}`}>
-                    <h2>{playlist.name}</h2>
-                    <p className="mt-3 text-sm font-medium text-gray-500">
-                      {playlist?.videosCount} Videos in this playlist
-                    </p>
-                  </Link>
-                  <Actions
-                    setIsModalOpen={setIsPlayListModalOpen}
-                    setDefaultValues={setDefaultValues}
-                    // setIsPlaylistModalOpen={setIsPlayListModalOpen}
-                    id={id}
-                    setEditId={setEditId}
-                    deleteHandler={deletePlaylistHandler}
-                    setActionsDivId={setActionsDivId}
-                    isActionDivOpen={actionsDivId === playlist._id}
-                    playlistName={playlist.name}
-                  />
-                </div>
+                />
               );
             })}
           </div>
-
-          <Search.NotFound
-            state={filteredPlaylists}
-            searchFor={"collection"}
-            filter={"name"}
-          />
         </>
       ) : (
         <Button className="mt-11" onClick={() => setIsPlayListModalOpen(true)}>
@@ -235,6 +190,14 @@ const AddNewPlaylistModal = ({
 }) => {
   return (
     <Modal setIsOpen={setIsOpen} isOpen={isOpen}>
+      <Modal.Header
+        title={
+          defaultValues?.playlistName
+            ? "Edit This Playlist"
+            : "Add New Playlist"
+        }
+        setIsOpen={setIsOpen}
+      ></Modal.Header>
       <Form
         className="w-[100%] max-w-[unset]"
         onSubmit={(e) =>
@@ -243,11 +206,6 @@ const AddNewPlaylistModal = ({
             : createPlaylistHandler(e)
         }
       >
-        <Form.Title>
-          {defaultValues?.playlistName
-            ? "Edit This Playlist"
-            : "Add New Playlist"}
-        </Form.Title>
         <Form.Field>
           <Form.Label>Playlist Name</Form.Label>
           <Form.Input
@@ -256,22 +214,22 @@ const AddNewPlaylistModal = ({
             name="playlist_name"
           />
         </Form.Field>
-
+      </Form>
+      <Modal.Footer>
         <div className="flex gap-2">
           <Button
             onClick={() => setIsOpen(false)}
             size="parent"
             type="button"
             variant={"danger"}
-            className={"mt-8"}
           >
             Cancel
           </Button>
-          <Button size="parent" className={"mt-8"}>
+          <Button size="parent">
             {defaultValues?.playlistName ? "Save Changes" : "Add Playlist"}
           </Button>{" "}
         </div>
-      </Form>
+      </Modal.Footer>
     </Modal>
   );
 };

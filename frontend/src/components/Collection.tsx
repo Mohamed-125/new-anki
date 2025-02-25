@@ -36,7 +36,7 @@ const Collection = ({ collection }: CollectionProps) => {
       .catch((err) => err);
   };
 
-  const renameHandler = () => {
+  const editHandler = () => {
     setEditId(id);
     setDefaultValues({
       collectionName: collection?.name,
@@ -55,7 +55,7 @@ const Collection = ({ collection }: CollectionProps) => {
       id={id}
       Icon={<Folder />}
       name={collection.name}
-      renameHandler={renameHandler}
+      editHandler={editHandler}
       deleteHandler={deleteHandler}
       moveHandler={moveHandler}
     />

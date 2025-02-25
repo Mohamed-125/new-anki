@@ -35,8 +35,6 @@ const AddNewText = () => {
       content,
     });
 
-    response.data;
-
     //@ts-ignore
     navigate("/myTexts/" + response.data._id, {
       replace: true,
@@ -49,7 +47,6 @@ const AddNewText = () => {
       title,
       content,
     });
-    response.data;
     queryClient.invalidateQueries({ queryKey: ["texts"] });
     navigate("/myTexts/" + id, {
       replace: true,
@@ -80,7 +77,7 @@ const AddNewText = () => {
           <Form.Input
             value={title}
             type="text"
-            name="playlist_name"
+            name="text_name"
             onChange={(e) => setTitle(e.target.value)}
           />
         </Form.Field>

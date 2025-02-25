@@ -12,7 +12,7 @@ const textSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    defaultCollection: {
+    defaultCollectionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Collection",
     },

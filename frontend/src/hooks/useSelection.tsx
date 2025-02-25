@@ -66,13 +66,18 @@ const useSelection = ({
 
   useEffect(() => {
     const removeSelection = (e: Event) => {
-      if ((e.target as HTMLElement)?.id !== "translationWindow") {
+      if (
+        (e.target as HTMLElement)?.id !== "translationWindow" &&
+        (e.target as HTMLElement)?.id !== "translationBtn"
+      ) {
         setSelectionData({ ele: null, text: "" });
       }
     };
 
     const handleSelectionChange = (e: Event) => {
       const selected = window.getSelection();
+
+      console.log(selected);
       if (selected?.toString()) {
         handleSelection();
       } else {
@@ -114,7 +119,7 @@ const useSelection = ({
     return () => {
       setTimeout(() => {
         root.unmount();
-        container.remove();
+        container?.remove();
       }, 150);
     };
   }, [selectionData]);

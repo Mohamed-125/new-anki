@@ -7,7 +7,7 @@ import useModalsStates from "@/hooks/useModalsStates";
 
 const ItemCard = ({
   moveHandler,
-  renameHandler,
+  editHandler,
   id,
   deleteHandler,
   name,
@@ -15,7 +15,7 @@ const ItemCard = ({
   subText,
 }: {
   moveHandler?: any;
-  renameHandler?: any;
+  editHandler?: any;
   deleteHandler?: any;
   id: string;
   name: string;
@@ -52,7 +52,7 @@ const ItemCard = ({
           (!selectedItems.length ? (
             <ActionsDropdown
               moveHandler={moveHandler}
-              renameHandler={renameHandler}
+              editHandler={editHandler}
               deleteHandler={deleteHandler}
               itemId={id}
               setSelectedItems={setSelectedItems}

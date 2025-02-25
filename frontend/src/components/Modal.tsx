@@ -19,6 +19,7 @@ interface ModalProps {
   className?: string;
   style?: React.CSSProperties;
   onAnimationEnd?: () => void;
+  big?: boolean;
 }
 
 // Define the Modal component
@@ -30,6 +31,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
     isOpen,
     style,
     onAnimationEnd,
+    big,
   }: ModalProps) {
     const modalRef = useRef<null | HTMLDivElement>(null);
 
@@ -70,10 +72,17 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
             isOpen
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",
+            big && "max-w-[1000px]",
+
             className
           )}
         >
-          <div className="overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ">
+          <div
+            className={twMerge(
+              "overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ",
+              big && "max-h-[90vh]"
+            )}
+          >
             {children}
           </div>
         </div>

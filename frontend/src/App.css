@@ -1,5 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
-
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,6 +13,7 @@
   --lightPrimary: rgb(95, 145, 255); /* bg-blue-500 */
   --danger: rgb(220, 38, 38); /* bg-red-500 */
   --greenColor: rgb(58, 216, 116); /* bg-green-500 */
+  --font: "Inter", sans-serif;
 }
 
 @layer utilities {
@@ -27,12 +28,11 @@
   }
 }
 body * {
-  white-space: pre-line;
   will-change: contents;
 }
 
 .title {
-  @apply text-4xl font-semibold mb-7;
+  @apply text-4xl font-semibold;
 }
 
 .container {
@@ -52,17 +52,22 @@ body {
   background-color: #f8f9fa;
   font-size: 15px;
   zoom: 0.96;
+  font-family: var(--font);
   /* font-family: "Bahnschrift"; */
-  font-size: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
-  /* font-family: "Inter", sans-serif; */
+  /* font-size: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important; */
 }
 
 .grid-container {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   grid-template-rows: repeat(3, auto);
 }
-
+@media (min-width: 900px) {
+  /* 3 columns * 270px = 810px + gaps */
+  .grid-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 .videos-container > div {
   align-items: start;
   display: grid;
@@ -305,7 +310,8 @@ iframe {
 }
 
 .ql-editor p {
-  font-size: 17px;
+  font-size: 15px;
+  font-family: var(--font);
 }
 
 .text-div h2 {

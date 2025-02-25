@@ -105,10 +105,6 @@ const TextPage = () => {
     setIsAddCardModalOpen(true);
   };
 
-  useEffect(() => {
-    console.log("editId", editId);
-  }, [editId]);
-
   if (isLoading) {
     return <Loading />;
   }

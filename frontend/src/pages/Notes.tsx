@@ -2,16 +2,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { FormEvent, useEffect, useState } from "react";
 import Loading from "../components/Loading";
 import axios from "axios";
-import Search from "../components/Search";
 import Button from "../components/Button";
 import SelectedItemsController from "../components/SelectedItemsController";
 import Modal from "../components/Modal";
 import Form from "../components/Form";
 import ReactQuillComponent from "../components/ReactQuillComponent";
-import Actions from "../components/ActionsDropdown";
-import useModalsStates from "@/hooks/useModalsStates";
-import ActionsDropdown from "../components/ActionsDropdown";
-import SelectCheckBox from "@/components/SelectCheckBox";
 import { StickyNote } from "lucide-react";
 import ItemCard from "@/components/ui/ItemCard";
 
@@ -61,13 +56,6 @@ const Notes = () => {
 
       {notes?.length ? (
         <>
-          <Search
-            setState={setFilteredNotes}
-            label={"Search your notes"}
-            items={notes}
-            filter={"title"}
-          />
-
           <h6 className="mt-4 text-lg font-bold text-gray-400">
             Number of notes : {notes?.length}
           </h6>
@@ -82,7 +70,7 @@ const Notes = () => {
           <SelectedItemsController isItemsNotes={true} />
 
           <div className="grid gap-4 grid-container">
-            {filteredNotes.map((note) => (
+            {notes.map((note) => (
               <ItemCard
                 id={note._id}
                 Icon={<StickyNote />}
@@ -91,11 +79,6 @@ const Notes = () => {
               />
             ))}
           </div>
-          <Search.NotFound
-            state={filteredNotes}
-            searchFor={"notes"}
-            filter={"title"}
-          />
         </>
       ) : (
         <Button onClick={() => setIsNotesModalOpen(true)}>
@@ -156,20 +139,17 @@ const NotesModal = ({
   }, [defaultValues.noteContent, defaultValues.noteTitle]);
 
   return (
-    <Modal
-      setIsOpen={setIsOpen}
-      isOpen={isOpen}
-      className="px-5 py-0 max-w-[unset]"
-    >
+    <Modal setIsOpen={setIsOpen} isOpen={isOpen} className="max-w-none">
+      <Modal.Header
+        title={defaultValues?.noteTitle ? "Edit This Note" : "Add New Note"}
+        setIsOpen={setIsOpen}
+      ></Modal.Header>
       <Form
-        className="w-[100%] max-w-[unset]"
+        className="w-[100%] py-0 px-0"
         onSubmit={(e) =>
           defaultValues?.noteTitle ? updateNoteHandler(e) : createNoteHandler(e)
         }
       >
-        <Form.Title>
-          {defaultValues?.noteTitle ? "Edit This Note" : "Add New Note"}
-        </Form.Title>
         <Form.FieldsContainer>
           <Form.Field>
             <Form.Label>Note Name</Form.Label>
@@ -186,22 +166,22 @@ const NotesModal = ({
             <ReactQuillComponent setContent={setContent} content={content} />
           </Form.Field>
         </Form.FieldsContainer>
-
+      </Form>
+      <Modal.Footer>
         <div className="flex gap-2">
           <Button
             onClick={() => setIsOpen(false)}
             size="parent"
             type="button"
             variant={"danger"}
-            className={"mt-8"}
           >
             Cancel
           </Button>
-          <Button size="parent" className={"mt-8"}>
+          <Button size="parent">
             {defaultValues?.noteTitle ? "Save Changes" : "Add Note"}
           </Button>{" "}
         </div>
-      </Form>
+      </Modal.Footer>
     </Modal>
   );
 };

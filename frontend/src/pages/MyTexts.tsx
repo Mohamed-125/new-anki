@@ -10,11 +10,15 @@ import { Link, useNavigate } from "react-router-dom";
 import ActionsDropdown from "../components/ActionsDropdown";
 import useModalsStates from "@/hooks/useModalsStates";
 import SelectCheckBox from "@/components/SelectCheckBox";
+import ItemCard from "@/components/ui/ItemCard";
+import { Text } from "lucide-react";
+import { text } from "stream/consumers";
+import AddNewTextModal from "@/components/AddNewTextModal";
 
 export type TextType = {
   title: string;
   content: string;
-  _id: string;
+  // defaultCollectionId: string | undefined;
 };
 
 const MyTexts = () => {
@@ -26,17 +30,20 @@ const MyTexts = () => {
     queryKey: ["text"],
     queryFn: async () => {
       const response = await axios.get("text");
-      return response.data;
+      return response.data as (TextType & { _id: string })[];
     },
   });
-  const { selectedItems, setSelectedItems } = useModalsStates();
-
-  const [filteredTexts, setFilteredTexts] = useState<TextType[]>([]);
 
   const deleteTextHandler = async (id: string) => {
-    setFilteredTexts((pre) => pre.filter((item) => item?._id !== id));
     const deleteRes = await axios.delete(`text/${id}`);
     return;
+  };
+
+  const { setEditId, setIsTextModalOpen } = useModalsStates();
+
+  const editHandler = (text: TextType & { _id: string }) => {
+    setEditId(text._id);
+    setIsTextModalOpen(true);
   };
 
   if (isLoading) return <Loading />;
@@ -45,63 +52,34 @@ const MyTexts = () => {
     <div className="container">
       <h1 className="my-6 text-5xl font-bold text-black">Texts</h1>
 
-      {texts?.length ? (
+      <AddNewTextModal />
+      {texts.length ? (
         <>
-          <Search
-            setState={setFilteredTexts}
-            label={"Search your text"}
-            items={texts}
-            filter={"title"}
-          />
-
           <h6 className="mt-4 text-lg font-bold text-gray-400">
             Number of texts : {texts?.length}
           </h6>
 
-          <Link to="/add-text">
-            <Button className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none ">
-              Add new text
-            </Button>
-          </Link>
+          <Button
+            onClick={() => setIsTextModalOpen(true)}
+            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
+          >
+            Add new text
+          </Button>
 
           <SelectedItemsController isItemsTexts={true} />
 
           <div className="grid gap-4 grid-container">
-            {filteredTexts.map((text) => (
-              <div
+            {texts.map((text) => (
+              <ItemCard
+                Icon={<Text />}
+                editHandler={() => editHandler(text)}
+                deleteHandler={deleteTextHandler}
+                name={text.title}
                 key={text._id}
-                className="bg-white py-4 px-3 min-h-[100px] flex items-center rounded-md"
-              >
-                <div className="flex justify-between gap-1 grow">
-                  <div>
-                    <Link to={`${location.pathname}/${text._id}`}>
-                      <h2>{text.title}</h2>
-                    </Link>
-                  </div>
-                  <div className="ml-auto">
-                    {!selectedItems?.length ? (
-                      <ActionsDropdown
-                        itemId={text._id as string}
-                        deleteHandler={deleteTextHandler}
-                        setSelectedItems={setSelectedItems}
-                      />
-                    ) : (
-                      <SelectCheckBox
-                        id={text._id}
-                        selectedItems={selectedItems}
-                        setSelectedItems={setSelectedItems}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
+                id={text._id}
+              />
             ))}
           </div>
-          <Search.NotFound
-            state={filteredTexts}
-            searchFor={"text"}
-            filter={"title"}
-          />
         </>
       ) : (
         <Link to="/add-text">
