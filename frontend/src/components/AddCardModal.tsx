@@ -5,7 +5,7 @@ import Button from "./Button";
 import Select, { SingleValue } from "react-select";
 import useCardActions from "../hooks/useCardActions";
 import "react-quill/dist/quill.snow.css";
-import ReactQuillComponent from "./ReactQuillComponent";
+import TipTapEditor from "./TipTapEditor";
 import { OptionType } from "./AddVideoModal";
 import useGetCollections from "../hooks/useGetCollections";
 import FormButtons from "./FormButtons";
@@ -221,7 +221,7 @@ export function AddCardModal({
           <Form.Field>
             <Form.Label>Content</Form.Label>
             <div className="p-4 border border-gray-200 rounded-lg">
-              <ReactQuillComponent
+              <TipTapEditor
                 className="min-h-[200px]"
                 setContent={setContent}
                 content={content}

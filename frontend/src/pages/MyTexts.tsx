@@ -13,7 +13,7 @@ import SelectCheckBox from "@/components/SelectCheckBox";
 import ItemCard from "@/components/ui/ItemCard";
 import { Text } from "lucide-react";
 import { text } from "stream/consumers";
-import AddNewTextModal from "@/components/AddNewTextModal";
+// import AddNewTextModal from "@/components/AddNewTextModal";
 
 export type TextType = {
   title: string;
@@ -41,8 +41,10 @@ const MyTexts = () => {
 
   const { setEditId, setIsTextModalOpen } = useModalsStates();
 
+  const navigate = useNavigate();
   const editHandler = (text: TextType & { _id: string }) => {
     setEditId(text._id);
+    navigate("/text/edit/" + text._id);
     setIsTextModalOpen(true);
   };
 
@@ -52,7 +54,7 @@ const MyTexts = () => {
     <div className="container">
       <h1 className="my-6 text-5xl font-bold text-black">Texts</h1>
 
-      <AddNewTextModal />
+      {/* <AddNewTextModal /> */}
       {texts.length ? (
         <>
           <h6 className="mt-4 text-lg font-bold text-gray-400">
@@ -60,7 +62,7 @@ const MyTexts = () => {
           </h6>
 
           <Button
-            onClick={() => setIsTextModalOpen(true)}
+            onClick={() => navigate("/text/new")}
             className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
           >
             Add new text

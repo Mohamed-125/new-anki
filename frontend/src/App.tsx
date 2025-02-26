@@ -1,4 +1,4 @@
-import "./App.css";
+import "./App.scss";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -153,7 +153,7 @@ function App() {
             }
           />
           <Route
-            path="/add-text/"
+            path="/text/new"
             element={
               <ProtectedRoute>
                 <AddNewText />
@@ -161,7 +161,7 @@ function App() {
             }
           />
           <Route
-            path="/edit-text/:id"
+            path="/text/edit/:id"
             element={
               <ProtectedRoute>
                 <AddNewText />

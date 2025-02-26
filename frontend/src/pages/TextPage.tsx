@@ -1,6 +1,12 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  FormEvent,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { FaEdit } from "react-icons/fa";
 import { FaTrashCan } from "react-icons/fa6";
 import ReactQuill from "react-quill";
@@ -16,6 +22,10 @@ import { px } from "framer-motion";
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
 import useModalsStates from "@/hooks/useModalsStates";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextType } from "./MyTexts";
+import useUseEditor from "@/hooks/useUseEditor";
 
 const TextPage = () => {
   const id = useParams()?.id;
@@ -25,13 +35,12 @@ const TextPage = () => {
     queryKey: ["text", id],
     queryFn: async () => {
       const response = await axios.get("text/" + id);
-      return response.data;
+      return response.data as TextType & { _id: string };
     },
   });
 
   const { userCards } = useGetCards({});
 
-  useEffect(() => {}, [text?.content]);
   const navigate = useNavigate();
 
   const deleteTextHandler = async () => {
@@ -44,12 +53,9 @@ const TextPage = () => {
     }
   };
 
-  const {
-    setContent,
-    isAddCardModalOpen,
-    setDefaultValues,
-    setIsAddCardModalOpen,
-  } = useModalsStates();
+  const [title, setTitle] = useState("");
+  const { isAddCardModalOpen, setDefaultValues, setIsAddCardModalOpen } =
+    useModalsStates();
   const {} = useSelection({
     isAddCardModalOpen,
     setDefaultValues,
@@ -105,6 +111,15 @@ const TextPage = () => {
     setIsAddCardModalOpen(true);
   };
 
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setTitle(text?.title);
+    setTimeout(() => setContent(text?.content), 200);
+  }, [text]);
+
+  const { editor, setContent } = useUseEditor();
+
   if (isLoading) {
     return <Loading />;
   }
@@ -115,8 +130,8 @@ const TextPage = () => {
 
       <h1 className="my-8 text-4xl font-bold">{text?.title}</h1>
       <div className="flex items-center justify-end gap-4 my-4">
-        <Link to={`/edit-text/${id}`} className="flex items-center gap-2">
-          <FaEdit className="text-3xl text-blue-600 cursor-pointer" /> Edit
+        <Link to={`/text/edit/${id}`} className="flex items-center gap-2">
+          <FaEdit className="text-xl text-blue-600 cursor-pointer" /> Edit
         </Link>
         <Button
           variant="danger"
@@ -125,7 +140,7 @@ const TextPage = () => {
           }}
           className="flex items-center gap-2"
         >
-          <FaTrashCan className="text-3xl text-white cursor-pointer" /> Delete
+          <FaTrashCan className="text-xl text-white cursor-pointer" /> Delete
         </Button>
       </div>
 

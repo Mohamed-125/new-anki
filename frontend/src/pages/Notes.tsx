@@ -6,7 +6,7 @@ import Button from "../components/Button";
 import SelectedItemsController from "../components/SelectedItemsController";
 import Modal from "../components/Modal";
 import Form from "../components/Form";
-import ReactQuillComponent from "../components/ReactQuillComponent";
+import TipTapEditor from "../components/TipTapEditor";
 import { StickyNote } from "lucide-react";
 import ItemCard from "@/components/ui/ItemCard";
 
@@ -163,7 +163,7 @@ const NotesModal = ({
 
           <Form.Field>
             <Form.Label>Note Content</Form.Label>
-            <ReactQuillComponent setContent={setContent} content={content} />
+            <TipTapEditor setContent={setContent} content={content} />
           </Form.Field>
         </Form.FieldsContainer>
       </Form>

@@ -10,7 +10,7 @@ import { HiMiniSpeakerWave } from "react-icons/hi2";
 // @ts-ignore
 import { useSpeech, useVoices } from "react-text-to-speech";
 import Form from "../components/Form";
-import ReactQuillComponent from "../components/ReactQuillComponent";
+import TipTapEditor from "../components/TipTapEditor";
 
 import {
   Select,
@@ -212,7 +212,7 @@ const StudyCards = () => {
                     ? cards[currentCard].back
                     : cards[currentCard].front}
                 </p>{" "}
-                <ReactQuillComponent
+                <TipTapEditor
                   readOnly={true}
                   content={cards[currentCard].content || ""}
                 />
