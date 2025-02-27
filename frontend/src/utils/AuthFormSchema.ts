@@ -1,4 +1,4 @@
-import zod from "zod";
+import { z } from "zod";
 
 const ALLOWED_EMAIL_DOMAINS = [
   "gmail.com",
@@ -35,8 +35,8 @@ const ALLOWED_EMAIL_DOMAINS = [
 //     .max(20, "Password should be contain less than 20 characters"),
 // });
 
-export const AuthFormSchema = zod.z.object({
-  email: zod.z
+export const AuthFormSchema = z.object({
+  email: z
     .string()
     .min(1, "Email is required") // Add this line to make email required
     .email("Invalid email format")
@@ -52,11 +52,11 @@ export const AuthFormSchema = zod.z.object({
         message: "Please use a valid email provider",
       }
     ),
-  password: zod.z
+  password: z
     .string() // Add this to make password required
     .min(1, "Password is required")
     .min(3, "Password must be at least 8 characters")
     .max(100, "Password must be less than 100 characters"),
 });
 
-export type AuthFormSchemaType = zod.z.infer<typeof AuthFormSchema>;
+export type AuthFormSchemaType = z.infer<typeof AuthFormSchema>;
