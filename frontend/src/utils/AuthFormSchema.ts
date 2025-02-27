@@ -1,4 +1,4 @@
-import * as zod from "zod";
+import zod from "zod";
 
 const ALLOWED_EMAIL_DOMAINS = [
   "gmail.com",

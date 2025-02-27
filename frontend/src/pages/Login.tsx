@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../components/Button";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
-import {} from "react";
 import { useForm } from "react-hook-form";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
