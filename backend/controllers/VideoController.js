@@ -62,7 +62,6 @@ module.exports.getVideoData = async (req, res, next) => {
 
     // Extract details of available captions (language, name)
     const availableCaptions = captions.map((caption) => {
-      console.log(caption);
       return {
         id: caption.id,
         language: caption.snippet.language,
@@ -99,13 +98,13 @@ const getTranscript = async (videoId, lang) => {
 };
 
 module.exports.getTranscript = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // res.setHeader("Access-Control-Allow-Origin", "*");
+  // res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  // res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  // if (req.method === "OPTIONS") {
+  //   return res.status(200).end();
+  // }
 
   const { videoId } = req.query;
 
@@ -119,6 +118,7 @@ module.exports.getTranscript = async (req, res) => {
 
     return res.status(200).json(newArray);
   } catch (err) {
+    console.log("err", err);
     return res
       .status(400)
       .json({ msg: "Error getting the subtitle", error: err.message });

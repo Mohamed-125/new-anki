@@ -140,6 +140,8 @@ const AddVideoModal = ({
   };
 
   const addVideo = (url: string) => {
+    console.log("tsrtsrt");
+
     setModalLoading(true);
 
     const videoId = getYouTubeVideoId(url);
@@ -155,7 +157,6 @@ const AddVideoModal = ({
             )
           ].language;
 
-    console.log("axios wworking");
     axios
       .get(`/video/getTranscript?videoId=${videoId}&lang=${defaultCaptionName}`)
       .then(async (res) => {
@@ -285,6 +286,7 @@ const AddVideoModal = ({
   };
 
   const createVideoHandler = (e: React.FormEvent<HTMLFormElement>) => {
+    console.log("creatin video");
     e.preventDefault();
 
     const urlInput = document.querySelector<HTMLInputElement>("#youtubeUrl");
@@ -427,28 +429,28 @@ const AddVideoModal = ({
             </>
           ) : null}
         </Form.FieldsContainer>
+        <Modal.Footer>
+          <div className="flex gap-2 sm:flex-wrap">
+            <Button
+              size="parent"
+              type="button"
+              onClick={() => {
+                setIsVideoModalOpen(false);
+              }}
+              variant={"danger"}
+            >
+              Cancel
+            </Button>{" "}
+            <Button size="parent" type="submit">
+              {availableCaptions?.length
+                ? defaultValues?.defaultCaption
+                  ? "Edit video"
+                  : "Add video"
+                : "Get video Captions"}
+            </Button>
+          </div>
+        </Modal.Footer>{" "}
       </Form>
-      <Modal.Footer>
-        <div className="flex gap-2 sm:flex-wrap">
-          <Button
-            size="parent"
-            type="button"
-            onClick={() => {
-              setIsVideoModalOpen(false);
-            }}
-            variant={"danger"}
-          >
-            Cancel
-          </Button>{" "}
-          <Button size="parent">
-            {availableCaptions?.length
-              ? defaultValues?.defaultCaption
-                ? "Edit video"
-                : "Add video"
-              : "Get video Captions"}
-          </Button>
-        </div>
-      </Modal.Footer>
     </Modal>
   );
 };

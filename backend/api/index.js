@@ -18,7 +18,6 @@ const textRouter = require("../routes/textRouter");
 const cookieParser = require("cookie-parser");
 
 // Mongo DB Connections
-
 console.log(process.env.MONGO_DB_URL);
 mongoose
   .connect(process.env.MONGO_DB_URL)
@@ -34,6 +33,7 @@ const whitelist = [
   "http://localhost:5173",
   "http://192.168.1.2:5174",
   "http://192.168.1.2:5173",
+  "chrome-extension://hcajffcecfpnmcpeoompmocgecciebpp",
   "http://localhost:5174",
 ];
 
@@ -54,6 +54,7 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "50mb" })); // Increase JSON body size limit
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser());
+
 // Ensure OPTIONS requests are handled properly
 app.options("*", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");

@@ -23,7 +23,7 @@ router
   .post("/", Authorization, createVideo)
   .get("/", Authorization, getUserVideos)
   .get("/getVideoData/:videoId", Authorization, getVideoData)
-  .get("/getTranscript", Authorization, getTranscript)
+  .get("/getTranscript", getTranscript)
   .get("/:id", Authorization, getVideo)
   .put("/:id", Authorization, updateVideo)
   .delete("/:id", Authorization, deleteVideo)
