@@ -13,8 +13,7 @@
     "lodash": "^4.17.21",
     "nodemon": "^3.1.7",
     "puppeteer": "^23.3.0",
-    "reverso-api": "^2.22.10",
-    "zod": "^3.24.2"
+    "reverso-api": "^2.22.10"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.15",
