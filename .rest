@@ -1,0 +1,62 @@
+POST http://localhost:5000/api/v1/auth/register
+Content-Type: application/json
+
+ { 
+    "email": "kingmforgaming@gmail.com", 
+    "password": "123"
+ }
+
+ 
+ 
+### 
+POST http://localhost:5000/api/v1/auth/login
+Content-Type: application/json
+
+ { 
+    "email": "kingmforgaming@gmail.com", 
+    "password": "123"
+ }
+
+ 
+### 
+GET  http://localhost:5000/api/v1/auth/me
+Content-Type: application/json
+
+
+ 
+ 
+### 
+POST http://localhost:5000/api/v1/auth/login
+Content-Type: application/json
+
+ { 
+    "email": "kingmforgaming6@gmail.com", 
+    "password": "123"
+ }
+
+ 
+ 
+### 
+
+POST http://localhost:5000/api/v1/collection/forkCollection
+Content-Type: application/json
+
+{ 
+   "collectionId":"670cdff7b1097dfea808e1c4"
+}
+### 
+
+GET https://new-anki-server.vercel.app/
+Content-Type: application/json
+
+###
+
+POST https://new-anki-server.vercel.app/api/v1/auth/login
+Content-Type: application/json
+
+ { 
+    "email": "kingmforgaming@gmail.com", 
+    "password": "123"
+ }
+###
+ 
