@@ -22,7 +22,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: [], // ✅ Ensure zod is not externalized
+      external: ["zod"], // Add zod here
     },
   },
 });
