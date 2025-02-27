@@ -84,6 +84,7 @@ module.exports.getCard = async (req, res, next) => {
 module.exports.updateCard = async (req, res, next) => {
   const { front, back, content, collectionId, easeFactor } = req.body;
 
+  console.log(collectionId);
   try {
     const updatedCard = await CardModel.findByIdAndUpdate(
       { _id: req.params.id },

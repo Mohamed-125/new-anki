@@ -93,4 +93,4 @@ const ActionsDropdown = ({
   );
 };
 
-export default ActionsDropdown;
+export default React.memo(ActionsDropdown);

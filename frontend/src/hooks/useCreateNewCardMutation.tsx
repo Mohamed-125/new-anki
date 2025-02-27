@@ -13,7 +13,7 @@ type Params = {
   collectionId?: string;
 };
 
-const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
+const useCreateNewCard = ({ optimistic }: Params = {}) => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
 
@@ -37,7 +37,7 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
     },
     mutationFn: (data: {}) => {
-      return axios.post("/card/", { ...data, collectionId }).then((res) => {
+      return axios.post("/card/", { ...data }).then((res) => {
         console.log(res);
         return res.data;
       });
@@ -57,6 +57,8 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
       back: formData.get("card_translation"),
       ...additionalData,
     };
+
+    console.log(data);
     mutateAsync(data)
       .then(() => {
         setIsAddCardModalOpen(false);

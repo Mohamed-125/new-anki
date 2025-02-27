@@ -3,13 +3,13 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import ReactDOM from "react-dom/client";
 
 const useSelection = ({
-  isAddCardModalOpen,
+  // isAddCardModalOpen,
   setContent,
   setDefaultValues,
   setIsAddCardModalOpen,
 }: {
-  isAddCardModalOpen: boolean;
-  setContent: React.Dispatch<React.SetStateAction<string>>;
+  // isAddCardModalOpen: boolean;
+  setContent?: React.Dispatch<React.SetStateAction<string>>;
   setDefaultValues: React.Dispatch<
     React.SetStateAction<{ front: string; back: string; content: string }>
   >;

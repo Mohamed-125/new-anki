@@ -14,7 +14,13 @@ import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 
-const MoveCollectionModal = ({ cards }: { cards?: CardType[] }) => {
+const MoveCollectionModal = ({
+  cards,
+  text,
+}: {
+  cards?: CardType[];
+  text?: boolean;
+}) => {
   const { collections, parentCollections, notParentCollections, isLoading } =
     useGetCollections();
 
@@ -33,6 +39,7 @@ const MoveCollectionModal = ({ cards }: { cards?: CardType[] }) => {
     setSelectedItems,
     isCollectionModalOpen,
     setIsCollectionModalOpen,
+    setDefaultValues,
   } = useModalStates();
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
@@ -170,6 +177,7 @@ const MoveCollectionModal = ({ cards }: { cards?: CardType[] }) => {
     });
 
     setSelectedItems?.([]);
+    setDefaultValues({ collectionId: targetCollectionId });
     states.setIsMoveToCollectionOpen(false);
   };
 
@@ -189,11 +197,12 @@ const MoveCollectionModal = ({ cards }: { cards?: CardType[] }) => {
   return (
     <Modal
       onAnimationEnd={() => {
+        if (isMoveToCollectionOpen) return;
         setSelectedCollectionIds([]);
-        setEditId("");
+        // setEditId("");
         setParentCollectionId("");
       }}
-      className={`max-w-lg w-full bg-white rounded-xl shadow-lg ${
+      className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
         isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
       }`}
       isOpen={isMoveToCollectionOpen}
@@ -239,6 +248,15 @@ const MoveCollectionModal = ({ cards }: { cards?: CardType[] }) => {
             }}
           >
             Move To Root Collections
+          </Button>
+        ) : text ? (
+          <Button
+            className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+            onClick={() => {
+              setDefaultValues({ defaultCollectionId: null });
+            }}
+          >
+            No Default Collection
           </Button>
         ) : (
           <Button
@@ -322,22 +340,40 @@ const MoveCollectionModal = ({ cards }: { cards?: CardType[] }) => {
                         <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400 group-hover:text-gray-600" />
                       )}
                     </span>
-                    <Button
-                      disabled={disabled}
-                      onClick={(e: any) => {
-                        e.stopPropagation();
-                        moving === "cards"
-                          ? moveCardsHandler({
-                              targetCollectionId: collection._id,
-                            })
-                          : moveCollectionsHandler({
-                              targetCollectionId: collection._id,
-                            });
-                      }}
-                      className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                    >
-                      Move
-                    </Button>
+                    {text ? (
+                      <Button
+                        onClick={(e: any) => {
+                          e.stopPropagation();
+                          setDefaultValues((pre) => {
+                            return {
+                              ...pre,
+                              defaultCollectionId: collection._id,
+                            };
+                          });
+                          setIsMoveToCollectionOpen(false);
+                        }}
+                        className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                      >
+                        Select{" "}
+                      </Button>
+                    ) : (
+                      <Button
+                        disabled={disabled}
+                        onClick={(e: any) => {
+                          e.stopPropagation();
+                          moving === "cards"
+                            ? moveCardsHandler({
+                                targetCollectionId: collection._id,
+                              })
+                            : moveCollectionsHandler({
+                                targetCollectionId: collection._id,
+                              });
+                        }}
+                        className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                      >
+                        Move
+                      </Button>
+                    )}
                   </div>
                 );
               })}

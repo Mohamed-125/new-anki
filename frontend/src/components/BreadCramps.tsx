@@ -25,7 +25,7 @@ const BreadCramps = () => {
   }
 
   return (
-    <div className="relative flex gap-1 sm:text-sm">
+    <div className="relative flex gap-1 mt-3 mb-8 sm:text-sm">
       {pathArray.map((path, index) => {
         return (
           <Link

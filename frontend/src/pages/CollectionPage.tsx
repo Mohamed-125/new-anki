@@ -19,6 +19,7 @@ import CardsSkeleton from "@/components/CardsSkeleton.tsx";
 import Search from "@/components/Search.tsx";
 import useModalsStates from "@/hooks/useModalsStates.tsx";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery.ts";
+import useGetCollectionById from "@/hooks/useGetCollectionById.tsx";
 
 const CollectionPage = ({}) => {
   const location = useLocation();
@@ -26,15 +27,7 @@ const CollectionPage = ({}) => {
   const id = pathArray[pathArray.length - 1]; // Get the last segment
   const { user } = useGetCurrentUser();
 
-  const {
-    data: collection,
-    isLoading: collectionLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["collection", id],
-    queryFn: () =>
-      axios.get("collection/" + id).then((res) => res.data as CollectionType),
-  });
+  const { collection, isCollectionLoading } = useGetCollectionById(id);
 
   const {
     selectedItems,
@@ -62,8 +55,6 @@ const CollectionPage = ({}) => {
   const {} = useInfiniteScroll(fetchNextPage);
 
   const [query, setQuery] = useState("");
-  const isLoading = collectionLoading;
-
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
   const queryClient = useQueryClient();
@@ -87,7 +78,7 @@ const CollectionPage = ({}) => {
     }
   }, [selectedItems]);
 
-  if (isLoading) {
+  if (isCollectionLoading) {
     return <Loading />;
   }
 

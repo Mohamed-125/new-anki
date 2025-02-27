@@ -23,7 +23,7 @@ const Button = (props: ButtonProps) => {
   const { children, className, variant, size, center, ...attributes } = props;
 
   const buttonVariants = cva(
-    "cursor-pointer py-2.5 px-6 sm:zoom-[90%] sm:text-sm disabled:opacity-30 text-white transition-all duration-200 ease-in-out border rounded-lg shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2 font-medium",
+    "cursor-pointer py-2.5 px-6 sm:zoom-[90%] sm:text-sm disabled:opacity-60 text-white transition-all duration-200 ease-in-out border rounded-lg shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2 font-medium",
     {
       variants: {
         variant: {

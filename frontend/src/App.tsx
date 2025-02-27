@@ -34,7 +34,7 @@ function App() {
     { name: "playlists", path: "/playlists" },
     { name: "Notes", path: "/notes" },
     { name: "word article", path: "/article" },
-    { name: "My Texts", path: "/myTexts" },
+    { name: "My Texts", path: "/texts" },
     { name: "Library", path: "/library" },
     { name: "channels", path: "/channels" },
   ];
@@ -136,7 +136,7 @@ function App() {
             }
           />
           <Route
-            path="/myTexts"
+            path="/texts"
             element={
               <ProtectedRoute>
                 <MyTexts />
@@ -145,7 +145,7 @@ function App() {
           />
 
           <Route
-            path="/myTexts/:id"
+            path="/texts/:id"
             element={
               <ProtectedRoute>
                 <TextPage />
@@ -153,7 +153,7 @@ function App() {
             }
           />
           <Route
-            path="/text/new"
+            path="/texts/new"
             element={
               <ProtectedRoute>
                 <AddNewText />
@@ -161,7 +161,7 @@ function App() {
             }
           />
           <Route
-            path="/text/edit/:id"
+            path="/texts/edit/:id"
             element={
               <ProtectedRoute>
                 <AddNewText />

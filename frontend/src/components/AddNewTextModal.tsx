@@ -12,7 +12,7 @@
 // import Button from "./Button";
 // import Modal from "./Modal";
 // import useModalStates from "@/hooks/useModalsStates";
-// import { TextType } from "@/pages/MyTexts";
+// import { TextType } from "@/pages/texts";
 // import TipTapEditor from "./TipTapEditor";
 // import { useNavigate } from "react-router-dom";
 // import Loading from "./Loading";
@@ -87,9 +87,9 @@
 //             onClick={() => {
 //               setIsTextModalOpen(false);
 //               if (editId) {
-//                 // navigate("/myTexts/" + editId, { replace: true });
+//                 // navigate("/texts/" + editId, { replace: true });
 //               } else {
-//                 // navigate("/myTexts", { replace: true });
+//                 // navigate("/texts", { replace: true });
 //               }
 //             }}
 //           >

@@ -99,25 +99,29 @@ const getTranscript = async (videoId, lang) => {
 };
 
 module.exports.getTranscript = async (req, res) => {
-  const { videoId, lang } = req.query;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  const { videoId } = req.query;
 
   try {
-    // const caption = await getTranscript(videoId, lang);
-    // return res.status(200).send(caption);
-
     const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-
     const newArray = transcript.map((item) => ({
-      dur: item.duration.toString(), // Convert to string
-      start: item.offset.toString(), // Convert to string
+      dur: item.duration.toString(),
+      start: item.offset.toString(),
       text: item.text,
     }));
-    return res.json(newArray);
+
+    return res.status(200).json(newArray);
   } catch (err) {
-    // Send error response if something went wrong
     return res
       .status(400)
-      .send({ msg: "Error getting the subtitle", error: err.message });
+      .json({ msg: "Error getting the subtitle", error: err.message });
   }
 };
 

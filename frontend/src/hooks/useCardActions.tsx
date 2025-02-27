@@ -16,7 +16,7 @@ const useCardActions = () => {
 
       if (data.collectionId) {
         queryClient.invalidateQueries({
-          queryKey: ["collection", data.collectionId],
+          queryKey: ["cards", data.collectionId],
         });
       }
       // console.log("context", context, d, c);
@@ -47,7 +47,7 @@ const useCardActions = () => {
       //@ts-ignore
       back: (formData.get("card_translation") as string) || back,
       _id: editId || "",
-      collectionId: collectionId || undefined,
+      collectionId: collectionId,
     }).then((res) => {
       setIsAddCardModalOpen?.(false);
       queryClient.invalidateQueries({ queryKey: ["cards"] });

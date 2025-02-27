@@ -64,7 +64,7 @@ const TranslationWindow = ({
       {!isTranslationBoxOpen ? (
         <Button
           id="translateBtn"
-          className="relative z-40 bg-blue-400 border-none"
+          className="relative bg-blue-400 border-none"
           onClick={() => setIsTraslationBoxOpen(true)}
         >
           <BookType className="pointer-events-none" />
@@ -72,7 +72,7 @@ const TranslationWindow = ({
       ) : (
         <div
           id="translationWindow"
-          className={`translationWindow  absolute z-50 max-w-[400px] text-wrap px-4 bg-white border border-gray-200 py-7 rounded-xl bordrer min-w-[200px]`}
+          className={`translationWindow mt-10  absolute z-50 max-w-[400px] text-wrap px-4 bg-white border border-gray-200 py-7 rounded-xl bordrer min-w-[200px]`}
         >
           <Form.Label>Choose the target language :</Form.Label>
           <Form.Select
@@ -173,7 +173,7 @@ const TranslationWindow = ({
                 content: "",
               });
 
-              setContent?.("");
+              // setContent?.("");
             }}
           >
             Save to your cards

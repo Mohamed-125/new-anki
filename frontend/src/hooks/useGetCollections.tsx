@@ -17,11 +17,9 @@ export type CollectionType = {
 
 const useGetCollections = ({
   publicCollections,
-  enabled = true,
   query,
 }: {
   publicCollections?: boolean;
-  enabled?: boolean;
   query?: string;
 } = {}) => {
   let queryKey = ["collections"];
@@ -35,20 +33,16 @@ const useGetCollections = ({
     queryKey.push(query);
   }
 
-  console.log(queryKey);
-
   let url = `collection/`;
 
   if (query) url += `?searchQuery=${query}`;
   if (publicCollections) url += `&public=${true}`;
 
-  console.log(url);
   const { data, isLoading, isError } = useQuery({
     queryKey,
     queryFn: ({ signal }) => axios.get(url, { signal }).then((res) => res.data),
   });
 
-  console.log(data);
   return {
     collections: data?.collections as CollectionType[],
     isLoading,

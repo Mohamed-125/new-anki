@@ -31,7 +31,7 @@ const TextPage = () => {
   const id = useParams()?.id;
   const [targetLanguage, setTargetLanguage] = useState("en");
   const [editId, setEditId] = useState("");
-  const { data: text = {}, isLoading } = useQuery({
+  const { data: text, isLoading } = useQuery({
     queryKey: ["text", id],
     queryFn: async () => {
       const response = await axios.get("text/" + id);
@@ -49,17 +49,14 @@ const TextPage = () => {
     );
     if (confirm) {
       await axios.delete(`text/${id}`);
-      navigate("/myTexts", { replace: true });
+      navigate("/texts", { replace: true });
     }
   };
 
-  const [title, setTitle] = useState("");
-  const { isAddCardModalOpen, setDefaultValues, setIsAddCardModalOpen } =
-    useModalsStates();
+  const { setDefaultValues, setIsAddCardModalOpen } = useModalsStates();
   const {} = useSelection({
-    isAddCardModalOpen,
     setDefaultValues,
-    setContent,
+    // setContent,
     setIsAddCardModalOpen,
   });
 
@@ -113,42 +110,39 @@ const TextPage = () => {
 
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    setTitle(text?.title);
-    setTimeout(() => setContent(text?.content), 200);
-  }, [text]);
-
-  const { editor, setContent } = useUseEditor();
-
   if (isLoading) {
     return <Loading />;
   }
 
   return (
-    <div className="container p-4 mt-5 mb-8 text-xl bg-white rounded-lg sm:px-2 sm:text-base">
-      <AddCardModal />
+    <div className="container w-[90%]  border-2 border-light-gray p-4  mb-8 bg-white rounded-2xl sm:px-2 sm:text-base">
+      <AddCardModal collectionId={text?.defaultCollectionId} />
 
-      <h1 className="my-8 text-4xl font-bold">{text?.title}</h1>
-      <div className="flex items-center justify-end gap-4 my-4">
-        <Link to={`/text/edit/${id}`} className="flex items-center gap-2">
-          <FaEdit className="text-xl text-blue-600 cursor-pointer" /> Edit
-        </Link>
-        <Button
-          variant="danger"
-          onClick={() => {
-            deleteTextHandler();
-          }}
-          className="flex items-center gap-2"
-        >
-          <FaTrashCan className="text-xl text-white cursor-pointer" /> Delete
-        </Button>
+      <div className="flex items-center justify-between gap-4 my-4">
+        <h1 className="text-4xl font-bold ">{text?.title}</h1>
+        <div className="flex gap-2">
+          <Link to={`/texts/edit/${id}`} className="flex items-center gap-2">
+            <Button variant="primary" className="flex items-center gap-2">
+              <FaEdit className="text-lg cursor-pointer" /> Edit
+            </Button>
+          </Link>
+          <Button
+            variant="danger"
+            onClick={() => {
+              deleteTextHandler();
+            }}
+            className="flex items-center gap-2"
+          >
+            <FaTrashCan className="text-lg text-white cursor-pointer" /> Delete
+          </Button>
+        </div>
       </div>
 
       <hr className="my-4"></hr>
       <div className="text-div">
         <div
           className="select-text"
-          dangerouslySetInnerHTML={{ __html: highlightText }}
+          dangerouslySetInnerHTML={{ __html: highlightText || "" }}
           onClick={(e) => {
             const target = e.target as HTMLElement;
             if (target?.classList.contains("highlight")) {

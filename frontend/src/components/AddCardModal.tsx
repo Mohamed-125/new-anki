@@ -14,6 +14,10 @@ import axios from "axios";
 import useAddOpenModal from "../hooks/useAddModalShortcuts";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import useModalStates from "@/hooks/useModalsStates";
+import useGetCollectionById from "@/hooks/useGetCollectionById";
+import { IoClose } from "react-icons/io5";
+import useUseEditor from "@/hooks/useUseEditor";
+import { twMerge } from "tailwind-merge";
 
 type AddCardModalProps = {
   collectionId?: string;
@@ -39,13 +43,17 @@ export function AddCardModal({
     defaultValues,
     setDefaultValues,
     targetCollectionId,
-    setTargetCollectionId,
-    content,
-    setContent,
   } = useModalStates();
 
   const isEdit = !!editId;
   useAddModalShortcuts(setIsAddCardModalOpen);
+  const { editor, setContent } = useUseEditor();
+
+  useEffect(() => {
+    // setDefaultValues((pre) => {
+    //   return { ...pre, collectionId };
+    // });
+  }, [collectionId]);
 
   useEffect(() => {
     if (defaultValues?.content) {
@@ -55,7 +63,6 @@ export function AddCardModal({
 
   const { updateCardHandler } = useCardActions();
   const { createCardHandler } = useCreateNewCard({
-    collectionId,
     optimistic: {
       isOptimistic: optimistic?.isOptimistic,
       setOptimistic: optimistic?.setOptimistic
@@ -65,19 +72,20 @@ export function AddCardModal({
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    console.log(defaultValues?.collectionId || collectionId || null);
     const cardData = {
-      collectionId: defaultValues?.collectionId || targetCollectionId || null,
+      collectionId: defaultValues?.collectionId || collectionId || null,
       videoId,
-      content,
+      content: editor?.getHTML(),
     };
 
     if (isEdit) {
       updateCardHandler(
         e,
         setIsAddCardModalOpen,
-        content,
+        editor?.getHTML(),
         editId,
-        targetCollectionId,
+        defaultValues?.collectionId || collectionId || null,
         frontValue,
         backValue
       );
@@ -93,12 +101,11 @@ export function AddCardModal({
   const frontRef = useRef<HTMLTextAreaElement>(null);
 
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
-  const [examples, setExamples] = useState<string[]>([]);
   const [frontValue, setFrontValue] = useState("");
   const [backValue, setBackValue] = useState("");
 
-  const translateHandler = async () => {
-    console.log(frontRef.current?.value);
+  const translateHandler = async (examples?: boolean) => {
+    console.log("hey");
     if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
@@ -112,29 +119,31 @@ export function AddCardModal({
         const uniqueTranslations = [...new Set(translations)];
 
         // Step 3: Display or use unique translations
-
-        setExamples(data.context.examples);
         setIsTranslationLoading(false);
 
-        if (backRef.current)
-          backRef.current.value = uniqueTranslations.splice(0, 4).join(",");
+        if (backRef.current && examples)
+          setBackValue(uniqueTranslations.splice(0, 4).join(","));
+
+        return data.context.examples;
       } catch (err) {
+        console.log(err);
         setIsTranslationLoading(false);
       }
     }
   };
 
   const onAnimationEnd = useCallback(() => {
-    setIsAddCardModalOpen(false);
-    setContent("");
-    setDefaultValues(null);
-    setEditId?.("");
-    setTargetCollectionId?.("");
-    setFrontValue("");
-    setBackValue("");
-    if (backRef.current && frontRef.current) {
-      backRef.current.value = "";
-      frontRef.current.value = "";
+    if (!isAddCardModalOpen || !isMoveToCollectionOpen) {
+      setIsAddCardModalOpen(false);
+      setContent("");
+      setDefaultValues(null);
+      setEditId?.("");
+      setFrontValue("");
+      setBackValue("");
+      if (backRef.current && frontRef.current) {
+        backRef.current.value = "";
+        frontRef.current.value = "";
+      }
     }
   }, [isAddCardModalOpen, isMoveToCollectionOpen]);
 
@@ -145,6 +154,10 @@ export function AddCardModal({
   }, [isAddCardModalOpen]);
 
   const formRef = useRef<HTMLFormElement | null>(null);
+
+  const { collection } = useGetCollectionById(
+    defaultValues?.collectionId || collectionId
+  );
 
   return (
     <Modal
@@ -180,7 +193,6 @@ export function AddCardModal({
             />
           </Form.Field>
           <Form.Field>
-            <Form.Label>Card Collection</Form.Label>
             <Button
               type="button"
               onClick={() => setIsMoveToCollectionOpen?.(true)}
@@ -189,6 +201,37 @@ export function AddCardModal({
               Choose Collection
             </Button>
           </Form.Field>
+
+          <Form.Field>
+            <Form.Label>
+              {collection?.name && (
+                <span className="flex items-center gap-2">
+                  Card Collection
+                  {"" + " : " + collection?.name}
+                  <Button
+                    onClick={() => {
+                      setDefaultValues((pre) => {
+                        return { ...pre, collectionId: null };
+                      });
+                    }}
+                    variant="danger"
+                    className="grid w-6 h-6 transition-colors !p-0 duration-200 rounded-full place-items-center hover:bg-red-400"
+                  >
+                    <IoClose className="text-[18px] font-medium" />
+                  </Button>{" "}
+                </span>
+              )}
+            </Form.Label>
+            <Button
+              type="button"
+              onClick={() => {
+                setIsMoveToCollectionOpen(true);
+              }}
+            >
+              Choose Collection
+            </Button>
+          </Form.Field>
+
           <Form.Field>
             <Form.Label>Card Back Side</Form.Label>
             <Form.Textarea
@@ -213,6 +256,10 @@ export function AddCardModal({
               variant="primary"
               className="w-full px-4 py-2 mt-3 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
               type="button"
+              disabled={
+                frontValue ? false : defaultValues?.front ? false : true
+              }
+              //@ts-ignore
               onClick={translateHandler}
             >
               Auto Translate
@@ -220,18 +267,25 @@ export function AddCardModal({
           </Form.Field>
           <Form.Field>
             <Form.Label>Content</Form.Label>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <TipTapEditor
-                className="min-h-[200px]"
-                setContent={setContent}
-                content={content}
-              />
+            <div
+              className={twMerge(
+                "p-4 relative border border-gray-200 rounded-lg",
+                isTranslationLoading && "inputLoading"
+              )}
+            >
+              <TipTapEditor editor={editor} />
+              {isTranslationLoading && <i className="loader loader-input"></i>}
             </div>
             <Button
               variant="primary"
               className="w-full px-4 py-2 mt-3 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
               type="button"
-              onClick={() => {
+              disabled={
+                frontValue ? false : defaultValues?.front ? false : true
+              }
+              onClick={async () => {
+                const examples = await translateHandler(true);
+
                 const sources = examples.map(
                   (example: any) =>
                     ` <strong>
@@ -243,6 +297,8 @@ export function AddCardModal({
                     <br />
                     ${example.target} `
                 );
+
+                console.log(sources.join("<br /> "));
                 setContent((pre) => pre + sources.join("<br /> "));
               }}
             >

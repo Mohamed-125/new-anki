@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 import Loading from "../components/Loading";
 import axios from "axios";
@@ -18,7 +18,7 @@ import { text } from "stream/consumers";
 export type TextType = {
   title: string;
   content: string;
-  // defaultCollectionId: string | undefined;
+  defaultCollectionId: string | undefined;
 };
 
 const MyTexts = () => {
@@ -33,9 +33,16 @@ const MyTexts = () => {
       return response.data as (TextType & { _id: string })[];
     },
   });
+  const queryClient = useQueryClient();
 
+  const invalidateTextQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["texts"] });
+    queryClient.invalidateQueries({ queryKey: ["text"] });
+  };
   const deleteTextHandler = async (id: string) => {
-    const deleteRes = await axios.delete(`text/${id}`);
+    const deleteRes = await axios.delete(`text/${id}`).then(() => {
+      invalidateTextQueries();
+    });
     return;
   };
 
@@ -44,7 +51,7 @@ const MyTexts = () => {
   const navigate = useNavigate();
   const editHandler = (text: TextType & { _id: string }) => {
     setEditId(text._id);
-    navigate("/text/edit/" + text._id);
+    navigate("/texts/edit/" + text._id);
     setIsTextModalOpen(true);
   };
 
@@ -62,7 +69,7 @@ const MyTexts = () => {
           </h6>
 
           <Button
-            onClick={() => navigate("/text/new")}
+            onClick={() => navigate("/texts/new")}
             className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
           >
             Add new text
@@ -75,7 +82,7 @@ const MyTexts = () => {
               <ItemCard
                 Icon={<Text />}
                 editHandler={() => editHandler(text)}
-                deleteHandler={deleteTextHandler}
+                deleteHandler={() => deleteTextHandler(text._id)}
                 name={text.title}
                 key={text._id}
                 id={text._id}

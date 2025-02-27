@@ -105,8 +105,15 @@ const AddNewCollectionModal = ({}: {}) => {
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const onAnimationEnd = () => {
+    console.log("ran");
     formRef.current?.reset();
-    setDefaultValues(null);
+    setDefaultValues((pre) => {
+      return {
+        ...pre,
+        collectionName: null,
+        isCollectionPublic: null,
+      };
+    });
   };
 
   return (
@@ -150,7 +157,7 @@ const AddNewCollectionModal = ({}: {}) => {
               <input
                 id="collection_public"
                 name="collection_public"
-                defaultChecked={defaultValues?.collecitonPublic}
+                defaultChecked={defaultValues?.isCollectionPublic}
                 type="checkbox"
                 className="w-5 h-5 text-blue-600 transition-colors border-gray-300 rounded focus:ring-blue-500"
               />
