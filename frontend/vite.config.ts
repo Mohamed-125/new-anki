@@ -17,12 +17,4 @@ export default defineConfig({
       },
     },
   },
-  optimizeDeps: {
-    include: ["zod"], // ✅ Ensure zod is bundled
-  },
-  build: {
-    rollupOptions: {
-      external: ["zod"], // Add zod here
-    },
-  },
 });
