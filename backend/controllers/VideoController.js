@@ -110,7 +110,10 @@ module.exports.getTranscript = async (req, res) => {
       start: caption.start,
       text: caption.text,
     }));
-
+    res.set({
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD",
+    });
     return res.status(200).json(newArray);
   } catch (err) {
     console.log("err", err);
