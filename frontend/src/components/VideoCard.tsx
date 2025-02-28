@@ -25,7 +25,7 @@ const VideoCard = ({ video, sideByside }: VideoCardProps) => {
 
   const queryClient = useQueryClient();
 
-  const deleteHandler = (id: string) => {
+  const deleteHandler = () => {
     axios
       .delete(`video/${id}`)
       .then((res) => {

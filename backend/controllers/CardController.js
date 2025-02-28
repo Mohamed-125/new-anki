@@ -14,7 +14,7 @@ module.exports.createCard = async (req, res, next) => {
       back,
       content,
       collectionId,
-      userId: req.user._id,
+      userId: req.user?._id,
       videoId,
     });
     res.status(200).send(createdCard);
@@ -88,7 +88,7 @@ module.exports.updateCard = async (req, res, next) => {
   try {
     const updatedCard = await CardModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { front, back, content, collectionId, userId: req.user._id, easeFactor },
+      { front, back, content, collectionId, userId: req.user?._id, easeFactor },
       {
         new: true,
       }

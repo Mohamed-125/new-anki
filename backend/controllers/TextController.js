@@ -1,7 +1,7 @@
 const TextModel = require("../models/TextModel");
 
 module.exports.getTexts = async (req, res) => {
-  const texts = await TextModel.find({ userId: req.user._id });
+  const texts = await TextModel.find({ userId: req.user?._id });
   res.send(texts);
 };
 

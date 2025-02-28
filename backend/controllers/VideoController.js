@@ -97,28 +97,122 @@ const getTranscript = async (videoId, lang) => {
     throw new Error(err.message);
   }
 };
+const { spawn } = require("child_process");
 
 module.exports.getTranscript = async (req, res) => {
-  const youtube = new Client();
+  const { videoId, lang = "en" } = req.query;
 
-  const { videoId, lang } = req.query;
-  const transcript = await youtube.getVideoTranscript(videoId, lang || "en");
-
-  try {
-    const newArray = transcript.map((caption) => ({
-      dur: caption.duration.toString(),
-      start: caption.start.toString(),
-      text: caption.text,
-    }));
-
-    return res.status(200).json(newArray);
-  } catch (err) {
-    console.log("err", err);
-    return res
-      .status(400)
-      .json({ msg: "Error getting the subtitle", error: err.message });
+  if (!videoId) {
+    return res.status(400).json({ msg: "Missing videoId parameter" });
   }
+
+  // Construct the YouTube URL
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  // Run yt-dlp as a child process to fetch subtitle URLs
+  const pythonProcess = spawn("yt-dlp", [
+    "--write-auto-sub", // Get auto-generated subtitles
+    "--skip-download", // Don't download the video
+    "--sub-lang",
+    lang, // Specify subtitle language
+    "-J", // Output JSON format
+    videoUrl,
+  ]);
+
+  let data = "";
+  let errorData = "";
+
+  // Collect data from stdout
+  pythonProcess.stdout.on("data", (chunk) => {
+    data += chunk.toString();
+  });
+
+  // Collect error data from stderr
+  pythonProcess.stderr.on("data", (chunk) => {
+    errorData += chunk.toString();
+  });
+
+  // Handle process close
+  pythonProcess.on("close", async (code) => {
+    if (code === 0) {
+      try {
+        const jsonData = JSON.parse(data);
+        const subtitles =
+          jsonData.subtitles?.[lang] || jsonData.automatic_captions?.[lang];
+
+        if (!subtitles || subtitles.length === 0) {
+          return res.status(404).json({ msg: "No subtitles found" });
+        }
+
+        // Get the first valid subtitle URL (VTT format is best)
+        const subtitleUrl = subtitles.find((s) => s.ext === "vtt")?.url;
+
+        if (!subtitleUrl) {
+          return res.status(404).json({ msg: "No valid subtitle URL found" });
+        }
+
+        // Fetch the subtitle content
+        const subtitleResponse = await axios.get(subtitleUrl);
+        const subtitleText = subtitleResponse.data;
+
+        // Parse the VTT subtitle text
+        const formattedSubtitles = parseVTT(subtitleText);
+
+        return res.status(200).json(formattedSubtitles);
+      } catch (err) {
+        return res.status(500).json({
+          msg: "Failed to process subtitles",
+          error: err.message,
+        });
+      }
+    } else {
+      return res.status(500).json({
+        msg: "yt-dlp execution failed",
+        error: errorData || "Unknown error",
+      });
+    }
+  });
 };
+
+// Function to parse WebVTT subtitle text into JSON format
+function parseVTT(vttString) {
+  const lines = vttString.split("\n").filter((line) => line.trim() !== "");
+  const result = [];
+  let currentSubtitle = { start: "", end: "", text: "" };
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Match timecode line (e.g., "00:00:03.200 --> 00:00:06.000")
+    const timeMatch = line.match(
+      /(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})/
+    );
+
+    if (timeMatch) {
+      // Save previous subtitle if it exists
+      if (currentSubtitle.text) {
+        result.push({ ...currentSubtitle });
+      }
+
+      // Start new subtitle block
+      currentSubtitle = {
+        start: timeMatch[1],
+        end: timeMatch[2],
+        text: "",
+      };
+    } else {
+      // Append text to the current subtitle block
+      currentSubtitle.text += (currentSubtitle.text ? " " : "") + line;
+    }
+  }
+
+  // Push the last subtitle block
+  if (currentSubtitle.text) {
+    result.push(currentSubtitle);
+  }
+
+  return result;
+}
 
 module.exports.createVideo = async (req, res, next) => {
   const {
@@ -134,7 +228,7 @@ module.exports.createVideo = async (req, res, next) => {
   try {
     const createdVideo = await VideoModel.create({
       url,
-      userId: req.user._id,
+      userId: req.user?._id,
       title,
       thumbnail,
       availableCaptions,
@@ -152,7 +246,7 @@ module.exports.createVideo = async (req, res, next) => {
 module.exports.getUserVideos = async (req, res, next) => {
   try {
     const videos = await VideoModel.find(
-      { userId: req.user._id },
+      { userId: req.user?._id },
       {},
       { sort: { createdAt: -1 } }
     );

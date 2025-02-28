@@ -1,7 +1,7 @@
 const NoteModel = require("../models/NoteModel");
 
 module.exports.getNotes = async (req, res) => {
-  const notes = await NoteModel.find({ userId: req.user._id });
+  const notes = await NoteModel.find({ userId: req.user?._id });
   res.send(notes);
 };
 
@@ -15,7 +15,7 @@ module.exports.createNote = async (req, res) => {
     return res.status(400).send("Title and content are required");
   }
   const createdNote = await NoteModel.create({
-    userId: req.user._id,
+    userId: req.user?._id,
     ...req.body,
   });
   res.send(createdNote);

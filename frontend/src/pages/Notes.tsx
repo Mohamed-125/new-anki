@@ -72,6 +72,7 @@ const Notes = () => {
           <div className="grid gap-4 grid-container">
             {notes.map((note) => (
               <ItemCard
+                key={note._id}
                 id={note._id}
                 Icon={<StickyNote />}
                 name={note.title}

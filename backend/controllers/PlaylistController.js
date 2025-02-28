@@ -8,7 +8,7 @@ module.exports.createPlaylist = async (req, res, next) => {
   try {
     const createdPlaylist = await PlaylistModel.create({
       name,
-      userId: req.user._id,
+      userId: req.user?._id,
     });
     res.status(200).send(createdPlaylist);
   } catch (err) {
@@ -20,7 +20,7 @@ module.exports.getPlaylists = async (req, res, next) => {
   try {
     const playlists = await PlaylistModel.aggregate([
       {
-        $match: { userId: req.user._id }, // Match playlists for the specific user
+        $match: { userId: req.user?._id }, // Match playlists for the specific user
       },
       {
         $lookup: {

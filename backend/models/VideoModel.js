@@ -30,9 +30,9 @@ const VideoSchema = new mongoose.Schema(
       name: { type: String },
       transcript: [
         {
-          dur: { type: String, required: true },
-          start: { type: String, required: true },
-          text: { type: String, required: true },
+          end: { type: String },
+          start: { type: String },
+          text: { type: String },
         },
       ],
       translatedTranscript: [{ type: String, required: true }],

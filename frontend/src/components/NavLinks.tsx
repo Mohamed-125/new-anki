@@ -2,7 +2,7 @@ import { twMerge } from "tailwind-merge";
 import Button from "./Button";
 import { Link, useNavigate } from "react-router-dom";
 import { LinkType } from "./Navbar";
-import useGetCurrentUser from "../hooks/useGetCurrentUser";
+import useGetCurrentUser, { UserType } from "../hooks/useGetCurrentUser";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -89,6 +89,7 @@ const ProfileDropdown = ({
 
   const logoutHandler = () => {
     axios.post("auth/logout").then(() => {
+      queryClient.setQueryData(["me"], null);
       queryClient.clear();
       navigate("/login");
     });

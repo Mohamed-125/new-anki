@@ -13,7 +13,7 @@ module.exports.createCollection = async (req, res, next) => {
       name,
       public,
       parentCollectionId,
-      userId: req.user._id,
+      userId: req.user?._id,
     });
     res.status(200).send(createdCollection);
   } catch (err) {
@@ -35,7 +35,7 @@ module.exports.forkCollection = async (req, res, next) => {
     });
     const clonedData = originalCollection.toObject();
 
-    clonedData.userId = req.user._id;
+    clonedData.userId = req.user?._id;
     clonedData.public = false;
     delete clonedData._id;
 
@@ -51,7 +51,7 @@ module.exports.getCollections = async (req, res, next) => {
   const { searchQuery, public } = req.query;
   const query = {};
   if (!public) {
-    query.userId = req.user._id;
+    query.userId = req.user?._id;
     if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
   } else {
     query.public = true;

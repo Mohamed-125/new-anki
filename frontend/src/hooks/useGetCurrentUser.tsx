@@ -1,11 +1,10 @@
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+export type UserType = {
+  email: string;
+  _id: string;
+};
 const useGetCurrentUser = () => {
-  type UserType = {
-    email: string;
-    _id: string;
-  };
   const { data: user, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
