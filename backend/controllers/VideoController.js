@@ -110,19 +110,30 @@ module.exports.getTranscript = async (req, res) => {
       start: caption.start,
       text: caption.text,
     }));
+
+    // Update CORS headers
     res.set({
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD",
+      "Access-Control-Allow-Origin": req.headers.origin || "*",
+      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
     });
+
     return res.status(200).json(newArray);
   } catch (err) {
     console.log("err", err);
+    // Set CORS headers even for error responses
+    res.set({
+      "Access-Control-Allow-Origin": req.headers.origin || "*",
+      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+    });
     return res
       .status(400)
       .json({ msg: "Error getting the subtitle", error: err.message });
   }
 };
-
 module.exports.createVideo = async (req, res, next) => {
   const {
     url,
