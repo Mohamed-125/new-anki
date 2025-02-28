@@ -36,16 +36,16 @@ const queryClient = new QueryClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <>
-        <ToastContext>
-          <StatesContext>
-            <Toasts />
-            <App />
-          </StatesContext>
-        </ToastContext>
-      </>
-    </QueryClientProvider>
-  </StrictMode>
+  // <StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <>
+      <ToastContext>
+        <StatesContext>
+          <Toasts />
+          <App />
+        </StatesContext>
+      </ToastContext>
+    </>
+  </QueryClientProvider>
+  // </StrictMode>
 );

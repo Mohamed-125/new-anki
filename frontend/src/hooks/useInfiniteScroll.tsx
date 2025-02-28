@@ -8,16 +8,17 @@ import React, { useEffect } from "react";
 const useInfiniteScroll = (
   fetchNextPage: (
     options?: FetchNextPageOptions
-  ) => Promise<InfiniteQueryObserverResult<InfiniteData<any, unknown>, Error>>
+  ) => Promise<InfiniteQueryObserverResult<InfiniteData<any, unknown>, Error>>,
+  hasNextPage: boolean
 ) => {
   useEffect(() => {
     const checkInitialLoad = () => {
       const scrollHeight = document.body.getBoundingClientRect().height;
       const windowHeight = window.innerHeight;
 
-      if (scrollHeight <= windowHeight) {
+      if (scrollHeight <= windowHeight && hasNextPage) {
         console.log("Initial load: Fetching next page");
-        fetchNextPage({});
+        fetchNextPage();
       }
     };
 
@@ -30,7 +31,7 @@ const useInfiniteScroll = (
       const scrollPercentage =
         (Math.round(scrollTop + windowHeight) / Math.round(scrollHeight)) * 100;
 
-      if (scrollPercentage > 99) {
+      if (scrollPercentage > 99 && hasNextPage) {
         fetchNextPage();
       }
     };

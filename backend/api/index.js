@@ -33,7 +33,6 @@ const whitelist = [
   "http://localhost:5173",
   "http://192.168.1.2:5174",
   "http://192.168.1.2:5173",
-  "chrome-extension://hcajffcecfpnmcpeoompmocgecciebpp",
   "http://localhost:5174",
 ];
 

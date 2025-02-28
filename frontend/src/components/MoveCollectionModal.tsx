@@ -13,6 +13,7 @@ import CollectionSkeleton from "./CollectionsSkeleton";
 import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
+import { twMerge } from "tailwind-merge";
 
 const MoveCollectionModal = ({
   cards,
@@ -27,6 +28,9 @@ const MoveCollectionModal = ({
   const [selectedCollectionsIds, setSelectedCollectionIds] = useState<string[]>(
     []
   );
+  const [referenceCollectionIds, setReferenceCollectionIds] = useState<
+    string[]
+  >([]);
 
   const {
     isMoveToCollectionOpen,
@@ -46,33 +50,78 @@ const MoveCollectionModal = ({
   useEffect(() => {
     if (!isMoveToCollectionOpen || !cards) return;
 
-    const card = cards.find((card) => card._id === editId);
+    if (!toMoveCollectionId) {
+      const card = cards.find((card) => card._id === editId);
 
-    let cardCollectionId = card?.collectionId;
-    let cardCollection = collections?.find(
-      (collection) => collection._id === cardCollectionId
-    );
-
-    const getParentCollection = (childCollection: CollectionType) => {
-      setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
-
-      const parentCollection = collections?.find(
-        (collection) => collection._id === childCollection.parentCollectionId
+      let cardCollectionId;
+      let cardCollection = collections?.find(
+        (collection) => collection._id === cardCollectionId
       );
 
-      if (!parentCollection) return;
+      const getParentCollection = (childCollection: CollectionType) => {
+        setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
 
-      if (parentCollection?.parentCollectionId) {
-        getParentCollection(parentCollection);
+        const parentCollection = collections?.find(
+          (collection) => collection._id === childCollection.parentCollectionId
+        );
+
+        if (!parentCollection) return;
+
+        if (parentCollection?.parentCollectionId) {
+          getParentCollection(parentCollection);
+        }
+      };
+
+      if (cardCollection?.parentCollectionId) {
+        getParentCollection(cardCollection);
+        setSelectedCollectionIds((prev) => {
+          let editPrev = prev.reverse();
+          setReferenceCollectionIds(editPrev);
+          return editPrev;
+        });
       }
-    };
+    } else {
+      const getParentCollection = (childCollection: CollectionType) => {
+        setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
 
-    if (cardCollection?.parentCollectionId) {
-      getParentCollection(cardCollection);
-      setSelectedCollectionIds((prev) => {
-        let editPrev = prev.reverse();
-        return editPrev;
-      });
+        const parentCollection = collections?.find(
+          (collection) => collection._id === childCollection.parentCollectionId
+        );
+
+        if (!parentCollection) return;
+
+        if (parentCollection?.parentCollectionId) {
+          getParentCollection(parentCollection);
+        }
+      };
+
+      const toMoveCollection = collections.find(
+        (collection) => collection._id === toMoveCollectionId
+      );
+
+      if (toMoveCollection) {
+        getParentCollection(toMoveCollection);
+
+        setSelectedCollectionIds((prev) => {
+          console.log(prev, toMoveCollectionId);
+
+          const topParentCollectionId = notParentCollections.find(
+            (collection) =>
+              collection._id ===
+              collections.find((c) => c._id === prev[prev.length - 1])
+                ?.parentCollectionId
+          )?._id;
+
+          if (topParentCollectionId) {
+            let editPrev = [...prev, topParentCollectionId].reverse();
+
+            setReferenceCollectionIds(editPrev);
+            return editPrev;
+          } else {
+            return prev;
+          }
+        });
+      }
     }
   }, [isMoveToCollectionOpen]);
 
@@ -194,14 +243,16 @@ const MoveCollectionModal = ({
       : "cards";
   }, [selectedCollectionsIds]);
 
+  const onAnimationEnd = useCallback(() => {
+    if (isMoveToCollectionOpen) return;
+    setSelectedCollectionIds([]);
+    // setEditId("");
+    setParentCollectionId("");
+  }, [setSelectedCollectionIds, setParentCollectionId]);
+
   return (
     <Modal
-      onAnimationEnd={() => {
-        if (isMoveToCollectionOpen) return;
-        setSelectedCollectionIds([]);
-        // setEditId("");
-        setParentCollectionId("");
-      }}
+      onAnimationEnd={onAnimationEnd}
       className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
         isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
       }`}
@@ -327,10 +378,15 @@ const MoveCollectionModal = ({
                         collection?._id as string,
                       ]);
                     }}
-                    className={`
-                  flex justify-between items-center p-3  cursor-pointer hover:bg-gray-50 
+                    className={twMerge(
+                      `
+                  flex justify-between items-center p-3  cursor-pointer 
                   transition-colors duration-200 ease-in-out border-b border-light-gray
-                   `}
+                   `,
+                      referenceCollectionIds.includes(collection?._id)
+                        ? "bg-yellow-50"
+                        : "bg-white  hover:bg-gray-50"
+                    )}
                   >
                     <span className="flex items-center flex-1 gap-3">
                       <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
