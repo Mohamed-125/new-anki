@@ -31,6 +31,7 @@
     "youtube-caption-extractor": "^1.4.3",
     "youtube-captions-scraper": "^2.0.3",
     "youtube-transcript": "^1.2.1",
+    "youtubei": "^1.6.7",
     "youtubei.js": "^10.5.0"
   },
   "keywords": [],

@@ -1,9 +1,10 @@
 const { default: axios } = require("axios");
 const VideoModel = require("../models/VideoModel");
 const { YoutubeTranscript } = require("youtube-transcript");
-const cheerio = require("cheerio");
 const getSubtitles = require("youtube-captions-scraper").getSubtitles;
-const flatted = require("flatted");
+
+const { Client } = require("youtubei");
+
 // module.exports.getVideoData = async (req, res, next) => {
 //   const videoId = req.params.videoId;
 
@@ -98,23 +99,16 @@ const getTranscript = async (videoId, lang) => {
 };
 
 module.exports.getTranscript = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://new-anki-one.vercel.app");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  const youtube = new Client();
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  const { videoId } = req.query;
+  const { videoId, lang } = req.query;
+  const transcript = await youtube.getVideoTranscript(videoId, lang || "en");
 
   try {
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-    const newArray = transcript.map((item) => ({
-      dur: item.duration.toString(),
-      start: item.offset.toString(),
-      text: item.text,
+    const newArray = transcript.map((caption) => ({
+      dur: caption.duration.toString(),
+      start: caption.start.toString(),
+      text: caption.text,
     }));
 
     return res.status(200).json(newArray);
