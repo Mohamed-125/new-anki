@@ -28,29 +28,29 @@ mongoose
     console.log("Error in DB connection: " + error);
   });
 
-// const whitelist = [
-//   "https://new-anki-one.vercel.app",
-//   "http://localhost:5173",
-//   "http://192.168.1.2:5174",
-//   "http://192.168.1.2:5173",
-//   "http://localhost:5174",
-// ];
+const whitelist = [
+  "https://new-anki-one.vercel.app",
+  "http://localhost:5173",
+  "http://192.168.1.2:5174",
+  "http://192.168.1.2:5173",
+  "http://localhost:5174",
+];
 
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (!origin || whitelist.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-// };
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// app.use(cors(corsOptions));
-app.use(cors({ origin: "*", credentials: true }));
+app.use(cors(corsOptions));
+// app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json({ limit: "50mb" })); // Increase JSON body size limit
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser());
