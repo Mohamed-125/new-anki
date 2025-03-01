@@ -35,7 +35,7 @@ const VideoSchema = new mongoose.Schema(
           text: { type: String },
         },
       ],
-      translatedTranscript: [{ type: String, required: true }],
+      translatedTranscript: [{ type: String }],
     },
 
     userId: {

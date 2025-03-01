@@ -145,7 +145,7 @@ module.exports.getTranscript = async (req, res) => {
 module.exports.createVideo = async (req, res, next) => {
   const {
     url,
-    videoTitle: title,
+    title,
     thumbnail,
     availableCaptions,
     defaultCaptionData,
