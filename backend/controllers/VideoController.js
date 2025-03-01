@@ -102,9 +102,15 @@ module.exports.getTranscript = async (req, res) => {
 
   const { videoId, lang } = req.query;
 
+  if (!videoId) {
+    return res.status(300).send("there is not video id");
+  }
   try {
-    const transcript = await youtube.getVideoTranscript(videoId, lang || "en");
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId, {
+      lang,
+    });
 
+    console.log("transcript", transcript);
     const newArray = transcript.map((caption) => ({
       dur: caption.duration,
       start: caption.start,
@@ -129,13 +135,11 @@ module.exports.getTranscript = async (req, res) => {
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Credentials": "true",
     });
-    return res
-      .status(400)
-      .json({
-        msg: "Error getting the subtitle",
-        error: err.message,
-        query: res.query,
-      });
+    return res.status(400).json({
+      msg: "Error getting the subtitle",
+      error: err.message,
+      query: res.query,
+    });
   }
 };
 module.exports.createVideo = async (req, res, next) => {
