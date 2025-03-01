@@ -97,14 +97,13 @@ const getTranscript = async (videoId, lang) => {
     throw new Error(err.message);
   }
 };
-
 module.exports.getTranscript = async (req, res) => {
-  const youtube = new Client();
-
   const { videoId, lang } = req.query;
-  const transcript = await youtube.getVideoTranscript(videoId, lang || "en");
+
+  console.log(videoId, lang, req.query);
 
   try {
+    const transcript = await youtube.getVideoTranscript(videoId, lang || "en");
     const newArray = transcript.map((caption) => ({
       dur: caption.duration,
       start: caption.start,
@@ -131,7 +130,11 @@ module.exports.getTranscript = async (req, res) => {
     });
     return res
       .status(400)
-      .json({ msg: "Error getting the subtitle", error: err.message });
+      .json({
+        msg: "Error getting the subtitle",
+        error: err.message,
+        query: res.query,
+      });
   }
 };
 module.exports.createVideo = async (req, res, next) => {
