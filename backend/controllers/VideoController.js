@@ -98,12 +98,13 @@ const getTranscript = async (videoId, lang) => {
   }
 };
 module.exports.getTranscript = async (req, res) => {
-  const { videoId, lang } = req.query;
+  const youtube = new Client();
 
-  console.log(videoId, lang, req.query);
+  const { videoId, lang } = req.query;
 
   try {
     const transcript = await youtube.getVideoTranscript(videoId, lang || "en");
+
     const newArray = transcript.map((caption) => ({
       dur: caption.duration,
       start: caption.start,
