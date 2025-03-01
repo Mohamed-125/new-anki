@@ -1,7 +1,7 @@
-// const { default: axios } = require("axios");
-// const VideoModel = require("../models/VideoModel");
-// const { YoutubeTranscript } = require("youtube-transcript");
-// const getSubtitles = require("youtube-captions-scraper").getSubtitles;
+const { default: axios } = require("axios");
+const VideoModel = require("../models/VideoModel");
+const { YoutubeTranscript } = require("youtube-transcript");
+const getSubtitles = require("youtube-captions-scraper").getSubtitles;
 
 // const { Client } = require("youtubei");
 
@@ -194,6 +194,7 @@ module.exports.getUserVideos = async (req, res, next) => {
     );
     res.status(200).send(videos);
   } catch (err) {
+    console.log(err);
     res.status(400).send(err);
   }
 };
