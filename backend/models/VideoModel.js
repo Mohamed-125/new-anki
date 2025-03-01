@@ -68,23 +68,6 @@ VideoSchema.virtual("videoCards", {
   justOne: false, // Indicates this is a one-to-many relationship
 });
 
-// Ensure proper population behavior
-VideoSchema.set("toJSON", {
-  virtuals: true,
-  transform: function (doc, ret) {
-    ret.id = ret._id;
-    return ret;
-  },
-});
-
-VideoSchema.set("toObject", {
-  virtuals: true,
-  transform: function (doc, ret) {
-    ret.id = ret._id;
-    return ret;
-  },
-});
-
 const VideoModel = mongoose.model("Video", VideoSchema);
 
 module.exports = VideoModel;

@@ -156,7 +156,7 @@ module.exports.createVideo = async (req, res, next) => {
   try {
     const createdVideo = await VideoModel.create({
       url,
-      userId: req.user._id,
+      userId: req.user?._id || null,
       title,
       thumbnail,
       availableCaptions,
@@ -164,9 +164,22 @@ module.exports.createVideo = async (req, res, next) => {
       playlistId,
     });
 
+    res.set({
+      "Access-Control-Allow-Origin": req.headers.origin || "*",
+      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+    });
+
     res.status(200).send(createdVideo);
   } catch (err) {
-    err.message;
+    console.log("err", err);
+    res.set({
+      "Access-Control-Allow-Origin": req.headers.origin || "*",
+      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
+    });
     res.status(400).send(err);
   }
 };

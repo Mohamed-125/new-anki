@@ -20,7 +20,7 @@ router
   //   Authorization,
   //   getVideoAvailavailableCaptions
   // )
-  .post("/", Authorization, createVideo)
+  .post("/", createVideo)
   .get("/", Authorization, getUserVideos)
   .get("/getVideoData/:videoId", Authorization, getVideoData)
   .get("/getTranscript", getTranscript)
