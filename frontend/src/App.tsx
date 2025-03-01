@@ -30,8 +30,8 @@ function App() {
   const links = [
     { name: "Home", path: "/" },
     { name: "Collections", path: "/collections" },
-    // { name: "videos", path: "/videos" },
-    // { name: "playlists", path: "/playlists" },
+    { name: "videos", path: "/videos" },
+    { name: "playlists", path: "/playlists" },
     { name: "Notes", path: "/notes" },
     { name: "word article", path: "/article" },
     { name: "My Texts", path: "/texts" },
@@ -100,7 +100,7 @@ function App() {
             }
           />
 
-          {/*      <Route
+               <Route
             path="/playlists/:id"
             element={
               <ProtectedRoute>
@@ -116,7 +116,7 @@ function App() {
                 <Playlists />
               </ProtectedRoute>
             }
-          /> */}
+          />
 
           <Route
             path="/notes"

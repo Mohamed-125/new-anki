@@ -1,9 +1,9 @@
-const { default: axios } = require("axios");
-const VideoModel = require("../models/VideoModel");
-const { YoutubeTranscript } = require("youtube-transcript");
-const getSubtitles = require("youtube-captions-scraper").getSubtitles;
+// const { default: axios } = require("axios");
+// const VideoModel = require("../models/VideoModel");
+// const { YoutubeTranscript } = require("youtube-transcript");
+// const getSubtitles = require("youtube-captions-scraper").getSubtitles;
 
-const { Client } = require("youtubei");
+// const { Client } = require("youtubei");
 
 // module.exports.getVideoData = async (req, res, next) => {
 //   const videoId = req.params.videoId;
@@ -150,13 +150,14 @@ module.exports.createVideo = async (req, res, next) => {
     availableCaptions,
     defaultCaptionData,
     playlistId,
+    userId,
   } = req.body;
 
   if (!url) return res.status(400).send("you have to enter the video url");
   try {
     const createdVideo = await VideoModel.create({
       url,
-      userId: req.user?._id || null,
+      userId: req.user?._id || userId || null,
       title,
       thumbnail,
       availableCaptions,
