@@ -2,7 +2,6 @@ import Form from "../components/Form";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../components/Button";
-import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import { useForm } from "react-hook-form";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,43 +37,41 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center flex-grow">
-      <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
-        <Form.Title> Login </Form.Title>
-        <Form.FieldsContainer gap={12}>
-          <Form.Field>
-            <Form.Label>Email</Form.Label>
-            <Form.Input
-              placeholder="JohnDeo@gmail.com"
-              type="text"
-              {...register("email")}
-            />
-            <Form.Message error={true}>{errors.email?.message}</Form.Message>
-          </Form.Field>
-          <Form.Field>
-            <Form.Label>Password</Form.Label>
-            <Form.Input
-              placeholder="Enter your password"
-              type="password"
-              {...register("password")}
-            />
-            <Form.Message error={true}>{errors.password?.message}</Form.Message>
-          </Form.Field>
-        </Form.FieldsContainer>
+    <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
+      <Form.Title> Login </Form.Title>
+      <Form.FieldsContainer gap={12}>
+        <Form.Field>
+          <Form.Label>Email</Form.Label>
+          <Form.Input
+            placeholder="JohnDeo@gmail.com"
+            type="text"
+            {...register("email")}
+          />
+          <Form.Message error={true}>{errors.email?.message}</Form.Message>
+        </Form.Field>
+        <Form.Field>
+          <Form.Label>Password</Form.Label>
+          <Form.Input
+            placeholder="Enter your password"
+            type="password"
+            {...register("password")}
+          />
+          <Form.Message error={true}>{errors.password?.message}</Form.Message>
+        </Form.Field>
+      </Form.FieldsContainer>
 
-        <Form.Message center={true} className="text-blue-500">
-          <Link to={"/forgot-password"}> Forgot password ?</Link>{" "}
-        </Form.Message>
+      <Form.Message center={true} className="text-blue-500">
+        <Link to={"/forgot-password"}> Forgot password ?</Link>{" "}
+      </Form.Message>
 
-        <Button size="parent">Submit</Button>
-        <Form.Message center={true}>
-          <Link to={"/register"}>
-            You don't have an account?{" "}
-            <span className="text-blue-500">Create one Now!</span>
-          </Link>
-        </Form.Message>
-      </Form>
-    </div>
+      <Button size="parent">Submit</Button>
+      <Form.Message center={true}>
+        <Link to={"/register"}>
+          You don't have an account?{" "}
+          <span className="text-blue-500">Create one Now!</span>
+        </Link>
+      </Form.Message>
+    </Form>
   );
 };
 

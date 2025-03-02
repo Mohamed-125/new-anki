@@ -1,15 +1,12 @@
-import React, { FormEvent, useContext } from "react";
 import Form from "../components/Form";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { userContext } from "../context/UserContext";
 import Button from "../components/Button";
-import useGetCurrentUser from "../hooks/useGetCurrentUser";
-import useToasts from "../hooks/useToasts";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { useQueryClient } from "@tanstack/react-query";
+import useToasts from "@/hooks/useToasts";
 
 const Register = () => {
   const { addToast } = useToasts();
@@ -39,7 +36,7 @@ const Register = () => {
       .catch((err) => err);
   };
   return (
-    <div className="flex flex-grow justify-center items-center">
+    <div className="flex items-center justify-center flex-grow">
       <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
         <Form.Title> Register </Form.Title>
         <Form.FieldsContainer gap={12}>
