@@ -32,7 +32,7 @@ const whitelist = [
   "https://new-anki-one.vercel.app",
   "http://localhost:5173",
   "chrome-extension://cbjhlfenceikgmdhffgcklhcfmjomojk",
-  "chrome-extension://poppciefkiccdhlohboikdneongfhgpp",
+  "chrome-extension://djlfoidjlgljkgpdnlglajpjigbgkdab",
   "http://192.168.1.2:5174",
   "http://192.168.1.2:5173",
   "http://localhost:5174",
