@@ -18,6 +18,10 @@ const CollectionSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "Collection",
     },
+    childCollectionId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Collection",
+    },
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
@@ -38,6 +42,7 @@ CollectionSchema.pre("find", function (next) {
 
 CollectionSchema.pre("save", function (next) {
   this.slug = slugify(this.name);
+
   next();
 });
 
@@ -51,7 +56,7 @@ CollectionSchema.virtual("subCollections", {
   options: {
     sort: { createdAt: -1 }, // Sort subcollections by createdAt in descending order (newest first)
     lean: true,
-    projection: { _id: 1, name: 1, public: 1 },
+    projection: { _id: 1, name: 1, public: 1, childCollectionId: 1 },
   },
 });
 
@@ -64,6 +69,29 @@ CollectionSchema.virtual("collectionCards", {
     lean: true,
     projection: { _id: 1 },
   },
+});
+
+CollectionSchema.pre(["save", "findByIdAndUpdate"], async function (next) {
+  const collectionModel = this.constructor;
+  const parentCollectionId = this?.parentCollectionId;
+
+  
+  if (parentCollectionId) {
+    try {
+      const editedParentCollection = await collectionModel.findByIdAndUpdate(
+        { _id: parentCollectionId },
+        { childCollectionId: this._id },
+        {
+          new: true,
+        }
+      );
+      
+    } catch (err) {
+      
+    }
+  }
+
+  next();
 });
 
 CollectionSchema.pre(["findOneAndDelete", "deleteMany"], async function (next) {
@@ -85,14 +113,14 @@ CollectionSchema.post(["findOneAndDelete", "deleteMany"], async function () {
   const CollectionModel = this.model;
 
   if (this.op === "findOneAndDelete" && this._docToDelete) {
-    console.log("Deleted doc:", this._docToDelete);
+    
     await CollectionModel.deleteMany({
       parentCollectionId: this._docToDelete._id,
     });
   }
 
   if (this.op === "deleteMany" && this._docsToDelete.length > 0) {
-    console.log("Deleted docs:", this._docsToDelete);
+    
     const idsToDelete = this._docsToDelete.map((doc) => doc._id);
     await CollectionModel.deleteMany({
       parentCollectionId: { $in: idsToDelete },

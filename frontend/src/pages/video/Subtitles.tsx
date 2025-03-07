@@ -11,6 +11,7 @@ import AvailableCaptionsSelect from "../../components/AvailableCaptionsSelect";
 import useGetCards from "../../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
 import useModalsStates from "@/hooks/useModalsStates";
+import TranslationWindow from "@/components/TranslationWindow";
 
 type subtitleProps = {
   video: any;
@@ -30,21 +31,6 @@ const Subtitles = memo(function ({
   const [selectedCaption, setSelectedCaption] = useState("");
   const [isCaptionLoading, setIsCaptionLoading] = useState(false);
 
-  const {
-    setEditId,
-    setDefaultValues,
-    setIsAddCardModalOpen,
-    setContent,
-    isAddCardModalOpen,
-  } = useModalsStates();
-
-  const { selectionData } = useSelection({
-    isAddCardModalOpen,
-    setContent,
-    setDefaultValues,
-    setIsAddCardModalOpen,
-  });
-
   const scrollToSubtitle = () => {
     const activeSubtitle = document.querySelector(".subtitle-active");
     if (activeSubtitle) {
@@ -57,57 +43,57 @@ const Subtitles = memo(function ({
     setSelectedCaption(video?.defaultCaptionData.name);
   }, [video]);
 
-  useEffect(() => {
-    console.log(caption);
-  }, [caption]);
+  const { setDefaultValues, setIsAddCardModalOpen, setContent, setEditId } =
+    useModalsStates();
+
+  const { selectionData } = useSelection();
+
   return (
     // Render your list
-
-    <div className="flex relative gap-1 py-8 bg-white rounded-r-md  h-[85vh] overflow-hidden">
-      <div
-        ref={subtitleContainerRef}
-        className="flex flex-col w-full px-3 overflow-auto select-text grow"
+    <div className="relative">
+      <Button
+        variant="primary"
+        className="absolute text-2xl rounded-full top-[-10px] right-5 z-50"
+        onClick={scrollToSubtitle}
       >
-        <div>
-          <label className="block mb-2 text-xl text-black">
-            available captions
-          </label>
-          <AvailableCaptionsSelect
-            setCaption={setCaption}
-            setIsCaptionLoading={setIsCaptionLoading}
-            setSelectedCaption={setSelectedCaption}
-            video={video}
-            availableCaptions={video?.availableCaptions}
-            value={selectedCaption}
-          />
-        </div>
-        <div className="grow">
-          <Button
-            variant="primary"
-            className="absolute text-2xl rounded-full top-[130px] right-4 z-50"
-            onClick={scrollToSubtitle}
-          >
-            <MdVerticalAlignCenter />
-          </Button>
-          {isCaptionLoading && <Loading />}
+        <MdVerticalAlignCenter />
+      </Button>
+      <div
+        id="captions-div"
+        className="flex     gap-1   bg-white rounded-r-md  h-[85vh] overflow-hidden"
+      >
+        <div
+          ref={subtitleContainerRef}
+          className="flex flex-col w-full px-3 overflow-auto select-text grow"
+        >
+          <div className="relative select-text grow">
+            {isCaptionLoading && <Loading />}
 
-          {caption?.map((subtitle: CaptionType, _) => {
-            return (
-              <Subtitle
-                selectionData={selectionData}
-                key={_}
-                n={_}
-                setDefaultValues={setDefaultValues}
-                selectedCaption={selectedCaption}
-                caption={caption}
-                setIsAddCardModalOpen={setIsAddCardModalOpen}
-                video={video}
-                subtitle={subtitle}
-                setEditId={setEditId}
-                playerRef={playerRef}
-              />
-            );
-          })}
+            <TranslationWindow
+              setIsAddCardModalOpen={setIsAddCardModalOpen}
+              setDefaultValues={setDefaultValues}
+              setContent={setContent}
+              selectionData={selectionData}
+            />
+
+            {caption?.map((subtitle: CaptionType, _) => {
+              return (
+                <Subtitle
+                  selectionData={selectionData}
+                  key={_}
+                  n={_}
+                  setDefaultValues={setDefaultValues}
+                  selectedCaption={selectedCaption}
+                  caption={caption}
+                  setIsAddCardModalOpen={setIsAddCardModalOpen}
+                  video={video}
+                  subtitle={subtitle}
+                  setEditId={setEditId}
+                  playerRef={playerRef}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -141,21 +127,12 @@ const Subtitle = memo(function ({
 
   useEffect(() => {
     const translateText = async (text: string) => {
-      console.log(
-        video.defaultCaptionData.name === selectedCaption,
-        video.defaultCaptionData.name,
-        selectedCaption
-      );
       if (video.defaultCaptionData.name === selectedCaption) {
         setTranslatedText(video.defaultCaptionData.translatedTranscript[n]);
       }
     };
     translateText(subtitle);
   }, []);
-
-  useEffect(() => {
-    console.log(translatedText);
-  }, [translatedText]);
 
   const { userCards } = useGetCards();
   let modifiedText = subtitle.text;
@@ -178,8 +155,9 @@ const Subtitle = memo(function ({
     setIsAddCardModalOpen(true);
   };
 
+  console.log(subtitle);
   return (
-    <div>
+    <div className={n == 0 ? "mt-7" : ""}>
       <div
         id={"subtitle-" + n}
         key={subtitle._id}
@@ -195,11 +173,9 @@ const Subtitle = memo(function ({
             className="relative subtitle "
             data-translated-text={translatedText}
           >
-            <div className="flex gap-2 mb-3 items center">
-              <FaPlay
-                className={`invisible p-1 text-2xl text-gray-700   rounded-full group-hover:visible  `}
-              />
+            <div className="flex gap-2 mb-3 select-text items center">
               <p
+                className="pl-[30px]"
                 dangerouslySetInnerHTML={{ __html: modifiedText }}
                 onClick={(e) => {
                   const target = e.target as HTMLElement;

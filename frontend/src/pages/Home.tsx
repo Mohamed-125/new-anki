@@ -40,9 +40,11 @@ const Home = () => {
     isFetchingNextPage,
     isIntialLoading,
     cardsCount,
+    hasNextPage,
   } = useGetCards({ query: debouncedQuery }); // Pass the query here
 
-  useInfiniteScroll(fetchNextPage);
+  useInfiniteScroll(fetchNextPage, hasNextPage);
+
   const states = useModalStates();
 
   const CardsJSX = useMemo(() => {
@@ -61,6 +63,9 @@ const Home = () => {
 
   return (
     <div className="container">
+      {/* <div className="absolute z-50 w-7/12 h-12 bg-red-400 " id="translateBtn">
+        heeey
+      </div> */}
       <AddCardModal />
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />

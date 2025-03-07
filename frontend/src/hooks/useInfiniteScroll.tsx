@@ -16,14 +16,13 @@ const useInfiniteScroll = (
       const scrollHeight = document.body.getBoundingClientRect().height;
       const windowHeight = window.innerHeight;
 
-      if (scrollHeight <= windowHeight && hasNextPage) {
-        console.log("Initial load: Fetching next page");
+      if (Math.floor(scrollHeight) <= Math.floor(windowHeight) && hasNextPage) {
         fetchNextPage();
       }
     };
 
-    // Call the check on the first render
-    setTimeout(() => checkInitialLoad(), 1500);
+    setTimeout(() => checkInitialLoad(), 500);
+
     const handleScroll = () => {
       const scrollHeight = document.documentElement.scrollHeight;
       const scrollTop = document.documentElement.scrollTop;
@@ -43,7 +42,7 @@ const useInfiniteScroll = (
       document.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
     };
-  }, [fetchNextPage]);
+  }, [fetchNextPage, hasNextPage]);
 
   return {};
 };

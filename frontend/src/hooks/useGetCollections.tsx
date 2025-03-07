@@ -12,6 +12,7 @@ export type CollectionType = {
   slug: string;
   userId: string;
   public: boolean;
+  childCollectionId: string;
   _id: string;
 };
 

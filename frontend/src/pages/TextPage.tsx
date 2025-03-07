@@ -1,36 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import React, {
-  FormEvent,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useMemo } from "react";
 import { FaEdit } from "react-icons/fa";
 import { FaTrashCan } from "react-icons/fa6";
-import ReactQuill from "react-quill";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Button from "../components/Button";
 import Loading from "../components/Loading";
 import TranslationWindow from "../components/TranslationWindow";
 import AddCardModal from "../components/AddCardModal";
-import useCreateNewCard from "../hooks/useCreateNewCardMutation";
-import useCardActions from "../hooks/useCardActions";
-import ReactDOM from "react-dom/client";
-import { px } from "framer-motion";
+
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
 import useModalsStates from "@/hooks/useModalsStates";
-import { useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { TextType } from "./MyTexts";
-import useUseEditor from "@/hooks/useUseEditor";
 
 const TextPage = () => {
   const id = useParams()?.id;
-  const [targetLanguage, setTargetLanguage] = useState("en");
-  const [editId, setEditId] = useState("");
   const { data: text, isLoading } = useQuery({
     queryKey: ["text", id],
     queryFn: async () => {
@@ -53,12 +38,8 @@ const TextPage = () => {
     }
   };
 
-  const { setDefaultValues, setIsAddCardModalOpen } = useModalsStates();
-  const {} = useSelection({
-    setDefaultValues,
-    // setContent,
-    setIsAddCardModalOpen,
-  });
+  const { setDefaultValues, setIsAddCardModalOpen, setContent } =
+    useModalsStates();
 
   const highlightText = useMemo(() => {
     if (!text?.content || !userCards?.length) return text?.content; // Return original text if no cards or content
@@ -98,17 +79,18 @@ const TextPage = () => {
     return doc.body.innerHTML; // Return modified HTML as string
   }, [text?.content, userCards]);
 
-  const onCardClick = (card: any) => {
-    setDefaultValues({
-      front: card.front,
-      back: card.back,
-      content: card?.content,
-    });
-    setEditId(card._id);
-    setIsAddCardModalOpen(true);
-  };
-
-  const queryClient = useQueryClient();
+  const onCardClick = useCallback(
+    (card: any) => {
+      setDefaultValues({
+        front: card.front,
+        back: card.back,
+        content: card?.content,
+      });
+      setIsAddCardModalOpen(true);
+    },
+    [setDefaultValues, setIsAddCardModalOpen]
+  );
+  const { selectionData } = useSelection();
 
   if (isLoading) {
     return <Loading />;
@@ -118,7 +100,13 @@ const TextPage = () => {
     <div className="container w-[90%]  border-2 border-light-gray p-4  mb-8 bg-white rounded-2xl sm:px-2 sm:text-base">
       <AddCardModal collectionId={text?.defaultCollectionId} />
 
-      <div className="flex items-center justify-between gap-4 my-4">
+      <TranslationWindow
+        setIsAddCardModalOpen={setIsAddCardModalOpen}
+        setDefaultValues={setDefaultValues}
+        setContent={setContent}
+        selectionData={selectionData}
+      />
+      <div className="flex items-center justify-between gap-4 px-4 my-4 sm:flex-col">
         <h1 className="text-4xl font-bold ">{text?.title}</h1>
         <div className="flex gap-2">
           <Link to={`/texts/edit/${id}`} className="flex items-center gap-2">
@@ -139,24 +127,41 @@ const TextPage = () => {
       </div>
 
       <hr className="my-4"></hr>
-      <div className="text-div">
-        <div
-          className="select-text"
-          dangerouslySetInnerHTML={{ __html: highlightText || "" }}
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            if (target?.classList.contains("highlight")) {
-              const cardId = target.getAttribute("data-id");
-              const card = userCards?.find((c: CardType) => c._id === cardId);
-              if (card) onCardClick(card);
-            }
-          }}
-        ></div>
 
-        {/* <ChunkedContent content={text?.content} /> */}
-      </div>
+      <Text
+        highlightText={highlightText}
+        onCardClick={onCardClick}
+        userCards={userCards}
+      />
     </div>
   );
 };
+
+const Text = React.memo(function ({
+  highlightText,
+  userCards,
+  onCardClick,
+}: {
+  highlightText: string | undefined;
+  userCards: CardType[] | undefined;
+  onCardClick: (card: any) => void;
+}) {
+  return (
+    <div className="text-div">
+      <div
+        className="select-text"
+        dangerouslySetInnerHTML={{ __html: highlightText || "" }}
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target?.classList.contains("highlight")) {
+            const cardId = target.getAttribute("data-id");
+            const card = userCards?.find((c: CardType) => c._id === cardId);
+            if (card) onCardClick(card);
+          }
+        }}
+      ></div>
+    </div>
+  );
+});
 
 export default TextPage;

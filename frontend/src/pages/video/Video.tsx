@@ -99,7 +99,7 @@ const Video = () => {
         </div>
       </div>
 
-      <div className="relative w-full grow">
+      <div className="w-full  grow">
         <Subtitles
           video={video}
           playerRef={playerRef}

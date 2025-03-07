@@ -1,128 +1,65 @@
-import TranslationWindow from "@/components/TranslationWindow";
 import { useEffect, useState, useCallback, useRef } from "react";
-import ReactDOM from "react-dom/client";
 
-const useSelection = ({
-  // isAddCardModalOpen,
-  setContent,
-  setDefaultValues,
-  setIsAddCardModalOpen,
-}: {
-  // isAddCardModalOpen: boolean;
-  setContent?: React.Dispatch<React.SetStateAction<string>>;
-  setDefaultValues: React.Dispatch<
-    React.SetStateAction<{ front: string; back: string; content: string }>
-  >;
-  setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-  const selectionRef = useRef<{ ele: HTMLElement | null; text: string }>({
-    ele: null,
-    text: "",
-  });
-
+const useSelection = () => {
   const [selectionData, setSelectionData] = useState<{
-    ele: HTMLElement | null;
     text: string;
   }>({
-    ele: null,
     text: "",
   });
 
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const handleSelection = useCallback((e: Event) => {
+    const selected = window.getSelection();
 
-  // Debounced selection handler
-  const handleSelection = useCallback(() => {
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    const textDiv = document.querySelector(".text-div");
+    const captionsDiv = document.getElementById("captions-div");
 
-    debounceTimeout.current = setTimeout(() => {
-      const selected = window.getSelection();
-      if (!selected?.toString()) return;
+    const translationWindow = document.getElementById("translationWindow");
 
-      const focusNode = selected.focusNode as HTMLElement;
-      const anchorNode = selected.anchorNode as HTMLElement;
-      const selectedElement =
-        focusNode?.nodeName === "#text"
-          ? (focusNode.parentNode as HTMLElement)
-          : focusNode?.children[0] ?? anchorNode?.parentNode;
-
-      // Update ref (won't trigger re-renders)
-      selectionRef.current = {
-        ele: selectedElement as HTMLElement,
-        text: selected.toString(),
-      };
-
-      // Update state only if necessary
-      setSelectionData((prev) => {
-        if (
-          prev.text === selectionRef.current.text &&
-          prev.ele === selectionRef.current.ele
-        ) {
-          return prev;
-        }
-        return selectionRef.current;
-      });
-    }, 300); // Debounce for 300ms
-  }, []);
-
-  useEffect(() => {
-    const removeSelection = (e: Event) => {
-      if (
-        (e.target as HTMLElement)?.id !== "translationWindow" &&
-        (e.target as HTMLElement)?.id !== "translationBtn"
-      ) {
-        setSelectionData({ ele: null, text: "" });
-      }
-    };
-
-    const handleSelectionChange = (e: Event) => {
-      const selected = window.getSelection();
-
-      console.log(selected);
-      if (selected?.toString()) {
-        handleSelection();
-      } else {
-        removeSelection(e);
-      }
-    };
-
-    document.addEventListener("selectionchange", handleSelectionChange);
-
-    return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
-    };
-  }, [handleSelection]);
-
-  useEffect(() => {
-    if (!selectionData.text) return;
-
-    const container = document.createElement("div");
-    const root = ReactDOM.createRoot(container);
-    container.style.position = "absolute";
-
-    const rect = selectionData.ele?.getBoundingClientRect();
-    if (!rect) return;
-    container.style.top = `${rect.bottom - rect.top}px`;
-
-    if (selectionData.ele && selectionData.text.length) {
-      selectionData.ele.insertBefore(container, null);
-      root.render(
-        <TranslationWindow
-          text={true}
-          selectionData={selectionData}
-          setContent={setContent}
-          setDefaultValues={setDefaultValues}
-          setIsAddCardModalOpen={setIsAddCardModalOpen}
-        />
-      );
+    if (!selected) return;
+    if (translationWindow?.contains(selected.anchorNode)) {
+      e.preventDefault();
+      return;
     }
 
+    if (textDiv) {
+      if (!textDiv?.contains(selected.anchorNode)) {
+        setSelectionData((prev) => {
+          return { text: "" };
+        });
+        return;
+      }
+    } else {
+      if (!captionsDiv?.contains(selected.anchorNode)) {
+        console.log(selected, selected.anchorNode);
+        setSelectionData((prev) => {
+          return { text: "" };
+        });
+        return;
+      }
+    }
+
+    // Update ref (won't trigger re-renders)
+
+    setSelectionData((prev) => {
+      return {
+        text: selected.toString(),
+      };
+    });
+  }, []);
+
+  const handleSelectionChange = (e: Event) => {
+    handleSelection(e);
+  };
+
+  useEffect(() => {
+    document.addEventListener("selectionchange", handleSelectionChange);
+    // document.addEventListener("click", removeSelection);
+
     return () => {
-      setTimeout(() => {
-        root.unmount();
-        container?.remove();
-      }, 150);
+      document?.removeEventListener("selectionchange", handleSelectionChange);
+      // document.removeEventListener("click", removeSelection);
     };
-  }, [selectionData]);
+  }, [handleSelection]);
 
   return { selectionData };
 };

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Modal from "./Modal";
 import Form from "./Form";
 import Button from "./Button";
@@ -132,20 +138,21 @@ export function AddCardModal({
     }
   };
 
-  const onAnimationEnd = useCallback(() => {
-    if (!isAddCardModalOpen || !isMoveToCollectionOpen) {
-      setIsAddCardModalOpen(false);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!isAddCardModalOpen) {
       setContent("");
       setDefaultValues(null);
       setEditId?.("");
       setFrontValue("");
       setBackValue("");
-      if (backRef.current && frontRef.current) {
-        backRef.current.value = "";
-        frontRef.current.value = "";
-      }
+      // if (backRef.current && frontRef.current) {
+      //   backRef.current.value = "";
+      //   frontRef.current.value = "";
+      // }
     }
-  }, [isAddCardModalOpen, isMoveToCollectionOpen]);
+  }, [isAddCardModalOpen]);
 
   useEffect(() => {
     if (!isAddCardModalOpen) {
@@ -164,7 +171,7 @@ export function AddCardModal({
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
         isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
       }`}
-      onAnimationEnd={onAnimationEnd}
+      // onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
@@ -235,7 +242,6 @@ export function AddCardModal({
           <Form.Field>
             <Form.Label>Card Back Side</Form.Label>
             <Form.Textarea
-              defaultValue={defaultValues?.back}
               isLoading={isTranslationLoading}
               disabled={isTranslationLoading}
               type="text"
@@ -306,10 +312,23 @@ export function AddCardModal({
             </Button>
           </Form.Field>
         </Form.FieldsContainer>
-        <Modal.Footer>
-          <FormButtons isEdit={isEdit} setIsOpen={setIsAddCardModalOpen} />
-        </Modal.Footer>
-      </Form>
+      </Form>{" "}
+      <Modal.Footer>
+        <div className="flex gap-2">
+          <Button
+            onClick={(e: Event) => {
+              setIsAddCardModalOpen(false);
+            }}
+            type="button"
+            size="parent"
+            variant={"danger"}
+          >
+            Cancel
+          </Button>
+
+          <Button size="parent">{isEdit ? "Save Changes" : "Add Card"}</Button>
+        </div>{" "}
+      </Modal.Footer>
     </Modal>
   );
 }

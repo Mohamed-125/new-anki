@@ -189,7 +189,7 @@ module.exports.getUserVideos = async (req, res, next) => {
   try {
     const videos = await VideoModel.find(
       { userId: req.user._id },
-      {},
+      { defaultCaptionData: 0 },
       { sort: { createdAt: -1 } }
     );
     res.status(200).send(videos);

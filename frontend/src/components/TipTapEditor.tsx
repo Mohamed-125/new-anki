@@ -22,13 +22,39 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
   const [color, setColor] = useState("#000000");
 
+  // Function to add an image from a URL
   const addImageFromUrl = () => {
-    const url = prompt("Enter image URL");
+    const url = prompt("Enter Image URL:");
     if (url) {
-      //@ts-ignore
       editor.chain().focus().setImage({ src: url }).run();
     }
   };
+
+  // Function to handle image pasting
+  const handlePasteImage = async (event: ClipboardEvent) => {
+    const clipboardItems = event.clipboardData?.items;
+    if (!clipboardItems) return;
+
+    for (const item of clipboardItems) {
+      if (item.type.startsWith("image")) {
+        const file = item.getAsFile();
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const imageUrl = reader.result as string;
+          editor.chain().focus().setImage({ src: imageUrl }).run();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  // Attach event listener for pasting images
+  useEffect(() => {
+    document.addEventListener("paste", handlePasteImage);
+    return () => document.removeEventListener("paste", handlePasteImage);
+  }, [editor]);
 
   const buttonClass = (isActive: boolean) =>
     `p-2 rounded-lg transition-all ${
@@ -45,8 +71,9 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
         onClick={addImageFromUrl}
         className="p-2 text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-300"
       >
-        Add Image via URL
+        🖼️ Insert Image
       </button>
+
       <button
         style={{ perspective: "1px" }}
         type="button"
@@ -55,6 +82,7 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
       >
         <Bold size={18} />
       </button>
+
       <button
         style={{ perspective: "1px" }}
         type="button"

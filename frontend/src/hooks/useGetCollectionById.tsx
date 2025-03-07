@@ -11,8 +11,7 @@ const useGetCollectionById = (id?: string) => {
       axios.get("collection/" + id).then((res) => res.data as CollectionType),
   });
 
-  console.log("getting collection by id ran");
-  return { data, isLoading };
+  return { collection: data, isLoading };
 };
 
 export default useGetCollectionById;

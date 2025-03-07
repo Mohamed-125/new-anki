@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Modal from "./Modal";
 import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { all } from "axios";
@@ -22,8 +28,13 @@ const MoveCollectionModal = ({
   cards?: CardType[];
   text?: boolean;
 }) => {
-  const { collections, parentCollections, notParentCollections, isLoading } =
-    useGetCollections();
+  const {
+    collections,
+    parentCollections,
+    notParentCollections,
+    isLoading,
+    subCollections,
+  } = useGetCollections();
 
   const [selectedCollectionsIds, setSelectedCollectionIds] = useState<string[]>(
     []
@@ -36,7 +47,6 @@ const MoveCollectionModal = ({
     isMoveToCollectionOpen,
     setIsMoveToCollectionOpen,
     editId,
-    setEditId,
     toMoveCollectionId,
     setParentCollectionId,
     selectedItems,
@@ -103,7 +113,6 @@ const MoveCollectionModal = ({
         getParentCollection(toMoveCollection);
 
         setSelectedCollectionIds((prev) => {
-          console.log(prev, toMoveCollectionId);
 
           const topParentCollectionId = notParentCollections.find(
             (collection) =>
@@ -153,6 +162,29 @@ const MoveCollectionModal = ({
       (c) => c._id === toMoveCollection.parentCollectionId
     )?._id;
   }, [toMoveCollectionId]);
+
+  const childrenCollectionsArray = useMemo(() => {
+    const toMoveCollection = collections?.find(
+      (collection) => collection._id === toMoveCollectionId
+    );
+    let arr: string[] = [];
+
+    const getCollectionChildren = (collection: CollectionType) => {
+      const childCollectionId = collection.childCollectionId;
+      const childCollection = subCollections.find(
+        (c) => c._id === childCollectionId
+      );
+      if (childCollection) {
+        arr.push(childCollection._id);
+        if (childCollection?.childCollectionId) {
+          getCollectionChildren(childCollection);
+        }
+      }
+    };
+    if (toMoveCollection) getCollectionChildren(toMoveCollection);
+
+    return arr;
+  }, [isMoveToCollectionOpen, toMoveCollectionId]);
 
   const { updateCardHandler } = useCardActions();
   const states = useModalStates();
@@ -364,7 +396,8 @@ const MoveCollectionModal = ({
                   ? collections?.find((c) => c._id === toMoveCollectionId)
                       ?.parentCollectionId === collection._id ||
                     collection?.parentCollectionId === toMoveCollectionId ||
-                    collection?._id === toMoveCollectionId
+                    collection?._id === toMoveCollectionId ||
+                    childrenCollectionsArray.includes(collection._id)
                   : cards?.find((card) => card._id === editId)?.collectionId ===
                     collection?._id;
 
@@ -417,7 +450,7 @@ const MoveCollectionModal = ({
                         disabled={disabled}
                         onClick={(e: any) => {
                           e.stopPropagation();
-                          moving === "cards"
+                          !toMoveCollectionId
                             ? moveCardsHandler({
                                 targetCollectionId: collection._id,
                               })

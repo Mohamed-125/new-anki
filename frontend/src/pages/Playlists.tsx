@@ -12,6 +12,7 @@ import SelectedItemsController from "../components/SelectedItemsController";
 import { VideoType } from "./Playlist";
 import { MdFeaturedPlayList, MdOutlinePlaylistPlay } from "react-icons/md";
 import ItemCard from "@/components/ui/ItemCard";
+import CollectionSkeleton from "@/components/CollectionsSkeleton";
 
 type PlaylistType = {
   name: string;
@@ -104,12 +105,6 @@ const Playlists = () => {
   const [actionsDivId, setActionsDivId] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  isLoading && (
-    <div>
-      <Loading />
-    </div>
-  );
-
   useEffect(() => {
     isPlayListModalOpen;
   }, [isPlayListModalOpen]);
@@ -132,43 +127,37 @@ const Playlists = () => {
         />
       </>
 
-      {playlists?.length ? (
-        <>
-          <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Playlists in collection : {playlists?.length}
-          </h6>
-          <Button
-            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
-            onClick={() => setIsPlayListModalOpen(true)}
-          >
-            Create new playlist
-          </Button>
-
-          <SelectedItemsController isItemsPlaylists={true} />
-
-          <div className="grid gap-2 grid-container">
-            {playlists?.map((playlist) => {
-              const id = playlist._id;
-
-              if (!id) return;
-              const isSelected = selectedItems.includes(id);
-              return (
-                <ItemCard
-                  Icon={<MdOutlinePlaylistPlay />}
-                  name={playlist.name}
-                  deleteHandler={() => deletePlaylistHandler(id)}
-                  subText={`${playlist?.videosCount} Videos in this playlist`}
-                  id={id}
-                />
-              );
-            })}
-          </div>
-        </>
-      ) : (
-        <Button className="mt-11" onClick={() => setIsPlayListModalOpen(true)}>
-          There is not playlists Create Your First Now{" "}
+      <>
+        <h6 className="mt-4 text-lg font-bold text-gray-400">
+          Playlists in collection : {playlists?.length}
+        </h6>
+        <Button
+          className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
+          onClick={() => setIsPlayListModalOpen(true)}
+        >
+          Create new playlist
         </Button>
-      )}
+
+        <SelectedItemsController isItemsPlaylists={true} />
+
+        <div className="grid gap-2 grid-container">
+          {playlists?.map((playlist) => {
+            const id = playlist._id;
+
+            if (!id) return;
+            return (
+              <ItemCard
+                Icon={<MdOutlinePlaylistPlay />}
+                name={playlist.name}
+                deleteHandler={() => deletePlaylistHandler(id)}
+                subText={`${playlist?.videosCount} Videos in this playlist`}
+                id={id}
+              />
+            );
+          })}
+          {isLoading && <CollectionSkeleton />}
+        </div>
+      </>
     </div>
   );
 };

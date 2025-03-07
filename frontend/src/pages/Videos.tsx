@@ -8,6 +8,7 @@ import VideoCard from "../components/VideoCard";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import { VideoType } from "./Playlist.tsx";
+import VideoSkeleton from "@/components/VideoSkeleton.tsx";
 
 const Videos = () => {
   const {
@@ -37,10 +38,6 @@ const Videos = () => {
     }
   }, [isVideoModalOpen]);
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
   const queryClient = useQueryClient();
   return (
     <div>
@@ -51,31 +48,26 @@ const Videos = () => {
       />
 
       <div className="container">
-        {videos?.length ? (
-          <>
-            <h6 className="mt-4 text-lg font-bold text-gray-400">
-              Number of videos : {videos?.length}
-            </h6>
-            <Button
-              className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
-              onClick={() => setIsVideoModalOpen(true)}
-            >
-              Add new Video
-            </Button>
-
-            <SelectedItemsController isItemsVideos={true} />
-
-            <div className="grid gap-3 grid-container videos-container">
-              {videos.map((video) => (
-                <VideoCard key={video._id} video={video} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <Button className="mt-11" onClick={() => setIsVideoModalOpen(true)}>
-            There is not videos Add Your First Now
+        <>
+          <h6 className="mt-4 text-lg font-bold text-gray-400">
+            Number of videos : {videos?.length}
+          </h6>
+          <Button
+            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
+            onClick={() => setIsVideoModalOpen(true)}
+          >
+            Add new Video
           </Button>
-        )}{" "}
+
+          <SelectedItemsController isItemsVideos={true} />
+
+          <div className="grid gap-3 grid-container videos-container">
+            {videos?.map((video) => (
+              <VideoCard key={video._id} video={video} />
+            ))}{" "}
+            {isLoading && <VideoSkeleton />}
+          </div>
+        </>
       </div>
     </div>
   );

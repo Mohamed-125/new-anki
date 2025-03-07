@@ -37,18 +37,20 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
 
     useEffect(() => {
       if (isOpen) {
-        const firstInput = document.querySelector(
-          ".modal input"
-        ) as HTMLInputElement;
+        document.body.style.overflow = "hidden";
 
-        firstInput?.focus();
+        const timeout = setTimeout(() => {
+          if (modalRef.current) {
+            modalRef.current.scrollTop = 0;
+          }
+        }, 0);
+
+        return () => clearTimeout(timeout);
       }
     }, [isOpen]);
 
     return (
       <div
-        onTransitionEnd={isOpen ? undefined : onAnimationEnd}
-        ref={modalRef}
         className={twMerge(
           "modal ",
           isOpen ? "pointer-events-auto" : "pointer-events-none"
@@ -56,19 +58,21 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
       >
         <div
           className={twMerge(
-            "transition-all duration-300 modal-backdrop",
+            "transition-all duration-500 modal-backdrop",
             isOpen ? "opacity-100" : "opacity-0"
           )}
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            setIsOpen(false);
+          }}
         ></div>
 
         <div
           style={{
             ...style,
-            transition: "transform 520ms ease, opacity 420ms ease",
+            transition: "transform 450ms ease, opacity 400ms ease",
           }}
           className={twMerge(
-            "bg-white  !w-[90%] max-w-[550px] modal-content translate-y-[-30%]  translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
+            "bg-white  !w-[90%] max-w-[550px] modal-content   translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
             isOpen
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",
@@ -78,12 +82,19 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
           )}
         >
           <div
+            ref={modalRef}
             className={twMerge(
               "overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ",
               big && "max-h-[90vh]"
             )}
           >
-            {children}
+            {isOpen ? (
+              children
+            ) : (
+              <div className="transition-opacity duration-75 opacity-0">
+                {children}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -118,7 +129,6 @@ const Header: ComponentType<{
           )}
           <Button
             onClick={() => {
-              console.log("tsrt");
               setIsOpen(false);
             }}
             variant="danger"

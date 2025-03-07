@@ -27,7 +27,6 @@ const Collections = () => {
       {selectedItems.length > 0 && (
         <SelectedItemsController isItemsCollections={true} />
       )}
-      {isLoading && <CollectionSkeleton />}
       <div className="space-y-6">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
@@ -52,6 +51,7 @@ const Collections = () => {
           {notParentCollections?.map((collection) => (
             <Collection collection={collection} key={collection._id} />
           ))}
+          {isLoading && <CollectionSkeleton />}
         </div>
       </div>
     </div>

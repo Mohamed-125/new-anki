@@ -1,25 +1,7 @@
-import React, { useState } from "react";
-import { FaTrashCan } from "react-icons/fa6";
 import useCardActions from "../hooks/useCardActions";
-import Button from "./Button";
 import { HiSwitchHorizontal } from "react-icons/hi";
 import { CollectionType } from "@/hooks/useGetCollections";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import { LuMoveUpRight } from "react-icons/lu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
 import useModalStates from "@/hooks/useModalsStates";
@@ -91,42 +73,40 @@ const Card = ({
 
   return (
     <div
+      onClick={() => {
+        navigateTo?.();
+        setDefaultValues({
+          front: card?.front,
+          back: card?.back,
+          content: card?.content,
+          collectionId: card?.collectionId,
+          collectionName: collection?.name,
+          collectionPublic: collection?.public,
+          playlistName,
+          playlistId: video?.playlistId || id,
+          videoUrl: video?.url,
+          defaultCaption: video?.defaultCaption,
+          videoTitle: video?.title,
+          videoThumbnail: video?.thumbnail,
+          videoAvailableCaptions: video?.availableCaptions,
+          videoDefaultCaption: video?.defaultCaption,
+          videoId: video?._id,
+          noteId: note?._id,
+          noteContent: note?.content,
+          noteTitle: note?.title,
+        });
+
+        setIsAddCardModalOpen?.(true);
+        setContent?.(content ? content : "");
+        setEditId(id);
+      }}
       className="flex items-center px-8 py-6 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-2xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
       id={id}
     >
       <div className="mr-3 text-2xl" onClick={switchHandler}>
         <HiSwitchHorizontal />
       </div>
-      <div
-        className="overflow-hidden break-words whitespace-normal grow text-ellipsis"
-        onClick={() => {
-          navigateTo?.();
-          setDefaultValues({
-            front: card?.front,
-            back: card?.back,
-            content: card?.content,
-            collectionId: card?.collectionId,
-            collectionName: collection?.name,
-            collectionPublic: collection?.public,
-            playlistName,
-            playlistId: video?.playlistId || id,
-            videoUrl: video?.url,
-            defaultCaption: video?.defaultCaption,
-            videoTitle: video?.title,
-            videoThumbnail: video?.thumbnail,
-            videoAvailableCaptions: video?.availableCaptions,
-            videoDefaultCaption: video?.defaultCaption,
-            videoId: video?._id,
-            noteId: note?._id,
-            noteContent: note?.content,
-            noteTitle: note?.title,
-          });
-
-          setIsAddCardModalOpen?.(true);
-          setContent?.(content ? content : "");
-          setEditId(id);
-        }}
-      >
+      <div className="overflow-hidden break-words whitespace-normal grow text-ellipsis">
         <p className="text-lg sm:text-base">{front}</p>
         <small className="text-base text-gray-500 truncate">{back}</small>
       </div>

@@ -7,8 +7,11 @@ import SelectedItemsController from "../components/SelectedItemsController";
 import Modal from "../components/Modal";
 import Form from "../components/Form";
 import TipTapEditor from "../components/TipTapEditor";
-import { StickyNote } from "lucide-react";
+import { Icon, StickyNote } from "lucide-react";
 import ItemCard from "@/components/ui/ItemCard";
+import CollectionSkeleton from "@/components/CollectionsSkeleton";
+import useUseEditor from "@/hooks/useUseEditor";
+import { Editor } from "@tiptap/react";
 
 type NoteType = {
   title: string;
@@ -31,61 +34,85 @@ const Notes = () => {
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
+  const [title, setTitle] = useState("");
 
   const deleteNoteHandler = async (id: string) => {
     setFilteredNotes((pre) => pre.filter((item) => item._id !== id));
     const deleteRes = await axios.delete(`note/${id}`);
   };
 
-  useEffect(() => {
-    if (!isNotesModalOpen) {
-      setDefaultValues({});
-    }
-  }, [isNotesModalOpen]);
-  if (isLoading) return <Loading />;
+  const { editor, setContent } = useUseEditor();
+
+  const updateNoteHandler = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const response = await axios.put("note/" + editId, {
+      title,
+      content: editor?.getHTML(),
+    });
+    setIsNotesModalOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["notes"] });
+  };
+  const queryClient = useQueryClient();
+
+  const onAnimationEnd = () => {
+    setTitle("");
+    setContent("");
+    setDefaultValues({});
+  };
 
   return (
     <div className="container">
       <h1 className="my-6 text-5xl font-bold text-black">Notes</h1>
       <NotesModal
+        editor={editor}
+        onAnimationEnd={onAnimationEnd}
+        setTitle={setTitle}
+        title={title}
+        updateNoteHandler={updateNoteHandler}
         setIsOpen={setIsNotesModalOpen}
         defaultValues={defaultValues}
         isOpen={isNotesModalOpen}
-        editId={editId}
       />
 
-      {notes?.length ? (
-        <>
-          <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Number of notes : {notes?.length}
-          </h6>
+      <>
+        <h6 className="mt-4 text-lg font-bold text-gray-400">
+          Number of notes : {notes?.length}
+        </h6>
 
-          <Button
-            className="py-4 my-6 ml-auto mr-0 bg-blue-600 border-none "
-            onClick={() => setIsNotesModalOpen(true)}
-          >
-            Add new note
-          </Button>
+        <Button
+          className="py-4 my-6 ml-auto mr-0 bg-blue-600 border-none "
+          onClick={() => setIsNotesModalOpen(true)}
+        >
+          Add new note
+        </Button>
 
-          <SelectedItemsController isItemsNotes={true} />
+        <SelectedItemsController isItemsNotes={true} />
 
-          <div className="grid gap-4 grid-container">
-            {notes.map((note) => (
+        <div className="grid gap-4 grid-container">
+          {notes?.map((note: NoteType) => (
+            <div
+              key={note._id}
+              onClick={() => {
+                setIsNotesModalOpen(true);
+                setDefaultValues({ title: note.title });
+                setTitle(note.title);
+                setEditId(note._id);
+                setContent(note.content);
+              }}
+            >
               <ItemCard
-                key={note._id}
+                isNotes={true}
                 id={note._id}
                 Icon={<StickyNote />}
                 name={note.title}
                 deleteHandler={deleteNoteHandler}
               />
-            ))}
-          </div>
-        </>
-      ) : (
-        <Button onClick={() => setIsNotesModalOpen(true)}>
-          No notes found. Click here to add new Video
-        </Button>
-      )}
+            </div>
+          ))}
+
+          {isLoading && <CollectionSkeleton />}
+        </div>
+      </>
     </div>
   );
 };
@@ -96,59 +123,49 @@ const NotesModal = ({
   setIsOpen,
   isOpen,
   defaultValues,
-  editId,
+  title,
+  setTitle,
+  updateNoteHandler,
+  editor,
+  onAnimationEnd,
 }: {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   defaultValues: any;
-  editId: string;
   isOpen: boolean;
+  title: string;
+  setTitle: React.Dispatch<React.SetStateAction<string>>;
+  updateNoteHandler: (e: FormEvent<HTMLFormElement>) => Promise<void>;
+  editor: Editor | null;
+  onAnimationEnd: () => void;
 }) => {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
   const queryClient = useQueryClient();
 
   const createNoteHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const response = await axios.post("note", {
       title,
-      content,
+      content: editor?.getHTML(),
     });
     response.data;
     setIsOpen(false);
     queryClient.invalidateQueries({ queryKey: ["notes"] });
   };
-
-  const updateNoteHandler = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const response = await axios.put("note/" + editId, {
-      title,
-      content,
-    });
-    response.data;
-    setIsOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["notes"] });
-  };
-
-  useEffect(() => {
-    if (defaultValues.noteContent) {
-      setContent(defaultValues.noteContent);
-    }
-    if (defaultValues.noteTitle) {
-      setTitle(defaultValues.noteTitle);
-    }
-  }, [defaultValues.noteContent, defaultValues.noteTitle]);
 
   return (
-    <Modal setIsOpen={setIsOpen} isOpen={isOpen} className="max-w-none">
+    <Modal
+      onAnimationEnd={onAnimationEnd}
+      setIsOpen={setIsOpen}
+      isOpen={isOpen}
+      className="max-w-none"
+    >
       <Modal.Header
-        title={defaultValues?.noteTitle ? "Edit This Note" : "Add New Note"}
+        title={defaultValues.title ? "Edit This Note" : "Add New Note"}
         setIsOpen={setIsOpen}
       ></Modal.Header>
       <Form
         className="w-[100%] py-0 px-0"
         onSubmit={(e) =>
-          defaultValues?.noteTitle ? updateNoteHandler(e) : createNoteHandler(e)
+          defaultValues.title ? updateNoteHandler(e) : createNoteHandler(e)
         }
       >
         <Form.FieldsContainer>
@@ -164,25 +181,25 @@ const NotesModal = ({
 
           <Form.Field>
             <Form.Label>Note Content</Form.Label>
-            <TipTapEditor setContent={setContent} content={content} />
+            <TipTapEditor editor={editor} />
           </Form.Field>
         </Form.FieldsContainer>
+        <Modal.Footer>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsOpen(false)}
+              size="parent"
+              type="button"
+              variant={"danger"}
+            >
+              Cancel
+            </Button>
+            <Button size="parent">
+              {defaultValues.title ? "Save Changes" : "Add Note"}
+            </Button>{" "}
+          </div>
+        </Modal.Footer>{" "}
       </Form>
-      <Modal.Footer>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsOpen(false)}
-            size="parent"
-            type="button"
-            variant={"danger"}
-          >
-            Cancel
-          </Button>
-          <Button size="parent">
-            {defaultValues?.noteTitle ? "Save Changes" : "Add Note"}
-          </Button>{" "}
-        </div>
-      </Modal.Footer>
     </Modal>
   );
 };

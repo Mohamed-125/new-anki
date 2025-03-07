@@ -51,7 +51,6 @@ body * {
 body {
   background-color: #f8f9fa;
   font-size: 15px;
-  zoom: 0.96;
   font-family: var(--font);
   /* font-family: "Bahnschrift"; */
   /* font-size: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
@@ -219,6 +218,27 @@ iframe {
   color: #393939;
   word-break: break-word;
   display: block;
+  user-select: none;
+}
+
+.subtitle {
+  &::before {
+    content: "";
+    background-image: url(https://icons.veryicon.com/png/o/internet--web/truckhome/play-47.png);
+    opacity: 0;
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    left: 0px;
+    top: 2px;
+    -o-object-fit: cover;
+    object-fit: cover;
+  }
+  &:hover::before {
+    opacity: 0.7;
+  }
 }
 
 .channel-video-thumbnail::before {
@@ -310,6 +330,7 @@ iframe {
 .translationWindow {
   font-weight: normal !important;
 }
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -405,6 +426,7 @@ iframe {
 .ProseMirror,
 .text-div {
   padding: 30px;
+
   //   min-height: 200px;
   // font-family: Arial, sans-serif;
   // width: 90%;
@@ -517,6 +539,10 @@ iframe {
 
   u {
     text-decoration: underline;
+  }
+
+  @media (max-width: 650px) {
+    padding: 30px 15px;
   }
 }
 
