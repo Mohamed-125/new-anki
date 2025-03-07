@@ -48,16 +48,25 @@ module.exports.forkCollection = async (req, res, next) => {
 };
 
 module.exports.getCollections = async (req, res, next) => {
-  const { searchQuery, public } = req.query;
+  const { searchQuery, public, page = 0 } = req.query;
+  const limit = 10; // Number of items per page
   const query = {};
+
   if (!public) {
     query.userId = req.user?._id;
     if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
   } else {
     query.public = true;
   }
+
   try {
-    const collections = await CollectionModel.find(query);
+    // Get total count for pagination
+    const totalCount = await CollectionModel.countDocuments(query);
+
+    // Get paginated collections
+    const collections = await CollectionModel.find(query)
+      .skip(page * limit)
+      .limit(limit);
 
     const subCollections = collections?.filter(
       (collection) => collection.parentCollectionId
@@ -75,11 +84,16 @@ module.exports.getCollections = async (req, res, next) => {
         )
       ) ?? [];
 
+    // Calculate if there's a next page
+    const nextPage = (page + 1) * limit < totalCount ? Number(page) + 1 : null;
+
     res.status(200).send({
       collections,
       subCollections,
       parentCollections,
       notParentCollections,
+      nextPage,
+      totalCount,
     });
   } catch (err) {
     res.status(400).send(err);

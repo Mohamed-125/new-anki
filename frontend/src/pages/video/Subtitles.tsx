@@ -64,7 +64,7 @@ const Subtitles = memo(function ({
       >
         <div
           ref={subtitleContainerRef}
-          className="flex flex-col w-full px-3 overflow-auto select-text grow"
+          className="flex overflow-auto flex-col px-3 w-full select-text grow"
         >
           <div className="relative select-text grow">
             {isCaptionLoading && <Loading />}
@@ -155,22 +155,23 @@ const Subtitle = memo(function ({
     setIsAddCardModalOpen(true);
   };
 
-  console.log(subtitle);
   return (
-    <div className={n == 0 ? "mt-7" : ""}>
+    <div
+      onClick={(e) => {
+        if (playerRef?.current) {
+          playerRef.current.seekTo(subtitle.offset);
+        }
+      }}
+      className={n == 0 ? "mt-7" : ""}
+    >
       <div
         id={"subtitle-" + n}
         key={subtitle._id}
-        className="mt-2 cursor-pointer select-text group"
-        onClick={(e) => {
-          if (playerRef?.current) {
-            playerRef.current.seekTo(subtitle.start);
-          }
-        }}
+        className="cursor-pointer select-text group"
       >
         <div className="relative py-4 border-b-2 border-gray-200">
           <div
-            className="relative subtitle "
+            className="relative subtitle"
             data-translated-text={translatedText}
           >
             <div className="flex gap-2 mb-3 select-text items center">

@@ -44,8 +44,8 @@ function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
         }
 
         return {
-          start: parseFloat((+subtitle.start).toFixed(1)),
-          dur: subtitle.dur * 1000,
+          offset: parseFloat((+subtitle.offset).toFixed(1)),
+          duration: subtitle.duration * 1000,
         };
       });
       // Clear any existing interval
@@ -59,7 +59,7 @@ function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
             playerRef.current.getCurrentTime().toFixed(1)
           );
           const index = subtitles.findIndex(
-            (subtitle) => subtitle.start === currentTime
+            (subtitle) => subtitle.offset === currentTime
           );
 
           subtitleElements?.current[index]?.classList.add("subtitle-active");

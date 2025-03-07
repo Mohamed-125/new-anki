@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import axios from "axios";
 import { CardType } from "./useGetCards";
@@ -16,12 +16,22 @@ export type CollectionType = {
   _id: string;
 };
 
+type GetCollectionsResponse = {
+  collections: CollectionType[];
+  parentCollections: CollectionType[];
+  subCollections: CollectionType[];
+  notParentCollections: CollectionType[];
+  nextPage: number;
+};
+
 const useGetCollections = ({
   publicCollections,
   query,
+  enabled = true,
 }: {
   publicCollections?: boolean;
   query?: string;
+  enabled?: boolean;
 } = {}) => {
   let queryKey = ["collections"];
 
@@ -34,23 +44,57 @@ const useGetCollections = ({
     queryKey.push(query);
   }
 
-  let url = `collection/`;
-
-  if (query) url += `?searchQuery=${query}`;
-  if (publicCollections) url += `&public=${true}`;
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey,
-    queryFn: ({ signal }) => axios.get(url, { signal }).then((res) => res.data),
-  });
-
-  return {
-    collections: data?.collections as CollectionType[],
+  const {
+    data,
     isLoading,
     isError,
-    parentCollections: data?.parentCollections as CollectionType[],
-    subCollections: data?.subCollections as CollectionType[],
-    notParentCollections: data?.notParentCollections as CollectionType[],
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey,
+    queryFn: async ({ signal, pageParam }) => {
+      let url = `collection/?page=${pageParam}`;
+
+      if (query) url += `&searchQuery=${query}`;
+      if (publicCollections) url += `&public=${true}`;
+
+      const response = await axios.get(url, { signal });
+      return response.data as GetCollectionsResponse;
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage?.nextPage,
+    enabled,
+  });
+
+  const collections = useMemo(() => {
+    return data?.pages.flatMap((page) => page.collections);
+  }, [data]);
+
+  const parentCollections = useMemo(() => {
+    return data?.pages.flatMap((page) => page.parentCollections);
+  }, [data]);
+
+  const subCollections = useMemo(() => {
+    return data?.pages.flatMap((page) => page.subCollections);
+  }, [data]);
+
+  const notParentCollections = useMemo(() => {
+    return data?.pages.flatMap((page) => page.notParentCollections);
+  }, [data]);
+
+  return {
+    collections,
+    isLoading,
+    isError,
+    parentCollections,
+    subCollections,
+    notParentCollections,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
   };
 };
 

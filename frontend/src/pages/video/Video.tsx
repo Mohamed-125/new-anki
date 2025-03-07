@@ -20,8 +20,8 @@ import CardsSkeleton from "@/components/CardsSkeleton";
 import AddNewCollectionModal from "@/components/AddNewCollectionModal";
 
 export type CaptionType = {
-  dur: string;
-  start: string;
+  duration: number;
+  offset: number;
   text: string;
 };
 
@@ -99,7 +99,7 @@ const Video = () => {
         </div>
       </div>
 
-      <div className="w-full  grow">
+      <div className="w-full grow">
         <Subtitles
           video={video}
           playerRef={playerRef}

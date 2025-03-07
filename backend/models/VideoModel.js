@@ -17,8 +17,8 @@ const VideoSchema = new mongoose.Schema(
       name: { type: String },
       transcript: [
         {
-          end: { type: String },
-          start: { type: String },
+          offset: { type: Number },
+          duration: { type: Number },
           text: { type: String },
         },
       ],

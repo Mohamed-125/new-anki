@@ -20,6 +20,7 @@ const Collections = () => {
     query: debouncedQuery,
   });
 
+  console.log(notParentCollections, isLoading);
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
       <MoveCollectionModal />
@@ -28,12 +29,12 @@ const Collections = () => {
         <SelectedItemsController isItemsCollections={true} />
       )}
       <div className="space-y-6">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
           <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
         </div>
 
-        <div className="p-4 bg-white border border-gray-200 shadow-sm rounded-xl">
-          <div className="flex flex-col items-start justify-between gap-4 mt-4 sm:flex-row sm:items-center">
+        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:flex-row sm:items-center">
             <Search query={query} setQuery={setQuery} />
             <h6 className="text-sm font-medium text-gray-500">
               {notParentCollections?.length} collections

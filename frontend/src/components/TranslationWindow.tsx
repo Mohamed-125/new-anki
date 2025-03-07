@@ -61,6 +61,8 @@ const TranslationWindow = ({
   }, [selectionData.text, isTranslationBoxOpen, targetLanguage]);
 
   const calculatePositionInText = useMemo(() => {
+    const textDiv = document.querySelector(".text-div")!;
+    if (!textDiv) return;
     const select = window.getSelection();
 
     const selection = window.getSelection();
@@ -78,7 +80,6 @@ const TranslationWindow = ({
 
     const rect = range?.getClientRects()[range?.getClientRects().length - 1];
     const windowWidth = window.innerWidth;
-    const textDiv = document.querySelector(".text-div")!;
     if (!translationContainer) return;
     if (isTranslationBoxOpen) {
       translationContainer.style.width = `80%`;
@@ -227,7 +228,7 @@ const TranslationWindow = ({
       {!isTranslationBoxOpen ? (
         <Button
           id="translateBtn"
-          className="p-2 bg-blue-400 border-none "
+          className="p-2 bg-blue-400 border-none"
           onClick={() => setTimeout(() => setIsTraslationBoxOpen(true), 0)}
         >
           <BookType className="pointer-events-none" />
@@ -235,7 +236,7 @@ const TranslationWindow = ({
       ) : (
         <div
           id="translationWindow"
-          className={`translationWindow text-wrap px-4 bg-white border border-gray-200 py-7 rounded-xl bordrer`}
+          className={`px-4 py-7 bg-white rounded-xl border border-gray-200 translationWindow text-wrap bordrer`}
         >
           <div id="translationWindow">
             {" "}
@@ -327,7 +328,7 @@ const TranslationWindow = ({
             </div>
           </div>
           <Button
-            className={"text-base mt-3 "}
+            className={"mt-3 text-base"}
             disabled={isTranslationLoading}
             onClick={() => {
               setIsAddCardModalOpen(true);

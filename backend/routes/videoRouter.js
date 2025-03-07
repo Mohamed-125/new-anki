@@ -22,7 +22,7 @@ router
   // )
   .post("/", createVideo)
   .get("/", Authorization, getUserVideos)
-  .get("/getVideoData/:videoId", getVideoData)
+  // .get("/getVideoData/:videoId", getVideoData)
   .get("/:id", Authorization, getVideo)
   .put("/:id", Authorization, updateVideo)
   .delete("/:id", Authorization, deleteVideo)
