@@ -6,6 +6,13 @@ export type ToastType = {
   duration: number;
   id: number;
   type: "error" | "success" | "info" | "promise";
+  isCompleted?: boolean;
+  isError?: boolean;
+  setToastData(data: {
+    title?: string;
+    isCompleted?: boolean;
+    isError?: boolean;
+  }): void;
 };
 
 type ContextType = {

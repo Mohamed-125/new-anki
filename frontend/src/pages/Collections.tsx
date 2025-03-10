@@ -16,11 +16,12 @@ const Collections = () => {
   useAddModalShortcuts(setIsCollectionModalOpen);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query);
-  const { notParentCollections, isLoading } = useGetCollections({
+
+  const { collections, isLoading, collectionsCount } = useGetCollections({
     query: debouncedQuery,
   });
 
-  console.log(notParentCollections, isLoading);
+  console.log(collections, isLoading);
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
       <MoveCollectionModal />
@@ -35,9 +36,13 @@ const Collections = () => {
 
         <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:flex-row sm:items-center">
-            <Search query={query} setQuery={setQuery} />
+            <Search
+              searchingFor="collections"
+              query={query}
+              setQuery={setQuery}
+            />
             <h6 className="text-sm font-medium text-gray-500">
-              {notParentCollections?.length} collections
+              {collectionsCount} collections
             </h6>
           </div>
         </div>
@@ -49,7 +54,7 @@ const Collections = () => {
           Create new collection
         </Button>
         <div className="grid grid-cols-3 gap-2 md:grid-cols-2 sm:grid-cols-1">
-          {notParentCollections?.map((collection) => (
+          {collections?.map((collection) => (
             <Collection collection={collection} key={collection._id} />
           ))}
           {isLoading && <CollectionSkeleton />}

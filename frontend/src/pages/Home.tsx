@@ -63,18 +63,18 @@ const Home = () => {
 
   return (
     <div className="container">
-      {/* <div className="absolute z-50 w-7/12 h-12 bg-red-400 " id="translateBtn">
+      {/* <div className="absolute z-50 w-7/12 h-12 bg-red-400" id="translateBtn">
         heeey
       </div> */}
       <AddCardModal />
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
       <SelectedItemsController isItemsCards={true} />
-      <Search query={query} setQuery={setQuery} />
+      <Search searchingFor="cards" query={query} setQuery={setQuery} />
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex justify-between items-center mt-2">
         <Link to="/study-cards">
           <Button variant="primary-outline" className="px-3 py-3 sm:text-sm">
             Study Your Cards
@@ -82,7 +82,7 @@ const Home = () => {
         </Link>
 
         <Button
-          className={"my-7 sm:text-sm py-3 px-2"}
+          className={"px-2 py-3 my-7 sm:text-sm"}
           onClick={() => states.setIsAddCardModalOpen(true)}
         >
           Create a new card

@@ -18,30 +18,30 @@ export type CollectionType = {
 
 type GetCollectionsResponse = {
   collections: CollectionType[];
-  parentCollections: CollectionType[];
-  subCollections: CollectionType[];
-  notParentCollections: CollectionType[];
   nextPage: number;
+  collectionsCount: number;
 };
 
 const useGetCollections = ({
   publicCollections,
   query,
+  all = false,
   enabled = true,
 }: {
   publicCollections?: boolean;
   query?: string;
   enabled?: boolean;
+  all?: boolean;
 } = {}) => {
   let queryKey = ["collections"];
 
   if (publicCollections) {
     queryKey.push("public");
-    if (query) {
-      queryKey.push(query);
-    }
-  } else if (query) {
+  }
+  if (query) {
     queryKey.push(query);
+  } else if (all) {
+    queryKey.push("all");
   }
 
   const {
@@ -59,6 +59,7 @@ const useGetCollections = ({
 
       if (query) url += `&searchQuery=${query}`;
       if (publicCollections) url += `&public=${true}`;
+      if (all) url += `&all=${true}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetCollectionsResponse;
@@ -67,34 +68,19 @@ const useGetCollections = ({
     getNextPageParam: (lastPage) => lastPage?.nextPage,
     enabled,
   });
-
   const collections = useMemo(() => {
     return data?.pages.flatMap((page) => page.collections);
-  }, [data]);
-
-  const parentCollections = useMemo(() => {
-    return data?.pages.flatMap((page) => page.parentCollections);
-  }, [data]);
-
-  const subCollections = useMemo(() => {
-    return data?.pages.flatMap((page) => page.subCollections);
-  }, [data]);
-
-  const notParentCollections = useMemo(() => {
-    return data?.pages.flatMap((page) => page.notParentCollections);
   }, [data]);
 
   return {
     collections,
     isLoading,
     isError,
-    parentCollections,
-    subCollections,
-    notParentCollections,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     refetch,
+    collectionsCount: data?.pages[0].collectionsCount,
   };
 };
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { FormEvent, useEffect, useState } from "react";
 import Loading from "../components/Loading";
@@ -13,6 +13,10 @@ import { VideoType } from "./Playlist";
 import { MdFeaturedPlayList, MdOutlinePlaylistPlay } from "react-icons/md";
 import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
+import useGetPlaylists from "@/hooks/useGetPlaylists";
+import useDebounce from "@/hooks/useDebounce";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useToasts from "@/hooks/useToasts";
 
 type PlaylistType = {
   name: string;
@@ -22,35 +26,32 @@ type PlaylistType = {
 };
 
 const Playlists = () => {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
+
   const {
-    data: playlists,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["playlists"],
-    queryFn: async () => {
-      const res = await axios.get("playlist");
-      return res.data;
-    },
-  });
+    playlists,
+    playlistsCount,
+    fetchNextPage,
+    isInitialLoading,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetPlaylists({ query: debouncedQuery });
+
+  useInfiniteScroll(fetchNextPage, hasNextPage);
 
   const queryClient = useQueryClient();
-
+  const { addToast } = useToasts();
+  const [isLoading, setIsLoading] = useState(false);
   const { mutate } = useMutation({
     mutationFn: async (data: PlaylistType) => {
-      ("mutation ran");
       return axios.post("playlist", data).then((res) => {
         return res.data;
       });
     },
     onMutate: async (newPlaylist) => {
       await queryClient.cancelQueries({ queryKey: ["playlists"] });
-
       const previousPlaylists = queryClient.getQueryData(["playlists"]);
-      queryClient.setQueryData(["playlists"], (old: PlaylistType[]) => {
-        return [...old, newPlaylist];
-      });
-
       return { previousPlaylists };
     },
     onError: (error, newPlaylist, context) => {
@@ -68,7 +69,27 @@ const Playlists = () => {
       name: formData.get("playlist_name"),
     };
 
-    mutate(data as PlaylistType);
+    const toast = addToast("Creating playlist...", "promise");
+    setIsLoading(true);
+
+    mutate(data as PlaylistType, {
+      onSuccess: () => {
+        toast.setToastData({
+          title: "Playlist created successfully!",
+          isCompleted: true,
+        });
+        setIsPlayListModalOpen(false);
+        setIsLoading(false);
+      },
+      onError: (err) => {
+        console.log(err);
+        setIsLoading(false);
+        toast.setToastData({
+          title: "Failed to create playlist",
+          isError: true,
+        });
+      },
+    });
   };
 
   const updatePlaylistHandler = (e: any) => {
@@ -77,31 +98,54 @@ const Playlists = () => {
     const data = {
       name: formData.get("playlist_name"),
     };
+
+    const toast = addToast("Updating playlist...", "promise");
+    setIsLoading(true);
     axios
       .put(`playlist/${editId}`, data)
-      .then((res) => {
+      .then(() => {
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        setIsPlayListModalOpen(false);
+        toast.setToastData({
+          title: "Playlist updated successfully!",
+          isCompleted: true,
+        });
       })
-      .catch((err) => err)
+      .catch(() => {
+        toast.setToastData({
+          title: "Failed to update playlist",
+          isError: true,
+        });
+      })
       .finally(() => {
+        setIsLoading(false);
         setIsPlayListModalOpen(false);
       });
   };
 
   const deletePlaylistHandler = (playlistId: string) => {
+    const toast = addToast("Deleting playlist...", "promise");
     axios
       .delete(`playlist/${playlistId}`)
-      .then((res) => {
+      .then(() => {
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        toast.setToastData({
+          title: "Playlist deleted successfully!",
+          isCompleted: true,
+        });
       })
-      .catch((err) => err);
+      .catch(() => {
+        toast.setToastData({
+          title: "Failed to delete playlist",
+          isError: true,
+        });
+      });
   };
 
   const [isPlayListModalOpen, setIsPlayListModalOpen] = React.useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
-  const [filteredPlaylists, setFilteredPlaylists] =
-    useState<PlaylistType[]>(playlists);
+
   const [actionsDivId, setActionsDivId] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -119,6 +163,7 @@ const Playlists = () => {
     <div className="container">
       <>
         <AddNewPlaylistModal
+          isLoading={isLoading}
           setIsOpen={setIsPlayListModalOpen}
           isOpen={isPlayListModalOpen}
           defaultValues={defaultValues}
@@ -128,11 +173,12 @@ const Playlists = () => {
       </>
 
       <>
+        <Search query={query} setQuery={setQuery} searchingFor="playlists" />
         <h6 className="mt-4 text-lg font-bold text-gray-400">
-          Playlists in collection : {playlists?.length}
+          Playlists in collection : {playlistsCount}
         </h6>
         <Button
-          className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none"
+          className="py-4 my-6 mr-0 ml-auto text-white bg-blue-600 border-none"
           onClick={() => setIsPlayListModalOpen(true)}
         >
           Create new playlist
@@ -141,21 +187,17 @@ const Playlists = () => {
         <SelectedItemsController isItemsPlaylists={true} />
 
         <div className="grid gap-2 grid-container">
-          {playlists?.map((playlist) => {
-            const id = playlist._id;
-
-            if (!id) return;
-            return (
-              <ItemCard
-                Icon={<MdOutlinePlaylistPlay />}
-                name={playlist.name}
-                deleteHandler={() => deletePlaylistHandler(id)}
-                subText={`${playlist?.videosCount} Videos in this playlist`}
-                id={id}
-              />
-            );
-          })}
-          {isLoading && <CollectionSkeleton />}
+          {playlists?.map((playlist) => (
+            <ItemCard
+              key={playlist._id}
+              Icon={<MdOutlinePlaylistPlay />}
+              name={playlist.name}
+              deleteHandler={() => deletePlaylistHandler(playlist._id)}
+              subText={`${playlist?.videosCount} Videos in this playlist`}
+              id={playlist._id}
+            />
+          ))}
+          {(isInitialLoading || isFetchingNextPage) && <CollectionSkeleton />}
         </div>
       </>
     </div>
@@ -170,15 +212,17 @@ const AddNewPlaylistModal = ({
   updatePlaylistHandler,
   defaultValues = {},
   setIsOpen,
+  isLoading,
 }: {
   createPlaylistHandler: any;
   updatePlaylistHandler: any;
   defaultValues: any;
   setIsOpen: any;
   isOpen: boolean;
+  isLoading: boolean;
 }) => {
   return (
-    <Modal setIsOpen={setIsOpen} isOpen={isOpen}>
+    <Modal loading={isLoading} setIsOpen={setIsOpen} isOpen={isOpen}>
       <Modal.Header
         title={
           defaultValues?.playlistName
@@ -189,36 +233,37 @@ const AddNewPlaylistModal = ({
       ></Modal.Header>
       <Form
         className="w-[100%] max-w-[unset]"
-        onSubmit={(e) =>
+        onSubmit={async (e) => {
           defaultValues?.playlistName
             ? updatePlaylistHandler(e)
-            : createPlaylistHandler(e)
-        }
+            : createPlaylistHandler(e);
+        }}
       >
         <Form.Field>
           <Form.Label>Playlist Name</Form.Label>
           <Form.Input
+            required
             defaultValue={defaultValues?.playlistName}
             type="text"
             name="playlist_name"
           />
         </Form.Field>
+        <Modal.Footer>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsOpen(false)}
+              size="parent"
+              type="button"
+              variant={"danger"}
+            >
+              Cancel
+            </Button>
+            <Button size="parent">
+              {defaultValues?.playlistName ? "Save Changes" : "Add Playlist"}
+            </Button>{" "}
+          </div>
+        </Modal.Footer>
       </Form>
-      <Modal.Footer>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsOpen(false)}
-            size="parent"
-            type="button"
-            variant={"danger"}
-          >
-            Cancel
-          </Button>
-          <Button size="parent">
-            {defaultValues?.playlistName ? "Save Changes" : "Add Playlist"}
-          </Button>{" "}
-        </div>
-      </Modal.Footer>
     </Modal>
   );
 };

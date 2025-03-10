@@ -106,26 +106,28 @@ const Card = ({
       <div className="mr-3 text-2xl" onClick={switchHandler}>
         <HiSwitchHorizontal />
       </div>
-      <div className="overflow-hidden break-words whitespace-normal grow text-ellipsis">
+      <div className="overflow-hidden whitespace-normal break-words grow text-ellipsis">
         <p className="text-lg sm:text-base">{front}</p>
         <small className="text-base text-gray-500 truncate">{back}</small>
       </div>
-      {isSameUser && !selectedItems?.length ? (
-        <>
-          <ActionsDropdown
+      <div onClick={(e) => e.stopPropagation()}>
+        {isSameUser && !selectedItems?.length ? (
+          <>
+            <ActionsDropdown
+              setSelectedItems={setSelectedItems}
+              itemId={id}
+              moveHandler={moveHandler}
+              deleteHandler={deleteHandler}
+            />
+          </>
+        ) : (
+          <SelectCheckBox
+            id={id}
+            selectedItems={selectedItems}
             setSelectedItems={setSelectedItems}
-            itemId={id}
-            moveHandler={moveHandler}
-            deleteHandler={deleteHandler}
           />
-        </>
-      ) : (
-        <SelectCheckBox
-          id={id}
-          selectedItems={selectedItems}
-          setSelectedItems={setSelectedItems}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 };

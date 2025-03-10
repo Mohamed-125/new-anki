@@ -5,6 +5,7 @@ const textSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      index: true,
     },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 

@@ -11,7 +11,6 @@ import {
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { LuMoveUpRight } from "react-icons/lu";
 import { CheckCircle, PenBoxIcon } from "lucide-react";
-import useModalsStates from "@/hooks/useModalsStates";
 
 type ActionsDropdownProps = {
   moveHandler?: any;
@@ -30,10 +29,10 @@ const ActionsDropdown = ({
 }: ActionsDropdownProps) => {
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="p-2 text-2xl transition-all rounded-md hover:bg-gray-100">
+      <DropdownMenuTrigger className="p-2 text-2xl rounded-md transition-all hover:bg-gray-100">
         <BsThreeDotsVertical />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-6 font-semibold bg-white">
+      <DropdownMenuContent className="mt-6 font-semibold bg-white dropdown-content">
         <Button
           className={
             "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal  text-gray-700 bg-transparent border-none outline-none"

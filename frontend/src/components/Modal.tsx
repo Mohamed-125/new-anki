@@ -20,6 +20,8 @@ interface ModalProps {
   style?: React.CSSProperties;
   onAnimationEnd?: () => void;
   big?: boolean;
+  loading?: boolean;
+  id?: string;
 }
 
 // Define the Modal component
@@ -32,6 +34,8 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
     style,
     onAnimationEnd,
     big,
+    loading = false,
+    id,
   }: ModalProps) {
     const modalRef = useRef<null | HTMLDivElement>(null);
 
@@ -46,13 +50,16 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
         }, 0);
 
         return () => clearTimeout(timeout);
+      } else {
+        document.body.style.overflow = "auto";
       }
     }, [isOpen]);
 
     return (
       <div
+        onTransitionEnd={isOpen ? undefined : onAnimationEnd}
         className={twMerge(
-          "modal ",
+          "modal",
           isOpen ? "pointer-events-auto" : "pointer-events-none"
         )}
       >
@@ -77,25 +84,49 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",
             big && "max-w-[1000px]",
-
             className
           )}
         >
-          <div
-            ref={modalRef}
-            className={twMerge(
-              "overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ",
-              big && "max-h-[90vh]"
-            )}
-          >
-            {isOpen ? (
-              children
-            ) : (
-              <div className="transition-opacity duration-75 opacity-0">
-                {children}
+          {loading ? (
+            <div className="relative">
+              <div className="grid absolute inset-0 z-50 place-items-center w-full h-full bg-white">
+                <div className="w-12 h-12 rounded-full border-4 border-blue-200 animate-spin border-t-blue-500"></div>
               </div>
-            )}
-          </div>
+              <div
+                id={id}
+                ref={modalRef}
+                className={twMerge(
+                  "overflow-auto pb-32 modalScroll z-10 relative max-h-[650px]  px-10 ",
+                  big && "max-h-[90vh]"
+                )}
+              >
+                {isOpen ? (
+                  children
+                ) : (
+                  <div className="opacity-0 transition-opacity duration-75">
+                    {children}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              id={id}
+              ref={modalRef}
+              className={twMerge(
+                "overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ",
+                big && "max-h-[90vh]"
+              )}
+            >
+              {isOpen ? (
+                children
+              ) : (
+                <div className="opacity-0 transition-opacity duration-75">
+                  {children}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -116,7 +147,7 @@ const Header: ComponentType<{
 }) {
   return (
     <div className="py-6 mb-6 border-b border-light-gray">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <h3 className="text-2xl font-bold text-gray-800">{title}</h3>
         <div className="flex gap-2">
           {title === "Move To Collection" && (
@@ -149,7 +180,7 @@ const Footer: ComponentType<{
   return (
     <div
       className={cn(
-        "fixed bottom-0 px-10 bg-white right-0 left-0  py-6 mt-6 border-t border-light-gray",
+        "fixed right-0 bottom-0 left-0 px-10 py-6 mt-6 bg-white border-t border-light-gray",
         className
       )}
     >

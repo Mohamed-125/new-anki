@@ -12,6 +12,11 @@ import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useUseEditor from "@/hooks/useUseEditor";
 import { Editor } from "@tiptap/react";
+import useGetNotes from "@/hooks/useGetNotes";
+import useDebounce from "@/hooks/useDebounce";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import Search from "@/components/Search";
+import useToasts from "@/hooks/useToasts";
 
 type NoteType = {
   title: string;
@@ -19,42 +24,68 @@ type NoteType = {
   _id: string;
 };
 const Notes = () => {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
+
   const {
-    data: notes = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["notes"],
-    queryFn: async () => {
-      const response = await axios.get("note");
-      return response.data;
-    },
-  });
-  const [filteredNotes, setFilteredNotes] = useState<NoteType[]>([]);
+    notes,
+    notesCount,
+    fetchNextPage,
+    isInitialLoading,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetNotes({ query: debouncedQuery });
+
+  useInfiniteScroll(fetchNextPage, hasNextPage);
+
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
   const [title, setTitle] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { addToast } = useToasts();
 
   const deleteNoteHandler = async (id: string) => {
-    setFilteredNotes((pre) => pre.filter((item) => item._id !== id));
-    const deleteRes = await axios.delete(`note/${id}`);
+    const toast = addToast("Deleting note...", "promise");
+    try {
+      await axios.delete(`note/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      toast.setToastData({
+        title: "Note deleted successfully!",
+        isCompleted: true,
+      });
+    } catch (err) {
+      toast.setToastData({ title: "Failed to delete note", isError: true });
+    }
   };
 
   const { editor, setContent } = useUseEditor();
 
   const updateNoteHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await axios.put("note/" + editId, {
-      title,
-      content: editor?.getHTML(),
-    });
-    setIsNotesModalOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["notes"] });
+    const toast = addToast("Updating note...", "promise");
+    setIsLoading(true);
+    try {
+      await axios.put("note/" + editId, {
+        title,
+        content: editor?.getHTML(),
+      });
+      setIsNotesModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      toast.setToastData({
+        title: "Note updated successfully!",
+        isCompleted: true,
+      });
+    } catch (err) {
+      toast.setToastData({ title: "Failed to update note", isError: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
   const queryClient = useQueryClient();
 
   const onAnimationEnd = () => {
+    console.log("on animation end ran");
     setTitle("");
     setContent("");
     setDefaultValues({});
@@ -75,12 +106,13 @@ const Notes = () => {
       />
 
       <>
+        <Search query={query} searchingFor="notes" setQuery={setQuery} />
         <h6 className="mt-4 text-lg font-bold text-gray-400">
-          Number of notes : {notes?.length}
+          Number of notes : {notesCount}
         </h6>
 
         <Button
-          className="py-4 my-6 ml-auto mr-0 bg-blue-600 border-none "
+          className="py-4 my-6 mr-0 ml-auto bg-blue-600 border-none"
           onClick={() => setIsNotesModalOpen(true)}
         >
           Add new note
@@ -89,7 +121,7 @@ const Notes = () => {
         <SelectedItemsController isItemsNotes={true} />
 
         <div className="grid gap-4 grid-container">
-          {notes?.map((note: NoteType) => (
+          {notes?.map((note) => (
             <div
               key={note._id}
               onClick={() => {
@@ -110,7 +142,7 @@ const Notes = () => {
             </div>
           ))}
 
-          {isLoading && <CollectionSkeleton />}
+          {(isInitialLoading || isFetchingNextPage) && <CollectionSkeleton />}
         </div>
       </>
     </div>
@@ -140,19 +172,27 @@ const NotesModal = ({
 }) => {
   const queryClient = useQueryClient();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const createNoteHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const response = await axios.post("note", {
-      title,
-      content: editor?.getHTML(),
-    });
-    response.data;
-    setIsOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["notes"] });
+    setIsLoading(true);
+    try {
+      const response = await axios.post("note", {
+        title,
+        content: editor?.getHTML(),
+      });
+      response.data;
+      setIsOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Modal
+      loading={isLoading}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsOpen}
       isOpen={isOpen}

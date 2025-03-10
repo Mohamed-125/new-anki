@@ -1,8 +1,27 @@
 const NoteModel = require("../models/NoteModel");
 
 module.exports.getNotes = async (req, res) => {
-  const notes = await NoteModel.find({ userId: req.user?._id });
-  res.send(notes);
+  const { page: pageNumber, searchQuery } = req.query;
+  const limit = 5;
+  let page = +pageNumber || 0;
+
+  try {
+    const query = { userId: req.user?._id };
+    if (searchQuery) {
+      query.title = { $regex: searchQuery, $options: "i" };
+    }
+    const notesCount = await NoteModel.countDocuments(query);
+
+    const skipNumber = page * limit;
+    const remaining = Math.max(0, notesCount - limit * (page + 1));
+    const nextPage = remaining > 0 ? page + 1 : null;
+
+    const notes = await NoteModel.find(query).skip(skipNumber).limit(limit);
+
+    res.status(200).send({ notes, nextPage, notesCount });
+  } catch (err) {
+    res.status(400).send(err);
+  }
 };
 
 module.exports.getNote = async (req, res) => {

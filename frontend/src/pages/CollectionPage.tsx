@@ -26,7 +26,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
   const id = pathArray[pathArray.length - 1]; // Get the last segment
   const { user } = useGetCurrentUser();
 
-  const { data: collection, isLoading: isCollectionLoading } =
+  const { collection, isLoading: isCollectionLoading } =
     useGetCollectionById(id);
 
   const {

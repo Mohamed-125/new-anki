@@ -18,10 +18,12 @@ const CollectionSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "Collection",
     },
-    childCollectionId: {
-      type: mongoose.Types.ObjectId,
-      ref: "Collection",
-    },
+    childCollectionsIds: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Collection",
+      },
+    ],
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
@@ -56,7 +58,42 @@ CollectionSchema.virtual("subCollections", {
   options: {
     sort: { createdAt: -1 }, // Sort subcollections by createdAt in descending order (newest first)
     lean: true,
-    projection: { _id: 1, name: 1, public: 1, childCollectionId: 1 },
+    populate: {
+      path: "subCollections",
+      options: {
+        sort: { createdAt: -1 },
+        lean: true,
+        projection: {
+          _id: 1,
+          name: 1,
+          public: 1,
+          parentCollectionId: 1,
+        }
+      }
+    },
+    projection: {
+      _id: 1,
+      name: 1,
+      public: 1,
+      parentCollectionId: 1,
+    },
+  },
+});
+
+CollectionSchema.virtual("parentCollection", {
+  ref: "Collection",
+  foreignField: "_id", // Foreign field of subcollections (parentCollectionId)
+  localField: "parentCollectionId", // Local field of parent collection (_id)
+  options: {
+    sort: { createdAt: -1 }, // Sort subcollections by createdAt in descending order (newest first)
+    lean: true,
+    projection: {
+      _id: 1,
+      name: 1,
+      public: 1,
+      parentCollectionId: 1,
+      childCollectionsIds: 1,
+    },
   },
 });
 
@@ -75,20 +112,16 @@ CollectionSchema.pre(["save", "findByIdAndUpdate"], async function (next) {
   const collectionModel = this.constructor;
   const parentCollectionId = this?.parentCollectionId;
 
-  
   if (parentCollectionId) {
     try {
       const editedParentCollection = await collectionModel.findByIdAndUpdate(
         { _id: parentCollectionId },
-        { childCollectionId: this._id },
+        { childCollectionsIds: { $push: this._id } },
         {
           new: true,
         }
       );
-      
-    } catch (err) {
-      
-    }
+    } catch (err) {}
   }
 
   next();
@@ -113,14 +146,12 @@ CollectionSchema.post(["findOneAndDelete", "deleteMany"], async function () {
   const CollectionModel = this.model;
 
   if (this.op === "findOneAndDelete" && this._docToDelete) {
-    
     await CollectionModel.deleteMany({
       parentCollectionId: this._docToDelete._id,
     });
   }
 
   if (this.op === "deleteMany" && this._docsToDelete.length > 0) {
-    
     const idsToDelete = this._docsToDelete.map((doc) => doc._id);
     await CollectionModel.deleteMany({
       parentCollectionId: { $in: idsToDelete },

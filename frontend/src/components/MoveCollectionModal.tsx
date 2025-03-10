@@ -7,19 +7,20 @@ import React, {
 } from "react";
 import Modal from "./Modal";
 import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios, { all } from "axios";
-import Loading from "./Loading";
+import axios from "axios";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import Button from "./Button";
 import useCardActions from "../hooks/useCardActions";
 import { CardType } from "../hooks/useGetCards";
-import { url } from "inspector";
 import CollectionSkeleton from "./CollectionsSkeleton";
 import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import { twMerge } from "tailwind-merge";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+
+//! make sure to replace every collections.find to work with the new structure
 
 const MoveCollectionModal = ({
   cards,
@@ -28,14 +29,6 @@ const MoveCollectionModal = ({
   cards?: CardType[];
   text?: boolean;
 }) => {
-  const {
-    collections,
-    parentCollections,
-    notParentCollections,
-    isLoading,
-    subCollections,
-  } = useGetCollections();
-
   const [selectedCollectionsIds, setSelectedCollectionIds] = useState<string[]>(
     []
   );
@@ -47,98 +40,26 @@ const MoveCollectionModal = ({
     isMoveToCollectionOpen,
     setIsMoveToCollectionOpen,
     editId,
-    toMoveCollectionId,
+    toMoveCollection,
     setParentCollectionId,
     selectedItems,
     setSelectedItems,
     isCollectionModalOpen,
+    setToMoveCollection,
     setIsCollectionModalOpen,
     setDefaultValues,
   } = useModalStates();
+
+  const toMoveCollectionId = toMoveCollection?._id || "";
+  const { collections, isLoading, fetchNextPage, hasNextPage } =
+    useGetCollections({ all: true, enabled: isMoveToCollectionOpen });
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
-
-  useEffect(() => {
-    if (!isMoveToCollectionOpen || !cards) return;
-
-    if (!toMoveCollectionId) {
-      const card = cards.find((card) => card._id === editId);
-
-      let cardCollectionId;
-      let cardCollection = collections?.find(
-        (collection) => collection._id === cardCollectionId
-      );
-
-      const getParentCollection = (childCollection: CollectionType) => {
-        setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
-
-        const parentCollection = collections?.find(
-          (collection) => collection._id === childCollection.parentCollectionId
-        );
-
-        if (!parentCollection) return;
-
-        if (parentCollection?.parentCollectionId) {
-          getParentCollection(parentCollection);
-        }
-      };
-
-      if (cardCollection?.parentCollectionId) {
-        getParentCollection(cardCollection);
-        setSelectedCollectionIds((prev) => {
-          let editPrev = prev.reverse();
-          setReferenceCollectionIds(editPrev);
-          return editPrev;
-        });
-      }
-    } else {
-      const getParentCollection = (childCollection: CollectionType) => {
-        setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
-
-        const parentCollection = collections?.find(
-          (collection) => collection._id === childCollection.parentCollectionId
-        );
-
-        if (!parentCollection) return;
-
-        if (parentCollection?.parentCollectionId) {
-          getParentCollection(parentCollection);
-        }
-      };
-
-      const toMoveCollection = collections.find(
-        (collection) => collection._id === toMoveCollectionId
-      );
-
-      if (toMoveCollection) {
-        getParentCollection(toMoveCollection);
-
-        setSelectedCollectionIds((prev) => {
-
-          const topParentCollectionId = notParentCollections.find(
-            (collection) =>
-              collection._id ===
-              collections.find((c) => c._id === prev[prev.length - 1])
-                ?.parentCollectionId
-          )?._id;
-
-          if (topParentCollectionId) {
-            let editPrev = [...prev, topParentCollectionId].reverse();
-
-            setReferenceCollectionIds(editPrev);
-            return editPrev;
-          } else {
-            return prev;
-          }
-        });
-      }
-    }
-  }, [isMoveToCollectionOpen]);
 
   let lastSelectedCollectionId =
     selectedCollectionsIds[selectedCollectionsIds.length - 1];
 
   const { data: selectedCollection, isLoading: collectionLoading } = useQuery({
-    queryKey: ["collection", lastSelectedCollectionId],
+    queryKey: ["collection", lastSelectedCollectionId || "root"],
     enabled: Boolean(lastSelectedCollectionId), // disable this query from automatically running
     queryFn: () =>
       axios
@@ -146,11 +67,124 @@ const MoveCollectionModal = ({
         .then((res) => res.data as CollectionType),
   });
 
+  //!this is the function that makes the modal open on the collection
   useEffect(() => {
+    console.log(selectedCollection);
+    if (!isMoveToCollectionOpen) return;
+    if (selectedCollection === null) return;
+
+    if (toMoveCollection) {
+      if (
+        collections?.find((collection) => collection._id === toMoveCollectionId)
+      )
+        return;
+
+      setSelectedCollectionIds([
+        toMoveCollection?.parentCollectionId as string,
+      ]);
+    } else {
+      const card = cards?.find((card) => card._id === editId);
+      let cardCollectionId = card?.collectionId;
+      if (
+        collections?.find((collection) => collection._id === cardCollectionId)
+      )
+        return;
+
+      console.log(
+        selectedCollection,
+        collections,
+        cardCollectionId,
+        collections?.find((collection) => collection._id === cardCollectionId)
+      );
+      console.log("ran");
+      setSelectedCollectionIds([cardCollectionId as string]);
+    }
+
+    // queryClient.invalidateQueries({ queryKey: ["collections"] });
+    // if (!isMoveToCollectionOpen || !cards) return;
+    // if (!toMoveCollectionId) {
+    //   const card = cards.find((card) => card._id === editId);
+    //   let cardCollectionId;
+    //   let cardCollection = collections?.find(
+    //     (collection) => collection._id === cardCollectionId
+    //   );
+    //   const getParentCollection = (childCollection: CollectionType) => {
+    //     setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
+    //     const parentCollection = collections?.find(
+    //       (collection) => collection._id === childCollection.parentCollectionId
+    //     );
+    //     if (!parentCollection) return;
+    //     if (parentCollection?.parentCollectionId) {
+    //       getParentCollection(parentCollection);
+    //     }
+    //   };
+    //   if (cardCollection?.parentCollectionId) {
+    //     getParentCollection(cardCollection);
+    //     setSelectedCollectionIds((prev) => {
+    //       let editPrev = prev.reverse();
+    //       setReferenceCollectionIds(editPrev);
+    //       return editPrev;
+    //     });
+    //   }
+    // } else {
+    //   const getParentCollection = (childCollection: CollectionType) => {
+    //     setSelectedCollectionIds((prev) => [...prev, childCollection._id]);
+    //     const parentCollection = collections?.find(
+    //       (collection) => collection._id === childCollection.parentCollectionId
+    //     );
+    //     if (!parentCollection) return;
+    //     if (parentCollection?.parentCollectionId) {
+    //       getParentCollection(parentCollection);
+    //     }
+    //   };
+    //   const toMoveCollection = collections?.find(
+    //     (collection) => collection._id === toMoveCollectionId
+    //   );
+    //   if (toMoveCollection) {
+    //     getParentCollection(toMoveCollection);
+    //     setSelectedCollectionIds((prev) => {
+    //       const topParentCollectionId = collections?.find(
+    //         (collection) =>
+    //           collection._id ===
+    //           collections?.find((c) => c._id === prev[prev.length - 1])
+    //             ?.parentCollectionId
+    //       )?._id;
+    //       if (topParentCollectionId) {
+    //         let editPrev = [...prev, topParentCollectionId].reverse();
+    //         setReferenceCollectionIds(editPrev);
+    //         return editPrev;
+    //       } else {
+    //         return prev;
+    //       }
+    //     });
+    //   }
+    // }
+  }, [isMoveToCollectionOpen]);
+
+  useEffect(() => {
+    if (!selectedCollection) return;
+    // if (toMoveCollection) {
+    if (
+      selectedCollectionsIds.includes(
+        selectedCollection?.parentCollectionId as string
+      )
+    )
+      return;
+
+    setSelectedCollectionIds((prev) => {
+      return [selectedCollection.parentCollectionId as string, ...prev];
+    });
+    // }
+  }, [selectedCollection]);
+
+  useEffect(() => {
+    console.log(selectedCollectionsIds);
     if (lastSelectedCollectionId) {
       setParentCollectionId(lastSelectedCollectionId);
     }
   }, [selectedCollectionsIds]);
+
+  //!this is the function that gets the parent collection id of the collection to move to prevent moving it to the parent
 
   let currentCollectionParentId = useMemo(() => {
     let toMoveCollection = collections?.find((c) => {
@@ -163,6 +197,8 @@ const MoveCollectionModal = ({
     )?._id;
   }, [toMoveCollectionId]);
 
+  //!this is the function that prevents moving the parent to the deep children
+
   const childrenCollectionsArray = useMemo(() => {
     const toMoveCollection = collections?.find(
       (collection) => collection._id === toMoveCollectionId
@@ -171,7 +207,7 @@ const MoveCollectionModal = ({
 
     const getCollectionChildren = (collection: CollectionType) => {
       const childCollectionId = collection.childCollectionId;
-      const childCollection = subCollections.find(
+      const childCollection = collections?.find(
         (c) => c._id === childCollectionId
       );
       if (childCollection) {
@@ -241,24 +277,12 @@ const MoveCollectionModal = ({
         ids: selectedItems,
         collectionId: root ? null : targetCollectionId,
       });
-    } else {
-      updateCardHandler(
-        undefined,
-        undefined,
-        undefined,
-        editId,
-        targetCollectionId,
-        undefined,
-        undefined
-      );
     }
 
-    queryClient.invalidateQueries({
-      queryKey: ["cards"],
-    });
-
     setSelectedItems?.([]);
-    setDefaultValues({ collectionId: targetCollectionId });
+    setDefaultValues((pre) => {
+      return { ...pre, collectionId: targetCollectionId };
+    });
     states.setIsMoveToCollectionOpen(false);
   };
 
@@ -269,6 +293,7 @@ const MoveCollectionModal = ({
     []
   );
 
+  //! find if this needs to be refactored
   const moving = useMemo(() => {
     return collections?.find((c) => c._id === selectedItems[0])?._id
       ? "collections"
@@ -276,33 +301,34 @@ const MoveCollectionModal = ({
   }, [selectedCollectionsIds]);
 
   const onAnimationEnd = useCallback(() => {
-    if (isMoveToCollectionOpen) return;
     setSelectedCollectionIds([]);
     // setEditId("");
+    setToMoveCollection(undefined);
     setParentCollectionId("");
   }, [setSelectedCollectionIds, setParentCollectionId]);
 
+  useInfiniteScroll(fetchNextPage, hasNextPage, "moveCollectionModal");
   return (
     <Modal
+      id={"moveCollectionModal"}
       onAnimationEnd={onAnimationEnd}
       className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
-        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
-      }`}
+        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""}`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >
-      <div className="pt-3 ">
+      <div className="pt-3">
         <Modal.Header
           title={"Move To Collection"}
           setIsOpen={setIsMoveToCollectionOpen}
           openCollectionModal={openCollectionModal}
         />
-
-        <div className="p-4 mb-6 border border-gray-100 bg-gray-50 rounded-xl">
+        <div className="p-4 mb-6 bg-gray-50 rounded-xl border border-gray-100">
           <h6 className="mb-2 text-sm font-medium text-gray-600">
             Card Collection
           </h6>
           <p className="text-lg font-medium text-gray-800">
+            {/* //! does this need edit ? */}
             {toMoveCollectionId
               ? collections?.find((c) => c._id === currentCollectionParentId)
                   ?.name || "No Collection"
@@ -366,14 +392,12 @@ const MoveCollectionModal = ({
         )}
 
         <div className="relative">
-          {collectionLoading || isLoading ? (
-            <CollectionSkeleton />
-          ) : (
+          {
             <>
               {lastSelectedCollectionId && (
-                <div className="flex items-center gap-3 p-3 mb-4 rounded-lg bg-gray-50">
+                <div className="flex gap-3 items-center p-3 mb-4 bg-gray-50 rounded-lg">
                   <button
-                    className="p-2 text-gray-600 transition-colors rounded-full hover:bg-gray-200"
+                    className="p-2 text-gray-600 rounded-full transition-colors hover:bg-gray-200"
                     onClick={() =>
                       setSelectedCollectionIds((pre) => pre.slice(0, -1))
                     }
@@ -385,89 +409,138 @@ const MoveCollectionModal = ({
                   </h4>
                 </div>
               )}
-              {(
-                selectedCollection?.subCollections || notParentCollections
-              )?.map((collection) => {
-                const isParentCollection = parentCollections?.find(
-                  (parentCollection) => parentCollection._id === collection?._id
-                );
+              {collectionLoading ? (
+                <CollectionSkeleton />
+              ) : (
+                <>
+                  {(selectedCollection?.subCollections || collections)?.map(
+                    (collection) => {
+                      const isParentCollection =
+                        collection?.subCollections?.length;
+                      {
+                        /* //! does this need edit ? */
+                      }
 
-                let disabled = toMoveCollectionId
-                  ? collections?.find((c) => c._id === toMoveCollectionId)
-                      ?.parentCollectionId === collection._id ||
-                    collection?.parentCollectionId === toMoveCollectionId ||
-                    collection?._id === toMoveCollectionId ||
-                    childrenCollectionsArray.includes(collection._id)
-                  : cards?.find((card) => card._id === editId)?.collectionId ===
-                    collection?._id;
+                      const isInputDisabled = () => {
+                        let disabled;
 
-                return (
-                  <div
-                    key={collection?._id}
-                    id={collection?._id}
-                    onClick={() => {
-                      setSelectedCollectionIds((pre) => [
-                        ...pre,
-                        collection?._id as string,
-                      ]);
-                    }}
-                    className={twMerge(
-                      `
-                  flex justify-between items-center p-3  cursor-pointer 
-                  transition-colors duration-200 ease-in-out border-b border-light-gray
-                   `,
-                      referenceCollectionIds.includes(collection?._id)
-                        ? "bg-yellow-50"
-                        : "bg-white  hover:bg-gray-50"
-                    )}
-                  >
-                    <span className="flex items-center flex-1 gap-3">
-                      <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
-                        {collection?.name}
-                      </p>
-                      {isParentCollection && (
-                        <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400 group-hover:text-gray-600" />
-                      )}
-                    </span>
-                    {text ? (
-                      <Button
-                        onClick={(e: any) => {
-                          e.stopPropagation();
-                          setDefaultValues((pre) => {
-                            return {
+                        if (toMoveCollectionId) {
+                          // prevent moving child to parent
+                          disabled =
+                            collections?.find(
+                              (c) => c._id === toMoveCollectionId
+                            )?.parentCollectionId === collection._id ||
+                            //prevent moving to it self
+                            collection?._id === toMoveCollectionId;
+
+                          //  [p1 , c1 , to move c2 , c3 , c4]
+                          if (
+                            selectedCollectionsIds.includes(toMoveCollectionId)
+                          ) {
+                            const toMoveCollectionIndex =
+                              selectedCollectionsIds.indexOf(
+                                toMoveCollectionId
+                              );
+
+                            const targetCollectionIndex =
+                              selectedCollectionsIds.indexOf(collection._id);
+
+                            const targetParentCollectionIndex =
+                              selectedCollectionsIds.indexOf(
+                                selectedCollection?._id as string
+                              );
+
+                            disabled =
+                              toMoveCollectionIndex < targetCollectionIndex ||
+                              toMoveCollectionIndex <
+                                targetParentCollectionIndex ||
+                              toMoveCollectionId ===
+                                selectedCollectionsIds[
+                                  selectedCollectionsIds.length - 1
+                                ];
+                          }
+                        } else {
+                          const cardCollectionId = cards?.find(
+                            (card) => card._id === editId
+                          )?.collectionId;
+
+                          disabled = cardCollectionId === collection?._id;
+                        }
+
+                        return disabled;
+                      };
+
+                      return (
+                        <div
+                          key={collection?._id}
+                          id={collection?._id}
+                          onClick={() => {
+                            setSelectedCollectionIds((pre) => [
                               ...pre,
-                              defaultCollectionId: collection._id,
-                            };
-                          });
-                          setIsMoveToCollectionOpen(false);
-                        }}
-                        className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                      >
-                        Select{" "}
-                      </Button>
-                    ) : (
-                      <Button
-                        disabled={disabled}
-                        onClick={(e: any) => {
-                          e.stopPropagation();
-                          !toMoveCollectionId
-                            ? moveCardsHandler({
-                                targetCollectionId: collection._id,
-                              })
-                            : moveCollectionsHandler({
-                                targetCollectionId: collection._id,
-                              });
-                        }}
-                        className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                      >
-                        Move
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
+                              collection?._id as string,
+                            ]);
+                          }}
+                          className={twMerge(
+                            `
+                flex justify-between items-center p-3  cursor-pointer 
+                transition-colors duration-200 ease-in-out border-b border-light-gray
+                 `,
+                            referenceCollectionIds.includes(collection?._id)
+                              ? "bg-yellow-50"
+                              : "bg-white  hover:bg-gray-50"
+                          )}
+                        >
+                          <span className="flex flex-1 gap-3 items-center">
+                            <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
+                              {collection?.name}
+                            </p>
+                            {isParentCollection ? (
+                              <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400 group-hover:text-gray-600" />
+                            ) : null}
+                          </span>
+                          {text ? (
+                            <Button
+                              onClick={(e: any) => {
+                                e.stopPropagation();
+                                setDefaultValues((pre) => {
+                                  return {
+                                    ...pre,
+                                    defaultCollectionId: collection._id,
+                                  };
+                                });
+                                setIsMoveToCollectionOpen(false);
+                              }}
+                              className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            >
+                              Select{" "}
+                            </Button>
+                          ) : (
+                            <Button
+                              disabled={isInputDisabled()}
+                              onClick={(e: any) => {
+                                e.stopPropagation();
+                                !toMoveCollectionId
+                                  ? moveCardsHandler({
+                                      targetCollectionId: collection._id,
+                                    })
+                                  : moveCollectionsHandler({
+                                      targetCollectionId: collection._id,
+                                    });
+                              }}
+                              className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            >
+                              Move
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    }
+                  )}
+                </>
+              )}
+              {isLoading ? <CollectionSkeleton /> : null}
             </>
-          )}
+          }
         </div>
       </div>
     </Modal>

@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import React, { FormEvent, useRef } from "react";
+import React, { FormEvent, useRef, useState } from "react";
 import Form from "./Form";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import { CollectionType } from "@/hooks/useGetCollections";
@@ -8,6 +8,8 @@ import Button from "./Button";
 import Modal from "./Modal";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
+import useToasts from "@/hooks/useToasts";
+import { isError } from "util";
 
 const AddNewCollectionModal = ({}: {}) => {
   const {
@@ -23,8 +25,10 @@ const AddNewCollectionModal = ({}: {}) => {
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
   useAddModalShortcuts(setIsCollectionModalOpen, true);
+  const { addToast } = useToasts();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { mutateAsync } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     onMutate: async (newCollection: Partial<CollectionType>) => {
       // await queryClient.cancelQueries({ queryKey: ["collections"] });
       // const previousCollections = queryClient.getQueryData(["collections"]);
@@ -38,19 +42,9 @@ const AddNewCollectionModal = ({}: {}) => {
       //   previousCollections: CollectionType[];
       // };
     },
-    // onError: (
-    //   context: undefined | { previousCollections: CollectionType[] }
-    // ) => {
-    //   if (context) {
-    //     const previousCollections = context.previousCollections;
-    //     if (previousCollections) {
-    //       queryClient.setQueryData(["collections"], (old: CollectionType[]) => [
-    //         ...old,
-    //         previousCollections,
-    //       ]);
-    //     }
-    //   }
-    // },
+    onError: (
+      context: undefined | { previousCollections: CollectionType[] }
+    ) => {},
 
     onSuccess() {
       invalidateCollectionsQueries();
@@ -69,18 +63,33 @@ const AddNewCollectionModal = ({}: {}) => {
     const name = formData.get("collection_name") as string;
 
     const publicCollection = formData.get("collection_public") as string;
+    const toast = addToast("Adding Collection...", "promise");
+    setIsLoading(true);
+
     if (name) {
       const data = {
         name,
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
       };
-      mutateAsync(data);
+
+      mutateAsync(data)
+        .then(() => {
+          toast.setToastData({ title: "Collection Added!", isCompleted: true });
+        })
+        .catch(() => {
+          toast.setToastData({
+            title: "Faild To Add Collection",
+            isError: true,
+          });
+        })
+        .finally(() => setIsLoading(false));
     }
   };
 
-  const updateCollectionHandler = (e: FormEvent<HTMLFormElement>) => {
+  const updateCollectionHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     const formData = new FormData(e.target as HTMLFormElement);
     const name = formData.get("collection_name") as string;
     const publicCollection = formData.get("collection_public") as string;
@@ -91,16 +100,20 @@ const AddNewCollectionModal = ({}: {}) => {
       parentCollectionId: isSubCollection ? undefined : null,
       public: publicCollection !== null,
     };
+    const toast = addToast("Adding Collection...", "promise");
 
-    axios
-      .put(`collection/${editId}`, data)
-      .then((res) => {})
-      .catch((err) => err)
-      .finally(() => {
-        setIsCollectionModalOpen(false);
-        invalidateCollectionsQueries();
-        (e.target as HTMLFormElement).reset();
-      });
+    try {
+      await axios.put(`collection/${editId}`, data);
+      setIsCollectionModalOpen(false);
+      invalidateCollectionsQueries();
+      toast.setToastData({ title: "Collection Added!", isCompleted: true });
+      (e.target as HTMLFormElement).reset();
+    } catch (err) {
+      console.error(err);
+      toast.setToastData({ title: "Faild To Add Collection", isError: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -118,6 +131,7 @@ const AddNewCollectionModal = ({}: {}) => {
 
   return (
     <Modal
+      loading={isPending || isLoading}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsCollectionModalOpen}
       isOpen={isCollectionModalOpen}
@@ -147,19 +161,19 @@ const AddNewCollectionModal = ({}: {}) => {
               defaultValue={defaultValues?.collectionName}
               type="text"
               name="collection_name"
-              className="w-full px-4 py-2 text-gray-900 transition-all border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter collection name"
               required
             />
           </Form.Field>
-          <Form.Field className="flex items-center gap-3">
-            <div className="relative flex items-center">
+          <Form.Field className="flex gap-3 items-center">
+            <div className="flex relative items-center">
               <input
                 id="collection_public"
                 name="collection_public"
                 defaultChecked={defaultValues?.isCollectionPublic}
                 type="checkbox"
-                className="w-5 h-5 text-blue-600 transition-colors border-gray-300 rounded focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-blue-500"
               />
               <label
                 htmlFor="collection_public"
@@ -170,7 +184,7 @@ const AddNewCollectionModal = ({}: {}) => {
             </div>
           </Form.Field>
         </Form.FieldsContainer>
-        <Modal.Footer className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+        <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
           <Button
             onClick={() => setIsCollectionModalOpen(false)}
             size="parent"
@@ -182,7 +196,7 @@ const AddNewCollectionModal = ({}: {}) => {
           <Button
             size="parent"
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg transition-colors hover:bg-blue-700"
           >
             {defaultValues?.collectionName ? "Save Changes" : "Add Collection"}
           </Button>

@@ -81,7 +81,7 @@ const AddVideoModal = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["videos"] });
-      queryClient.refetchQueries({ queryKey: ["videos"] });
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
     },
   });
 
@@ -90,7 +90,7 @@ const AddVideoModal = ({
     onSuccess: (data) => {
       {
         queryClient.invalidateQueries({ queryKey: ["videos"] });
-        queryClient.refetchQueries({ queryKey: ["videos"] });
+        queryClient.invalidateQueries({ queryKey: ["videos"] });
       }
     },
   });

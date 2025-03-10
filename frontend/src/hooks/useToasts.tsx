@@ -12,17 +12,31 @@ const useToasts = () => {
 
   const addToast = (
     title: string,
-    type: "success" | "error" | "info",
+    type: "success" | "error" | "info" | "promise" = "success",
     duration: number = 2500
   ) => {
-    const toastData: ToastType = {
+    function setToastData(data: { title?: string; isCompleted?: boolean }) {
+      setToasts((pre) => {
+        return pre.map((currentToast) => {
+          //@ts-ignore
+          if (currentToast.id === (this as ToastType).id) {
+            return { ...currentToast, ...data };
+          }
+          return currentToast;
+        });
+      });
+    }
+
+    const toast: ToastType = {
       title,
       duration,
-      type,
+      type: type,
       id: Math.random(),
+      setToastData,
     };
 
-    setToasts((pre: ToastType[]) => [...pre, toastData]);
+    setToasts((pre: ToastType[]) => [...pre, toast]);
+    return toast;
   };
 
   const deleteToast = (id: number) => {

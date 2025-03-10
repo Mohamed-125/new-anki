@@ -9,7 +9,7 @@ const BreadCramps = () => {
   }
   let breadCramps = [] as string[];
 
-  const { collections } = useGetCollections();
+  const { collections } = useGetCollections({ all: true });
 
   if (pathArray.includes("collections")) {
     pathArray.forEach((path, index) => {
@@ -25,7 +25,7 @@ const BreadCramps = () => {
   }
 
   return (
-    <div className="relative flex gap-1 mt-3 mb-8 sm:text-sm">
+    <div className="flex relative gap-1 mt-3 mb-8 sm:text-sm">
       {pathArray.map((path, index) => {
         return (
           <Link

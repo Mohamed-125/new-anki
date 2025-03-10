@@ -187,21 +187,36 @@ module.exports.createVideo = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
-
 module.exports.getUserVideos = async (req, res, next) => {
+  const { page: pageNumber, searchQuery } = req.query;
+  const limit = 5;
+  let page = +pageNumber || 0;
+
   try {
+    const query = { userId: req.user._id };
+    if (searchQuery) {
+      query.title = { $regex: searchQuery, $options: "i" };
+    }
+    const videosCount = await VideoModel.countDocuments(query);
+
+    const skipNumber = page * limit;
+    const remaining = Math.max(0, videosCount - limit * (page + 1));
+    const nextPage = remaining > 0 ? page + 1 : null;
+
     const videos = await VideoModel.find(
-      { userId: req.user._id },
+      query,
       { defaultCaptionData: 0 },
       { sort: { createdAt: -1 } }
-    );
-    res.status(200).send(videos);
+    )
+      .skip(skipNumber)
+      .limit(limit);
+
+    res.status(200).send({ videos, nextPage, videosCount });
   } catch (err) {
     console.log(err);
     res.status(400).send(err);
   }
 };
-
 module.exports.getVideo = async (req, res, next) => {
   try {
     const video = await VideoModel.find({ _id: req.params.id }).populate(

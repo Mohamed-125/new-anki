@@ -9,17 +9,27 @@ const useCardActions = () => {
   const { addToast } = useToasts();
 
   const { mutateAsync: updateCardMutation } = useMutation({
-    onMutate: async () => {},
-
-    onSuccess: async (d, data, context) => {
+    onMutate: async () => {
+      const toast = addToast("Updating card...", "promise");
+      return { toast };
+    },
+    onSuccess: async (d, data, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
-
       if (data.collectionId) {
         queryClient.invalidateQueries({
           queryKey: ["cards", data.collectionId],
         });
       }
-      // console.log("context", context, d, c);
+      context.toast.setToastData({
+        title: "Card updated successfully!",
+        isCompleted: true,
+      });
+    },
+    onError: (error, variables, context: any) => {
+      context.toast.setToastData({
+        title: "Failed to update card",
+        isError: true,
+      });
     },
     mutationFn: (data: CardType) => {
       return axios.put(`/card/${data._id}`, data).then((res) => {
@@ -40,18 +50,20 @@ const useCardActions = () => {
     e?.preventDefault();
     const formData = new FormData(e?.target as HTMLFormElement);
 
-    updateCardMutation({
-      content: content,
-      //@ts-ignore
-      front: (formData.get("card_word") as string) || front,
-      //@ts-ignore
-      back: (formData.get("card_translation") as string) || back,
-      _id: editId || "",
-      collectionId: collectionId,
-    }).then((res) => {
-      setIsAddCardModalOpen?.(false);
-      queryClient.invalidateQueries({ queryKey: ["cards"] });
-    });
+    try {
+      await updateCardMutation({
+        content: content,
+        //@ts-ignore
+        front: (formData.get("card_word") as string) || front,
+        //@ts-ignore
+        back: (formData.get("card_translation") as string) || back,
+        _id: editId || "",
+        collectionId: collectionId,
+      }).then((res) => {
+        setIsAddCardModalOpen?.(false);
+        queryClient.invalidateQueries({ queryKey: ["cards"] });
+      });
+    } catch (err) {}
   };
 
   const deleteHandler = async (id: string, collectionId?: string) => {

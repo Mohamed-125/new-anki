@@ -14,7 +14,6 @@ import "react-quill/dist/quill.snow.css";
 import TipTapEditor from "./TipTapEditor";
 import { OptionType } from "./AddVideoModal";
 import useGetCollections from "../hooks/useGetCollections";
-import FormButtons from "./FormButtons";
 import useCreateNewCard from "../hooks/useCreateNewCardMutation";
 import axios from "axios";
 import useAddOpenModal from "../hooks/useAddModalShortcuts";
@@ -24,6 +23,7 @@ import useGetCollectionById from "@/hooks/useGetCollectionById";
 import { IoClose } from "react-icons/io5";
 import useUseEditor from "@/hooks/useUseEditor";
 import { twMerge } from "tailwind-merge";
+import useToasts from "@/hooks/useToasts";
 
 type AddCardModalProps = {
   collectionId?: string;
@@ -77,16 +77,20 @@ export function AddCardModal({
     },
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    console.log(defaultValues?.collectionId || collectionId || null);
+  const { addToast } = useToasts();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const cardData = {
       collectionId: defaultValues?.collectionId || collectionId || null,
       videoId,
       content: editor?.getHTML(),
     };
 
+    setIsLoading(true);
     if (isEdit) {
-      updateCardHandler(
+      await updateCardHandler(
         e,
         setIsAddCardModalOpen,
         editor?.getHTML(),
@@ -96,9 +100,19 @@ export function AddCardModal({
         backValue
       );
     } else {
-      createCardHandler(e, cardData, setIsAddCardModalOpen);
+      const toast = addToast("Creating card...", "promise");
+      try {
+        await createCardHandler(e, cardData, setIsAddCardModalOpen);
+        toast.setToastData({
+          title: "Card created successfully!",
+          isCompleted: true,
+        });
+      } catch (err) {
+        toast.setToastData({ title: "Failed to create card", isError: true });
+      }
     }
 
+    setIsLoading(false);
     //@ts-ignore
     e.target.reset();
   };
@@ -138,8 +152,6 @@ export function AddCardModal({
     }
   };
 
-  const [isPending, startTransition] = useTransition();
-
   useEffect(() => {
     if (!isAddCardModalOpen) {
       setContent("");
@@ -147,10 +159,6 @@ export function AddCardModal({
       setEditId?.("");
       setFrontValue("");
       setBackValue("");
-      // if (backRef.current && frontRef.current) {
-      //   backRef.current.value = "";
-      //   frontRef.current.value = "";
-      // }
     }
   }, [isAddCardModalOpen]);
 
@@ -162,16 +170,17 @@ export function AddCardModal({
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  const { collection } = useGetCollectionById(
+  const { collection, isLoading: isCollectionLoading } = useGetCollectionById(
     defaultValues?.collectionId || collectionId
   );
 
   return (
     <Modal
+      loading={isLoading || isCollectionLoading}
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
+        // onAnimationEnd={onAnimationEnd}
         isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
       }`}
-      // onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
@@ -195,7 +204,7 @@ export function AddCardModal({
               name="card_word"
               ref={frontRef}
               required
-              className="w-full px-4 py-2 text-gray-900 transition-all border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter the front side content"
             />
           </Form.Field>
@@ -203,7 +212,7 @@ export function AddCardModal({
             <Button
               type="button"
               onClick={() => setIsMoveToCollectionOpen?.(true)}
-              className="w-full px-4 py-2 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
+              className="px-4 py-2 w-full text-sm font-medium text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100"
             >
               Choose Collection
             </Button>
@@ -212,7 +221,7 @@ export function AddCardModal({
           <Form.Field>
             <Form.Label>
               {collection?.name && (
-                <span className="flex items-center gap-2">
+                <span className="flex gap-2 items-center">
                   Card Collection
                   {"" + " : " + collection?.name}
                   <Button
@@ -255,12 +264,12 @@ export function AddCardModal({
               }}
               name="card_translation"
               required
-              className="w-full px-4 py-2 text-gray-900 transition-all border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter the back side content"
             />
             <Button
               variant="primary"
-              className="w-full px-4 py-2 mt-3 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
+              className="px-4 py-2 mt-3 w-full text-sm font-medium text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100"
               type="button"
               disabled={
                 frontValue ? false : defaultValues?.front ? false : true
@@ -284,7 +293,7 @@ export function AddCardModal({
             </div>
             <Button
               variant="primary"
-              className="w-full px-4 py-2 mt-3 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
+              className="px-4 py-2 mt-3 w-full text-sm font-medium text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100"
               type="button"
               disabled={
                 frontValue ? false : defaultValues?.front ? false : true
@@ -312,23 +321,26 @@ export function AddCardModal({
             </Button>
           </Form.Field>
         </Form.FieldsContainer>
-      </Form>{" "}
-      <Modal.Footer>
-        <div className="flex gap-2">
-          <Button
-            onClick={(e: Event) => {
-              setIsAddCardModalOpen(false);
-            }}
-            type="button"
-            size="parent"
-            variant={"danger"}
-          >
-            Cancel
-          </Button>
+        <Modal.Footer>
+          <div className="flex gap-2">
+            <Button
+              //@ts-ignore
+              onClick={(e: MouseEvent) => {
+                setIsAddCardModalOpen(false);
+              }}
+              type="button"
+              size="parent"
+              variant={"danger"}
+            >
+              Cancel
+            </Button>
 
-          <Button size="parent">{isEdit ? "Save Changes" : "Add Card"}</Button>
-        </div>{" "}
-      </Modal.Footer>
+            <Button size="parent">
+              {isEdit ? "Save Changes" : "Add Card"}
+            </Button>
+          </div>{" "}
+        </Modal.Footer>{" "}
+      </Form>{" "}
     </Modal>
   );
 }

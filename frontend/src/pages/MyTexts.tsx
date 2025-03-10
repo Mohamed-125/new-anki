@@ -1,20 +1,18 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
-import Loading from "../components/Loading";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import Search from "../components/Search";
 import Button from "../components/Button";
 import SelectedItemsController from "../components/SelectedItemsController";
-import Actions from "../components/ActionsDropdown";
-import { Link, useNavigate } from "react-router-dom";
-import ActionsDropdown from "../components/ActionsDropdown";
+import { useNavigate } from "react-router-dom";
 import useModalsStates from "@/hooks/useModalsStates";
-import SelectCheckBox from "@/components/SelectCheckBox";
 import ItemCard from "@/components/ui/ItemCard";
 import { Text } from "lucide-react";
-import { text } from "stream/consumers";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
-// import AddNewTextModal from "@/components/AddNewTextModal";
+import useGetTexts from "@/hooks/useGetTexts";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import Search from "@/components/Search";
+import { useState } from "react";
+import useDebounce from "@/hooks/useDebounce";
+import useToasts from "@/hooks/useToasts";
 
 export type TextType = {
   title: string;
@@ -23,31 +21,48 @@ export type TextType = {
 };
 
 const MyTexts = () => {
-  const {
-    data: texts = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["text"],
-    queryFn: async () => {
-      const response = await axios.get("text");
-      return response.data as (TextType & { _id: string })[];
-    },
-  });
-  const queryClient = useQueryClient();
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
 
+  const {
+    texts,
+    textsCount,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isInitialLoading,
+  } = useGetTexts({ query: debouncedQuery });
+
+  const queryClient = useQueryClient();
+  const isLoading = isFetchingNextPage || isInitialLoading;
   const invalidateTextQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["texts"] });
-    queryClient.invalidateQueries({ queryKey: ["text"] });
   };
+
+  const { addToast } = useToasts();
+
   const deleteTextHandler = async (id: string) => {
+    const element = document.getElementById(id)!;
+    const dropDownContent = document.querySelector(
+      ".dropdown-content"
+    )! as HTMLElement;
+
+    if (element) {
+      element.style.display = "none";
+    }
+    if (dropDownContent) {
+      dropDownContent.style.display = "none";
+    }
     const deleteRes = await axios.delete(`text/${id}`).then(() => {
       invalidateTextQueries();
+      addToast("Text deleted successfully");
     });
     return;
   };
 
   const { setEditId, setIsTextModalOpen } = useModalsStates();
+
+  useInfiniteScroll(fetchNextPage, hasNextPage);
 
   const navigate = useNavigate();
   const editHandler = (text: TextType & { _id: string }) => {
@@ -62,21 +77,19 @@ const MyTexts = () => {
 
       {/* <AddNewTextModal /> */}
       <>
+        <SelectedItemsController isItemsTexts={true} />
+        <Search query={query} setQuery={setQuery} searchingFor="texts" />
         <h6 className="mt-4 text-lg font-bold text-gray-400">
-          Number of texts : {texts?.length}
-        </h6>
-
+          Number of texts : {textsCount}
+        </h6>{" "}
         <Button
           onClick={() => navigate("/texts/new")}
-          className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
+          className="py-4 my-6 mr-0 ml-auto text-white bg-blue-600 border-none"
         >
           Add new text
         </Button>
-
-        <SelectedItemsController isItemsTexts={true} />
-
         <div className="grid gap-4 grid-container">
-          {texts.map((text) => (
+          {texts?.map((text) => (
             <ItemCard
               Icon={<Text />}
               editHandler={() => editHandler(text)}

@@ -63,11 +63,8 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
       .then(() => {
         setIsAddCardModalOpen(false);
         callback?.();
-        addToast("New Card Added Successfly", "success");
       })
-      .catch(() => {
-        addToast("Failed To Add Card ", "error");
-      });
+      .catch(() => {});
   };
 
   return { createCardHandler, data, isLoading: isPending };

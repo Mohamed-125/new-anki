@@ -8,6 +8,7 @@ const VideoSchema = new mongoose.Schema(
     },
     title: {
       type: String,
+      index: true,
     },
     thumbnail: {
       type: String,
@@ -32,6 +33,7 @@ const VideoSchema = new mongoose.Schema(
     },
     playlistId: {
       type: mongoose.Types.ObjectId,
+      index: true,
       ref: "Playlist",
     },
   },

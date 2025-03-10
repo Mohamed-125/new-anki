@@ -1,3 +1,4 @@
+import { CollectionType } from "@/hooks/useGetCollections";
 import React, {
   createContext,
   Dispatch,
@@ -13,8 +14,10 @@ type StatesType = {
   editId: string;
   setEditId: React.Dispatch<React.SetStateAction<string>>;
 
-  toMoveCollectionId: string;
-  setToMoveCollectionId: React.Dispatch<React.SetStateAction<string>>;
+  toMoveCollection: CollectionType | undefined;
+  setToMoveCollection: React.Dispatch<
+    React.SetStateAction<CollectionType | undefined>
+  >;
 
   parentCollectionId: string;
   setParentCollectionId: React.Dispatch<React.SetStateAction<string>>;
@@ -55,7 +58,9 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   // used in cards and collection to set the edit it in put requests
   const [editId, setEditId] = useState("");
   // the collection chosesn to move in the move collection modal
-  const [toMoveCollectionId, setToMoveCollectionId] = useState("");
+  const [toMoveCollection, setToMoveCollection] = useState<
+    CollectionType | undefined
+  >();
   // sets the parent collection when when editing moving collections
   const [parentCollectionId, setParentCollectionId] = useState("");
   // state to select many card,collection, etc.
@@ -81,8 +86,8 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
         setIsMoveToCollectionOpen,
         editId,
         setEditId,
-        toMoveCollectionId,
-        setToMoveCollectionId,
+        toMoveCollection,
+        setToMoveCollection,
         parentCollectionId,
         setParentCollectionId,
         selectedItems,

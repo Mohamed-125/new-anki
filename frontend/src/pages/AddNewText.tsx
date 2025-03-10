@@ -13,6 +13,8 @@ import { IoClose } from "react-icons/io5";
 import useModalsStates from "@/hooks/useModalsStates";
 import useGetCollections from "@/hooks/useGetCollections";
 import useGetCollectionById from "@/hooks/useGetCollectionById";
+import useToasts from "@/hooks/useToasts";
+import { text } from "stream/consumers";
 
 const AddNewText = () => {
   const [title, setTitle] = useState("");
@@ -37,8 +39,9 @@ const AddNewText = () => {
 
   const invalidateTextQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["texts"] });
-    queryClient.invalidateQueries({ queryKey: ["text"] });
+    queryClient.invalidateQueries({ queryKey: ["text", id] });
   };
+
   useEffect(() => {
     if (text?.title) setTitle(text?.title);
     if (text?.content) setTimeout(() => setContent(text?.content), 200);
@@ -52,7 +55,7 @@ const AddNewText = () => {
   }, [text]);
 
   const navigate = useNavigate();
-
+  const { addToast, setToasts } = useToasts();
   const createTextHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log(title, editor);
@@ -64,11 +67,20 @@ const AddNewText = () => {
         defaultCollectionId: defaultValues?.defaultCollectionId,
       };
 
+      const toast = addToast("Text added successfully", "promise");
       axios
         .post(`text/`, data)
         .then((res) => {
-          navigate("/texts/" + res.data._id);
           invalidateTextQueries();
+          navigate("/texts/" + res.data._id);
+          setToasts((pre) => {
+            return pre.map((currentToast) => {
+              if (currentToast.id === toast.id) {
+                return { ...currentToast, isComplete: true };
+              }
+              return currentToast;
+            });
+          });
         })
         .catch((err) => err);
     }
@@ -83,11 +95,13 @@ const AddNewText = () => {
       defaultCollectionId: defaultValues?.defaultCollectionId,
     };
 
+    const toast = addToast("Updating Text...", "promise");
     axios
       .put(`text/${text._id}`, data)
       .then((res) => {
         navigate("/texts/" + res.data._id);
         invalidateTextQueries();
+        toast.setToastData({ title: "Text Updated!", isCompleted: true });
       })
       .catch((err) => err);
   };
@@ -140,7 +154,7 @@ const AddNewText = () => {
           <Form.Field>
             <Form.Label>
               {collection?.name && (
-                <span className="flex items-center gap-2">
+                <span className="flex gap-2 items-center">
                   Default Collection
                   {"" + " : " + collection?.name}
                   <Button
@@ -171,7 +185,7 @@ const AddNewText = () => {
           </Form.Field>
         </Form.FieldsContainer>
 
-        <div className="container fixed bottom-0 left-0 right-0 flex gap-2 bg-white border rounded-md mt-9 border-light-gray">
+        <div className="container flex fixed right-0 bottom-0 left-0 gap-2 mt-9 bg-white rounded-md border border-light-gray">
           <Button
             size="parent"
             className={"py-3"}

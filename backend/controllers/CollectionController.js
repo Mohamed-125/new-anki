@@ -48,54 +48,51 @@ module.exports.forkCollection = async (req, res, next) => {
 };
 
 module.exports.getCollections = async (req, res, next) => {
-  const { searchQuery, public, page = 0 } = req.query;
+  const { searchQuery, public, page = 0, all } = req.query;
   const limit = 10; // Number of items per page
   const query = {};
 
   if (!public) {
     query.userId = req.user?._id;
-    if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
   } else {
     query.public = true;
   }
+  query.$or = [
+    { parentCollectionId: { $exists: false } },
+    { parentCollectionId: null },
+  ];
+
+  if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
 
   try {
     // Get total count for pagination
-    const totalCount = await CollectionModel.countDocuments(query);
+    const collectionsCount = await CollectionModel.countDocuments(query);
 
     // Get paginated collections
-    const collections = await CollectionModel.find(query)
-      .skip(page * limit)
-      .limit(limit);
-
-    const subCollections = collections?.filter(
-      (collection) => collection.parentCollectionId
-    );
-
-    const notParentCollections = collections?.filter(
-      (collection) => !collection.parentCollectionId
-    );
-
-    const parentCollections =
-      collections.find((parentCollection) =>
-        subCollections?.some(
-          (subCollection) =>
-            subCollection.parentCollectionId === parentCollection._id
-        )
-      ) ?? [];
-
+    let collections;
+    if (all === "true") {
+      collections = await CollectionModel.find(query)
+        .skip(page * limit)
+        .limit(limit)
+        .populate("subCollections")
+        .lean();
+    } else {
+      collections = await CollectionModel.find(query)
+        .skip(page * limit)
+        .limit(limit)
+        .lean();
+    }
     // Calculate if there's a next page
-    const nextPage = (page + 1) * limit < totalCount ? Number(page) + 1 : null;
+    const nextPage =
+      (page + 1) * limit < collectionsCount ? Number(page) + 1 : null;
 
     res.status(200).send({
       collections,
-      subCollections,
-      parentCollections,
-      notParentCollections,
       nextPage,
-      totalCount,
+      collectionsCount,
     });
   } catch (err) {
+    console.log("err", err);
     res.status(400).send(err);
   }
 };

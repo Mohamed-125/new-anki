@@ -62,7 +62,7 @@ const Toast = ({ toast }: { toast: ToastType }) => {
       ) : toast.type === "success" ? (
         <AnimatedCheck />
       ) : toast.type === "promise" ? (
-        <PromiseToSuccess />
+        <PromiseToSuccess toast={toast} />
       ) : (
         <FaCircleInfo className="text-blue-500 size-7" />
       )}
@@ -124,21 +124,12 @@ const AnimatedError = () => (
   </motion.svg>
 );
 
-const PromiseToSuccess = () => {
-  const [isComplete, setIsComplete] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsTransitioning(true);
-      setTimeout(() => setIsComplete(true), 400);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isComplete) {
+const PromiseToSuccess = ({ toast }: { toast: ToastType }) => {
+  if (toast.isCompleted) {
     return <AnimatedCheck />;
+  }
+  if (toast.isError) {
+    return <AnimatedError />;
   }
 
   return <div className="!static  ml-[2px]   loader bg-primary"></div>;

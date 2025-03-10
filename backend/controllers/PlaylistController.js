@@ -15,16 +15,29 @@ module.exports.createPlaylist = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
-
 module.exports.getPlaylists = async (req, res, next) => {
+  const { page: pageNumber, searchQuery } = req.query;
+  const limit = 10;
+  let page = +pageNumber || 0;
+
   try {
+    const query = { userId: req.user?._id };
+    if (searchQuery) {
+      query.name = { $regex: searchQuery, $options: "i" };
+    }
+    const playlistsCount = await PlaylistModel.countDocuments(query);
+
+    const skipNumber = page * limit;
+    const remaining = Math.max(0, playlistsCount - limit * (page + 1));
+    const nextPage = remaining > 0 ? page + 1 : null;
+
     const playlists = await PlaylistModel.aggregate([
-      {
-        $match: { userId: req.user?._id }, // Match playlists for the specific user
-      },
+      { $match: query },
+      { $skip: skipNumber },
+      { $limit: limit },
       {
         $lookup: {
-          from: "videos", // The name of the Video collection
+          from: "videos",
           localField: "_id",
           foreignField: "playlistId",
           as: "videos",
@@ -32,22 +45,20 @@ module.exports.getPlaylists = async (req, res, next) => {
       },
       {
         $addFields: {
-          videosCount: { $size: "$videos" }, // Add a field to count the number of videos
+          videosCount: { $size: "$videos" },
         },
       },
       {
         $project: {
-          videos: 1, // Exclude the videos array from the final output
+          videos: 1,
           name: 1,
           videosCount: 1,
         },
       },
     ]).exec();
 
-    playlists;
-    res.status(200).send(playlists);
+    res.status(200).send({ playlists, nextPage, playlistsCount });
   } catch (err) {
-    "err", err;
     res.status(400).send(err);
   }
 };

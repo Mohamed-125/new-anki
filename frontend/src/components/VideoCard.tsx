@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
+import useToasts from "@/hooks/useToasts";
 
 type VideoCardProps = {
   video: {
@@ -20,18 +21,26 @@ type VideoCardProps = {
 const VideoCard = ({ video, sideByside }: VideoCardProps) => {
   const id = video._id;
   const { selectedItems, setSelectedItems } = useModalsStates();
+  const { addToast } = useToasts();
 
   const isSelected = selectedItems?.includes(id);
 
   const queryClient = useQueryClient();
 
   const deleteHandler = () => {
+    const toast = addToast("Deleting video...", "promise");
     axios
       .delete(`video/${id}`)
-      .then((res) => {
+      .then(() => {
         queryClient.invalidateQueries({ queryKey: ["videos"] });
+        toast.setToastData({
+          title: "Video deleted successfully!",
+          isCompleted: true,
+        });
       })
-      .catch((err) => err);
+      .catch(() => {
+        toast.setToastData({ title: "Failed to delete video", isError: true });
+      });
   };
 
   return (
@@ -50,12 +59,15 @@ const VideoCard = ({ video, sideByside }: VideoCardProps) => {
         )}
       >
         <img
-          className={twMerge("w-full object-cover", sideByside && " h-full")}
+          className={twMerge(
+            "w-full object-cover h-full",
+            sideByside && " h-full"
+          )}
           src={video.thumbnail}
         />
       </Link>
 
-      <div className="flex justify-between gap-3 px-4 mt-4 grow">
+      <div className="flex gap-3 justify-between px-4 mt-4 grow">
         <Link to={"/video/" + video._id}>{video.title}</Link>
         <div>
           {!selectedItems?.length ? (

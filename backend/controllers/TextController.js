@@ -1,8 +1,33 @@
 const TextModel = require("../models/TextModel");
 
 module.exports.getTexts = async (req, res) => {
-  const texts = await TextModel.find({ userId: req.user?._id });
-  res.send(texts);
+  const { page: pageNumber, searchQuery } = req.query;
+  const limit = 5;
+  let page = +pageNumber || 0;
+
+  try {
+    const query = {
+      userId: req.user?._id,
+    };
+
+    if (searchQuery) {
+      query.title = { $regex: searchQuery, $options: "i" };
+    }
+    const textsCount = await TextModel.countDocuments(query);
+
+    console.log("textsCount", textsCount);
+    const skipNumber = page * limit;
+    const remaining = Math.max(0, textsCount - limit * (page + 1));
+    const nextPage = remaining > 0 ? page + 1 : null;
+
+    const texts = await TextModel.find(query, { content: 0 })
+      .skip(skipNumber)
+      .limit(limit);
+
+    res.status(200).send({ texts, nextPage, textsCount });
+  } catch (err) {
+    res.status(400).send(err);
+  }
 };
 
 module.exports.getText = async (req, res) => {

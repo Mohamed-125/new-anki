@@ -23,7 +23,7 @@ const Collection = ({ collection }: CollectionProps) => {
     setDefaultValues,
     setIsCollectionModalOpen,
     setIsMoveToCollectionOpen,
-    setToMoveCollectionId,
+    setToMoveCollection,
   } = useModalsStates();
 
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
@@ -47,7 +47,7 @@ const Collection = ({ collection }: CollectionProps) => {
   const moveHandler = () => {
     setEditId(id);
     setIsMoveToCollectionOpen(true);
-    setToMoveCollectionId(id);
+    setToMoveCollection(collection);
   };
 
   return (

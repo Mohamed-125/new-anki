@@ -28,9 +28,7 @@ const ItemCard = ({
   const { selectedItems, setSelectedItems } = useModalsStates();
 
   const linkContent = (
-    <div 
-    className="flex items-center flex-1 gap-4"
->
+    <div className="flex flex-1 gap-4 items-center">
       <div
         data-lov-name="div"
         data-component-line="70"
@@ -48,35 +46,39 @@ const ItemCard = ({
   );
 
   return (
-    <div className="rounded-lg border  p-6 py-7 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]">
+    <div
+      id={id}
+      className="rounded-lg border  p-6 py-7 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]"
+    >
       <div className="flex items-center">
         {isNotes ? (
           linkContent
         ) : (
           <Link
             to={`${location.pathname}/${id}`}
-            className="flex items-center flex-1 gap-4"
+            className="flex flex-1 gap-4 items-center"
           >
             {linkContent}
           </Link>
         )}
-
-        {id &&
-          (!selectedItems.length ? (
-            <ActionsDropdown
-              moveHandler={moveHandler}
-              editHandler={editHandler}
-              deleteHandler={deleteHandler}
-              itemId={id}
-              setSelectedItems={setSelectedItems}
-            />
-          ) : (
-            <SelectCheckBox
-              id={id}
-              setSelectedItems={setSelectedItems}
-              selectedItems={selectedItems}
-            />
-          ))}
+        <div onClick={(e) => e.stopPropagation()}>
+          {id &&
+            (!selectedItems.length ? (
+              <ActionsDropdown
+                moveHandler={moveHandler}
+                editHandler={editHandler}
+                deleteHandler={deleteHandler}
+                itemId={id}
+                setSelectedItems={setSelectedItems}
+              />
+            ) : (
+              <SelectCheckBox
+                id={id}
+                setSelectedItems={setSelectedItems}
+                selectedItems={selectedItems}
+              />
+            ))}
+        </div>
       </div>
     </div>
   );

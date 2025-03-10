@@ -1,71 +1,59 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import AddVideoModal from "../components/AddVideoModal";
 import Button from "../components/Button";
-import Loading from "../components/Loading";
 import VideoCard from "../components/VideoCard";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
-import { VideoType } from "./Playlist.tsx";
-import VideoSkeleton from "@/components/VideoSkeleton.tsx";
+import VideoSkeleton from "@/components/VideoSkeleton";
+import useGetVideos from "@/hooks/useGetVideos";
+import useDebounce from "@/hooks/useDebounce";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll";
 
 const Videos = () => {
-  const {
-    data: videos,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["videos"],
-    queryFn: () => axios.get("video").then((res) => res.data),
-  });
-
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [filteredVideos, setFilteredVideos] = useState<VideoType[]>(
-    videos || []
-  );
-  const [acionsDivId, setActionsDivId] = useState("");
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [defaultValues, setDefaultValues] = useState({});
-  const [availableCaptions, setAvailavailableCaptions] = useState<string[]>([]);
-  const [changeItemsParent, setChangeItemsParent] = useState(false);
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query);
 
-  useEffect(() => {
-    if (!isVideoModalOpen) {
-      setDefaultValues([]);
-      setAvailavailableCaptions([]);
-      document.querySelector("form")?.reset();
-    }
-  }, [isVideoModalOpen]);
+  const {
+    videos,
+    videosCount,
+    fetchNextPage,
+    isInitialLoading,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetVideos({ query: debouncedQuery });
 
-  const queryClient = useQueryClient();
+  useInfiniteScroll(fetchNextPage, hasNextPage);
+
   return (
     <div>
-      <AddVideoModal
+      {/* <AddVideoModal
         setIsVideoModalOpen={setIsVideoModalOpen}
         defaultValues={defaultValues}
         isVideoModalOpen={isVideoModalOpen}
-      />
+      /> */}
 
       <div className="container">
         <>
-          <h6 className="mt-4 text-lg font-bold text-gray-400">
-            Number of videos : {videos?.length}
+          <Search query={query} setQuery={setQuery} searchingFor="videos" />
+          <h6 className="mt-4 mb-6 text-lg font-bold text-gray-400">
+            Number of videos : {videosCount}
           </h6>
-          <Button
-            className="py-4 my-6 ml-auto mr-0 text-white bg-blue-600 border-none "
+          {/* <Button
+            className="py-4 my-6 mr-0 ml-auto text-white bg-blue-600 border-none"
             onClick={() => setIsVideoModalOpen(true)}
           >
             Add new Video
-          </Button>
+          </Button> */}
 
           <SelectedItemsController isItemsVideos={true} />
 
           <div className="grid gap-3 grid-container videos-container">
             {videos?.map((video) => (
               <VideoCard key={video._id} video={video} />
-            ))}{" "}
-            {isLoading && <VideoSkeleton />}
+            ))}
+            {(isInitialLoading || isFetchingNextPage) && <VideoSkeleton />}
           </div>
         </>
       </div>

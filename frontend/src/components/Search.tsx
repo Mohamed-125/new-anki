@@ -1,24 +1,26 @@
 import React from "react";
 import Form from "./Form";
 
-type SearchCardsProps = {
+type SearchProps = {
   query: string;
-  setQuery: (query: string) => void;
+  searchingFor: string;
+  setQuery: React.Dispatch<React.SetStateAction<string>>;
 };
 
-const SearchCards = React.memo(function SearchCards({
+const Search = React.memo(function Search({
   query,
+  searchingFor,
   setQuery,
-}: SearchCardsProps) {
+}: SearchProps) {
   return (
     <>
       <Form
         className={
-          "flex px-0 py-0 w-full mb-6 max-w-none text-lg bg-transparent rounded-xl"
+          "flex px-0 py-0 mb-6 w-full max-w-none text-lg bg-transparent rounded-xl"
         }
       >
         <div className="grow">
-          <Form.Label>Search Your Cards</Form.Label>
+          <Form.Label>Search Your {searchingFor}</Form.Label>
           <Form.Input
             className="py-2 text-black bg-gray-200 rounded-xl"
             value={query}
@@ -33,4 +35,4 @@ const SearchCards = React.memo(function SearchCards({
   );
 });
 
-export default SearchCards;
+export default Search;
