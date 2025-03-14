@@ -16,7 +16,9 @@ module.exports.getNotes = async (req, res) => {
     const remaining = Math.max(0, notesCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
-    const notes = await NoteModel.find(query).skip(skipNumber).limit(limit);
+    const notes = await NoteModel.find(query, { content: 0 })
+      .skip(skipNumber)
+      .limit(limit);
 
     res.status(200).send({ notes, nextPage, notesCount });
   } catch (err) {
@@ -63,5 +65,24 @@ module.exports.batchDelete = async (req, res) => {
     res.status(200).send({ message: "notes deleted successfully" });
   } catch (error) {
     res.status(500).send({ error: "Error deleting notes" });
+  }
+};
+
+module.exports.forkNote = async (req, res) => {
+  try {
+    const originalNote = await NoteModel.findOne({ _id: req.params.id });
+    if (!originalNote) {
+      return res.status(404).send("Note not found");
+    }
+
+    const forkedNote = await NoteModel.create({
+      userId: req.user?._id,
+      title: originalNote.title,
+      content: originalNote.content,
+    });
+
+    res.status(200).send(forkedNote);
+  } catch (err) {
+    res.status(400).send(err);
   }
 };

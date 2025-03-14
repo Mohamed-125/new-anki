@@ -8,10 +8,10 @@ import VideoSkeleton from "@/components/VideoSkeleton";
 import useGetVideos from "@/hooks/useGetVideos";
 import useDebounce from "@/hooks/useDebounce";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import MoveVideoModal from "@/components/MoveVideoModal";
+import ShareModal from "@/components/ShareModal";
 
 const Videos = () => {
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [defaultValues, setDefaultValues] = useState({});
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query);
 
@@ -25,6 +25,14 @@ const Videos = () => {
   } = useGetVideos({ query: debouncedQuery });
 
   useInfiniteScroll(fetchNextPage, hasNextPage);
+  const [isOpen, setIsOpen] = useState(false);
+  const [editId, setEditId] = useState("");
+
+  const moveVideosHandler = (id: string) => {
+    console.log("id", id);
+    setIsOpen(true);
+    setEditId(id);
+  };
 
   return (
     <div>
@@ -33,7 +41,13 @@ const Videos = () => {
         defaultValues={defaultValues}
         isVideoModalOpen={isVideoModalOpen}
       /> */}
+      <SelectedItemsController
+        setMoveVideoModal={setIsOpen}
+        isItemsVideos={true}
+      />
 
+      <ShareModal sharing="video" />
+      <MoveVideoModal editId={editId} isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className="container">
         <>
           <Search query={query} setQuery={setQuery} searchingFor="videos" />
@@ -47,12 +61,16 @@ const Videos = () => {
             Add new Video
           </Button> */}
 
-          <SelectedItemsController isItemsVideos={true} />
-
           <div className="grid gap-3 grid-container videos-container">
-            {videos?.map((video) => (
-              <VideoCard key={video._id} video={video} />
-            ))}
+            {videos?.map((video) => {
+              return (
+                <VideoCard
+                  moveVideoHandler={() => moveVideosHandler(video._id)}
+                  key={video._id}
+                  video={video}
+                />
+              );
+            })}
             {(isInitialLoading || isFetchingNextPage) && <VideoSkeleton />}
           </div>
         </>

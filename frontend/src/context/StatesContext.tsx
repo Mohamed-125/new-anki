@@ -27,6 +27,14 @@ type StatesType = {
 
   isCollectionModalOpen: boolean;
   setIsCollectionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
+  isShareModalOpen: boolean;
+  setIsShareModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  shareItemId: string;
+  setShareItemId: React.Dispatch<React.SetStateAction<string>>;
+  shareItemName: string;
+  setShareItemName: React.Dispatch<React.SetStateAction<string>>;
+
   defaultValues: Record<string, any> | null;
   setDefaultValues: React.Dispatch<
     React.SetStateAction<Record<string, any> | null>
@@ -76,12 +84,22 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   const [content, setContent] = useState("");
   // the collection to move to
   const [targetCollectionId, setTargetCollectionId] = useState("");
+  const [shareItemId, setShareItemId] = useState("");
+  const [shareItemName, setShareItemName] = useState("");
+
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   return (
     <statesContext.Provider
       value={{
+        isShareModalOpen,
+        setIsShareModalOpen,
+        shareItemId,
+        setShareItemId,
+        shareItemName,
+        setShareItemName,
         isMoveToCollectionOpen,
         setIsMoveToCollectionOpen,
         editId,

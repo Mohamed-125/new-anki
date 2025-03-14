@@ -10,83 +10,128 @@ import {
 } from "../components/ui/dropdown-menu";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { LuMoveUpRight } from "react-icons/lu";
-import { CheckCircle, PenBoxIcon } from "lucide-react";
+import { CheckCircle, PenBoxIcon, Plus, Share2 } from "lucide-react";
 
 type ActionsDropdownProps = {
   moveHandler?: any;
   editHandler?: any;
   deleteHandler?: any;
+  shareHandler?: () => void;
   itemId: string;
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  isCard?: boolean;
+  setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
+  forkData?: { forking: string; handler: any } | undefined;
+  isSameUser?: boolean;
 };
 
 const ActionsDropdown = ({
   moveHandler,
   editHandler,
   deleteHandler,
+  shareHandler,
   itemId,
+  isCard,
   setSelectedItems,
+  forkData,
+  isSameUser,
 }: ActionsDropdownProps) => {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="p-2 text-2xl rounded-md transition-all hover:bg-gray-100">
         <BsThreeDotsVertical />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mt-6 font-semibold bg-white dropdown-content">
-        <Button
-          className={
-            "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal  text-gray-700 bg-transparent border-none outline-none"
-          }
-          onClick={() => {
-            setSelectedItems?.((pre) => {
-              return [...pre, itemId];
-            });
-          }}
-        >
-          <CheckCircle className="text-xl" />
-          Select
-        </Button>
-        <DropdownMenuSeparator />
-
-        {editHandler && (
+      <DropdownMenuContent className="mt-6 font-semibold !max-w-[250px]  bg-white dropdown-content">
+        {setSelectedItems && (
           <>
             <Button
-              onClick={editHandler}
               className={
-                "flex gap-3 items-center leading-normal hover:bg-transparent hover:scale-100 !shadow-none text-gray-700 bg-transparent border-none outline-none"
+                "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal  text-gray-700 bg-transparent border-none outline-none"
               }
+              onClick={() => {
+                setSelectedItems?.((pre) => {
+                  return [...pre, itemId];
+                });
+              }}
             >
-              <PenBoxIcon className="text-xl" />
-              Edit
+              <CheckCircle className="text-xl" />
+              Select
             </Button>
             <DropdownMenuSeparator />
           </>
         )}
-
-        {moveHandler && (
+        {forkData && (
           <>
             <Button
-              onClick={moveHandler}
+              onClick={forkData?.handler}
+              className={
+                "flex gap-3 items-center text-left hover:bg-transparent hover:scale-100 !shadow-none leading-normal  text-gray-700 bg-transparent border-none outline-none"
+              }
+            >
+              <Plus className="text-xl" />
+              {forkData?.forking}
+            </Button>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        {shareHandler && (
+          <>
+            <Button
+              onClick={shareHandler}
               className={
                 "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal text-gray-700 bg-transparent border-none outline-none"
               }
             >
-              <LuMoveUpRight className="text-xl" />
-              Move
+              <Share2 className="text-xl" />
+              Share
             </Button>
+
             <DropdownMenuSeparator />
           </>
         )}
 
-        <Button
-          className={
-            "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal text-red-600 bg-transparent border-none outline-none"
-          }
-          onClick={deleteHandler}
-        >
-          <FaTrashCan className="text-xl" />
-          Delete
-        </Button>
+        {isSameUser && (
+          <>
+            {editHandler && (
+              <>
+                <Button
+                  onClick={editHandler}
+                  className={
+                    "flex gap-3 items-center leading-normal hover:bg-transparent hover:scale-100 !shadow-none text-gray-700 bg-transparent border-none outline-none"
+                  }
+                >
+                  <PenBoxIcon className="text-xl" />
+                  Edit
+                </Button>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
+            {moveHandler && (
+              <>
+                <Button
+                  onClick={moveHandler}
+                  className={
+                    "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal text-gray-700 bg-transparent border-none outline-none"
+                  }
+                >
+                  <LuMoveUpRight className="text-xl" />
+                  Move
+                </Button>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
+            <Button
+              className={
+                "flex gap-3 items-center  hover:bg-transparent hover:scale-100 !shadow-none leading-normal text-red-600 bg-transparent border-none outline-none"
+              }
+              onClick={deleteHandler}
+            >
+              <FaTrashCan className="text-xl" />
+              Delete
+            </Button>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

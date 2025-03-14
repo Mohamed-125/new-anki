@@ -115,7 +115,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
       return "cards";
     }
   }, [selectedItems]);
-
+  const isSameUser = user?._id === collection?.userId;
   if (isCollectionLoading) {
     return <Loading />;
   }
@@ -156,29 +156,39 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                       <h1 className="text-3xl font-bold text-gray-800 md:mb-3">
                         {collection?.name}
                       </h1>
-                      {user?._id === collection?.userId && (
-                        <div className="flex gap-3">
+
+                      <div className="flex gap-3">
+                        {isSameUser ? (
+                          <>
+                            <Button
+                              variant="primary-outline"
+                              className="flex gap-2 items-center hover:bg-blue-50"
+                            >
+                              <Link to={"/study-cards/" + id}>
+                                <span className="flex gap-2 items-center">
+                                  📚 Study Now
+                                </span>
+                              </Link>
+                            </Button>
+                            <Button
+                              className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                              onClick={() => {
+                                setDefaultValues({ collectionId: id });
+                                setIsAddCardModalOpen(true);
+                              }}
+                            >
+                              <span>+</span> Add Card
+                            </Button>
+                          </>
+                        ) : (
                           <Button
-                            variant="primary-outline"
-                            className="flex gap-2 items-center hover:bg-blue-50"
+                            variant="primary"
+                            className="flex gap-2 items-center"
                           >
-                            <Link to={"/study-cards/" + id}>
-                              <span className="flex gap-2 items-center">
-                                📚 Study Now
-                              </span>
-                            </Link>
+                            Add to your collections
                           </Button>
-                          <Button
-                            className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
-                            onClick={() => {
-                              setDefaultValues({ collectionId: id });
-                              setIsAddCardModalOpen(true);
-                            }}
-                          >
-                            <span>+</span> Add Card
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                   {/* Search Section */}
@@ -187,7 +197,11 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                       label="Search cards"
                       filter="front"
                     /> */}
-                    <Search query={query} setQuery={setQuery} />
+                    <Search
+                      searchingFor="Cards"
+                      query={query}
+                      setQuery={setQuery}
+                    />
                   </div>
                   {/* Sub Collections Section */}
                   <div className="mt-8">
@@ -198,15 +212,17 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                           {collection?.subCollections?.length || 0}
                         </span>
                       </h2>
-                      <Button
-                        className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
-                        onClick={() => {
-                          setDefaultValues({ parentCollectionId: id });
-                          setIsCollectionModalOpen(true);
-                        }}
-                      >
-                        <span>+</span> New Sub Collection
-                      </Button>
+                      {isSameUser && (
+                        <Button
+                          className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                          onClick={() => {
+                            setDefaultValues({ parentCollectionId: id });
+                            setIsCollectionModalOpen(true);
+                          }}
+                        >
+                          <span>+</span> New Sub Collection
+                        </Button>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-3 gap-4 lg:grid-cols-2 md:grid-cols-1">

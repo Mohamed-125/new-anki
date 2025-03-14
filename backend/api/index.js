@@ -18,7 +18,6 @@ const textRouter = require("../routes/textRouter");
 const cookieParser = require("cookie-parser");
 
 // Mongo DB Connections
-console.log(process.env.MONGO_DB_URL);
 mongoose
   .connect(process.env.MONGO_DB_URL)
   .then((response) => {
@@ -35,6 +34,8 @@ const whitelist = [
   "chrome-extension://djlfoidjlgljkgpdnlglajpjigbgkdab",
   "http://192.168.1.2:5174",
   "http://192.168.1.2:5173",
+  "http://192.168.1.3:5174",
+  "http://192.168.1.3:5173",
   "http://localhost:5174",
 ];
 

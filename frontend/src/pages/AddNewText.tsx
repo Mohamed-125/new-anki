@@ -18,7 +18,7 @@ import { text } from "stream/consumers";
 
 const AddNewText = () => {
   const [title, setTitle] = useState("");
-
+  const [loading, setLoading] = useState(false);
   const id = useParams()?.id;
 
   const {
@@ -58,7 +58,7 @@ const AddNewText = () => {
   const { addToast, setToasts } = useToasts();
   const createTextHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(title, editor);
+    setLoading(true);
 
     if (title && editor) {
       const data = {
@@ -73,6 +73,7 @@ const AddNewText = () => {
         .then((res) => {
           invalidateTextQueries();
           navigate("/texts/" + res.data._id);
+
           setToasts((pre) => {
             return pre.map((currentToast) => {
               if (currentToast.id === toast.id) {
@@ -88,6 +89,7 @@ const AddNewText = () => {
 
   const updateTextHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
 
     const data = {
       title,
@@ -126,7 +128,7 @@ const AddNewText = () => {
     defaultValues?.defaultCollectionId
   );
 
-  if (isLoading) return <Loading />;
+  if (isLoading || loading) return <Loading />;
   return (
     <>
       <MoveCollectionModal text={true} />

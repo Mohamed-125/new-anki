@@ -50,7 +50,6 @@ module.exports.getPlaylists = async (req, res, next) => {
       },
       {
         $project: {
-          videos: 1,
           name: 1,
           videosCount: 1,
         },

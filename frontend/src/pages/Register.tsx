@@ -36,7 +36,7 @@ const Register = () => {
       .catch((err) => err);
   };
   return (
-    <div className="flex items-center justify-center flex-grow">
+    <div className="flex flex-grow justify-center items-center">
       <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
         <Form.Title> Register </Form.Title>
         <Form.FieldsContainer gap={12}>
@@ -60,7 +60,7 @@ const Register = () => {
           </Form.Field>
         </Form.FieldsContainer>
 
-        <Form.Message center={true} className="text-blue-500">
+        <Form.Message center={true} className="text-primary">
           <Link to={"/forgot-password"}> Forgot password ?</Link>{" "}
         </Form.Message>
 
@@ -68,7 +68,7 @@ const Register = () => {
         <Form.Message center={true}>
           <Link to={"/register"}>
             You don't have an account?{" "}
-            <span className="text-blue-500">Create one Now!</span>
+            <span className="text-primary">Create one Now!</span>
           </Link>
         </Form.Message>
       </Form>

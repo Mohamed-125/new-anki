@@ -12,6 +12,7 @@ import useGetCards from "../../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
 import useModalsStates from "@/hooks/useModalsStates";
 import TranslationWindow from "@/components/TranslationWindow";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type subtitleProps = {
   video: any;
@@ -48,6 +49,9 @@ const Subtitles = memo(function ({
 
   const { selectionData } = useSelection();
 
+  const { user } = useGetCurrentUser();
+  const isSameUser = user?._id === video?.userId;
+
   return (
     // Render your list
     <div className="relative">
@@ -66,16 +70,15 @@ const Subtitles = memo(function ({
           ref={subtitleContainerRef}
           className="flex overflow-auto flex-col px-3 w-full select-text grow"
         >
-          <div className="relative select-text grow">
+          <div className="relative select-text subtitles-div grow">
             {isCaptionLoading && <Loading />}
-
             <TranslationWindow
               setIsAddCardModalOpen={setIsAddCardModalOpen}
               setDefaultValues={setDefaultValues}
               setContent={setContent}
+              isSameUser={isSameUser}
               selectionData={selectionData}
             />
-
             {caption?.map((subtitle: CaptionType, _) => {
               return (
                 <Subtitle
@@ -171,7 +174,7 @@ const Subtitle = memo(function ({
       >
         <div className="relative py-4 border-b-2 border-gray-200">
           <div
-            className="relative subtitle"
+            className="relative subtitle w-fit"
             data-translated-text={translatedText}
           >
             <div className="flex gap-2 mb-3 select-text items center">

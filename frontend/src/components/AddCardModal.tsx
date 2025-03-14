@@ -204,7 +204,7 @@ export function AddCardModal({
               name="card_word"
               ref={frontRef}
               required
-              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter the front side content"
             />
           </Form.Field>
@@ -264,7 +264,7 @@ export function AddCardModal({
               }}
               name="card_translation"
               required
-              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter the back side content"
             />
             <Button

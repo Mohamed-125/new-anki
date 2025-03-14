@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import useUseEditor from "@/hooks/useUseEditor";
 
 const StudyCards = () => {
   const collectionId = useParams()?.collectionId;
@@ -48,6 +50,8 @@ const StudyCards = () => {
     isIntialLoading,
   } = useGetCards({ collectionId, study: true });
 
+  const { user } = useGetCurrentUser();
+  const isSameUser = cards?.[0].userId === user?._id;
   // Determine loading state
   const isLoading = isIntialLoading;
 
@@ -123,13 +127,22 @@ const StudyCards = () => {
 
   const [studyCardsView, setStudyCardsView] = useState("normal");
 
+  const { editor, setContent } = useUseEditor(true);
+
+  useEffect(() => {
+    if (cards) setContent(cards[currentCard].content || "");
+  }, [currentCard]);
+
+  if (!isSameUser) {
+    navigate("/");
+  }
   if (isLoading) {
     return <Loading />;
   }
 
   return (
     <div className="container flex flex-col min-h-[calc(100vh-170px)] mt-3 study-cards__div">
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex justify-between items-center mb-7">
         <h3 className="title">{collection?.name || "All cards"}</h3>
 
         <SelectGroup>
@@ -157,7 +170,7 @@ const StudyCards = () => {
         <Loading />
       ) : (
         <>
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex gap-3 items-center mb-6">
             <div className="px-6 py-2 rounded-lg bg-light-gray min-w-fit w-fit">
               {currentCard + 1} / {cardsCount}{" "}
             </div>
@@ -178,7 +191,7 @@ const StudyCards = () => {
                 : cards[currentCard].back}
             </p>
             <hr className="mt-8" />
-            <div className="flex flex-col items-center justify-center gap-2">
+            <div className="flex flex-col gap-2 justify-center items-center">
               <Form.Field className="flex gap-2 mt-11">
                 <label>Voice:</label>
                 <Form.Select
@@ -195,7 +208,7 @@ const StudyCards = () => {
                 </Form.Select>
               </Form.Field>
               <HiMiniSpeakerWave
-                className="mb-6 text-5xl cursor-pointer hover:scale-110 "
+                className="mb-6 text-5xl cursor-pointer hover:scale-110"
                 onClick={() => {
                   if (speechStatus) {
                     stop();
@@ -212,20 +225,17 @@ const StudyCards = () => {
                     ? cards[currentCard].back
                     : cards[currentCard].front}
                 </p>{" "}
-                <TipTapEditor
-                  readOnly={true}
-                  content={cards[currentCard].content || ""}
-                />
+                <TipTapEditor editor={editor} />
               </div>
             )}
           </div>
 
-          <div className="flex flex-wrap justify-center flex-1 w-full h-full gap-2 ">
+          <div className="flex flex-wrap flex-1 gap-2 justify-center w-full h-full">
             {showAnswer ? (
               <>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block mt-auto text-green-500 border-green-500 h-11 hover:text-white sm:w-full hover:bg-green-500"
+                  className="block mt-6 h-11 text-green-500 border-green-500 hover:text-white sm:w-full hover:bg-green-500"
                   variant="primary-outline"
                   onClick={() => submitAnswer("easy")}
                 >
@@ -233,7 +243,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block mt-auto text-yellow-500 border-yellow-500 h-11 hover:text-white sm:w-full text hover:bg-yellow-500"
+                  className="block mt-6 h-11 text-yellow-500 border-yellow-500 hover:text-white sm:w-full text hover:bg-yellow-500"
                   variant="primary-outline"
                   onClick={() => submitAnswer("medium")}
                 >
@@ -241,7 +251,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block mt-auto hover:text-white h-11 sm:w-full"
+                  className="block mt-6 h-11 hover:text-white sm:w-full"
                   variant="danger-outline"
                   onClick={() => submitAnswer("hard")}
                 >
@@ -249,7 +259,7 @@ const StudyCards = () => {
                 </Button>
                 <Button //@ts-ignore
                   tabIndex="-1"
-                  className="block mt-auto text-black border-black h-11 hover:text-white sm:w-full text hover:bg-black "
+                  className="block mt-6 h-11 text-black border-black hover:text-white sm:w-full text hover:bg-black"
                   variant="primary-outline"
                   onClick={() => submitAnswer(`Couldn't Remember`)}
                 >
@@ -258,7 +268,7 @@ const StudyCards = () => {
               </>
             ) : (
               <Button
-                className="block mx-auto mt-auto h-11 sm:w-full"
+                className="block mx-auto mt-6 h-11 sm:w-full"
                 //@ts-ignore
                 tabIndex="-1"
                 onClick={() => setShowAnswer(true)}

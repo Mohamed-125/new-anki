@@ -38,6 +38,7 @@ const ChangeItemsParent = ({
   });
 
   useEffect(() => {
+    if (!data || data.length) return;
     const options: OptionType[] = data?.map(
       (item: { _id: string; name: string }) => ({
         value: item._id,

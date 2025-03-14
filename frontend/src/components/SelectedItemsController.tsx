@@ -6,6 +6,7 @@ type SelectedItemsControllerProps = {
   isItemsTexts?: boolean;
   isItemsCards?: boolean;
   moving?: string;
+  setMoveVideoModal?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 import React from "react";
 import Button from "./Button";
@@ -25,6 +26,7 @@ const SelectedItemsController = ({
   isItemsTexts,
   isItemsCards,
   moving,
+  setMoveVideoModal,
 }: SelectedItemsControllerProps) => {
   const { selectedItems, setSelectedItems, setIsMoveToCollectionOpen } =
     useModalStates();
@@ -32,11 +34,11 @@ const SelectedItemsController = ({
   const queryClient = useQueryClient();
 
   return selectedItems.length ? (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-between w-full gap-4 px-6 bg-white border-t shadow-lg py-7 bg-opacity-90 backdrop-blur-sm py-4items-center border-neutral-200">
-      <div className="flex items-center gap-3">
+    <div className="flex fixed right-0 bottom-0 left-0 z-50 gap-4 justify-between px-6 py-7 w-full bg-white bg-opacity-90 border-t shadow-lg backdrop-blur-sm py-4items-center border-neutral-200">
+      <div className="flex gap-3 items-center">
         <button
           onClick={() => setSelectedItems([])}
-          className="flex items-center gap-2 text-xl text-gray-600 transition-colors hover:text-gray-900"
+          className="flex gap-2 items-center text-xl text-gray-600 transition-colors hover:text-gray-900"
         >
           <IoClose />
         </button>
@@ -54,9 +56,10 @@ const SelectedItemsController = ({
         isItemsCollections ||
         isItemsVideos ? (
           <button
-            className="flex items-center gap-2 transition-colors text-primary hover:text-primary/80"
+            className="flex gap-2 items-center transition-colors text-primary hover:text-primary/80"
             onClick={() => {
               setIsMoveToCollectionOpen(true);
+              setMoveVideoModal?.(true);
             }}
           >
             <MdDriveFileMove className="text-3xl" />
@@ -67,7 +70,7 @@ const SelectedItemsController = ({
         ) : null}
 
         <button
-          className="flex items-center gap-2 text-red-500 transition-colors hover:text-red-600"
+          className="flex gap-2 items-center text-red-500 transition-colors hover:text-red-600"
           onClick={async () => {
             const url = isItemsVideos
               ? `video/batch-delete`

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { useCallback, useMemo } from "react";
 import { FaEdit } from "react-icons/fa";
@@ -13,6 +13,10 @@ import useGetCards, { CardType } from "../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
 import useModalsStates from "@/hooks/useModalsStates";
 import { TextType } from "./MyTexts";
+import ActionsDropdown from "@/components/ActionsDropdown";
+import ShareModal from "@/components/ShareModal";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import useToasts from "@/hooks/useToasts";
 
 const TextPage = () => {
   const id = useParams()?.id;
@@ -91,6 +95,34 @@ const TextPage = () => {
     [setDefaultValues, setIsAddCardModalOpen]
   );
   const { selectionData } = useSelection();
+  const { setIsShareModalOpen, setShareItemId, setShareItemName } =
+    useModalsStates();
+  const shareHandler = () => {
+    if (!text) return;
+    setIsShareModalOpen(true);
+    setShareItemId(text._id);
+    setShareItemName(text?.title);
+  };
+  const { setSelectedItems } = useModalsStates();
+  const { user } = useGetCurrentUser();
+  const isSameUser = user?._id === text?.userId;
+  const { addToast } = useToasts();
+  const queryClient = useQueryClient();
+
+  const forkHandler = async () => {
+    const toast = addToast("Forking text...", "promise");
+    try {
+      const response = await axios.post(`text/fork/${text?._id}`);
+      navigate(`/texts/${response.data._id}`);
+      queryClient.invalidateQueries({ queryKey: ["texts"] });
+      toast.setToastData({
+        title: "Text forked successfully!",
+        isCompleted: true,
+      });
+    } catch (err) {
+      toast.setToastData({ title: "Failed to fork text", isError: true });
+    }
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -99,30 +131,34 @@ const TextPage = () => {
   return (
     <div className="container w-[90%]  border-2 border-light-gray p-4  mb-8 bg-white rounded-2xl sm:px-2 sm:text-base">
       <AddCardModal collectionId={text?.defaultCollectionId} />
-
+      <ShareModal sharing="texts" />
       <TranslationWindow
         setIsAddCardModalOpen={setIsAddCardModalOpen}
         setDefaultValues={setDefaultValues}
         setContent={setContent}
+        isSameUser={isSameUser}
         selectionData={selectionData}
       />
-      <div className="flex items-center justify-between gap-4 px-4 my-4 sm:flex-col">
-        <h1 className="text-4xl font-bold ">{text?.title}</h1>
+      <div className="flex gap-4 justify-between items-center px-4 my-4">
+        <h1 className="text-3xl font-bold sm:text-xl">{text?.title}</h1>
         <div className="flex gap-2">
-          <Link to={`/texts/edit/${id}`} className="flex items-center gap-2">
-            <Button variant="primary" className="flex items-center gap-2">
-              <FaEdit className="text-lg cursor-pointer" /> Edit
-            </Button>
-          </Link>
-          <Button
-            variant="danger"
-            onClick={() => {
-              deleteTextHandler();
+          <ActionsDropdown
+            itemId={text?._id as string}
+            shareHandler={shareHandler}
+            forkData={
+              isSameUser
+                ? undefined
+                : {
+                    forking: "Add to your texts",
+                    handler: forkHandler,
+                  }
+            }
+            isSameUser={isSameUser}
+            editHandler={() => {
+              navigate("/texts/edit/${id}");
             }}
-            className="flex items-center gap-2"
-          >
-            <FaTrashCan className="text-lg text-white cursor-pointer" /> Delete
-          </Button>
+            deleteHandler={deleteTextHandler}
+          />
         </div>
       </div>
 

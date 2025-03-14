@@ -37,23 +37,39 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
 
     for (const item of clipboardItems) {
       if (item.type.startsWith("image")) {
+        event.preventDefault(); // Prevent default paste behavior
         const file = item.getAsFile();
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = () => {
           const imageUrl = reader.result as string;
-          editor.chain().focus().setImage({ src: imageUrl }).run();
+          // Ensure editor maintains focus after inserting the image
+          editor.chain().focus().setImage({ src: imageUrl }).focus().run();
         };
         reader.readAsDataURL(file);
+        return; // Exit after handling the first image
       }
     }
   };
 
   // Attach event listener for pasting images
   useEffect(() => {
-    document.addEventListener("paste", handlePasteImage);
-    return () => document.removeEventListener("paste", handlePasteImage);
+    if (!editor || !editor.view || !editor.view.dom) return;
+
+    // Attach to the editor DOM element instead of document
+    const editorElement = editor.view.dom;
+    editorElement.addEventListener("paste", handlePasteImage);
+
+    // Ensure the editor is focused when clicking anywhere in the editor area
+    editorElement.addEventListener("click", () => {
+      editor.commands.focus();
+    });
+
+    return () => {
+      editorElement.removeEventListener("paste", handlePasteImage);
+      editorElement.removeEventListener("click", () => {});
+    };
   }, [editor]);
 
   const buttonClass = (isActive: boolean) =>
@@ -64,7 +80,7 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
     }`;
 
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-gray-100 border-b shadow-sm rounded-t-md">
+    <div className="flex flex-wrap gap-2 p-3 bg-gray-100 rounded-t-md border-b shadow-sm editor-menu">
       <button
         style={{ perspective: "1px" }}
         type="button"
@@ -203,7 +219,7 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
           setColor(e.target.value);
           editor.chain().focus().setColor(e.target.value).run();
         }}
-        className="border cursor-pointer w-7 h-7"
+        className="w-7 h-7 border cursor-pointer"
       />
       <datalist id="presetColors">
         <option>#4287f5</option>
@@ -221,7 +237,7 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
 
 export default ({ editor = null }: { editor: Editor | null }) => {
   return (
-    <div className="overflow-hidden border rounded-md shadow-md tiptap-editor ">
+    <div className="overflow-hidden rounded-md border shadow-md tiptap-editor">
       <MenuBar editor={editor} />
       <EditorContent
         editor={editor}

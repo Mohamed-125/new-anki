@@ -15,6 +15,7 @@ import { root } from "postcss";
 import container from "quill/blots/container";
 import { twMerge } from "tailwind-merge";
 import { createPortal } from "react-dom";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 const TranslationWindow = ({
   selectionData,
@@ -22,6 +23,7 @@ const TranslationWindow = ({
   setDefaultValues,
   setContent,
   text = false,
+  isSameUser,
 }: {
   selectionData: {
     text: string;
@@ -30,6 +32,7 @@ const TranslationWindow = ({
   setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setDefaultValues: any;
   setContent?: React.Dispatch<React.SetStateAction<string>>;
+  isSameUser: boolean;
 }) => {
   // const parent =
   //   selectionData?.ele?.parentElement?.parentElement?.parentElement;
@@ -62,7 +65,7 @@ const TranslationWindow = ({
 
   const calculatePositionInText = useMemo(() => {
     const textDiv = document.querySelector(".text-div")!;
-    if (!textDiv) return;
+    const subtitlesDiv = document.querySelector(".subtitles-div");
     const select = window.getSelection();
 
     const selection = window.getSelection();
@@ -80,10 +83,15 @@ const TranslationWindow = ({
 
     const rect = range?.getClientRects()[range?.getClientRects().length - 1];
     const windowWidth = window.innerWidth;
+
     if (!translationContainer) return;
+
     if (isTranslationBoxOpen) {
+      console.log(textDiv?.clientWidth || subtitlesDiv?.clientWidth);
       translationContainer.style.width = `80%`;
-      translationContainer.style.maxWidth = `${textDiv.clientWidth}px`;
+      if (textDiv) {
+        // translationContainer.style.maxWidth = `${textDiv?.clientWidth}px`;
+      }
     } else {
       translationContainer.style.width = `fit-content`;
     }
@@ -95,16 +103,22 @@ const TranslationWindow = ({
       const calculateLeft = () => {
         left = `${rect?.left + rect.width}px`;
         if (window.innerWidth < 400) {
-          left = `${20}px`;
-          translationContainer.style.transform = `translate(0px)`;
+          if (isTranslationBoxOpen) {
+            left = `${20}px`;
+            translationContainer.style.transform = `translate(0px)`;
+          } else {
+            translationContainer.style.transform = `translate(-50%)`;
+          }
         } else {
-          if (rect.left / windowWidth > 0.5) {
+          if (rect.right / windowWidth > 0.5) {
             if (isTranslationBoxOpen) {
               translationContainer.style.transform = `translate(-${translationContainer.scrollWidth}px)`;
             } else {
               translationContainer.style.transform = `translate(-50%)`;
             }
           } else {
+            console.log("ran");
+
             if (isTranslationBoxOpen) {
               translationContainer.style.transform = `translate(0px)`;
             } else {
@@ -132,7 +146,6 @@ const TranslationWindow = ({
     const captionsDiv = document.getElementById("captions-div")!;
 
     if (!captionsDiv) return;
-    console.log("caculate text in video");
     const select = window.getSelection();
 
     const selection = window.getSelection();
@@ -172,7 +185,7 @@ const TranslationWindow = ({
           if (
             (rect.left - captionsDivClientRect.left) /
               captionsDivClientRect.width >
-            0.4
+            0.5
           ) {
             if (isTranslationBoxOpen) {
               translationContainer.style.transform = `translate(-${translationContainer.scrollWidth}px)`;
@@ -213,7 +226,7 @@ const TranslationWindow = ({
     <div
       id="translationContainer"
       className={twMerge(
-        "absolute z-50   opacity-0   w-[80%]",
+        "absolute z-50   opacity-0  max-w-[270px]  ",
         selectionData.text && "opacity-100  "
       )}
       style={{
@@ -332,14 +345,11 @@ const TranslationWindow = ({
             disabled={isTranslationLoading}
             onClick={() => {
               setIsAddCardModalOpen(true);
-
               setDefaultValues({
                 front: selectionData.text,
                 back: translatedText,
                 content: "",
               });
-
-              // setContent?.("");
             }}
           >
             Save to your cards
@@ -347,10 +357,6 @@ const TranslationWindow = ({
         </div>
       )}
     </div>,
-
-    //   document.body
-    //   // document.getElementById("trnaslationPortal")!
-    // ),
   ];
 };
 

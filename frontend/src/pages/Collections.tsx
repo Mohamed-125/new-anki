@@ -10,6 +10,7 @@ import MoveCollectionModal from "@/components/MoveCollectionModal";
 import useModalStates from "@/hooks/useModalsStates";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
+import ShareModal from "@/components/ShareModal";
 
 const Collections = () => {
   const { setIsCollectionModalOpen, selectedItems } = useModalStates();
@@ -26,6 +27,7 @@ const Collections = () => {
     <div className="container px-6 py-8 mx-auto max-w-7xl">
       <MoveCollectionModal />
       <AddNewCollectionModal />
+      <ShareModal />
       {selectedItems.length > 0 && (
         <SelectedItemsController isItemsCollections={true} />
       )}

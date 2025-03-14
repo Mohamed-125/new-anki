@@ -68,8 +68,8 @@ CollectionSchema.virtual("subCollections", {
           name: 1,
           public: 1,
           parentCollectionId: 1,
-        }
-      }
+        },
+      },
     },
     projection: {
       _id: 1,
@@ -97,35 +97,24 @@ CollectionSchema.virtual("parentCollection", {
   },
 });
 
-CollectionSchema.virtual("collectionCards", {
-  ref: "Card",
-  foreignField: "collectionId",
-  localField: "_id",
-  options: {
-    sort: { createdAt: -1 },
-    lean: true,
-    projection: { _id: 1 },
-  },
-});
+// CollectionSchema.pre(["save", "findByIdAndUpdate"], async function (next) {
+//   const collectionModel = this.constructor;
+//   const parentCollectionId = this?.parentCollectionId;
 
-CollectionSchema.pre(["save", "findByIdAndUpdate"], async function (next) {
-  const collectionModel = this.constructor;
-  const parentCollectionId = this?.parentCollectionId;
+//   if (parentCollectionId) {
+//     try {
+//       const editedParentCollection = await collectionModel.findByIdAndUpdate(
+//         { _id: parentCollectionId },
+//         { childCollectionsIds: { $push: this._id } },
+//         {
+//           new: true,
+//         }
+//       );
+//     } catch (err) {}
+//   }
 
-  if (parentCollectionId) {
-    try {
-      const editedParentCollection = await collectionModel.findByIdAndUpdate(
-        { _id: parentCollectionId },
-        { childCollectionsIds: { $push: this._id } },
-        {
-          new: true,
-        }
-      );
-    } catch (err) {}
-  }
-
-  next();
-});
+//   next();
+// });
 
 CollectionSchema.pre(["findOneAndDelete", "deleteMany"], async function (next) {
   const query = this.getQuery(); // Get the query used for deletion

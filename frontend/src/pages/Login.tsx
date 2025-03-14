@@ -60,7 +60,7 @@ const Login = () => {
         </Form.Field>
       </Form.FieldsContainer>
 
-      <Form.Message center={true} className="text-blue-500">
+      <Form.Message center={true} className="text-primary">
         <Link to={"/forgot-password"}> Forgot password ?</Link>{" "}
       </Form.Message>
 
@@ -68,7 +68,7 @@ const Login = () => {
       <Form.Message center={true}>
         <Link to={"/register"}>
           You don't have an account?{" "}
-          <span className="text-blue-500">Create one Now!</span>
+          <span className="text-primary">Create one Now!</span>
         </Link>
       </Form.Message>
     </Form>

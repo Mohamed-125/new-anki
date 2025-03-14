@@ -1,7 +1,4 @@
-const { default: axios } = require("axios");
 const VideoModel = require("../models/VideoModel");
-const { YoutubeTranscript } = require("youtube-transcript");
-const getSubtitles = require("youtube-captions-scraper").getSubtitles;
 
 // const { Client } = require("youtubei");
 
@@ -188,7 +185,7 @@ module.exports.createVideo = async (req, res, next) => {
   }
 };
 module.exports.getUserVideos = async (req, res, next) => {
-  const { page: pageNumber, searchQuery } = req.query;
+  const { page: pageNumber, searchQuery, playlistId } = req.query;
   const limit = 5;
   let page = +pageNumber || 0;
 
@@ -196,6 +193,9 @@ module.exports.getUserVideos = async (req, res, next) => {
     const query = { userId: req.user._id };
     if (searchQuery) {
       query.title = { $regex: searchQuery, $options: "i" };
+    }
+    if (playlistId) {
+      query.playlistId = playlistId;
     }
     const videosCount = await VideoModel.countDocuments(query);
 
@@ -277,5 +277,29 @@ module.exports.batchMove = async (req, res) => {
     res.status(200).send({ message: "videos moved successfully" });
   } catch (error) {
     res.status(500).send({ error: "Error moveing videos" });
+  }
+};
+module.exports.forkVideo = async (req, res) => {
+  try {
+    const originalVideo = await VideoModel.findOne({ _id: req.params.id });
+    if (!originalVideo) {
+      return res.status(404).send("Video not found");
+    }
+
+    const forkedVideo = await VideoModel.create({
+      userId: req.user?._id,
+      title: originalVideo.title,
+      thumbnail: originalVideo.thumbnail,
+      videoId: originalVideo.videoId,
+      defaultCaptionData: {
+        transcript: originalVideo.defaultCaptionData.transcript,
+        translatedTranscript:
+          originalVideo.defaultCaptionData.translatedTranscript,
+      },
+    });
+
+    res.status(200).send(forkedVideo);
+  } catch (err) {
+    res.status(400).send(err);
   }
 };

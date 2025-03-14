@@ -5,6 +5,7 @@ import ActionsDropdown from "../ActionsDropdown";
 import SelectCheckBox from "../SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
 import { linkSync } from "fs";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 const ItemCard = ({
   moveHandler,
@@ -15,6 +16,9 @@ const ItemCard = ({
   Icon,
   subText,
   isNotes,
+  shareHandler,
+  isSameUser = true,
+  select = true,
 }: {
   moveHandler?: any;
   editHandler?: any;
@@ -24,9 +28,11 @@ const ItemCard = ({
   subText?: string;
   Icon: any;
   isNotes?: boolean;
+  shareHandler?: () => void;
+  isSameUser?: boolean;
+  select?: boolean;
 }) => {
   const { selectedItems, setSelectedItems } = useModalsStates();
-
   const linkContent = (
     <div className="flex flex-1 gap-4 items-center">
       <div
@@ -63,13 +69,16 @@ const ItemCard = ({
         )}
         <div onClick={(e) => e.stopPropagation()}>
           {id &&
+            isSameUser &&
             (!selectedItems.length ? (
               <ActionsDropdown
                 moveHandler={moveHandler}
                 editHandler={editHandler}
                 deleteHandler={deleteHandler}
+                shareHandler={shareHandler}
                 itemId={id}
-                setSelectedItems={setSelectedItems}
+                isSameUser={isSameUser}
+                setSelectedItems={select ? setSelectedItems : undefined}
               />
             ) : (
               <SelectCheckBox

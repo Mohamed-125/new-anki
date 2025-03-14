@@ -9,7 +9,6 @@ import Search from "../components/Search";
 import { Link } from "react-router-dom";
 import Actions from "../components/ActionsDropdown";
 import SelectedItemsController from "../components/SelectedItemsController";
-import { VideoType } from "./Playlist";
 import { MdFeaturedPlayList, MdOutlinePlaylistPlay } from "react-icons/md";
 import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
@@ -17,6 +16,7 @@ import useGetPlaylists from "@/hooks/useGetPlaylists";
 import useDebounce from "@/hooks/useDebounce";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll";
 import useToasts from "@/hooks/useToasts";
+import { VideoType } from "@/hooks/useGetVideos";
 
 type PlaylistType = {
   name: string;
@@ -175,7 +175,7 @@ const Playlists = () => {
       <>
         <Search query={query} setQuery={setQuery} searchingFor="playlists" />
         <h6 className="mt-4 text-lg font-bold text-gray-400">
-          Playlists in collection : {playlistsCount}
+          Playlists : {playlistsCount}
         </h6>
         <Button
           className="py-4 my-6 mr-0 ml-auto text-white bg-blue-600 border-none"

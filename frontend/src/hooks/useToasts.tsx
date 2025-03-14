@@ -15,24 +15,22 @@ const useToasts = () => {
     type: "success" | "error" | "info" | "promise" = "success",
     duration: number = 2500
   ) => {
-    function setToastData(data: { title?: string; isCompleted?: boolean }) {
-      setToasts((pre) => {
-        return pre.map((currentToast) => {
-          //@ts-ignore
-          if (currentToast.id === (this as ToastType).id) {
-            return { ...currentToast, ...data };
-          }
-          return currentToast;
-        });
-      });
-    }
-
     const toast: ToastType = {
       title,
       duration,
       type: type,
       id: Math.random(),
-      setToastData,
+      setToastData: function (data: { title?: string; isCompleted?: boolean }) {
+        console.log("this", toast.id);
+        setToasts((pre) => {
+          return pre.map(function (currentToast) {
+            if (currentToast.id === toast.id) {
+              return { ...currentToast, ...data };
+            }
+            return currentToast;
+          });
+        });
+      },
     };
 
     setToasts((pre: ToastType[]) => [...pre, toast]);

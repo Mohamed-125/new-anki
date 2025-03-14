@@ -27,6 +27,8 @@ export default Toasts;
 const Toast = ({ toast }: { toast: ToastType }) => {
   const { deleteToast, setToasts } = useToasts();
   useEffect(() => {
+    if ((toast.type === "promise" && !toast.isCompleted) || !toast.isError)
+      return;
     const timeout = setTimeout(() => {
       setToasts((pre) =>
         pre.filter((currentToast) => currentToast.id !== toast.id)
@@ -36,7 +38,7 @@ const Toast = ({ toast }: { toast: ToastType }) => {
     return () => {
       clearTimeout(timeout);
     };
-  }, []);
+  }, [toast]);
 
   return (
     <motion.div
@@ -49,12 +51,14 @@ const Toast = ({ toast }: { toast: ToastType }) => {
         deleteToast(toast.id);
       }}
       className={twMerge(
-        "flex items-center relative h-[55px]  w-full gap-3 px-4 py-3 bg-white rounded-lg shadow-lg cursor-pointer ",
+        "flex items-center relative h-[55px]  w-full gap-3 px-4 py-3 bg-white rounded-lg shadow-lg border  cursor-pointer ",
         toast.type === "error"
           ? "border-red-500"
           : toast.type === "success"
           ? "border-green-500"
-          : "border-blue-500"
+          : toast.type === "promise"
+          ? "border-gray-200"
+          : "border-primary"
       )}
     >
       {toast.type === "error" ? (
@@ -64,7 +68,7 @@ const Toast = ({ toast }: { toast: ToastType }) => {
       ) : toast.type === "promise" ? (
         <PromiseToSuccess toast={toast} />
       ) : (
-        <FaCircleInfo className="text-blue-500 size-7" />
+        <FaCircleInfo className="text-priborder-primary size-7" />
       )}
       <p className="text-sm font-medium text-gray-700 grow">{toast.title}</p>
       <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
@@ -132,5 +136,5 @@ const PromiseToSuccess = ({ toast }: { toast: ToastType }) => {
     return <AnimatedError />;
   }
 
-  return <div className="!static  ml-[2px]   loader bg-primary"></div>;
+  return <div className="!static  ml-[2px]  loader "></div>;
 };

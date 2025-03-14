@@ -1,9 +1,9 @@
 import React, {
   useRef,
   useEffect,
-  ReactNode,
   NamedExoticComponent,
   ComponentType,
+  ReactNode,
 } from "react";
 import { twMerge } from "tailwind-merge";
 import Button from "./Button";
@@ -90,7 +90,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
           {loading ? (
             <div className="relative">
               <div className="grid absolute inset-0 z-50 place-items-center w-full h-full bg-white">
-                <div className="w-12 h-12 rounded-full border-4 border-blue-200 animate-spin border-t-blue-500"></div>
+                <div className="w-12 h-12 rounded-full border-4 border-blue-200 animate-spin border-t-primary"></div>
               </div>
               <div
                 id={id}
@@ -135,7 +135,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
 
 // Define the Header component
 const Header: ComponentType<{
-  title: string;
+  title: string | ReactNode;
   children?: ReactNode;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   openCollectionModal?: () => void;

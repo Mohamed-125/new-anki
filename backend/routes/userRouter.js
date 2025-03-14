@@ -13,9 +13,9 @@ router
   .post("/register", registerUserController)
   .post("/login", loginUserController)
   .post("/logout", logUserOutController)
+  .get("")
   .get("/me", Authorization, async (req, res) => {
     const user = req.user;
-    console.log("User:", user);
     return res.status(200).send(user);
   });
 

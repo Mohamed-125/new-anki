@@ -5,13 +5,24 @@ import { useMemo } from "react";
 export type VideoType = {
   _id: string;
   title: string;
-  thumbnail: string;
   url: string;
-  defaultCaptionData?: {
+  availableCaptions: string[];
+  defaultCaptionData: {
     name: string;
-    transcript: any[];
-    translatedTranscript: any[];
+    transcript?: {
+      dur: string;
+      start: string;
+      text: string;
+    };
+    translatedTranscript?: {
+      dur: string;
+      start: string;
+      text: string;
+    };
   };
+  playlistId: string;
+  thumbnail: string;
+  userId: string;
 };
 
 type GetVideosResponse = {
@@ -22,12 +33,18 @@ type GetVideosResponse = {
 
 const useGetVideos = ({
   enabled = true,
+  playlistId,
   query,
 }: {
   enabled?: boolean;
   query?: string;
+  playlistId?: string;
 } = {}) => {
-  let queryKey = query ? ["videos", query] : ["videos"];
+  let queryKey = query
+    ? ["videos", query]
+    : playlistId
+    ? ["videos", playlistId]
+    : ["videos"];
 
   const {
     data,
@@ -44,6 +61,7 @@ const useGetVideos = ({
     queryFn: async ({ signal, pageParam }) => {
       let url = `video/?page=${pageParam}`;
       if (query) url += `&searchQuery=${query}`;
+      if (playlistId) url += `&playlistId=${playlistId}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetVideosResponse;

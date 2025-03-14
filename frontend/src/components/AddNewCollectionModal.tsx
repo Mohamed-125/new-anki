@@ -161,7 +161,7 @@ const AddNewCollectionModal = ({}: {}) => {
               defaultValue={defaultValues?.collectionName}
               type="text"
               name="collection_name"
-              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter collection name"
               required
             />
@@ -173,7 +173,7 @@ const AddNewCollectionModal = ({}: {}) => {
                 name="collection_public"
                 defaultChecked={defaultValues?.isCollectionPublic}
                 type="checkbox"
-                className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-primary"
               />
               <label
                 htmlFor="collection_public"

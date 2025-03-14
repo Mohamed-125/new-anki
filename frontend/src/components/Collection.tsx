@@ -10,6 +10,7 @@ import SelectCheckBox from "./SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import ItemCard from "./ui/ItemCard";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type CollectionProps = {
   collection: CollectionType;
@@ -24,6 +25,9 @@ const Collection = ({ collection }: CollectionProps) => {
     setIsCollectionModalOpen,
     setIsMoveToCollectionOpen,
     setToMoveCollection,
+    setIsShareModalOpen,
+    setShareItemId,
+    setShareItemName,
   } = useModalsStates();
 
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
@@ -50,14 +54,25 @@ const Collection = ({ collection }: CollectionProps) => {
     setToMoveCollection(collection);
   };
 
+  const shareHandler = () => {
+    setIsShareModalOpen(true);
+    setShareItemId(collection._id);
+    setShareItemName(collection.name);
+  };
+
+  const { user } = useGetCurrentUser();
+  const isSameUser = user?._id === collection.userId;
+
   return (
     <ItemCard
+      isSameUser={isSameUser}
       id={id}
       Icon={<Folder />}
       name={collection.name}
       editHandler={editHandler}
       deleteHandler={deleteHandler}
       moveHandler={moveHandler}
+      shareHandler={shareHandler}
     />
   );
 };

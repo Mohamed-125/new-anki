@@ -34,7 +34,7 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
         return (
           <Link
             key={link.name}
-            className="hover:text-blue-500"
+            className="hover:text-primary"
             to={link.path}
             onClick={() => {
               setIsNavOpen((pre) => !pre);
@@ -99,9 +99,11 @@ const ProfileDropdown = ({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="ml-1 text-2xl">
-        <div className="flex items-center justify-center font-bold text-white rounded-full w-11 h-11 bg-sky-900">
-          {user?.email?.[0]}
-        </div>
+        <Link to={"/profile/" + user?._id} className="cursor-pointer">
+          <div className="flex justify-center items-center w-11 h-11 font-bold text-white bg-sky-900 rounded-full">
+            {user?.email?.[0]}
+          </div>
+        </Link>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="px-4 py-5 mt-6 font-semibold bg-popover">
         <strong>{user?.email}</strong>

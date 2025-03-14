@@ -25,6 +25,8 @@ import StudyCards from "./pages/StudyCards.tsx";
 import Congrats from "./pages/Congrats.tsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import BreadCramps from "./components/BreadCramps.tsx";
+import Profile from "./pages/Profile.tsx";
+import AddNewNote from "./pages/AddNewNote.tsx";
 
 function App() {
   const links = [
@@ -92,7 +94,7 @@ function App() {
             }
           />
           <Route
-            path="/video/:id"
+            path="/videos/:id"
             element={
               <ProtectedRoute>
                 <Video />
@@ -128,13 +130,31 @@ function App() {
           />
 
           <Route
-            path="/note/:id"
+            path="/notes/:id"
             element={
               <ProtectedRoute>
                 <Note />
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/notes/new"
+            element={
+              <ProtectedRoute>
+                <AddNewNote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notes/edit/:id"
+            element={
+              <ProtectedRoute>
+                <AddNewNote />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/texts"
             element={
@@ -204,6 +224,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/profile/:id" element={<Profile />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

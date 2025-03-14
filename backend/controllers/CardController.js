@@ -32,7 +32,7 @@ module.exports.getUserCards = async (req, res, next) => {
     study,
   } = req.query;
 
-  const query = { userId: req.user?._id };
+  const query = {};
   const options = {};
 
   if (searchQuery) {
@@ -44,6 +44,8 @@ module.exports.getUserCards = async (req, res, next) => {
 
   if (collectionId) {
     query.collectionId = collectionId;
+  } else {
+    query.userId = req.user?._id;
   }
   if (videoId) {
     query.videoId = videoId;
@@ -56,7 +58,6 @@ module.exports.getUserCards = async (req, res, next) => {
   try {
     const cardsCount = await CardModel.countDocuments(query);
 
-    console.log(query);
     const skipNumber = page * limit;
     const remaining = Math.max(0, cardsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
@@ -67,7 +68,7 @@ module.exports.getUserCards = async (req, res, next) => {
 
     res.status(200).send({ cards, nextPage, cardsCount: cardsCount });
   } catch (err) {
-    console.log(err);
+    console.log("get cards error :", err);
     res.status(400).send(err);
   }
 };
@@ -84,7 +85,6 @@ module.exports.getCard = async (req, res, next) => {
 module.exports.updateCard = async (req, res, next) => {
   const { front, back, content, collectionId, easeFactor } = req.body;
 
-  console.log(collectionId);
   try {
     const updatedCard = await CardModel.findByIdAndUpdate(
       { _id: req.params.id },

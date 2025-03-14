@@ -21,31 +21,54 @@ module.exports.createCollection = async (req, res, next) => {
   }
 };
 
-module.exports.forkCollection = async (req, res, next) => {
-  const collectionId = req.params.id;
+const forkCollection = async (originalCollectionId, userId) => {
+  const originalCollection = await Collection.findById(originalCollectionId)
+    .populate("subCollections")
+    .exec();
 
-  if (!collectionId)
-    return res
-      .status(400)
-      .send("you have to send the collection id to fork it");
-
-  try {
-    const originalCollection = await CollectionModel.findOne({
-      _id: collectionId,
-    });
-    const clonedData = originalCollection.toObject();
-
-    clonedData.userId = req.user?._id;
-    clonedData.public = false;
-    delete clonedData._id;
-
-    const newCollection = await CollectionModel.create(clonedData);
-
-    res.status(200).send({ newCollection, originalCollection });
-  } catch (err) {
-    res.status(400).send(err);
+  if (!originalCollection) {
+    throw new Error("Collection not found");
   }
+
+  // Create a new collection for the user
+  const newCollection = new Collection({
+    name: originalCollection.name,
+    slug: originalCollection.slug,
+    public: false, // Forked collections are private by default
+    userId: userId,
+    forkedFrom: originalCollection._id, // Track the original collection
+  });
+
+  await newCollection.save();
+
+  // Copy all cards from the original collection to the new collection
+  const originalCards = await Card.find({
+    collectionId: originalCollection._id,
+  });
+  for (const card of originalCards) {
+    const newCard = new Card({
+      ...card.toObject(), // Copy all fields
+      _id: new mongoose.Types.ObjectId(), // Generate a new ID
+      userId: userId, // Assign to the new user
+      collectionId: newCollection._id, // Link to the new collection
+    });
+    await newCard.save();
+  }
+
+  // Recursively fork child collections
+  for (const childCollectionId of originalCollection.subCollections) {
+    const forkedChildCollection = await forkCollection(
+      childCollectionId,
+      userId
+    );
+  }
+
+  await newCollection.save();
+
+  return newCollection;
 };
+
+module.exports.forkCollection = forkCollection;
 
 module.exports.getCollections = async (req, res, next) => {
   const { searchQuery, public, page = 0, all } = req.query;
@@ -92,7 +115,7 @@ module.exports.getCollections = async (req, res, next) => {
       collectionsCount,
     });
   } catch (err) {
-    console.log("err", err);
+    console.log("get collections err:", err);
     res.status(400).send(err);
   }
 };
@@ -116,7 +139,7 @@ module.exports.getCollection = async (req, res, next) => {
 
     res.status(200).send(collection);
   } catch (err) {
-    console.log("", err);
+    console.log("collection err : ", err);
     res.status(400).send(err);
   }
 };

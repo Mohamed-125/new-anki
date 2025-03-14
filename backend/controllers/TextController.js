@@ -71,3 +71,22 @@ module.exports.batchDelete = async (req, res) => {
     res.status(500).send({ error: "Error deleting texts" });
   }
 };
+
+module.exports.forkText = async (req, res) => {
+  try {
+    const originalText = await TextModel.findOne({ _id: req.params.id });
+    if (!originalText) {
+      return res.status(404).send("Text not found");
+    }
+
+    const forkedText = await TextModel.create({
+      userId: req.user?._id,
+      title: originalText.title,
+      content: originalText.content,
+    });
+
+    res.status(200).send(forkedText);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+};
