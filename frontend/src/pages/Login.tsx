@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../components/Button";
 import { useForm } from "react-hook-form";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+
 const Login = () => {
   const {
     register,
@@ -37,41 +39,74 @@ const Login = () => {
   };
 
   return (
-    <Form onSubmit={handleSubmit((values) => onSubmit(values))}>
-      <Form.Title> Login </Form.Title>
-      <Form.FieldsContainer gap={12}>
-        <Form.Field>
-          <Form.Label>Email</Form.Label>
-          <Form.Input
-            placeholder="JohnDeo@gmail.com"
-            type="text"
-            {...register("email")}
-          />
-          <Form.Message error={true}>{errors.email?.message}</Form.Message>
-        </Form.Field>
-        <Form.Field>
-          <Form.Label>Password</Form.Label>
-          <Form.Input
-            placeholder="Enter your password"
-            type="password"
-            {...register("password")}
-          />
-          <Form.Message error={true}>{errors.password?.message}</Form.Message>
-        </Form.Field>
-      </Form.FieldsContainer>
+    <div className="flex flex-grow justify-center items-center">
+      <Form
+        onSubmit={handleSubmit((values) => onSubmit(values))}
+        className="p-8 w-full max-w-md bg-white rounded-xl shadow-lg"
+      >
+        <Form.Title className="mb-6 text-2xl font-bold text-center">
+          {" "}
+          Login{" "}
+        </Form.Title>
+        <Form.FieldsContainer gap={12} className="space-y-4">
+          <Form.Field>
+            <Form.Label className="font-medium">Email</Form.Label>
+            <Form.Input
+              placeholder="JohnDeo@gmail.com"
+              type="text"
+              className="px-4 py-2 w-full rounded-md border transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
+              {...register("email")}
+            />
+            <Form.Message error={true} className="text-sm">
+              {errors.email?.message}
+            </Form.Message>
+          </Form.Field>
+          <Form.Field>
+            <Form.Label className="font-medium">Password</Form.Label>
+            <Form.Input
+              placeholder="Enter your password"
+              type="password"
+              className="px-4 py-2 w-full rounded-md border transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
+              {...register("password")}
+            />
+            <Form.Message error={true} className="text-sm">
+              {errors.password?.message}
+            </Form.Message>
+          </Form.Field>
+        </Form.FieldsContainer>
 
-      <Form.Message center={true} className="text-primary">
-        <Link to={"/forgot-password"}> Forgot password ?</Link>{" "}
-      </Form.Message>
+        <Form.Message
+          center={true}
+          className="mt-4 text-primary hover:underline"
+        >
+          <Link to={"/forgot-password"}> Forgot password ?</Link>{" "}
+        </Form.Message>
 
-      <Button size="parent">Submit</Button>
-      <Form.Message center={true}>
-        <Link to={"/register"}>
-          You don't have an account?{" "}
-          <span className="text-primary">Create one Now!</span>
-        </Link>
-      </Form.Message>
-    </Form>
+        <Button
+          size="parent"
+          className="py-2 mt-6 w-full text-white rounded-md transition-colors bg-primary hover:bg-primary/90"
+        >
+          Submit
+        </Button>
+        <div className="relative my-4">
+          <div className="flex absolute inset-0 items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="flex relative justify-center text-sm">
+            <span className="px-2 text-gray-500 bg-white">Or</span>
+          </div>
+        </div>
+        <GoogleAuthButton />
+        <Form.Message center={true} className="mt-4">
+          <Link to={"/register"}>
+            You don't have an account?{" "}
+            <span className="text-primary hover:underline">
+              Create one Now!
+            </span>
+          </Link>
+        </Form.Message>
+      </Form>
+    </div>
   );
 };
 

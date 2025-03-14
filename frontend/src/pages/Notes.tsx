@@ -13,6 +13,7 @@ import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";
 import { useNavigate } from "react-router-dom";
 import ShareModal from "@/components/ShareModal";
+import useModalsStates from "@/hooks/useModalsStates";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 const Notes = () => {
@@ -47,9 +48,12 @@ const Notes = () => {
   };
 
   useInfiniteScroll(fetchNextPage, hasNextPage);
+  const { setIsShareModalOpen, setShareItemId, setShareItemName } =
+    useModalsStates();
 
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === notes?.[0]?.userId;
+
   return (
     <div className="container">
       <h1 className="my-6 text-5xl font-bold text-black">Notes</h1>
@@ -70,22 +74,31 @@ const Notes = () => {
         <SelectedItemsController isItemsNotes={true} />
 
         <div className="grid gap-4 grid-container">
-          {notes?.map((note) => (
-            <div
-              key={note._id}
-              onClick={() => navigate(`/notes/edit/${note._id}`)}
-            >
-              <ItemCard
-                isNotes={true}
-                select={false}
-                isSameUser={isSameUser}
-                id={note._id}
-                Icon={<StickyNote />}
-                name={note.title}
-                deleteHandler={() => deleteNoteHandler(note._id)}
-              />
-            </div>
-          ))}
+          {notes?.map((note) => {
+            const shareHandler = () => {
+              setIsShareModalOpen(true);
+              setShareItemId(note._id);
+              setShareItemName(note.title);
+            };
+
+            return (
+              <div
+                key={note._id}
+                onClick={() => navigate(`/notes/edit/${note._id}`)}
+              >
+                <ItemCard
+                  isNotes={true}
+                  select={false}
+                  isSameUser={isSameUser}
+                  shareHandler={shareHandler}
+                  id={note._id}
+                  Icon={<StickyNote />}
+                  name={note.title}
+                  deleteHandler={deleteNoteHandler}
+                />
+              </div>
+            );
+          })}
 
           {(isInitialLoading || isFetchingNextPage) && <CollectionSkeleton />}
         </div>

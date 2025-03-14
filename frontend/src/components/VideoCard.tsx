@@ -8,11 +8,13 @@ import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
 import useToasts from "@/hooks/useToasts";
-import useGetCurrentUser from "@/hooks/useGetCurrentUser";
-import { VideoType } from "@/hooks/useGetVideos";
 
 type VideoCardProps = {
-  video: VideoType;
+  video: {
+    _id: string;
+    thumbnail: string;
+    title: string;
+  };
   sideByside?: boolean;
   moveVideoHandler: any;
 };
@@ -54,9 +56,6 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
     setShareItemName(video.title);
   };
 
-  const { user } = useGetCurrentUser();
-  const isSameUser = user?._id === video?.userId;
-
   return (
     <div
       id={id}
@@ -66,7 +65,7 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       )}
     >
       <Link
-        to={"/videos/" + video._id}
+        to={"/video/" + video._id}
         className={twMerge(
           "overflow-hidden cursor-pointer h-full  rounded-t-xl",
           sideByside && "min-w-[40%]"
@@ -82,11 +81,10 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       </Link>
 
       <div className="flex gap-3 justify-between px-4 mt-4 grow">
-        <Link to={"/videos/" + video._id}>{video.title}</Link>
+        <Link to={"/video/" + video._id}>{video.title}</Link>
         <div>
           {!selectedItems?.length ? (
             <ActionsDropdown
-              isSameUser={isSameUser}
               itemId={id as string}
               deleteHandler={deleteHandler}
               moveHandler={moveVideoHandler}
