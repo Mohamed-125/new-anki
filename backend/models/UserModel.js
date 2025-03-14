@@ -11,6 +11,19 @@ const UserSchema = new mongoose.Schema({
     type: String,
     require: [true, "password is require"],
   },
+  username: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  language: {
+    type: String,
+    enum: ["german", "english", "spanish", "french"],
+  },
+  proficiencyLevel: {
+    type: String,
+    enum: ["a1", "a2", "b1", "b2"],
+  },
 });
 
 UserSchema.pre("save", async function (next) {

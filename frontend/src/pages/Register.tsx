@@ -31,8 +31,11 @@ const Register = () => {
         queryClient.setQueryData(["me"], () => {
           return res.data;
         });
-        navigate("/");
-        addToast("account created succefuly", "success");
+        navigate("/user-profile");
+        addToast(
+          "Account created successfully! Please complete your profile.",
+          "success"
+        );
       })
       .catch((err) => err);
   };
@@ -49,12 +52,7 @@ const Register = () => {
         <Form.FieldsContainer gap={12} className="space-y-4">
           <Form.Field>
             <Form.Label className="font-medium">Email</Form.Label>
-            <Form.Input
-              placeholder="JohnDeo@gmail.com"
-              type="text"
-              className="px-4 py-2 w-full rounded-md border transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
-              {...register("email")}
-            />
+            <Form.Input placeholder="" type="text" {...register("email")} />
             <Form.Message error={true} className="text-sm">
               {errors.email?.message}
             </Form.Message>
@@ -62,9 +60,8 @@ const Register = () => {
           <Form.Field>
             <Form.Label className="font-medium">Password</Form.Label>
             <Form.Input
-              placeholder="Enter your password"
+              placeholder=""
               type="password"
-              className="px-4 py-2 w-full rounded-md border transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               {...register("password")}
             />
             <Form.Message error={true} className="text-sm">
@@ -96,8 +93,8 @@ const Register = () => {
         </div>
         <GoogleAuthButton />
         <Form.Message center={true} className="mt-4">
+          You already have an account?{" "}
           <Link to={"/login"}>
-            You already have an account?{" "}
             <span className="text-primary hover:underline">Login</span>
           </Link>
         </Form.Message>

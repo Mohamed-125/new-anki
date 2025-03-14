@@ -19,7 +19,10 @@ type CommonProps = {
 // Using a union type refinement for ButtonProps
 type ButtonProps = CommonProps & (ButtonTypeProps | AnchorTypeProps);
 
-const Button = (props: ButtonProps) => {
+const Button = React.forwardRef<
+  HTMLButtonElement | HTMLAnchorElement,
+  ButtonProps
+>((props, ref) => {
   const { children, className, variant, size, center, ...attributes } = props;
 
   const buttonVariants = cva(
@@ -53,6 +56,7 @@ const Button = (props: ButtonProps) => {
     const link = (props as AnchorTypeProps).link;
     return (
       <a
+        ref={ref as React.Ref<HTMLAnchorElement>}
         href={link}
         className={twMerge(
           buttonVariants({ variant, size }),
@@ -68,6 +72,7 @@ const Button = (props: ButtonProps) => {
     // Regular button
     return (
       <button
+        ref={ref as React.Ref<HTMLButtonElement>}
         className={twMerge(
           buttonVariants({ variant, size }),
           className,
@@ -79,6 +84,6 @@ const Button = (props: ButtonProps) => {
       </button>
     );
   }
-};
+});
 
 export default Button;

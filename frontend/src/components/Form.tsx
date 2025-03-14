@@ -134,7 +134,10 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
       <span className="relative">
         <Input
           ref={ref}
-          className={twMerge("focus-visible:ring-lightPrimary", className)}
+          className={cn(
+            "transition-all focus-visible:ring-lightPrimary user-select-auto [-webkit-user-select:auto] [-webkit-text-fill-color:currentcolor] [&:-webkit-autofill]:[-webkit-text-fill-color:currentcolor] [&:-webkit-autofill]:shadow-[0_0_0px_1000px_white_inset]",
+            className
+          )}
           type={isPassword ? "password" : "text"}
           {...attributes}
         />
@@ -155,8 +158,8 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="relative">
         <Input
           ref={ref}
-          className={twMerge(
-            "focus-visible:ring-lightPrimary",
+          className={cn(
+            "focus-visible:ring-lightPrimary transition-all user-select-auto [-webkit-user-select:auto] [-webkit-text-fill-color:currentcolor]",
             className,
             isLoading && "inputLoading"
           )}

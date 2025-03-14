@@ -13,12 +13,10 @@ import Search from "@/components/Search";
 import { useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";
-import ShareModal from "@/components/ShareModal";
 
 export type TextType = {
   title: string;
   content: string;
-  userId: string;
   defaultCollectionId: string | undefined;
 };
 
@@ -42,13 +40,6 @@ const MyTexts = () => {
   };
 
   const { addToast } = useToasts();
-  const {
-    setEditId,
-    setIsTextModalOpen,
-    setIsShareModalOpen,
-    setShareItemId,
-    setShareItemName,
-  } = useModalsStates();
 
   const deleteTextHandler = async (id: string) => {
     const element = document.getElementById(id)!;
@@ -69,11 +60,7 @@ const MyTexts = () => {
     return;
   };
 
-  const shareHandler = (text: TextType & { _id: string }) => {
-    setIsShareModalOpen(true);
-    setShareItemId(text._id);
-    setShareItemName(text.title);
-  };
+  const { setEditId, setIsTextModalOpen } = useModalsStates();
 
   useInfiniteScroll(fetchNextPage, hasNextPage);
 
@@ -87,7 +74,8 @@ const MyTexts = () => {
   return (
     <div className="container">
       <h1 className="my-6 text-5xl font-bold text-black">Texts</h1>
-      <ShareModal sharing="texts" />
+
+      {/* <AddNewTextModal /> */}
       <>
         <SelectedItemsController isItemsTexts={true} />
         <Search query={query} setQuery={setQuery} searchingFor="texts" />
@@ -104,13 +92,8 @@ const MyTexts = () => {
           {texts?.map((text) => (
             <ItemCard
               Icon={<Text />}
-              editHandler={() =>
-                editHandler(text as TextType & { _id: string })
-              }
+              editHandler={() => editHandler(text)}
               deleteHandler={() => deleteTextHandler(text._id)}
-              shareHandler={() =>
-                shareHandler(text as TextType & { _id: string })
-              }
               name={text.title}
               key={text._id}
               id={text._id}

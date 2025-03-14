@@ -54,7 +54,6 @@ const Login = () => {
             <Form.Input
               placeholder="JohnDeo@gmail.com"
               type="text"
-              className="px-4 py-2 w-full rounded-md border transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               {...register("email")}
             />
             <Form.Message error={true} className="text-sm">
@@ -66,7 +65,6 @@ const Login = () => {
             <Form.Input
               placeholder="Enter your password"
               type="password"
-              className="px-4 py-2 w-full rounded-md border transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               {...register("password")}
             />
             <Form.Message error={true} className="text-sm">
@@ -98,8 +96,8 @@ const Login = () => {
         </div>
         <GoogleAuthButton />
         <Form.Message center={true} className="mt-4">
+          You don't have an account?{" "}
           <Link to={"/register"}>
-            You don't have an account?{" "}
             <span className="text-primary hover:underline">
               Create one Now!
             </span>

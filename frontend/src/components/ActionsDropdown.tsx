@@ -33,7 +33,7 @@ const ActionsDropdown = ({
   isCard,
   setSelectedItems,
   forkData,
-  isSameUser,
+  isSameUser = true,
 }: ActionsDropdownProps) => {
   return (
     <DropdownMenu modal={false}>

@@ -8,26 +8,18 @@ import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
 import useToasts from "@/hooks/useToasts";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import { VideoType } from "@/hooks/useGetVideos";
 
 type VideoCardProps = {
-  video: {
-    _id: string;
-    thumbnail: string;
-    title: string;
-  };
+  video: VideoType;
   sideByside?: boolean;
   moveVideoHandler: any;
 };
 
 const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
   const id = video._id;
-  const {
-    selectedItems,
-    setSelectedItems,
-    setIsShareModalOpen,
-    setShareItemId,
-    setShareItemName,
-  } = useModalsStates();
+  const { selectedItems, setSelectedItems } = useModalsStates();
   const { addToast } = useToasts();
 
   const isSelected = selectedItems?.includes(id);
@@ -50,12 +42,9 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       });
   };
 
-  const shareHandler = () => {
-    setIsShareModalOpen(true);
-    setShareItemId(video._id);
-    setShareItemName(video.title);
-  };
+  const { user } = useGetCurrentUser();
 
+  const isSameUser = user?._id === video?.userId;
   return (
     <div
       id={id}
@@ -87,9 +76,9 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
             <ActionsDropdown
               itemId={id as string}
               deleteHandler={deleteHandler}
+              isSameUser={isSameUser}
               moveHandler={moveVideoHandler}
               setSelectedItems={setSelectedItems}
-              shareHandler={shareHandler}
             />
           ) : (
             <SelectCheckBox
