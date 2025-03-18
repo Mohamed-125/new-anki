@@ -48,8 +48,12 @@ module.exports.loginUserController = async (req, res, next) => {
 };
 
 module.exports.logUserOutController = async (req, res, next) => {
-  res.clearCookie("token");
-  res.clearCookie("refreshToken");
+  res.clearCookie("token", {
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
+  res.clearCookie("refreshToken", {
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
 
   return res.status(200).send("user logged out ");
 };
