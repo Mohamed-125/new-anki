@@ -8,28 +8,25 @@ import Form from "../components/Form";
 import Button from "../components/Button";
 import { useQueryClient } from "@tanstack/react-query";
 import useToasts from "@/hooks/useToasts";
-import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/Drawer";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/Drawer";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
-} from "@radix-ui/react-popover";
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Command,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
-} from "cmdk";
+  CommandList,
+} from "@/components/ui/Command";
 import useMediaQuery from "@/hooks/useMediaQuery";
 
-import React, { FormEvent, useContext, useState } from "react";
-import useGetPlaylists, { PlaylistType } from "@/hooks/useGetPlaylists";
-import useDebounce from "@/hooks/useDebounce";
-import StatesContext, { statesContext } from "@/context/StatesContext";
+import React, { useState } from "react";
 
-// Define the schema for username validation
+// Define the schema fذor username validation
 const usernameSchema = z.object({
   username: z
     .string()
@@ -185,6 +182,7 @@ const UserProfile = () => {
 
   const onSubmit = async (data: UserProfileFormData) => {
     try {
+      console.log({ ...data, selectedNativeLanguage });
       // Send the complete profile data to the backend
       const response = await axios.post("auth/update-profile", data);
 
@@ -261,7 +259,7 @@ const UserProfile = () => {
     },
     step4: {
       height: "auto",
-      minHeight: "490px",
+      minHeight: "320px",
     },
   };
 
@@ -317,7 +315,7 @@ const UserProfile = () => {
               {/* Active progress line */}
               <div
                 className="absolute left-0 top-1/2 z-0 h-1 transition-all duration-300 -translate-y-1/2 bg-primary"
-                style={{ width: `${(step - 1) * 50}%` }}
+                style={{ width: `${step * 35}%` }}
               />
             </div>
           </div>
@@ -327,6 +325,7 @@ const UserProfile = () => {
               <motion.div
                 key="step1"
                 custom={direction}
+                // @ts-ignore
                 variants={variants}
                 initial="enter"
                 animate="center"
@@ -356,6 +355,7 @@ const UserProfile = () => {
               <motion.div
                 key="step2"
                 custom={direction}
+                // @ts-ignore
                 variants={variants}
                 initial="enter"
                 animate="center"
@@ -402,6 +402,7 @@ const UserProfile = () => {
               <motion.div
                 key="step3"
                 custom={direction}
+                // @ts-ignore
                 variants={variants}
                 initial="enter"
                 animate="center"
@@ -445,6 +446,7 @@ const UserProfile = () => {
               <motion.div
                 key="step4"
                 custom={direction}
+                // @ts-ignore
                 variants={variants}
                 initial="enter"
                 animate="center"
@@ -454,13 +456,13 @@ const UserProfile = () => {
                   <Popover open={isSelectOpen} onOpenChange={setIsSelectOpen}>
                     <PopoverTrigger asChild>
                       <Button
-                        variant="outline"
-                        className="justify-start !w-full !max-w-none"
+                        variant="primary-outline"
+                        className="justify-start !text-black !w-full !max-w-none"
                       >
                         {selectedNativeLanguage ? (
                           <>{selectedNativeLanguage}</>
                         ) : (
-                          <>+ Set playlist</>
+                          <>+ Select translation language</>
                         )}
                       </Button>
                     </PopoverTrigger>{" "}
@@ -478,13 +480,13 @@ const UserProfile = () => {
                   <Drawer open={isSelectOpen} onOpenChange={setIsSelectOpen}>
                     <DrawerTrigger asChild>
                       <Button
-                        variant="outline"
-                        className="justify-start w-full"
+                        variant="primary-outline"
+                        className="justify-start !text-black w-full"
                       >
                         {selectedNativeLanguage ? (
                           <>{selectedNativeLanguage}</>
                         ) : (
-                          <>+ Set playlist</>
+                          <>+ Select translation language</>
                         )}
                       </Button>
                     </DrawerTrigger>
@@ -506,7 +508,7 @@ const UserProfile = () => {
             {step > 1 ? (
               <Button
                 type="button"
-                onClick={(e) => handlePrevStep(e)}
+                onClick={(e: any) => handlePrevStep(e)}
                 variant="primary-outline"
                 className="px-6 mr-2"
               >
@@ -519,7 +521,7 @@ const UserProfile = () => {
             {step < 4 ? (
               <Button
                 type="button"
-                onClick={(e) => handleNextStep(e)}
+                onClick={(e: any) => handleNextStep(e)}
                 disabled={
                   step === 1
                     ? !watchUsername || !!errors.username || !!usernameError
@@ -537,7 +539,7 @@ const UserProfile = () => {
                 onClick={() => {
                   console.log("clicked");
                 }}
-                disabled={!watchProficiencyLevel}
+                disabled={!selectedNativeLanguage}
                 className="px-6"
               >
                 Complete
@@ -550,7 +552,13 @@ const UserProfile = () => {
   );
 };
 
-function LanguagesList({ setIsSelectOpen, setSelectedNativeLanguage }: {}) {
+function LanguagesList({
+  setIsSelectOpen,
+  setSelectedNativeLanguage,
+}: {
+  setIsSelectOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedNativeLanguage: React.Dispatch<React.SetStateAction<string>>;
+}) {
   type LanguagesType = {
     value: string;
     label: string;
@@ -686,7 +694,7 @@ function LanguagesList({ setIsSelectOpen, setSelectedNativeLanguage }: {}) {
               onSelect={(value) => {
                 setSelectedNativeLanguage(
                   languages.find((priority) => priority.label === value)
-                    ?.value || null
+                    ?.label || ""
                 );
                 setIsSelectOpen(false);
               }}
@@ -694,7 +702,6 @@ function LanguagesList({ setIsSelectOpen, setSelectedNativeLanguage }: {}) {
               {language.label}
             </CommandItem>
           ))}
-          hey hey
         </CommandGroup>
       </CommandList>
     </Command>

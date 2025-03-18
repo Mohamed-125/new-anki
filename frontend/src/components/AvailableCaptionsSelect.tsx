@@ -3,7 +3,7 @@ import { availableCaption } from "./AddVideoModal";
 import getYouTubeVideoId from "../utils/getYoutubeVideoId";
 import axios from "axios";
 import { CaptionType } from "../pages/video/Video";
-import { VideoType } from "../pages/Playlist";
+import { VideoType } from "@/hooks/useGetVideos";
 
 const AvailableCaptionsSelect = ({
   availableCaptions,
@@ -53,7 +53,7 @@ const AvailableCaptionsSelect = ({
       name="video_subtitle"
       value={value}
       onChange={handleCaptionChange}
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+      className="px-4 py-3 w-full rounded-lg border border-gray-300"
     >
       {availableCaptions?.map((caption, index) => (
         <option value={caption.name} key={index}>

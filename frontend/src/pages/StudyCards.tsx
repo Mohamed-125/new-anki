@@ -133,9 +133,6 @@ const StudyCards = () => {
     if (cards) setContent(cards[currentCard].content || "");
   }, [currentCard]);
 
-  if (!isSameUser) {
-    navigate("/");
-  }
   if (isLoading) {
     return <Loading />;
   }

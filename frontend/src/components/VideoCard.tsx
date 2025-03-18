@@ -41,10 +41,16 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
         toast.setToastData({ title: "Failed to delete video", isError: true });
       });
   };
-
+  const { setIsShareModalOpen, setShareItemId, setShareItemName } =
+    useModalsStates();
   const { user } = useGetCurrentUser();
-
   const isSameUser = user?._id === video?.userId;
+  const shareHandler = () => {
+    setIsShareModalOpen(true);
+    setShareItemId(video._id);
+    setShareItemName(video.title);
+  };
+
   return (
     <div
       id={id}
@@ -54,7 +60,7 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       )}
     >
       <Link
-        to={"/video/" + video._id}
+        to={"/videos/" + video._id}
         className={twMerge(
           "overflow-hidden cursor-pointer h-full  rounded-t-xl",
           sideByside && "min-w-[40%]"
@@ -70,13 +76,14 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       </Link>
 
       <div className="flex gap-3 justify-between px-4 mt-4 grow">
-        <Link to={"/video/" + video._id}>{video.title}</Link>
+        <Link to={"/videos/" + video._id}>{video.title}</Link>
         <div>
           {!selectedItems?.length ? (
             <ActionsDropdown
               itemId={id as string}
               deleteHandler={deleteHandler}
               isSameUser={isSameUser}
+              shareHandler={shareHandler}
               moveHandler={moveVideoHandler}
               setSelectedItems={setSelectedItems}
             />
