@@ -49,9 +49,11 @@ module.exports.loginUserController = async (req, res, next) => {
 
 module.exports.logUserOutController = async (req, res, next) => {
   res.clearCookie("token", {
+    secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
   res.clearCookie("refreshToken", {
+    secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 

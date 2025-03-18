@@ -277,6 +277,7 @@ const UserProfile = () => {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [selectedNativeLanguage, setSelectedNativeLanguage] = useState("");
 
+  console.log(step);
   return (
     <div className="flex flex-grow justify-center items-center p-4">
       <Form
@@ -315,7 +316,7 @@ const UserProfile = () => {
               {/* Active progress line */}
               <div
                 className="absolute left-0 top-1/2 z-0 h-1 transition-all duration-300 -translate-y-1/2 bg-primary"
-                style={{ width: `${step * 35}%` }}
+                style={{ width: `${step * 25}%` }}
               />
             </div>
           </div>
