@@ -24,9 +24,7 @@ axios.interceptors.request.use(function (config) {
 
   // Only modify POST requests
   if (config.method === "post") {
-    console.log("lan", language);
-    // For object data (most common case)
-    config.data.language = language;
+    if (config.data?.language) config.data.language = language;
   }
   return config;
 });
