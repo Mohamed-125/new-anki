@@ -10,6 +10,7 @@ import getYouTubeVideoId from "../utils/getYoutubeVideoId";
 import AvailableCaptionsSelect from "./AvailableCaptionsSelect";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import { CaptionType } from "../pages/video/Video";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type playlistType = {
   name: string;
@@ -86,7 +87,7 @@ const AddVideoModal = ({
   });
 
   const { mutateAsync: updateVideoMutation } = useMutation({
-    mutationFn: (data: any) => axios.put(`video/${data.id}`, data),
+    mutationFn: (data: any) => axios.patch(`video/${data.id}`, data),
     onSuccess: (data) => {
       {
         queryClient.invalidateQueries({ queryKey: ["videos"] });
@@ -97,8 +98,10 @@ const AddVideoModal = ({
 
   useAddModalShortcuts(setIsVideoModalOpen);
 
+  const { selectedLearningLanguage } = useGetCurrentUser();
+
   const { data: playlists } = useQuery({
-    queryKey: ["playlists"],
+    queryKey: ["playlists", selectedLearningLanguage],
     queryFn: () =>
       axios.get("playlist").then((res) => res.data as playlistType[]),
   });
@@ -186,6 +189,7 @@ const AddVideoModal = ({
         const translatedTranscript = await batchTranslate(transcript, 20);
 
         console.log("translatedTranscript", translatedTranscript);
+
         const addVideoData = {
           url,
           selectedSubtitle,

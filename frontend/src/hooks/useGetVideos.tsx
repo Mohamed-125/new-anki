@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useMemo } from "react";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 export type VideoType = {
   _id: string;
@@ -40,11 +41,14 @@ const useGetVideos = ({
   query?: string;
   playlistId?: string;
 } = {}) => {
+  const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey = query
     ? ["videos", query]
     : playlistId
     ? ["videos", playlistId]
     : ["videos"];
+
+  queryKey.push(selectedLearningLanguage);
 
   const {
     data,
@@ -62,6 +66,8 @@ const useGetVideos = ({
       let url = `video/?page=${pageParam}`;
       if (query) url += `&searchQuery=${query}`;
       if (playlistId) url += `&playlistId=${playlistId}`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetVideosResponse;

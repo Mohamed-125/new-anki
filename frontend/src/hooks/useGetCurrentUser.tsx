@@ -1,8 +1,12 @@
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
 export type UserType = {
   email: string;
   _id: string;
+  languages: [string];
+  proficiencyLevel: string;
+  username: string;
 };
 const useGetCurrentUser = () => {
   const { data: user, isLoading } = useQuery({
@@ -14,7 +18,17 @@ const useGetCurrentUser = () => {
     refetchOnWindowFocus: false,
   });
 
-  return { user, isLoading };
+  // Language state is now managed by LanguageContext
+
+  const { selectedLearningLanguage, setSelectedLearningLanguage } =
+    useGetSelectedLearningLanguage();
+
+  return {
+    user,
+    isLoading,
+    selectedLearningLanguage,
+    setSelectedLearningLanguage,
+  };
 };
 
 export default useGetCurrentUser;

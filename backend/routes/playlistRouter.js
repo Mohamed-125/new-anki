@@ -16,7 +16,7 @@ router
   .post("/", Authorization, createPlaylist)
   .get("/", Authorization, getPlaylists)
   .get("/:id", Authorization, getPlaylist)
-  .put("/:id", Authorization, updatePlaylist)
+  .patch("/:id", Authorization, updatePlaylist)
   .delete("/:id", Authorization, deletePlaylist)
   .post("/batch-delete", Authorization, batchDelete);
 

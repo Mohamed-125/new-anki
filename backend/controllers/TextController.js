@@ -1,7 +1,7 @@
 const TextModel = require("../models/TextModel");
 
 module.exports.getTexts = async (req, res) => {
-  const { page: pageNumber, searchQuery } = req.query;
+  const { page: pageNumber, searchQuery, language } = req.query;
   const limit = 5;
   let page = +pageNumber || 0;
 
@@ -12,6 +12,9 @@ module.exports.getTexts = async (req, res) => {
 
     if (searchQuery) {
       query.title = { $regex: searchQuery, $options: "i" };
+    }
+    if (language) {
+      query.language = language;
     }
     const textsCount = await TextModel.countDocuments(query);
 
@@ -39,9 +42,13 @@ module.exports.createText = async (req, res) => {
   if (!req.body.title || !req.body.content) {
     return res.status(400).send("Title and content are required");
   }
+  const { title, content, defaultCollectionId, language } = req.body;
   const createdText = await TextModel.create({
     userId: req.user?._id,
-    ...req.body,
+    title,
+    content,
+    defaultCollectionId,
+    language,
   });
   res.send(createdText);
 };

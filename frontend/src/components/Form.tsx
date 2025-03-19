@@ -144,7 +144,7 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
         <Button
           type="button"
           variant="ghost"
-          className="absolute right-2 top-1/2 p-0 h-auto -translate-y-1/2"
+          className="absolute h-auto p-0 -translate-y-1/2 right-2 top-1/2"
           onClick={() => setIsPassword(!isPassword)}
         >
           {isPassword ? (

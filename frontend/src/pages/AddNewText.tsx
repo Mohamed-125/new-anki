@@ -99,7 +99,7 @@ const AddNewText = () => {
 
     const toast = addToast("Updating Text...", "promise");
     axios
-      .put(`text/${text._id}`, data)
+      .patch(`text/${text._id}`, data)
       .then((res) => {
         navigate("/texts/" + res.data._id);
         invalidateTextQueries();

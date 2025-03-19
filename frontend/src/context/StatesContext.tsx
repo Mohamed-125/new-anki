@@ -63,7 +63,7 @@ export const statesContext = createContext<StatesType | null>(null);
 const StatesContext = ({ children }: { children: ReactNode }) => {
   // used To open the move collection modal
   const [isMoveToCollectionOpen, setIsMoveToCollectionOpen] = useState(false);
-  // used in cards and collection to set the edit it in put requests
+  // used in cards and collection to set the edit it in patch requests
   const [editId, setEditId] = useState("");
   // the collection chosesn to move in the move collection modal
   const [toMoveCollection, setToMoveCollection] = useState<

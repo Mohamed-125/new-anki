@@ -16,7 +16,7 @@ router
   .get("/:id", Authorization, getText)
   .post("/", Authorization, createText)
   .post("/fork/:id", Authorization, forkText)
-  .put("/:id", Authorization, updateText)
+  .patch("/:id", Authorization, updateText)
   .delete("/:id", Authorization, deleteText)
   .post("/batch-delete", Authorization, batchDelete);
 

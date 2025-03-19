@@ -8,9 +8,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLocalStorage } from "react-use";
+import { useState } from "react";
 
 type NavLinkProps = {
   links: LinkType[];
@@ -33,7 +36,7 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
       {links?.map((link) => {
         return (
           <Link
-            key={link.name}
+            key={Math.random()}
             className="hover:text-primary"
             to={link.path}
             onClick={() => {
@@ -45,7 +48,10 @@ function NavLinks({ links, isNavOpen, setIsNavOpen, gap }: NavLinkProps) {
         );
       })}
       {user?._id ? (
-        <ProfileDropdown setIsNavOpen={setIsNavOpen} user={user} />
+        <>
+          <ProfileDropdown setIsNavOpen={setIsNavOpen} user={user} />
+          <LanguagesDropdown />
+        </>
       ) : (
         <>
           <div style={{ gap: `${gap}px` }} className="flex md:hidden">
@@ -105,12 +111,139 @@ const ProfileDropdown = ({
           </div>
         </Link>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="px-4 py-5 mt-6 font-semibold bg-popover">
-        <strong>{user?.email}</strong>
+      <DropdownMenuContent className="px-4 py-5 mt-2 bg-popover">
+        <strong>{user?.username}</strong>
+        <br />
+        <small>{user?.email}</small>{" "}
+        <DropdownMenuSeparator className="my-3 h-[2px]" />
         <DropdownMenuSeparator className="my-3 h-[2px]" />
         <Button onClick={logoutHandler} variant="danger">
           Logout
         </Button>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+const LanguagesDropdown = () => {
+  const languageOptions = [
+    {
+      value: "de",
+      label: "German",
+      flag: "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
+    },
+    {
+      value: "en",
+      label: "English",
+      flag: "https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg",
+    },
+    {
+      value: "es",
+      label: "Spanish",
+      flag: "https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg",
+    },
+    {
+      value: "fr",
+      label: "French",
+      flag: "https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg",
+    },
+  ];
+
+  const { user } = useGetCurrentUser();
+
+  const [addLanguages, setAddLanguages] = useState(false);
+
+  const filteredLanguages = languageOptions.filter(
+    (option) => !user?.languages.includes(option.value)
+  );
+
+  const { selectedLearningLanguage, setSelectedLearningLanguage } =
+    useGetCurrentUser();
+
+  const queryClient = useQueryClient();
+
+  const addLanguageToUser = (languageToAdd: string) => {
+    if (user?.languages)
+      axios
+        .patch("/auth/update-profile", {
+          languages: [...user?.languages, languageToAdd],
+        })
+        .then((res) => {
+          queryClient.setQueryData(["me"], (oldData: any) => {
+            return res.data;
+          });
+        });
+  };
+
+  console.log(filteredLanguages);
+  return (
+    <DropdownMenu
+      modal={false}
+      onOpenChange={() => {
+        setAddLanguages(false);
+      }}
+    >
+      <DropdownMenuTrigger className="ml-1 text-2xl">
+        <img
+          src={
+            languageOptions.find(
+              (language) => language.value === selectedLearningLanguage
+            )?.flag
+          }
+          className="object-fill w-16 h-16 rounded-full"
+        />{" "}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="px-4 w-[200px] py-5 mt-2 bg-popover">
+        {user?.languages.map((userLanguage) => {
+          const language = languageOptions.find(
+            (option) => option.value === userLanguage
+          );
+          return (
+            <>
+              <DropdownMenuItem
+                key={userLanguage}
+                className="cursor-pointer"
+                onClick={() => {
+                  setSelectedLearningLanguage(userLanguage);
+                }}
+              >
+                <img src={language?.flag} className="w-8 h-8 rounded-full" />{" "}
+                <p>{language?.label}</p>
+              </DropdownMenuItem>
+            </>
+          );
+        })}
+        <DropdownMenuSeparator />
+        {!addLanguages && filteredLanguages.length ? (
+          <div
+            onClick={() => setAddLanguages(true)}
+            className="px-2 py-2 rounded-md cursor-pointer hover:bg-gray-100"
+          >
+            + Add New language
+          </div>
+        ) : (
+          <div>
+            {filteredLanguages.map((filteredLanguage) => {
+              return (
+                <>
+                  <DropdownMenuItem
+                    key={filteredLanguage.value}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelectedLearningLanguage(filteredLanguage.value);
+                      addLanguageToUser(filteredLanguage.value);
+                    }}
+                  >
+                    <img
+                      src={filteredLanguage?.flag}
+                      className="w-8 h-8 rounded-full"
+                    />{" "}
+                    <p>{filteredLanguage?.label}</p>
+                  </DropdownMenuItem>
+                </>
+              );
+            })}
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

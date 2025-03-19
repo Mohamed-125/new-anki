@@ -185,7 +185,7 @@ module.exports.createVideo = async (req, res, next) => {
   }
 };
 module.exports.getUserVideos = async (req, res, next) => {
-  const { page: pageNumber, searchQuery, playlistId } = req.query;
+  const { page: pageNumber, searchQuery, playlistId, language } = req.query;
   const limit = 5;
   let page = +pageNumber || 0;
 
@@ -196,6 +196,9 @@ module.exports.getUserVideos = async (req, res, next) => {
     }
     if (playlistId) {
       query.playlistId = playlistId;
+    }
+    if (language) {
+      query.language = language;
     }
     const videosCount = await VideoModel.countDocuments(query);
 

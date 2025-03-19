@@ -89,7 +89,7 @@ const MoveVideoModal = ({
       const { setToastData } = addToast("Moving Video...", "promise");
 
       axios
-        .put("video/" + editId, {
+        .patch("video/" + editId, {
           playlistId:
             selectedPlaylist.value === "remove"
               ? null

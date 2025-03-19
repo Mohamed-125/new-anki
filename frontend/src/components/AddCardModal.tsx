@@ -24,6 +24,7 @@ import { IoClose } from "react-icons/io5";
 import useUseEditor from "@/hooks/useUseEditor";
 import { twMerge } from "tailwind-merge";
 import useToasts from "@/hooks/useToasts";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type AddCardModalProps = {
   collectionId?: string;
@@ -79,9 +80,9 @@ export function AddCardModal({
 
   const { addToast } = useToasts();
   const [isLoading, setIsLoading] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     const cardData = {
       collectionId: defaultValues?.collectionId || collectionId || null,
       videoId,

@@ -11,7 +11,6 @@ import Card from "../components/Card";
 import AddCardModal from "../components/AddCardModal";
 import Button from "../components/Button";
 import Loading from "../components/Loading";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import ChangeItemsParent from "../components/ChangeItemsParent";

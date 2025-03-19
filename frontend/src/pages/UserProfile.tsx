@@ -25,6 +25,7 @@ import {
 import useMediaQuery from "@/hooks/useMediaQuery";
 
 import React, { useState } from "react";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 // Define the schema fذor username validation
 const usernameSchema = z.object({
@@ -38,11 +39,6 @@ const usernameSchema = z.object({
     ),
 });
 
-// Define the schema for language selection
-const languageSchema = z.object({
-  language: z.enum(["german", "english", "spanish", "french"]),
-});
-
 // Define the schema for proficiency level
 const proficiencySchema = z.object({
   proficiencyLevel: z.enum(["a1", "a2", "b1", "b2"]),
@@ -51,7 +47,7 @@ const proficiencySchema = z.object({
 // Define the combined schema for all steps
 const userProfileSchema = z.object({
   username: usernameSchema.shape.username,
-  language: languageSchema.shape.language,
+  language: z.string(),
   proficiencyLevel: proficiencySchema.shape.proficiencyLevel,
 });
 
@@ -59,22 +55,22 @@ type UserProfileFormData = z.infer<typeof userProfileSchema>;
 
 const languageOptions = [
   {
-    value: "german",
+    value: "de",
     label: "German",
     flag: "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
   },
   {
-    value: "english",
+    value: "en",
     label: "English",
     flag: "https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg",
   },
   {
-    value: "spanish",
+    value: "es",
     label: "Spanish",
     flag: "https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg",
   },
   {
-    value: "french",
+    value: "fr",
     label: "French",
     flag: "https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg",
   },
@@ -88,7 +84,7 @@ const proficiencyOptions = [
 ];
 
 const UserProfile = () => {
-  const [step, setStep] = useState(3);
+  const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1); // Track animation direction: 1 for forward, -1 for backward
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState("");
@@ -125,16 +121,14 @@ const UserProfile = () => {
     setUsernameError("");
 
     try {
-      // This is a placeholder for the actual API call
-      // You'll need to implement the actual endpoint on the backend
-      //   const response = await axios.post("auth/check-username", {
-      //     username: watchUsername,
-      //   });
+      const response = await axios.post("auth/check-username", {
+        username: watchUsername,
+      });
 
-      //   if (!response.data.isUnique) {
-      //     setUsernameError("This username is already taken");
-      //     return false;
-      //   }
+      if (!response.data.isUnique) {
+        setUsernameError("This username is already taken");
+        return false;
+      }
 
       return true;
     } catch (error) {
@@ -156,6 +150,8 @@ const UserProfile = () => {
       isValid = await trigger("username");
       if (isValid) {
         const isUnique = await checkUsernameUnique();
+
+        console.log(usernameError);
         if (!isUnique && usernameError) {
           return;
         }
@@ -180,19 +176,27 @@ const UserProfile = () => {
     setStep(step - 1);
   };
 
+  const { setSelectedLearningLanguage } = useGetCurrentUser();
   const onSubmit = async (data: UserProfileFormData) => {
     try {
-      console.log({ ...data, selectedNativeLanguage });
-      // Send the complete profile data to the backend
-      const response = await axios.post("auth/update-profile", data);
+      // // Send the complete profile data to the backend
+      const response = await axios.patch("auth/update-profile", {
+        ...data,
+        languages: [data.language],
+        selectedNativeLanguage,
+      });
 
       // Update the user data in the cache
       queryClient.setQueryData(["me"], (oldData: any) => {
-        return { ...oldData, ...response.data };
+        return {
+          ...oldData,
+          ...response.data,
+        };
       });
 
+      setSelectedLearningLanguage(data.language);
       addToast("Profile updated successfully", "success");
-      navigate("/");
+      // navigate("/");
     } catch (error) {
       addToast("Failed to update profile", "error");
     }
@@ -316,7 +320,10 @@ const UserProfile = () => {
               {/* Active progress line */}
               <div
                 className="absolute left-0 top-1/2 z-0 h-1 transition-all duration-300 -translate-y-1/2 bg-primary"
-                style={{ width: `${step * 25}%` }}
+                style={{
+                  width: `${(step - 1) * 33.33}%`,
+                  transition: "width 0.3s ease-in-out",
+                }}
               />
             </div>
           </div>

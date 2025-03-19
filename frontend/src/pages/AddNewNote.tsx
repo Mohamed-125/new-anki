@@ -8,6 +8,7 @@ import TipTapEditor from "../components/TipTapEditor";
 import Button from "../components/Button";
 import useUseEditor from "@/hooks/useUseEditor";
 import useToasts from "@/hooks/useToasts";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 const AddNewNote = () => {
   const [title, setTitle] = useState("");
@@ -43,6 +44,8 @@ const AddNewNote = () => {
   const navigate = useNavigate();
   const { addToast } = useToasts();
 
+  const { selectedLearningLanguage } = useGetCurrentUser();
+
   const createNoteHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -53,6 +56,7 @@ const AddNewNote = () => {
         const data = {
           title,
           content: editor.getHTML(),
+          selectedLearningLanguage,
         };
         const response = await axios.post(`note/`, data);
         invalidateNoteQueries();
@@ -76,7 +80,7 @@ const AddNewNote = () => {
         title,
         content: editor?.getHTML(),
       };
-      const response = await axios.put(`note/${note._id}`, data);
+      const response = await axios.patch(`note/${note._id}`, data);
       navigate("/notes/" + response.data._id);
       invalidateNoteQueries();
       toast.setToastData({ title: "Note Updated!", isCompleted: true });

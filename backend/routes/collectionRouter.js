@@ -20,7 +20,7 @@ router
   .get("/", Authorization, getCollections)
   .get("/public", Authorization, getPublicCollections)
   .get("/:id", Authorization, getCollection)
-  .put("/:id", Authorization, updateCollection)
+  .patch("/:id", Authorization, updateCollection)
   .delete("/:id", Authorization, deleteCollection)
   .post("/batch-delete", Authorization, batchDelete);
 

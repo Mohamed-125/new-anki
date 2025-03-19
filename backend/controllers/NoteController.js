@@ -1,7 +1,7 @@
 const NoteModel = require("../models/NoteModel");
 
 module.exports.getNotes = async (req, res) => {
-  const { page: pageNumber, searchQuery } = req.query;
+  const { page: pageNumber, searchQuery, language } = req.query;
   const limit = 5;
   let page = +pageNumber || 0;
 
@@ -9,6 +9,9 @@ module.exports.getNotes = async (req, res) => {
     const query = { userId: req.user?._id };
     if (searchQuery) {
       query.title = { $regex: searchQuery, $options: "i" };
+    }
+    if (language) {
+      query.language = language;
     }
     const notesCount = await NoteModel.countDocuments(query);
 
@@ -35,9 +38,12 @@ module.exports.createNote = async (req, res) => {
   if (!req.body.title || !req.body.content) {
     return res.status(400).send("Title and content are required");
   }
+  const { title, content, language } = req.body;
   const createdNote = await NoteModel.create({
     userId: req.user?._id,
-    ...req.body,
+    title,
+    content,
+    language,
   });
   res.send(createdNote);
 };

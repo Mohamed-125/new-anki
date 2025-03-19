@@ -4,6 +4,7 @@ const UserModel = require("../models/UserModel");
 const setReqUser = async (_id, req) => {
   try {
     const user = await UserModel.findOne({ _id });
+
     req.user = user;
     return user;
   } catch (err) {}

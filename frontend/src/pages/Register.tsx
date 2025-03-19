@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { useQueryClient } from "@tanstack/react-query";
 import useToasts from "@/hooks/useToasts";
+import { error } from "console";
 
 const Register = () => {
   const { addToast } = useToasts();
@@ -24,7 +25,10 @@ const Register = () => {
       password: "",
     },
   });
+
   const onSubmit = (values: AuthFormSchemaType) => {
+    const toast = addToast("Creating your account", "promise");
+
     axios
       .post("auth/register", values)
       .then((res) => {
@@ -32,12 +36,14 @@ const Register = () => {
           return res.data;
         });
         navigate("/user-profile");
-        addToast(
-          "Account created successfully! Please complete your profile.",
-          "success"
-        );
+        toast.setToastData({
+          title: "Account created successfully",
+          isCompleted: true,
+        });
       })
-      .catch((err) => err);
+      .catch((err) => {
+        toast.setToastData({ title: err.response.data, isError: true });
+      });
   };
   return (
     <div className="flex flex-grow justify-center items-center">
@@ -52,7 +58,11 @@ const Register = () => {
         <Form.FieldsContainer gap={12} className="space-y-4">
           <Form.Field>
             <Form.Label className="font-medium">Email</Form.Label>
-            <Form.Input placeholder="" type="text" {...register("email")} />
+            <Form.Input
+              placeholder="tsrtarstarstarstarst"
+              type="text"
+              {...register("email")}
+            />
             <Form.Message error={true} className="text-sm">
               {errors.email?.message}
             </Form.Message>

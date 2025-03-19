@@ -7,6 +7,7 @@ import GoogleAuthButton from "../components/GoogleAuthButton";
 import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import useGetCurrentUser, { UserType } from "@/hooks/useGetCurrentUser";
 
 const Login = () => {
   const {
@@ -22,6 +23,7 @@ const Login = () => {
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { setSelectedLearningLanguage } = useGetCurrentUser();
 
   const onSubmit = (values: AuthFormSchemaType) => {
     console.log(values);
@@ -32,7 +34,9 @@ const Login = () => {
         queryClient.setQueryData(["me"], () => {
           return res.data;
         });
-        console.log(res.data);
+        console.log(res.data as UserType);
+        setSelectedLearningLanguage(res.data?.languages?.[0]);
+
         navigate("/");
       })
       .catch((err) => err);
@@ -54,6 +58,7 @@ const Login = () => {
             <Form.Input
               placeholder="JohnDeo@gmail.com"
               type="text"
+              autoComplete="nope"
               {...register("email")}
             />
             <Form.Message error={true} className="text-sm">
@@ -65,6 +70,7 @@ const Login = () => {
             <Form.Input
               placeholder="Enter your password"
               type="password"
+              autoComplete="nope"
               {...register("password")}
             />
             <Form.Message error={true} className="text-sm">

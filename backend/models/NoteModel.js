@@ -6,6 +6,7 @@ const NoteSchema = new Schema(
     title: { type: String, required: true, index: true },
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     content: { type: String, required: true },
+    language: { type: String, index: true },
   },
   { timestamps: true, lean: true }
 );

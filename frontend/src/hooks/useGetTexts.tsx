@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useMemo } from "react";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 export type TextType = {
   _id: string;
@@ -22,7 +23,10 @@ const useGetTexts = ({
   enabled?: boolean;
   query?: string;
 } = {}) => {
+  const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey = query ? ["texts", query] : ["texts"];
+
+  queryKey.push(selectedLearningLanguage);
 
   const {
     data,
@@ -39,6 +43,8 @@ const useGetTexts = ({
     queryFn: async ({ signal, pageParam }) => {
       let url = `text/?page=${pageParam}`;
       if (query) url += `&searchQuery=${query}`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetTextsResponse;

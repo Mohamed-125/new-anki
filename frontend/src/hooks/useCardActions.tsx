@@ -32,7 +32,7 @@ const useCardActions = () => {
       });
     },
     mutationFn: (data: CardType) => {
-      return axios.put(`/card/${data._id}`, data).then((res) => {
+      return axios.patch(`/card/${data._id}`, data).then((res) => {
         return res.data;
       });
     },

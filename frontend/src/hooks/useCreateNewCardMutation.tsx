@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { CardType } from "./useGetCards";
 import useToasts from "./useToasts";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 type Optimistic = {
   isOptimistic?: boolean;
@@ -44,6 +45,8 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
     },
   });
 
+  const { selectedLearningLanguage } = useGetCurrentUser();
+
   const createCardHandler = async (
     e: React.FormEvent<HTMLFormElement>,
     additionalData: any = {},
@@ -55,6 +58,7 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
     const data = {
       front: formData.get("card_word"),
       back: formData.get("card_translation"),
+      language: selectedLearningLanguage,
       ...additionalData,
     };
 

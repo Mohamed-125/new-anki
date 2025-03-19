@@ -4,6 +4,7 @@ import Button from "../components/Button";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "../components/Loading";
 import AddVideoModal from "../components/AddVideoModal";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 type Item = {
   duration: string;
   href: string;
@@ -33,6 +34,7 @@ const ImportantChannelsAndVideos = () => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState({});
   const [openedVideo, setOpenedVideo] = useState("");
+  const { selectedLearningLanguage } = useGetCurrentUser();
 
   const {
     data: channelsData,
@@ -43,7 +45,7 @@ const ImportantChannelsAndVideos = () => {
     isLoading: boolean;
     error: any;
   } = useQuery({
-    queryKey: ["channels"],
+    queryKey: ["channels", selectedLearningLanguage],
     queryFn: () => axios.get("channels").then((res) => res.data),
   });
 
@@ -66,8 +68,8 @@ const ImportantChannelsAndVideos = () => {
     return <Loading />;
   }
   return (
-    <div className="container " ref={containerRef}>
-      <h1 className="my-6 text-3xl font-bold text-black mb-11">
+    <div className="container" ref={containerRef}>
+      <h1 className="my-6 mb-11 text-3xl font-bold text-black">
         Important German Channels and Videos
       </h1>
       <AddVideoModal
@@ -93,7 +95,7 @@ const ImportantChannelsAndVideos = () => {
               return (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-2 text-black border-b-2 border-gray-100 cursor-pointer hover:bg-gray-200"
+                  className="flex gap-3 items-center p-2 text-black border-b-2 border-gray-100 cursor-pointer hover:bg-gray-200"
                   onClick={() => setSelectedChannel(channelsData[channel])}
                 >
                   <img
@@ -114,7 +116,7 @@ const ImportantChannelsAndVideos = () => {
         </div>
 
         <div className="w-[70%] rounded-md   flex flex-col gap-4">
-          <div className="flex items-center gap-4 p-2 bg-white rounded-md">
+          <div className="flex gap-4 items-center p-2 bg-white rounded-md">
             <img
               src={selectedChannel?.channelThumbnail}
               className="w-[125px] h-[125px] rounded-full"
@@ -139,7 +141,7 @@ const ImportantChannelsAndVideos = () => {
               <div
                 key={index}
                 id={id}
-                className="relative flex w-full gap-4 bg-white"
+                className="flex relative gap-4 w-full bg-white"
               >
                 <div
                   className={`video-video-thumbnail  min-w-[40%]`}
@@ -153,7 +155,7 @@ const ImportantChannelsAndVideos = () => {
                 <div className=" h-[220px] py-4 grow flex flex-col justify-between">
                   <div></div>
                   <p>{video.title}</p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-2 items-center">
                     <Button
                       link={`https://www.youtube.com/watch?v=${videoLinkId}`}
                       target="_blank"

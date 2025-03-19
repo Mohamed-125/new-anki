@@ -70,7 +70,7 @@ const StudyCards = () => {
 
     easeFactor = easeFactor > 1 ? 1 : easeFactor < 0 ? 0 : easeFactor;
 
-    const res = await axios.put(`card/${cards[currentCard]._id}`, {
+    const res = await axios.patch(`card/${cards[currentCard]._id}`, {
       easeFactor,
     });
     setShowAnswer(false);
@@ -92,7 +92,7 @@ const StudyCards = () => {
     Text, // Component that returns the modified text property
     speechStatus, // String that stores current speech status
     isInQueue, // Boolean that stores whether a speech utterance is either being spoken or present in queue
-    start, // Function to start the speech or put it in queue
+    start, // Function to start the speech or patch it in queue
     pause, // Function to pause the speech
     stop, // Function to stop the speech or remove it from queue
   } = useSpeech({ text: cards && cards[currentCard]?.front, voiceURI: voice });

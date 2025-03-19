@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useMemo } from "react";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 export type NoteType = {
   _id: string;
@@ -22,7 +23,10 @@ const useGetNotes = ({
   enabled?: boolean;
   query?: string;
 } = {}) => {
+  const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey = query ? ["notes", query] : ["notes"];
+
+  queryKey.push(selectedLearningLanguage);
 
   const {
     data,
@@ -39,6 +43,8 @@ const useGetNotes = ({
     queryFn: async ({ signal, pageParam }) => {
       let url = `note/?page=${pageParam}`;
       if (query) url += `&searchQuery=${query}`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetNotesResponse;

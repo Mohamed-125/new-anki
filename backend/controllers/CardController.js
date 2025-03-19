@@ -1,7 +1,7 @@
 const CardModel = require("../models/CardModel");
 
 module.exports.createCard = async (req, res, next) => {
-  const { front, back, content, collectionId, videoId } = req.body;
+  const { front, back, content, collectionId, videoId, language } = req.body;
 
   if (!front || !back)
     return res
@@ -16,6 +16,7 @@ module.exports.createCard = async (req, res, next) => {
       collectionId,
       userId: req.user?._id,
       videoId,
+      language,
     });
     res.status(200).send(createdCard);
   } catch (err) {
@@ -30,6 +31,7 @@ module.exports.getUserCards = async (req, res, next) => {
     collectionId,
     videoId,
     study,
+    language,
   } = req.query;
 
   const query = {};
@@ -49,6 +51,9 @@ module.exports.getUserCards = async (req, res, next) => {
   }
   if (videoId) {
     query.videoId = videoId;
+  }
+  if (language) {
+    query.language = language;
   }
   if (study) {
     options.sort = { easeFactor: 1 };

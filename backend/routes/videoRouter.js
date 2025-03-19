@@ -26,7 +26,7 @@ router
   .get("/", Authorization, getUserVideos)
   // .get("/getVideoData/:videoId", getVideoData)
   .get("/:id", Authorization, getVideo)
-  .put("/:id", Authorization, updateVideo)
+  .patch("/:id", Authorization, updateVideo)
   .delete("/:id", Authorization, deleteVideo)
   .post("/batch-delete", Authorization, batchDelete)
   .post("/batch-move", Authorization, batchMove);

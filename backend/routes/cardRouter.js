@@ -16,7 +16,7 @@ router
   .post("/", Authorization, createCard)
   .get("/", Authorization, getUserCards)
   .get("/:id", Authorization, getCard)
-  .put("/:id", Authorization, updateCard)
+  .patch("/:id", Authorization, updateCard)
   .delete("/:id", Authorization, deleteCard)
   .post("/batch-delete", Authorization, batchDelete)
   .post("/batch-move", Authorization, batchMove);

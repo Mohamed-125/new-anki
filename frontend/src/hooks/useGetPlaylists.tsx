@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useMemo } from "react";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 export type PlaylistType = {
   _id: string;
@@ -22,7 +23,10 @@ const useGetPlaylists = ({
   enabled?: boolean;
   query?: string;
 } = {}) => {
+  const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey = query ? ["playlists", query] : ["playlists"];
+
+  queryKey.push(selectedLearningLanguage);
 
   const {
     data,
@@ -39,6 +43,8 @@ const useGetPlaylists = ({
     queryFn: async ({ signal, pageParam }) => {
       let url = `playlist/?page=${pageParam}`;
       if (query) url += `&searchQuery=${query}`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetPlaylistsResponse;

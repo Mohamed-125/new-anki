@@ -17,6 +17,10 @@ const textSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Collection",
     },
+    language: {
+      type: String,
+      index: true,
+    },
   },
   { timestamps: true, lean: true }
 );

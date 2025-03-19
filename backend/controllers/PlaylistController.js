@@ -1,7 +1,7 @@
 const PlaylistModel = require("../models/PlaylistModel");
 
 module.exports.createPlaylist = async (req, res, next) => {
-  const { name } = req.body;
+  const { name, language } = req.body;
 
   if (!name) return res.status(400).send("you have to enter the playlist name");
 
@@ -9,6 +9,7 @@ module.exports.createPlaylist = async (req, res, next) => {
     const createdPlaylist = await PlaylistModel.create({
       name,
       userId: req.user?._id,
+      language,
     });
     res.status(200).send(createdPlaylist);
   } catch (err) {
@@ -16,7 +17,7 @@ module.exports.createPlaylist = async (req, res, next) => {
   }
 };
 module.exports.getPlaylists = async (req, res, next) => {
-  const { page: pageNumber, searchQuery } = req.query;
+  const { page: pageNumber, searchQuery, language } = req.query;
   const limit = 10;
   let page = +pageNumber || 0;
 
@@ -24,6 +25,9 @@ module.exports.getPlaylists = async (req, res, next) => {
     const query = { userId: req.user?._id };
     if (searchQuery) {
       query.name = { $regex: searchQuery, $options: "i" };
+    }
+    if (language) {
+      query.language = language;
     }
     const playlistsCount = await PlaylistModel.countDocuments(query);
 

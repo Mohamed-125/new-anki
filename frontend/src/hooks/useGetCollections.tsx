@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import axios from "axios";
 import { CardType } from "./useGetCards";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 export type CollectionType = {
   collectionCards: CardType[];
@@ -33,6 +34,8 @@ const useGetCollections = ({
   enabled?: boolean;
   all?: boolean;
 } = {}) => {
+  const { selectedLearningLanguage } = useGetCurrentUser();
+
   let queryKey = ["collections"];
 
   if (publicCollections) {
@@ -43,6 +46,8 @@ const useGetCollections = ({
   } else if (all) {
     queryKey.push("all");
   }
+
+  queryKey.push(selectedLearningLanguage);
 
   const {
     data,
@@ -60,6 +65,8 @@ const useGetCollections = ({
       if (query) url += `&searchQuery=${query}`;
       if (publicCollections) url += `&public=${true}`;
       if (all) url += `&all=${true}`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetCollectionsResponse;

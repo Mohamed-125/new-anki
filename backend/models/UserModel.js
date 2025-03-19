@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
   email: {
     type: String,
     require: [true, "email is require"],
+    index: true,
   },
   password: {
     type: String,
@@ -15,10 +16,15 @@ const UserSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
+    index: true,
   },
-  language: {
+  languages: [
+    {
+      type: String,
+    },
+  ],
+  selectedNativeLanguage: {
     type: String,
-    enum: ["german", "english", "spanish", "french"],
   },
   proficiencyLevel: {
     type: String,
@@ -69,8 +75,6 @@ UserSchema.virtual("collections", {
   localField: "_id", // The field in the User schema
   foreignField: "user", // The field in the Todo schema that references the User
 });
-
-UserSchema.index({ email: 1 });
 
 const UserModel = mongoose.model("User", UserSchema);
 module.exports = UserModel;

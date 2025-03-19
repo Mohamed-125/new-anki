@@ -10,6 +10,7 @@ import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import useToasts from "@/hooks/useToasts";
 import { isError } from "util";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 const AddNewCollectionModal = ({}: {}) => {
   const {
@@ -57,6 +58,8 @@ const AddNewCollectionModal = ({}: {}) => {
     },
   });
 
+  const { selectedLearningLanguage } = useGetCurrentUser();
+
   const createCollectionHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -71,6 +74,7 @@ const AddNewCollectionModal = ({}: {}) => {
         name,
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
+        language: selectedLearningLanguage,
       };
 
       mutateAsync(data)
@@ -103,7 +107,7 @@ const AddNewCollectionModal = ({}: {}) => {
     const toast = addToast("Adding Collection...", "promise");
 
     try {
-      await axios.put(`collection/${editId}`, data);
+      await axios.patch(`collection/${editId}`, data);
       setIsCollectionModalOpen(false);
       invalidateCollectionsQueries();
       toast.setToastData({ title: "Collection Added!", isCompleted: true });

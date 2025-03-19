@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 export type CardType = {
   _id: string;
@@ -35,6 +36,7 @@ const useGetCards = ({
   videoId?: string;
   study?: boolean;
 } = {}) => {
+  const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey = query
     ? ["cards", query]
     : collectionId
@@ -47,6 +49,7 @@ const useGetCards = ({
     ? ["cards", "study"]
     : ["cards"];
 
+  queryKey.push(selectedLearningLanguage);
   const {
     data,
     error,
@@ -66,6 +69,8 @@ const useGetCards = ({
       if (collectionId) url += `&collectionId=${collectionId}`;
       if (videoId) url += `&videoId=${videoId}`;
       if (study) url += `&study=true`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
 
       const cards = await axios.get(url, { signal });
 

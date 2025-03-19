@@ -40,6 +40,10 @@ const CardSchema = new mongoose.Schema(
       ref: "Collection",
       index: true,
     },
+    language: {
+      type: String,
+      index: true,
+    },
   },
   {
     timestamps: true,

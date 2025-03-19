@@ -3,7 +3,7 @@ const CollectionModel = require("../models/CollectionModel");
 const { getUserCards } = require("./CardController");
 
 module.exports.createCollection = async (req, res, next) => {
-  const { name, public = false, parentCollectionId } = req.body;
+  const { name, public = false, parentCollectionId, language } = req.body;
 
   if (!name)
     return res.status(400).send("you have to enter the collection name");
@@ -14,6 +14,7 @@ module.exports.createCollection = async (req, res, next) => {
       public,
       parentCollectionId,
       userId: req.user?._id,
+      language,
     });
     res.status(200).send(createdCollection);
   } catch (err) {
@@ -71,7 +72,7 @@ const forkCollection = async (originalCollectionId, userId) => {
 module.exports.forkCollection = forkCollection;
 
 module.exports.getCollections = async (req, res, next) => {
-  const { searchQuery, public, page = 0, all } = req.query;
+  const { searchQuery, public, page = 0, all, language } = req.query;
   const limit = 10; // Number of items per page
   const query = {};
 
@@ -86,6 +87,7 @@ module.exports.getCollections = async (req, res, next) => {
   ];
 
   if (searchQuery) query.name = { $regex: searchQuery, $options: "i" };
+  if (language) query.language = language;
 
   try {
     // Get total count for pagination

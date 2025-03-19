@@ -36,6 +36,10 @@ const VideoSchema = new mongoose.Schema(
       index: true,
       ref: "Playlist",
     },
+    language: {
+      type: String,
+      index: true,
+    },
   },
   {
     toJSON: { virtuals: true }, // Ensure virtuals are included in JSON output

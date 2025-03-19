@@ -17,6 +17,7 @@ import useDebounce from "@/hooks/useDebounce";
 import useInfiniteScroll from "@/hooks/useInfiniteScroll";
 import useToasts from "@/hooks/useToasts";
 import { VideoType } from "@/hooks/useGetVideos";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type PlaylistType = {
   name: string;
@@ -61,12 +62,14 @@ const Playlists = () => {
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
     },
   });
+  const { selectedLearningLanguage } = useGetCurrentUser();
 
   const createPlaylistHandler = (e: any) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = {
       name: formData.get("playlist_name"),
+      selectedLearningLanguage,
     };
 
     const toast = addToast("Creating playlist...", "promise");
@@ -102,7 +105,7 @@ const Playlists = () => {
     const toast = addToast("Updating playlist...", "promise");
     setIsLoading(true);
     axios
-      .put(`playlist/${editId}`, data)
+      .patch(`playlist/${editId}`, data)
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
         setIsPlayListModalOpen(false);

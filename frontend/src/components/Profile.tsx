@@ -110,14 +110,7 @@ const SetProfile = () => {
   return (
     <div className="space-y-6">
       {/* Share Modal */}
-      {shareItem && (
-        <ShareModal
-          // isOpen={shareModalOpen}
-          // onClose={() => setShareModalOpen(false)}
-          itemId={shareItem.id}
-          itemName={shareItem.name}
-        />
-      )}
+      {shareItem && <ShareModal sharing="profile" />}
       {/* User Profile Header */}
       <div className="flex gap-6 items-center p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="relative">
@@ -141,6 +134,7 @@ const SetProfile = () => {
         </div>
       </div>
 
+      {/* <Button onClick={} variant="danger">delete account </Button> */}
       {/* Pinned Sets
       {profile.pinnedSets.length > 0 && (
         <div className="space-y-4">

@@ -28,6 +28,10 @@ const CollectionSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
+    language: {
+      type: String,
+      index: true,
+    },
   },
   { timestamps: true, lean: true }
 );

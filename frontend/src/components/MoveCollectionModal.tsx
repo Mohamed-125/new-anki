@@ -254,7 +254,7 @@ const MoveCollectionModal = ({
         });
     } else {
       axios
-        .put(`collection/${toMoveCollectionId}`, {
+        .patch(`collection/${toMoveCollectionId}`, {
           parentCollectionId: targetCollectionId,
         })
         .then((res) => {
@@ -313,7 +313,8 @@ const MoveCollectionModal = ({
       id={"moveCollectionModal"}
       onAnimationEnd={onAnimationEnd}
       className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
-        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""}`}
+        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
+      }`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >
@@ -346,7 +347,7 @@ const MoveCollectionModal = ({
             className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
             onClick={() => {
               axios
-                .put(`collection/${toMoveCollectionId}`, {
+                .patch(`collection/${toMoveCollectionId}`, {
                   parentCollectionId: null,
                 })
                 .then((res) => {
@@ -378,7 +379,7 @@ const MoveCollectionModal = ({
                 });
               } else {
                 await axios
-                  .put(`card/${editId}`, {
+                  .patch(`card/${editId}`, {
                     collectionId: null,
                   })
                   .catch((err) => err);

@@ -7,9 +7,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Toasts from "./components/Toasts.js";
 import ToastContext from "./context/ToastContext.js";
 import StatesContext from "./context/StatesContext.js";
+import { LanguageProvider } from "./context/SelectedLearningLanguageContext.js";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
+
+// Add a request interceptor to include language in all POST requests
+axios.interceptors.request.use(function (config) {
+  // Import the language from your context
+  let language = localStorage.getItem("selectedLearningLanguage") || "en";
+
+  // Remove any quotes if they exist
+  if (language.startsWith('"') && language.endsWith('"')) {
+    language = language.slice(1, -1);
+  }
+
+  // Only modify POST requests
+  if (config.method === "post") {
+    console.log("lan", language);
+    // For object data (most common case)
+    config.data.language = language;
+  }
+  return config;
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,15 +57,17 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <>
-        <ToastContext>
-          <StatesContext>
-            <Toasts />
-            <App />
-          </StatesContext>
-        </ToastContext>
-      </>
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <>
+          <ToastContext>
+            <StatesContext>
+              <Toasts />
+              <App />
+            </StatesContext>
+          </ToastContext>
+        </>
+      </QueryClientProvider>
+    </LanguageProvider>
   </StrictMode>
 );

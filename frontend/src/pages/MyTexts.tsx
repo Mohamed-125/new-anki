@@ -17,6 +17,7 @@ import useToasts from "@/hooks/useToasts";
 export type TextType = {
   title: string;
   content: string;
+  userId: string;
   defaultCollectionId: string | undefined;
 };
 
@@ -92,7 +93,9 @@ const MyTexts = () => {
           {texts?.map((text) => (
             <ItemCard
               Icon={<Text />}
-              editHandler={() => editHandler(text)}
+              editHandler={() =>
+                editHandler(text as TextType & { _id: string })
+              }
               deleteHandler={() => deleteTextHandler(text._id)}
               name={text.title}
               key={text._id}
