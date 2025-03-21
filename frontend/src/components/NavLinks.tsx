@@ -112,10 +112,17 @@ const ProfileDropdown = ({
         </Link>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="px-4 py-5 mt-2 bg-popover">
-        <strong>{user?.username}</strong>
-        <br />
-        <small>{user?.email}</small>{" "}
-        <DropdownMenuSeparator className="my-3 h-[2px]" />
+        <div>
+          <strong>{user?.username}</strong>
+        </div>
+        <div>
+          <small>{user?.email}</small>
+        </div>
+        {user?.isAdmin && (
+          <Link className="block mt-3" to={"/admin"}>
+            <Button variant="primary-outline">Go To The Admin Panel</Button>
+          </Link>
+        )}
         <DropdownMenuSeparator className="my-3 h-[2px]" />
         <Button onClick={logoutHandler} variant="danger">
           Logout
@@ -174,7 +181,6 @@ const LanguagesDropdown = () => {
         });
   };
 
-  console.log(filteredLanguages);
   return (
     <DropdownMenu
       modal={false}
@@ -189,7 +195,7 @@ const LanguagesDropdown = () => {
               (language) => language.value === selectedLearningLanguage
             )?.flag
           }
-          className="object-fill w-16 h-16 rounded-full"
+          className="object-fill w-11 h-11 rounded-full"
         />{" "}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="px-4 w-[200px] py-5 mt-2 bg-popover">

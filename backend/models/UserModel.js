@@ -30,6 +30,14 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ["a1", "a2", "b1", "b2"],
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
+  isPremium: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 UserSchema.pre("save", async function (next) {

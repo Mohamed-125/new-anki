@@ -27,7 +27,7 @@ const Collections = () => {
     <div className="container px-6 py-8 mx-auto max-w-7xl">
       <MoveCollectionModal />
       <AddNewCollectionModal />
-      <ShareModal />
+      <ShareModal sharing="collections" />
       {selectedItems.length > 0 && (
         <SelectedItemsController isItemsCollections={true} />
       )}

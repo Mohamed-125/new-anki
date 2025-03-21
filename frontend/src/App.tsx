@@ -4,6 +4,7 @@ import {
   Route,
   Routes,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -37,8 +38,11 @@ import BreadCramps from "./components/BreadCramps.tsx";
 import Profile from "./pages/Profile.tsx";
 import AddNewNote from "./pages/AddNewNote.tsx";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.tsx";
-import { useEffect, useState } from "react";
-import { useLocalStorage } from "react-use";
+import { ReactNode, useEffect, useState } from "react";
+import Admin from "./pages/Admin/Admin.tsx";
+import AdminUsers from "./pages/Admin/Users/AdminUsers.tsx";
+
+import AiChat from "./components/AiChat";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
@@ -251,6 +255,20 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminRoute>
+                      <Admin />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="users" element={<AdminUsers />} />
+              </Route>
+
               <Route
                 path="*"
                 element={selectedLearningLanguage ? <PageNotFound /> : ""}
@@ -260,8 +278,26 @@ function App() {
           </div>
         </LanguageProvider>
       </Router>
+      <AiChat />
     </>
   );
 }
 
 export default App;
+
+const AdminRoute = ({ children }: { children: ReactNode }) => {
+  const { user, isLoading } = useGetCurrentUser();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log(user);
+    if (!isLoading) {
+      // if (!user?.isAdmin || false) {
+      //   console.log("admin route worked");
+      //   navigate("/");
+      // }
+    }
+  }, [user, isLoading]);
+
+  return <>{user && children}</>;
+};

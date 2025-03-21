@@ -104,7 +104,7 @@ const Card = ({
             }
           : () => {}
       }
-      className="flex items-center px-8 py-6 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-2xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
+      className="flex items-center px-8 py-4 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
       id={id}
     >
       {isSameUser && (

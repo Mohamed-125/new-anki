@@ -19,6 +19,7 @@ import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import useToasts from "@/hooks/useToasts";
 
 const TextPage = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const id = useParams()?.id;
   const { data: text, isLoading } = useQuery({
     queryKey: ["text", id],
@@ -129,46 +130,60 @@ const TextPage = () => {
   }
 
   return (
-    <div className="container w-[90%]  border-2 border-light-gray p-4  mb-8 bg-white rounded-2xl sm:px-2 sm:text-base">
-      <AddCardModal collectionId={text?.defaultCollectionId} />
-      <ShareModal sharing="texts" />
-      <TranslationWindow
-        setIsAddCardModalOpen={setIsAddCardModalOpen}
-        setDefaultValues={setDefaultValues}
-        setContent={setContent}
-        isSameUser={isSameUser}
-        selectionData={selectionData}
-      />
-      <div className="flex gap-4 justify-between items-center px-4 my-4">
-        <h1 className="text-3xl font-bold sm:text-xl">{text?.title}</h1>
-        <div className="flex gap-2">
-          <ActionsDropdown
-            itemId={text?._id as string}
-            shareHandler={shareHandler}
-            forkData={
-              isSameUser
-                ? undefined
-                : {
-                    forking: "Add to your texts",
-                    handler: forkHandler,
+    <div className="min-h-screen bg-gray-50">
+      <div className="container px-4 py-8 mx-auto max-w-7xl">
+        <AddCardModal collectionId={text?.defaultCollectionId} />
+        <ShareModal sharing="texts" />
+        <TranslationWindow
+          setIsAddCardModalOpen={setIsAddCardModalOpen}
+          setDefaultValues={setDefaultValues}
+          setContent={setContent}
+          isSameUser={isSameUser}
+          selectionData={selectionData}
+        />
+
+        <div className="overflow-hidden bg-white rounded-xl shadow-sm">
+          {/* Header Section */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold text-gray-900 sm:text-2xl">
+                {text?.title}
+              </h1>
+              <div className="flex items-center space-x-4">
+                <ActionsDropdown
+                  itemId={text?._id as string}
+                  shareHandler={shareHandler}
+                  forkData={
+                    isSameUser
+                      ? undefined
+                      : {
+                          forking: "Add to your texts",
+                          handler: forkHandler,
+                        }
                   }
-            }
-            isSameUser={isSameUser}
-            editHandler={() => {
-              navigate("/texts/edit/${id}");
-            }}
-            deleteHandler={deleteTextHandler}
-          />
+                  isSameUser={isSameUser}
+                  editHandler={() => {
+                    navigate("/texts/edit/${id}");
+                  }}
+                  deleteHandler={deleteTextHandler}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex divide-x divide-gray-200">
+            {/* Text Content */}
+            <div className="flex-1 px-6 py-4">
+              <Text
+                highlightText={highlightText}
+                onCardClick={onCardClick}
+                userCards={userCards}
+              />
+            </div>
+          </div>
         </div>
       </div>
-
-      <hr className="my-4"></hr>
-
-      <Text
-        highlightText={highlightText}
-        onCardClick={onCardClick}
-        userCards={userCards}
-      />
     </div>
   );
 };
@@ -185,7 +200,7 @@ const Text = React.memo(function ({
   return (
     <div className="text-div">
       <div
-        className="select-text"
+        className="max-w-none leading-relaxed text-gray-800 select-text prose prose-lg"
         dangerouslySetInnerHTML={{ __html: highlightText || "" }}
         onClick={(e) => {
           const target = e.target as HTMLElement;
@@ -195,7 +210,24 @@ const Text = React.memo(function ({
             if (card) onCardClick(card);
           }
         }}
+        style={{
+          fontSize: "1.125rem",
+          lineHeight: "1.75",
+        }}
       ></div>
+      <style>{`
+        .highlight {
+          position: relative;
+          background-color: rgba(255, 255, 0, 0.2);
+          cursor: pointer;
+          padding: 0 2px;
+          border-radius: 2px;
+          transition: background-color 0.2s;
+        }
+        .highlight:hover {
+          background-color: rgba(255, 255, 0, 0.4);
+        }
+      `}</style>
     </div>
   );
 });

@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Button } from "./ui/button";
+import Button from "./Button";
 import { cn } from "@/lib/utils";
 
 type FormProps = React.HTMLAttributes<HTMLFormElement> & {
@@ -143,8 +143,7 @@ Form.Input = forwardRef<HTMLInputElement, InputProps>(
         />
         <Button
           type="button"
-          variant="ghost"
-          className="absolute h-auto p-0 -translate-y-1/2 right-2 top-1/2"
+          className="absolute right-2 top-1/2 p-0 h-auto -translate-y-1/2"
           onClick={() => setIsPassword(!isPassword)}
         >
           {isPassword ? (

@@ -1,6 +1,9 @@
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { cva } from "class-variance-authority";
+import { link } from "fs";
+import { size } from "lodash";
+import { boolean, string } from "zod";
 
 type AnchorTypeProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
   link: string; // Anchor buttons will have a link
@@ -9,7 +12,15 @@ type AnchorTypeProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
 type ButtonTypeProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 type CommonProps = {
-  variant?: "primary" | "primary-outline" | "danger" | "danger-outline";
+  variant?:
+    | "primary"
+    | "primary-outline"
+    | "danger"
+    | "danger-outline"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
   size?: "large" | "parent" | "fit";
   center?: boolean;
   className?: string;
@@ -26,22 +37,32 @@ const Button = React.forwardRef<
   const { children, className, variant, size, center, ...attributes } = props;
 
   const buttonVariants = cva(
-    "cursor-pointer py-2.5 px-6 sm:zoom-[90%] sm:text-sm disabled:opacity-60 text-white transition-all duration-200 ease-in-out border rounded-lg shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2 font-medium",
+    "inline-flex text-white py-2 px-4 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
     {
       variants: {
         variant: {
           primary: "bg-primary hover:bg-blue-600",
           dark: "bg-dark-primary hover:bg-opacity-90",
           "primary-outline":
-            "border-primary bg-transparent hover:bg-blue-50 text-blue-700",
+            "border-primary border bg-transparent  hover:bg-blue-50 text-blue-700",
           danger: "bg-red-600 hover:bg-red-700",
           "danger-outline":
             "border-red-600 bg-transparent hover:bg-red-500 text-red-600",
+          outline:
+            "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          secondary:
+            "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          ghost: "hover:bg-accent hover:text-accent-foreground",
+          link: "text-primary underline-offset-4 hover:underline",
         },
         size: {
           large: "py-3 px-8 w-full max-w-[200px] text-base",
-          parent: "w-full justify-center",
+          parent: "w-full py-3 justify-center",
           fit: "w-fit justify-center",
+          default: "h-10 px-4 py-2",
+          sm: "h-9 rounded-md px-3",
+          lg: "h-11 rounded-md px-8",
+          icon: "h-10 w-10",
         },
       },
       defaultVariants: {

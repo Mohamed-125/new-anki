@@ -2,7 +2,7 @@ import React, { FormEvent, useContext, useState } from "react";
 import Modal from "./Modal";
 
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { Button } from "@/components/ui/button";
+
 import {
   Command,
   CommandEmpty,
@@ -23,6 +23,7 @@ import useDebounce from "@/hooks/useDebounce";
 import StatesContext, { statesContext } from "@/context/StatesContext";
 import axios from "axios";
 import useToasts from "@/hooks/useToasts";
+import Button from "./Button";
 
 const MoveVideoModal = ({
   isOpen,
@@ -212,13 +213,11 @@ function PlaylistsList({
 }) {
   const playlistsList: Playlist[] = [
     { label: "Remove From Any Playlist", value: "remove" },
-    ...(playlists?.map((playlist) => ({
+    ...(playlists ?? []).map((playlist) => ({
       value: playlist._id,
       label: playlist.name,
-    })) || []),
+    })),
   ];
-
-  console.log(playlistsList);
 
   return (
     <Command

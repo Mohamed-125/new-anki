@@ -1,13 +1,17 @@
 import axios from "axios";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
+
 export type UserType = {
   email: string;
   _id: string;
   languages: [string];
   proficiencyLevel: string;
   username: string;
+  isPremium: boolean;
+  isAdmin: boolean;
 };
+
 const useGetCurrentUser = () => {
   const { data: user, isLoading } = useQuery({
     queryKey: ["me"],

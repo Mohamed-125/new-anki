@@ -4,6 +4,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
+
+/* Example Usage */
+body {
+  // font-family: "Poppins", sans-serif; /* Change this to test different fonts */
+  font-family: "Jost", sans-serif;
+  // font-family: "Nunito", sans-serif;
+  // font-family: "Baloo 2", sans-serif;
+  // font-family: "Quicksand", sans-serif;
+  // font-family: "Lexend", sans-serif;
+  // font-family: "Atkinson Hyperlegible", sans-serif;
+  // font-family: "Fredoka", sans-serif;
+}
+
 :root {
   --grayColor: rgb(153, 153, 155);
   --dark-primary: rgb(46, 46, 46);
@@ -76,7 +98,7 @@ body * {
 body {
   background-color: #f8f9fa;
   font-size: 15px;
-  font-family: var(--font);
+  // font-family: var(--font);
   /* font-family: "Bahnschrift"; */
   /* font-size: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important; */

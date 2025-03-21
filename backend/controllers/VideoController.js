@@ -197,9 +197,9 @@ module.exports.getUserVideos = async (req, res, next) => {
     if (playlistId) {
       query.playlistId = playlistId;
     }
-    if (language) {
-      query.language = language;
-    }
+    // if (language) {
+    //   query.language = language;
+    // }
     const videosCount = await VideoModel.countDocuments(query);
 
     const skipNumber = page * limit;

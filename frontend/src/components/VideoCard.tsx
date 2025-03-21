@@ -53,7 +53,7 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       )}
     >
       <Link
-        to={"/video/" + video._id}
+        to={"/videos/" + video._id}
         className={twMerge(
           "overflow-hidden cursor-pointer h-full  rounded-t-xl",
           sideByside && "min-w-[40%]"

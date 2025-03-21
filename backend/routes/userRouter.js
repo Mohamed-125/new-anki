@@ -6,6 +6,7 @@ const {
   logUserOutController,
   checkUsernameController,
   updateProfileController,
+  getUsersController,
 } = require("../controllers/UserController");
 const Authorization = require("../middleware/Authorization");
 
@@ -19,6 +20,7 @@ router
     const user = req.user;
     console.log("user", user);
     return res.status(200).send(user);
-  });
+  })
+  .get("/users", Authorization, getUsersController);
 
 module.exports = router;

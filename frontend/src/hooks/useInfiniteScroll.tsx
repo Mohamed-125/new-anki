@@ -17,6 +17,11 @@ const useInfiniteScroll = (
       const scrollHeight = document.body.getBoundingClientRect().height;
       const windowHeight = window.innerHeight;
 
+      console.log(
+        Math.floor(scrollHeight),
+        Math.floor(windowHeight),
+        hasNextPage
+      );
       if (Math.floor(scrollHeight) <= Math.floor(windowHeight) && hasNextPage) {
         fetchNextPage();
       }

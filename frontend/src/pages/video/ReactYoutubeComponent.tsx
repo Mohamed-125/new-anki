@@ -20,8 +20,8 @@ type Props = {
 function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
   const opts = {
     playerVars: {
-      // Add other player parameters if needed
       autoplay: 0,
+      rel: 0,
     },
   };
   const intervalId = useRef(0); // Ref to store interval ID

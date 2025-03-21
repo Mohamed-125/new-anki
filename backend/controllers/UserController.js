@@ -11,7 +11,6 @@ module.exports.registerUserController = async (req, res, next) => {
       email,
     });
 
-    console.log("user", user);
     if (user)
       return res.status(400).send("User with this email already exsists");
 
@@ -37,6 +36,8 @@ module.exports.updateProfileController = async (req, res, next) => {
     languages,
     selectedNativeLanguage,
     proficiencyLevel,
+    isAdmin,
+    isPremium,
   } = req.body;
   try {
     const user = await UserModel.findById(req.user._id);
@@ -48,12 +49,81 @@ module.exports.updateProfileController = async (req, res, next) => {
     if (selectedNativeLanguage)
       user.selectedNativeLanguage = selectedNativeLanguage;
     if (proficiencyLevel) user.proficiencyLevel = proficiencyLevel;
+    if (isAdmin) user.isAdmin = isAdmin;
+    if (isPremium) user.isPremium = isPremium;
 
     await user.save();
+
+    console.log(user);
     res.status(200).send(user);
   } catch (err) {
     console.log("Update profile error:", err);
     res.status(400).send(err.message);
+  }
+};
+
+module.exports.getUsersController = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 30;
+    const searchQuery = req.query.searchQuery || "";
+    const language = req.query.language || "";
+    const isAdmin =
+      req.query.isAdmin !== undefined
+        ? req.query.isAdmin === "true"
+        : undefined;
+    const isPremium =
+      req.query.isPremium !== undefined
+        ? req.query.isPremium === "true"
+        : undefined;
+
+    let query = {};
+
+    // Add search query filter if provided
+    if (searchQuery) {
+      query = {
+        $or: [
+          { username: { $regex: searchQuery, $options: "i" } },
+          { email: { $regex: searchQuery, $options: "i" } },
+        ],
+      };
+    }
+
+    // Add language filter if provided
+    if (language) {
+      query.languages = { $in: [language] };
+    }
+
+    // Add admin filter if provided
+    if (isAdmin !== undefined) {
+      query.isAdmin = isAdmin;
+    }
+
+    // Add paid filter if provided
+    if (isPremium !== undefined) {
+      query.isPremium = isPremium;
+    }
+
+    // Count total users matching the query
+    const usersCount = await UserModel.countDocuments(query);
+
+    // Get users with pagination
+    const users = await UserModel.find(query)
+      .sort({ _id: -1 })
+      .skip(page * limit)
+      .limit(limit);
+
+    // Calculate if there's a next page
+    const nextPage = page + 1 < Math.ceil(usersCount / limit) ? page + 1 : null;
+
+    res.status(200).json({
+      users,
+      usersCount,
+      nextPage,
+    });
+  } catch (err) {
+    console.log("Get users error:", err);
+    res.status(500).send("Error fetching users");
   }
 };
 
@@ -89,6 +159,8 @@ module.exports.updateProfileController = async (req, res, next) => {
     languages,
     selectedNativeLanguage,
     proficiencyLevel,
+    isPremium,
+    isAdmin,
   } = req.body;
   try {
     const user = await UserModel.findById(req.user._id);
@@ -100,6 +172,8 @@ module.exports.updateProfileController = async (req, res, next) => {
     if (selectedNativeLanguage)
       user.selectedNativeLanguage = selectedNativeLanguage;
     if (proficiencyLevel) user.proficiencyLevel = proficiencyLevel;
+    if (isPremium) user.isPremium = isPremium;
+    if (isAdmin) user.isAdmin = isAdmin;
 
     await user.save();
     res.status(200).send(user);
@@ -120,33 +194,6 @@ module.exports.checkUsernameController = async (req, res, next) => {
     console.log(userExists, !userExists, !!userExists, Boolean(userExists));
     return res.status(200).json({ isUnique: !userExists });
   } catch (err) {
-    res.status(400).send(err.message);
-  }
-};
-
-module.exports.updateProfileController = async (req, res, next) => {
-  const {
-    username,
-    email,
-    languages,
-    selectedNativeLanguage,
-    proficiencyLevel,
-  } = req.body;
-  try {
-    const user = await UserModel.findById(req.user._id);
-    if (!user) return res.status(404).send("User not found");
-
-    if (username) user.username = username;
-    if (email) user.email = email;
-    if (languages && Array.isArray(languages)) user.languages = languages;
-    if (selectedNativeLanguage)
-      user.selectedNativeLanguage = selectedNativeLanguage;
-    if (proficiencyLevel) user.proficiencyLevel = proficiencyLevel;
-
-    await user.save();
-    res.status(200).send(user);
-  } catch (err) {
-    console.log("Update profile error:", err);
     res.status(400).send(err.message);
   }
 };
