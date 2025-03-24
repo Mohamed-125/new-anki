@@ -24,9 +24,10 @@ import {
 } from "@/components/ui/Command";
 import useMediaQuery from "@/hooks/useMediaQuery";
 
-import React, { useState } from "react";
+import React, { useDeferredValue, useEffect, useState } from "react";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
-
+import useGetCourses from "@/hooks/Queries/useGetCourses";
+import useDebounce from "@/hooks/useDebounce";
 // Define the schema fذor username validation
 const usernameSchema = z.object({
   username: z
@@ -53,29 +54,6 @@ const userProfileSchema = z.object({
 
 type UserProfileFormData = z.infer<typeof userProfileSchema>;
 
-const languageOptions = [
-  {
-    value: "de",
-    label: "German",
-    flag: "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
-  },
-  {
-    value: "en",
-    label: "English",
-    flag: "https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg",
-  },
-  {
-    value: "es",
-    label: "Spanish",
-    flag: "https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg",
-  },
-  {
-    value: "fr",
-    label: "French",
-    flag: "https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg",
-  },
-];
-
 const proficiencyOptions = [
   { value: "a1", label: "A1", description: "New to the language" },
   { value: "a2", label: "A2", description: "Basic knowledge of the language" },
@@ -91,7 +69,7 @@ const UserProfile = () => {
   const { addToast } = useToasts();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
+  const { courses } = useGetCourses();
   const {
     register,
     handleSubmit,
@@ -139,6 +117,14 @@ const UserProfile = () => {
     }
   };
 
+  const deferredUsername = useDebounce(watchUsername, 400);
+
+  useEffect(() => {
+    if (deferredUsername) {
+      checkUsernameUnique();
+    }
+  }, [deferredUsername]);
+
   const handleNextStep = async (e: React.MouseEvent) => {
     // Prevent default to ensure no form submission occurs
     e.preventDefault();
@@ -151,8 +137,7 @@ const UserProfile = () => {
       if (isValid) {
         const isUnique = await checkUsernameUnique();
 
-        console.log(usernameError);
-        if (!isUnique && usernameError) {
+        if (!isUnique) {
           return;
         }
       } else {
@@ -182,6 +167,7 @@ const UserProfile = () => {
       // // Send the complete profile data to the backend
       const response = await axios.patch("auth/update-profile", {
         ...data,
+
         languages: [data.language],
         selectedNativeLanguage,
       });
@@ -196,7 +182,7 @@ const UserProfile = () => {
 
       setSelectedLearningLanguage(data.language);
       addToast("Profile updated successfully", "success");
-      // navigate("/");
+      navigate("/");
     } catch (error) {
       addToast("Failed to update profile", "error");
     }
@@ -348,7 +334,7 @@ const UserProfile = () => {
                       placeholder="Enter your username"
                       type="text"
                       {...register("username")}
-                      onBlur={checkUsernameUnique}
+                      // onChange={checkUsernameUnique}
                       isLoading={isCheckingUsername}
                     />
                     <Form.Message error={true} className="text-sm">
@@ -375,24 +361,24 @@ const UserProfile = () => {
                       Choose a Language to Learn
                     </Form.Label>
                     <div className="grid grid-cols-2 gap-6 mt-4">
-                      {languageOptions.map((option) => (
+                      {courses?.map((course) => (
                         <div
-                          key={option.value}
-                          onClick={() => selectedLanguage(option.value)}
+                          key={course.lang}
+                          onClick={() => selectedLanguage(course.lang)}
                           className={`flex flex-col justify-center items-center p-6 h-32 text-center rounded-lg border-2 cursor-pointer transition-all ${
-                            watchLanguage === option.value
+                            watchLanguage === course.lang
                               ? "border-primary bg-blue-50"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
                           <div className="flex flex-col items-center">
                             <img
-                              src={option.flag}
+                              src={course.flag}
                               className="object-cover mb-2 w-16 h-10 rounded-md border border-gray-200"
-                              alt={`${option.label} flag`}
+                              alt={`${course.lang} flag`}
                             />
                             <span className="text-lg font-medium">
-                              {option.label}
+                              {course.lang}
                             </span>
                           </div>
                         </div>

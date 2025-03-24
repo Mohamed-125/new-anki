@@ -21,7 +21,7 @@ type CommonProps = {
     | "secondary"
     | "ghost"
     | "link";
-  size?: "large" | "parent" | "fit";
+  size?: "large" | "parent" | "fit" | "default" | "sm" | "lg" | "icon";
   center?: boolean;
   className?: string;
   children: React.ReactNode;

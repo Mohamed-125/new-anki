@@ -40,15 +40,21 @@ import AddNewNote from "./pages/AddNewNote.tsx";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.tsx";
 import { ReactNode, useEffect, useState } from "react";
 import Admin from "./pages/Admin/Admin.tsx";
-import AdminUsers from "./pages/Admin/Users/AdminUsers.tsx";
-
 import AiChat from "./components/AiChat";
+import AdminCourses from "./pages/Admin/AdminCourses.tsx";
+import AdminCourse from "./pages/Admin/AdminCourse.tsx";
+import AdminUsers from "./pages/Admin/Users/AdminUsers.tsx";
+import AdminLesson from "./pages/Admin/AdminLesson.tsx";
+import AdminCourseLevel from "./pages/Admin/AdminCourseLevel.tsx";
+import CoursePage from "./pages/CoursePage";
+import LessonPage from "./pages/LessonPage";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
 
   const links = [
     { name: "Home", path: "/" },
+    { name: "Learn", path: "/learn" },
     { name: "Collections", path: "/collections" },
     { name: "videos", path: "/videos" },
     { name: "playlists", path: "/playlists" },
@@ -245,6 +251,23 @@ function App() {
 
               <Route path="/profile/:id" element={<Profile />} />
 
+              <Route
+                path="/learn"
+                element={
+                  <ProtectedRoute>
+                    <CoursePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/learn/:lessonId"
+                element={
+                  <ProtectedRoute>
+                    <LessonPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route
@@ -267,6 +290,16 @@ function App() {
                 }
               >
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="courses" element={<AdminCourses />} />
+                <Route path="courses/:courseId" element={<AdminCourse />} />
+                <Route
+                  path="courses/:courseId/:courseLevelId"
+                  element={<AdminCourseLevel />}
+                />
+                <Route
+                  path="courses/:courseId/:courseLevelId/:lessonId"
+                  element={<AdminLesson />}
+                />
               </Route>
 
               <Route
@@ -290,12 +323,11 @@ const AdminRoute = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(user);
     if (!isLoading) {
-      // if (!user?.isAdmin || false) {
-      //   console.log("admin route worked");
-      //   navigate("/");
-      // }
+      if (!user?.isAdmin) {
+        console.log("admin route worked");
+        navigate("/");
+      }
     }
   }, [user, isLoading]);
 

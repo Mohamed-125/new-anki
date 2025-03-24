@@ -24,7 +24,7 @@ axios.interceptors.request.use(function (config) {
 
   // Only modify POST requests
   if (config.method === "post") {
-    config.data.language = language;
+    if (config.data) config.data.language = language;
   }
   return config;
 });

@@ -150,7 +150,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
             <div className="space-y-8">
               <div className="bg-white rounded-xl mx-auto py-9 !w-[90%]">
                 <div className="container">
-                  {/* Header Section */}
+                  {/* Header courseLevel */}
                   <div className="flex flex-col gap-4 pb-6 border-b border-gray-200">
                     <div className="flex justify-between items-start md:block">
                       <h1 className="text-3xl font-bold text-gray-800 md:mb-3">
@@ -191,7 +191,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                       </div>
                     </div>
                   </div>
-                  {/* Search Section */}
+                  {/* Search courseLevel */}
                   <div className="mt-6 rounded-lg white">
                     {/* <Search
                       label="Search cards"
@@ -203,7 +203,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                       setQuery={setQuery}
                     />
                   </div>
-                  {/* Sub Collections Section */}
+                  {/* Sub Collections courseLevel */}
                   <div className="mt-8">
                     <div className="flex flex-wrap justify-between items-center mb-5">
                       <h2 className="text-xl font-medium text-gray-700">
@@ -231,7 +231,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                   </div>{" "}
                 </div>
               </div>
-              {/* Cards Section */}
+              {/* Cards courseLevel */}
               <div className="container space-y-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-medium text-gray-700">

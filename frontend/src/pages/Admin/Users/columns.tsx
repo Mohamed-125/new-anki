@@ -87,7 +87,7 @@ export const columns: ColumnDef<UserType>[] = [
         );
 
         if (!answer) return;
-        axios.patch("/auth/update-profile", {
+        axios.patch(`/auth/update-profile?userId=${user._id}`, {
           isAdmin: !user?.isAdmin || true,
         });
         queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -99,7 +99,7 @@ export const columns: ColumnDef<UserType>[] = [
         );
 
         if (!answer) return;
-        axios.patch("/auth/update-profile", {
+        axios.patch(`/auth/update-profile?userId=${user._id}`, {
           isPremium: !user?.isPremium || true,
         });
         queryClient.invalidateQueries({ queryKey: ["users"] });

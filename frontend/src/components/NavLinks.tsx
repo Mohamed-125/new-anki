@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocalStorage } from "react-use";
 import { useState } from "react";
+import useGetCourses from "@/hooks/Queries/useGetCourses";
 
 type NavLinkProps = {
   links: LinkType[];
@@ -132,41 +133,22 @@ const ProfileDropdown = ({
   );
 };
 const LanguagesDropdown = () => {
-  const languageOptions = [
-    {
-      value: "de",
-      label: "German",
-      flag: "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
-    },
-    {
-      value: "en",
-      label: "English",
-      flag: "https://upload.wikimedia.org/wikipedia/en/a/ae/Flag_of_the_United_Kingdom.svg",
-    },
-    {
-      value: "es",
-      label: "Spanish",
-      flag: "https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg",
-    },
-    {
-      value: "fr",
-      label: "French",
-      flag: "https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg",
-    },
-  ];
-
+  const { courses, isLoading } = useGetCourses();
   const { user } = useGetCurrentUser();
 
   const [addLanguages, setAddLanguages] = useState(false);
-
-  const filteredLanguages = languageOptions.filter(
-    (option) => !user?.languages.includes(option.value)
-  );
 
   const { selectedLearningLanguage, setSelectedLearningLanguage } =
     useGetCurrentUser();
 
   const queryClient = useQueryClient();
+
+  if (isLoading) return <div>Loading....</div>;
+
+  console.log(courses);
+  const filteredLanguages = courses?.filter(
+    (course) => !user?.languages.includes(course.lang)
+  );
 
   const addLanguageToUser = (languageToAdd: string) => {
     if (user?.languages)
@@ -181,6 +163,10 @@ const LanguagesDropdown = () => {
         });
   };
 
+  console.log(
+    courses?.find((courses) => courses.lang === selectedLearningLanguage)
+  );
+
   return (
     <DropdownMenu
       modal={false}
@@ -191,8 +177,8 @@ const LanguagesDropdown = () => {
       <DropdownMenuTrigger className="ml-1 text-2xl">
         <img
           src={
-            languageOptions.find(
-              (language) => language.value === selectedLearningLanguage
+            courses?.find(
+              (courses) => courses.lang === selectedLearningLanguage
             )?.flag
           }
           className="object-fill w-11 h-11 rounded-full"
@@ -200,9 +186,10 @@ const LanguagesDropdown = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="px-4 w-[200px] py-5 mt-2 bg-popover">
         {user?.languages.map((userLanguage) => {
-          const language = languageOptions.find(
-            (option) => option.value === userLanguage
+          const language = courses?.find(
+            (courses) => courses.lang === userLanguage
           );
+
           return (
             <>
               <DropdownMenuItem
@@ -213,13 +200,13 @@ const LanguagesDropdown = () => {
                 }}
               >
                 <img src={language?.flag} className="w-8 h-8 rounded-full" />{" "}
-                <p>{language?.label}</p>
+                <p>{language?.lang}</p>
               </DropdownMenuItem>
             </>
           );
         })}
         <DropdownMenuSeparator />
-        {!addLanguages && filteredLanguages.length ? (
+        {!addLanguages && filteredLanguages?.length ? (
           <div
             onClick={() => setAddLanguages(true)}
             className="px-2 py-2 rounded-md cursor-pointer hover:bg-gray-100"
@@ -228,22 +215,22 @@ const LanguagesDropdown = () => {
           </div>
         ) : (
           <div>
-            {filteredLanguages.map((filteredLanguage) => {
+            {filteredLanguages?.map((filteredLanguage) => {
               return (
                 <>
                   <DropdownMenuItem
-                    key={filteredLanguage.value}
+                    key={filteredLanguage.lang}
                     className="cursor-pointer"
                     onClick={() => {
-                      setSelectedLearningLanguage(filteredLanguage.value);
-                      addLanguageToUser(filteredLanguage.value);
+                      setSelectedLearningLanguage(filteredLanguage.lang);
+                      addLanguageToUser(filteredLanguage.lang);
                     }}
                   >
                     <img
                       src={filteredLanguage?.flag}
                       className="w-8 h-8 rounded-full"
                     />{" "}
-                    <p>{filteredLanguage?.label}</p>
+                    <p>{filteredLanguage?.lang}</p>
                   </DropdownMenuItem>
                 </>
               );

@@ -277,8 +277,11 @@ const MoveCollectionModal = ({
         ids: selectedItems,
         collectionId: root ? null : targetCollectionId,
       });
+    } else {
+      await axios.patch("card/" + editId, {
+        collectionId: root ? null : targetCollectionId,
+      });
     }
-
     setSelectedItems?.([]);
     setDefaultValues((pre) => {
       return { ...pre, collectionId: targetCollectionId };
@@ -313,8 +316,7 @@ const MoveCollectionModal = ({
       id={"moveCollectionModal"}
       onAnimationEnd={onAnimationEnd}
       className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
-        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
-      }`}
+        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""}`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >

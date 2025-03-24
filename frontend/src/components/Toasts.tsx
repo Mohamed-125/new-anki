@@ -27,12 +27,19 @@ export default Toasts;
 const Toast = ({ toast }: { toast: ToastType }) => {
   const { deleteToast, setToasts } = useToasts();
   useEffect(() => {
+    // console.log(toast);
     if (toast.type === "promise") {
-      if (!toast.isCompleted || !toast.isError) {
+      if (toast.isCompleted) {
+        // console.log("toast not completed should not be removed");
+        return;
+      }
+      if (!toast.isError) {
+        // console.log("toast not completed should not be removed");
         return;
       }
     }
 
+    // console.log("toast should be removed");
     const timeout = setTimeout(() => {
       setToasts((pre) =>
         pre.filter((currentToast) => currentToast.id !== toast.id)

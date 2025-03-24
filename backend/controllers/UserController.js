@@ -29,39 +29,6 @@ module.exports.registerUserController = async (req, res, next) => {
   }
 };
 
-module.exports.updateProfileController = async (req, res, next) => {
-  const {
-    username,
-    email,
-    languages,
-    selectedNativeLanguage,
-    proficiencyLevel,
-    isAdmin,
-    isPremium,
-  } = req.body;
-  try {
-    const user = await UserModel.findById(req.user._id);
-    if (!user) return res.status(404).send("User not found");
-
-    if (username) user.username = username;
-    if (email) user.email = email;
-    if (languages && Array.isArray(languages)) user.languages = languages;
-    if (selectedNativeLanguage)
-      user.selectedNativeLanguage = selectedNativeLanguage;
-    if (proficiencyLevel) user.proficiencyLevel = proficiencyLevel;
-    if (isAdmin) user.isAdmin = isAdmin;
-    if (isPremium) user.isPremium = isPremium;
-
-    await user.save();
-
-    console.log(user);
-    res.status(200).send(user);
-  } catch (err) {
-    console.log("Update profile error:", err);
-    res.status(400).send(err.message);
-  }
-};
-
 module.exports.getUsersController = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 0;
@@ -162,10 +129,14 @@ module.exports.updateProfileController = async (req, res, next) => {
     isPremium,
     isAdmin,
   } = req.body;
+
+  console.log("tsrtarstarst");
   try {
     const user = await UserModel.findById(req.user._id);
+    console.log(user);
     if (!user) return res.status(404).send("User not found");
 
+    console.log(user);
     if (username) user.username = username;
     if (email) user.email = email;
     if (languages && Array.isArray(languages)) user.languages = languages;

@@ -36,8 +36,11 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="relative">
       <SidebarProvider>
         <AdminSidebar />
-        <main className="container flex-1">
-          <SidebarTrigger />
+        <main className="container relative flex-1 p-4">
+          <div className="absolute top-4 left-4">
+            {/* @ts-ignore */}
+            <SidebarTrigger />
+          </div>
           {children}
         </main>
       </SidebarProvider>
@@ -48,13 +51,13 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
 const AdminSidebar = () => {
   const items = [
     {
-      title: "users",
+      title: "Users",
       url: "users",
       icon: User,
     },
     {
       title: "Courses",
-      url: "Courses",
+      url: "courses",
       icon: Inbox,
     },
     {

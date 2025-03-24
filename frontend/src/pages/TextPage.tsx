@@ -143,7 +143,7 @@ const TextPage = () => {
         />
 
         <div className="overflow-hidden bg-white rounded-xl shadow-sm">
-          {/* Header Section */}
+          {/* Header courseLevel */}
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h1 className="text-3xl font-bold text-gray-900 sm:text-2xl">
