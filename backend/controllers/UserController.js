@@ -130,7 +130,6 @@ module.exports.updateProfileController = async (req, res, next) => {
     isAdmin,
   } = req.body;
 
-  console.log("tsrtarstarst");
   try {
     const user = await UserModel.findById(req.user._id);
     console.log(user);

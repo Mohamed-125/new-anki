@@ -41,6 +41,9 @@ const AddNewLessonModal = ({
   const { mutateAsync, isPending } = useMutation({
     onSuccess() {
       queryClient.invalidateQueries({ queryKey: ["lessons", courseLevelId] });
+      queryClient.invalidateQueries({
+        queryKey: ["courseLevelLessons", courseLevelId],
+      });
       setIsOpen(false);
     },
     mutationFn: async (data: Partial<LessonType>) => {
@@ -65,12 +68,12 @@ const AddNewLessonModal = ({
 
       mutateAsync(data)
         .then(() => {
-          toast.setToastData({ title: "Lesson Added!", isCompleted: true });
+          toast.setToastData({ title: "Lesson Added!", type: "success" });
         })
         .catch(() => {
           toast.setToastData({
             title: "Failed To Add Lesson",
-            isError: true,
+            type: "error",
           });
         })
         .finally(() => setIsLoading(false));
@@ -92,11 +95,11 @@ const AddNewLessonModal = ({
       await axios.patch(`lesson/${editId}`, data);
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["lessons", courseLevelId] });
-      toast.setToastData({ title: "Lesson Updated!", isCompleted: true });
+      toast.setToastData({ title: "Lesson Updated!", type: "success" });
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
-      toast.setToastData({ title: "Failed To Update Lesson", isError: true });
+      toast.setToastData({ title: "Failed To Update Lesson", type: "error" });
     } finally {
       setIsLoading(false);
     }

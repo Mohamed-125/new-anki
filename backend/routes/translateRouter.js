@@ -8,31 +8,32 @@ router.post("/", async (req, res, next) => {
   const { targetLanguage, examples = false } = req.query;
 
   console.log(targetLanguage);
-  if (examples) {
-    const reverso = new Reverso();
-    try {
-      reverso.getTranslation(text, "german", "english", (err, response) => {
-        if (err) {
-          res.send(err.message);
-          return;
-        }
-        res.send(response);
-      });
-    } catch (err) {
-      res.status(400).send(err);
-    }
-  } else {
-    try {
-      const encodedText = encodeURIComponent(text);
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodedText}`;
-      const response = await axios.get(url);
-      const data = response.data[0].map((arr) => arr[0]);
-      res.send(data.join(" "));
-    } catch (err) {
-      err;
-      res.send(err.message);
-    }
+  // if (examples) {
+  //   const reverso = new Reverso();
+  //   try {
+  //     reverso.getTranslation(text, "german", "english", (err, response) => {
+  //       if (err) {
+  //         res.send(err.message);
+  //         return;
+  //       }
+  //       res.send(response);
+  //     });
+  //   } catch (err) {
+  //     console.log(err);
+  //     res.status(400).send(err);
+  //   }
+  // }
+  //  else {
+  try {
+    const encodedText = encodeURIComponent(text);
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodedText}`;
+    const response = await axios.get(url);
+    const data = response.data[0].map((arr) => arr[0]);
+    res.send(data.join(" "));
+  } catch (err) {
+    res.send(err.message);
   }
+  // }
 
   // const textParts = Math.ceil(text.length / 2000);
   // const arrOfNumbers = Array.from({ length: textParts }, (_, i) => i);

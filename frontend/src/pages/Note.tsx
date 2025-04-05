@@ -81,7 +81,7 @@ const Note = () => {
         isCompleted: true,
       });
     } catch (err) {
-      toast.setToastData({ title: "Failed to fork note", isError: true });
+      toast.setToastData({ title: "Failed to fork note", type: "error" });
     }
   };
 

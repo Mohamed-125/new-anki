@@ -49,9 +49,7 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
 
   const createCardHandler = async (
     e: React.FormEvent<HTMLFormElement>,
-    additionalData: any = {},
-    setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>,
-    callback?: () => void
+    additionalData: any = {}
   ) => {
     e?.preventDefault();
     const formData = new FormData(e?.target as HTMLFormElement);
@@ -62,13 +60,7 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
       ...additionalData,
     };
 
-    console.log(data);
-    mutateAsync(data)
-      .then(() => {
-        setIsAddCardModalOpen(false);
-        callback?.();
-      })
-      .catch(() => {});
+    return mutateAsync(data);
   };
 
   return { createCardHandler, data, isLoading: isPending };

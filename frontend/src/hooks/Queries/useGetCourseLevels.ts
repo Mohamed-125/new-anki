@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { courseLevelType } from "./useCourseLevelMutations";
@@ -43,8 +44,10 @@ const useGetCourseLevels = ({
     enabled,
   });
 
-  console.log(data?.pages);
-  const courseLevels = data?.pages.flatMap((page) => page.courseLevels || []);
+  const courseLevels = useMemo(
+    () => data?.pages.flatMap((page) => page.courseLevels || []),
+    [data]
+  );
 
   return {
     courseLevels,

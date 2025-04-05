@@ -7,6 +7,7 @@ const {
   getAllSections,
   getSection,
   updateSection,
+  updateOrder,
   deleteSection,
 } = require("../controllers/SectionController");
 
@@ -15,6 +16,7 @@ router
   .route("/:id")
   .get(getSection)
   .patch(Authorization, updateSection)
+  .put(Authorization, updateOrder)
   .delete(Authorization, deleteSection);
 
 module.exports = router;

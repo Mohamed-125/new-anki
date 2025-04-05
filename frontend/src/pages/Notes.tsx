@@ -43,7 +43,7 @@ const Notes = () => {
         isCompleted: true,
       });
     } catch (err) {
-      toast.setToastData({ title: "Failed to delete note", isError: true });
+      toast.setToastData({ title: "Failed to delete note", type: "error" });
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useGetCourse from "@/hooks/Queries/useGetCourse";
 import useCourseMutations from "@/hooks/Queries/useCourseMutations";
 import useGetCourseLevels from "@/hooks/Queries/useGetCourseLevels";
@@ -17,6 +17,7 @@ import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { sampleLessons } from "@/data/sampleCourseData";
+import DragableComponent from "@/components/DraggableComponent";
 
 const AdminCourse = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +37,7 @@ const AdminCourse = () => {
     data: course,
     isLoading: courseLoading,
     isError: courseError,
-  } = useGetCourse(courseId || "");
+  } = useGetCourse({ courseId: courseId || "" });
 
   const {
     courseLevels,
@@ -47,11 +48,21 @@ const AdminCourse = () => {
   const { updateCourse } = useCourseMutations();
   const { deletecourseLevel } = usecourseLevelMutations(courseId || "");
 
+  const [arrangedCourseLevels, setArrangedCourseLevels] = useState(
+    courseLevels || []
+  );
+
+  console.log(course);
+  useEffect(() => {
+    if (courseLevels) {
+      setArrangedCourseLevels(courseLevels);
+    }
+  }, [courseLevels]);
+
   if (courseLoading || courseLevelsLoading) return <div>Loading...</div>;
   if (courseError || courseLevelsError) return <div>Error loading data</div>;
   if (!course) return <div>Course not found</div>;
 
-  console.log(courseLevels, course);
   return (
     <div className="p-6 mx-auto max-w-7xl">
       <div className="mb-8">
@@ -87,8 +98,13 @@ const AdminCourse = () => {
       />
 
       <div className="grid gap-8">
-        {courseLevels?.map((courseLevel, index) => (
-          <div key={courseLevel._id}>
+        {arrangedCourseLevels?.map((courseLevel, index) => (
+          <DragableComponent
+            order={index + 1}
+            setState={setArrangedCourseLevels}
+            state={arrangedCourseLevels}
+            key={courseLevel._id}
+          >
             <div key={index} className="overflow-hidden bg-white shadow-md">
               <div className="p-6 text-white bg-blue-500 rounded-t-xl">
                 <div className="flex justify-between items-center mb-4">
@@ -186,7 +202,7 @@ const AdminCourse = () => {
                 </Link>
               ))}
             </div>
-          </div>
+          </DragableComponent>
         ))}
       </div>
     </div>

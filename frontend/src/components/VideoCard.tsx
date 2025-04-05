@@ -16,7 +16,7 @@ type VideoCardProps = {
     title: string;
   };
   sideByside?: boolean;
-  moveVideoHandler: any;
+  moveVideoHandler?: any;
 };
 
 const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
@@ -36,11 +36,12 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
         queryClient.invalidateQueries({ queryKey: ["videos"] });
         toast.setToastData({
           title: "Video deleted successfully!",
+          type: "success",
           isCompleted: true,
         });
       })
       .catch(() => {
-        toast.setToastData({ title: "Failed to delete video", isError: true });
+        toast.setToastData({ title: "Failed to delete video", type: "error" });
       });
   };
 

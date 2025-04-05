@@ -79,12 +79,12 @@ const AddNewCollectionModal = ({}: {}) => {
 
       mutateAsync(data)
         .then(() => {
-          toast.setToastData({ title: "Collection Added!", isCompleted: true });
+          toast.setToastData({ title: "Collection Added!", type: "success" });
         })
         .catch(() => {
           toast.setToastData({
             title: "Faild To Add Collection",
-            isError: true,
+            type: "error",
           });
         })
         .finally(() => setIsLoading(false));
@@ -110,11 +110,11 @@ const AddNewCollectionModal = ({}: {}) => {
       await axios.patch(`collection/${editId}`, data);
       setIsCollectionModalOpen(false);
       invalidateCollectionsQueries();
-      toast.setToastData({ title: "Collection Added!", isCompleted: true });
+      toast.setToastData({ title: "Collection Added!", type: "success" });
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
-      toast.setToastData({ title: "Faild To Add Collection", isError: true });
+      toast.setToastData({ title: "Faild To Add Collection", type: "error" });
     } finally {
       setIsLoading(false);
     }

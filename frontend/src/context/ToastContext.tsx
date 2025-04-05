@@ -11,6 +11,7 @@ export type ToastType = {
   setToastData(data: {
     title?: string;
     isCompleted?: boolean;
+    type: "error" | "success" | "info" | "promise";
     isError?: boolean;
   }): void;
 };

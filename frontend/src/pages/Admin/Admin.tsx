@@ -18,6 +18,7 @@ import {
 import { Home, Inbox, Calendar, Search, Settings, User } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { FaUsers } from "react-icons/fa";
+import { MdOutlineTopic, MdTopic } from "react-icons/md";
 
 const Admin = () => {
   return (
@@ -61,9 +62,9 @@ const AdminSidebar = () => {
       icon: Inbox,
     },
     {
-      title: "Calendar",
-      url: "#",
-      icon: Calendar,
+      title: "Topics",
+      url: "topics",
+      icon: MdOutlineTopic,
     },
     {
       title: "Search",

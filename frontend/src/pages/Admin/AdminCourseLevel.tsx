@@ -112,6 +112,9 @@ const AdminCourseLevel = () => {
                   queryClient.invalidateQueries({
                     queryKey: ["lessons", courseLevelId],
                   });
+                  queryClient.invalidateQueries({
+                    queryKey: ["courseLevelLessons", courseLevelId],
+                  });
                 } catch (err) {
                   console.error(err);
                 }

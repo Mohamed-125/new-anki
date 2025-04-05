@@ -75,7 +75,7 @@ const AddNewSectionModal = ({
         .catch(() => {
           toast.setToastData({
             title: "Failed To Add Section",
-            isError: true,
+            type: "error",
           });
         })
         .finally(() => setIsLoading(false));
@@ -96,13 +96,13 @@ const AddNewSectionModal = ({
       await axios.patch(`section/${editId}`, data);
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
-      toast.setToastData({ title: "Section Updated!", isCompleted: true });
+      toast.setToastData({ title: "Section Updated!", type: "success" });
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
       toast.setToastData({
         title: "Failed To Update Section",
-        isError: true,
+        type: "error",
       });
     } finally {
       setIsLoading(false);

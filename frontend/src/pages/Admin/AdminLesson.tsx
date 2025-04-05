@@ -18,7 +18,6 @@ import AdminSectionComponent from "./components/AdminSectionComponent";
 const AdminLesson = () => {
   const { lessonId, courseId } = useParams();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
-  const [sectionType, setSectionType] = useState("");
   const [showQuestionDropdown, setShowQuestionDropdown] = useState(false);
   const [questionsBySectionId, setQuestionsBySectionId] = useState<
     Record<
@@ -39,15 +38,17 @@ const AdminLesson = () => {
 
   const { sections } = useGetSections(lessonId as string);
 
+  const [arrangedSections, setArrangedSections] = useState(sections || []);
+
   useEffect(() => {
     if (sections) {
+      setArrangedSections(sections);
       const questionsBySection: Record<string, any[]> = {};
       let totalQuestions = 0;
 
       sections.forEach((section) => {
         const sectionQuestions =
           section.content?.questions?.map((q: any) => {
-            console.log("q", q);
             return {
               id: q.id,
               type: q.type,
@@ -70,7 +71,6 @@ const AdminLesson = () => {
   const [defaultValues, setDefaultValues] = useState({});
   const [editId, setEditId] = useState("");
 
-  console.log(sectionType);
   if (isLoading) return <p>isLoading</p>;
 
   return (
@@ -127,25 +127,24 @@ const AdminLesson = () => {
             </Button>
           </div>
 
-          <div className="grid gap-8">
-            {sections?.map((section, index) => {
+          <div className="">
+            {arrangedSections?.map((section, index) => {
               return (
                 <AdminSectionComponent
+                  index={index}
                   setQuestionsBySectionId={setQuestionsBySectionId}
                   section={section}
                   expandedSections={expandedSections}
                   setExpandedSections={setExpandedSections}
-                  setSectionType={setSectionType}
                   showQuestionDropdown={showQuestionDropdown}
                   setShowQuestionDropdown={setShowQuestionDropdown}
                   questionsBySectionId={questionsBySectionId}
                   setEditId={setEditId}
                   editId={editId}
-                  setIsSectionModalOpen={setIsSectionModalOpen}
-                  setDefaultValues={setDefaultValues}
-                  sectionType={sectionType}
                   questionCounter={questionCounter}
                   setQuestionCounter={setQuestionCounter}
+                  setArrangedSections={setArrangedSections}
+                  arrangedSections={arrangedSections}
                 />
               );
             })}

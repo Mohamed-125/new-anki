@@ -70,7 +70,7 @@ const Playlist = () => {
       .catch(() => {
         toast.setToastData({
           title: "Failed to delete playlist",
-          isError: true,
+          type: "error",
         });
       });
   };

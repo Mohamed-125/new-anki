@@ -66,6 +66,7 @@ const UserProfile = () => {
   const [direction, setDirection] = useState(1); // Track animation direction: 1 for forward, -1 for backward
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameError, setUsernameError] = useState("");
+  const [isUserNameChecked, setIsUserNameChecked] = useState(false);
   const { addToast } = useToasts();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -107,6 +108,7 @@ const UserProfile = () => {
         setUsernameError("This username is already taken");
         return false;
       }
+      setIsUserNameChecked(true);
 
       return true;
     } catch (error) {
@@ -118,6 +120,12 @@ const UserProfile = () => {
   };
 
   const deferredUsername = useDebounce(watchUsername, 400);
+
+  useEffect(() => {
+    if (watchUsername && watchUsername.length >= 3) {
+      setIsUserNameChecked(false);
+    }
+  }, [watchUsername]);
 
   useEffect(() => {
     if (deferredUsername) {
@@ -267,7 +275,6 @@ const UserProfile = () => {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [selectedNativeLanguage, setSelectedNativeLanguage] = useState("");
 
-  console.log(step);
   return (
     <div className="flex flex-grow justify-center items-center p-4">
       <Form
@@ -384,9 +391,6 @@ const UserProfile = () => {
                         </div>
                       ))}
                     </div>
-                    <Form.Message error={true} className="text-sm">
-                      {errors.language?.message}
-                    </Form.Message>
                   </Form.Field>
                 </Form.FieldsContainer>
               </motion.div>
@@ -429,9 +433,6 @@ const UserProfile = () => {
                         </div>
                       ))}
                     </div>
-                    <Form.Message error={true} className="text-sm">
-                      {errors.proficiencyLevel?.message}
-                    </Form.Message>
                   </Form.Field>
                 </Form.FieldsContainer>
               </motion.div>
@@ -518,9 +519,14 @@ const UserProfile = () => {
                 onClick={(e: any) => handleNextStep(e)}
                 disabled={
                   step === 1
-                    ? !watchUsername || !!errors.username || !!usernameError
+                    ? !isUserNameChecked ||
+                      isCheckingUsername ||
+                      !!errors.username ||
+                      !!usernameError
                     : step === 2
                     ? !watchLanguage
+                    : step === 3
+                    ? !watchProficiencyLevel
                     : false
                 }
                 className="px-6"

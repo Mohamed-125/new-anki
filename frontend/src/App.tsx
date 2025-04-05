@@ -48,6 +48,10 @@ import AdminLesson from "./pages/Admin/AdminLesson.tsx";
 import AdminCourseLevel from "./pages/Admin/AdminCourseLevel.tsx";
 import CoursePage from "./pages/CoursePage";
 import LessonPage from "./pages/LessonPage";
+import GetTranscript from "./pages/GetTranscript";
+import AdminTopics from "./pages/Admin/AdminTopics.tsx";
+import AdminTopic from "./pages/Admin/AdminTopic.tsx";
+import LandingPage from "./pages/LandingPage.tsx";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
@@ -122,6 +126,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Video />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/transcript"
+                element={
+                  <ProtectedRoute>
+                    <GetTranscript />
                   </ProtectedRoute>
                 }
               />
@@ -261,7 +273,7 @@ function App() {
               />
 
               <Route
-                path="/learn/:lessonId"
+                path="/learn/:courseLevelId/:lessonId"
                 element={
                   <ProtectedRoute>
                     <LessonPage />
@@ -300,8 +312,11 @@ function App() {
                   path="courses/:courseId/:courseLevelId/:lessonId"
                   element={<AdminLesson />}
                 />
+                <Route path="topics" element={<AdminTopics />} />
+                <Route path="topics/:topicId" element={<AdminTopic />} />
               </Route>
 
+              <Route path="/landing" element={<LandingPage />} />
               <Route
                 path="*"
                 element={selectedLearningLanguage ? <PageNotFound /> : ""}

@@ -61,10 +61,10 @@ const AddNewNote = () => {
         const response = await axios.post(`note/`, data);
         invalidateNoteQueries();
         navigate("/notes/" + response.data._id);
-        toast.setToastData({ title: "Note Added!", isCompleted: true });
+        toast.setToastData({ title: "Note Added!", type: "success" });
       }
     } catch (err) {
-      toast.setToastData({ title: "Failed to add note", isError: true });
+      toast.setToastData({ title: "Failed to add note", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -83,9 +83,9 @@ const AddNewNote = () => {
       const response = await axios.patch(`note/${note._id}`, data);
       navigate("/notes/" + response.data._id);
       invalidateNoteQueries();
-      toast.setToastData({ title: "Note Updated!", isCompleted: true });
+      toast.setToastData({ title: "Note Updated!", type: "success" });
     } catch (err) {
-      toast.setToastData({ title: "Failed to update note", isError: true });
+      toast.setToastData({ title: "Failed to update note", type: "error" });
     } finally {
       setLoading(false);
     }

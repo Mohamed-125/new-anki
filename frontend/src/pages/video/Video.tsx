@@ -70,8 +70,6 @@ const Video = () => {
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === video?.userId;
 
-  console.log(user?._id, video?.userId);
-
   const forkHandler = async () => {
     const toast = addToast("Forking video...", "promise");
     try {
@@ -80,10 +78,11 @@ const Video = () => {
       queryClient.invalidateQueries({ queryKey: ["videos"] });
       toast.setToastData({
         title: "Video forked successfully!",
+        type: "success",
         isCompleted: true,
       });
     } catch (err) {
-      toast.setToastData({ title: "Failed to fork video", isError: true });
+      toast.setToastData({ title: "Failed to fork video", type: "error" });
     }
   };
 
@@ -114,11 +113,11 @@ const Video = () => {
           subtitleContainerRef={subtitleContainerRef}
         />
         <div className="mt-5">
-          {!isSameUser && (
+          {!isSameUser || !video?.topicId ? (
             <Button onClick={forkHandler} className="mb-7">
               Add to your videos
             </Button>
-          )}
+          ) : null}
           {isIntialLoading && <CardsSkeleton />}
           {videoCards?.map((card: CardType) => (
             <Card key={card._id} card={card} id={card._id} />

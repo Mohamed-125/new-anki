@@ -31,6 +31,17 @@ const VideoSchema = new mongoose.Schema(
       ref: "User",
       index: true,
     },
+    listId: { type: String, index: true },
+    lessonId: { type: String, index: true },
+    topicOrder: {
+      type: Number,
+      default: 0,
+    },
+    topicId: {
+      type: mongoose.Types.ObjectId,
+      index: true,
+      ref: "Topic",
+    },
     playlistId: {
       type: mongoose.Types.ObjectId,
       index: true,

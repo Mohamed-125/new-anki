@@ -18,6 +18,7 @@ export type TextType = {
   title: string;
   content: string;
   userId: string;
+  topicId?: string;
   defaultCollectionId: string | undefined;
 };
 

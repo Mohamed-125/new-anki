@@ -103,16 +103,17 @@ export function AddCardModal({
     } else {
       const toast = addToast("Creating card...", "promise");
       try {
-        await createCardHandler(e, cardData, setIsAddCardModalOpen);
+        await createCardHandler(e, cardData);
         toast.setToastData({
           title: "Card created successfully!",
-          isCompleted: true,
+          type: "success",
         });
       } catch (err) {
-        toast.setToastData({ title: "Failed to create card", isError: true });
+        toast.setToastData({ title: "Failed to create card", type: "error" });
       }
     }
 
+    setIsAddCardModalOpen(false);
     setIsLoading(false);
     //@ts-ignore
     e.target.reset();

@@ -62,12 +62,12 @@ const AddNewCourseModal = ({
 
       mutateAsync(data)
         .then(() => {
-          toast.setToastData({ title: "Course Added!", isCompleted: true });
+          toast.setToastData({ title: "Course Added!", type: "success" });
         })
         .catch(() => {
           toast.setToastData({
             title: "Failed To Add Course",
-            isError: true,
+            type: "error",
           });
         })
         .finally(() => setIsLoading(false));
@@ -89,11 +89,11 @@ const AddNewCourseModal = ({
       await axios.patch(`course/${editId}`, data);
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["courses"] });
-      toast.setToastData({ title: "Course Updated!", isCompleted: true });
+      toast.setToastData({ title: "Course Updated!", type: "success" });
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
-      toast.setToastData({ title: "Failed To Update Course", isError: true });
+      toast.setToastData({ title: "Failed To Update Course", type: "error" });
     } finally {
       setIsLoading(false);
     }

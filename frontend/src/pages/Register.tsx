@@ -42,7 +42,7 @@ const Register = () => {
         });
       })
       .catch((err) => {
-        toast.setToastData({ title: err.response.data, isError: true });
+        toast.setToastData({ title: err.response.data, type: "error" });
       });
   };
   return (

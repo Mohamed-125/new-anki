@@ -118,10 +118,11 @@ const TextPage = () => {
       queryClient.invalidateQueries({ queryKey: ["texts"] });
       toast.setToastData({
         title: "Text forked successfully!",
+        type: "success",
         isCompleted: true,
       });
     } catch (err) {
-      toast.setToastData({ title: "Failed to fork text", isError: true });
+      toast.setToastData({ title: "Failed to fork text", type: "error" });
     }
   };
 
@@ -154,7 +155,7 @@ const TextPage = () => {
                   itemId={text?._id as string}
                   shareHandler={shareHandler}
                   forkData={
-                    isSameUser
+                    isSameUser || text?.topicId
                       ? undefined
                       : {
                           forking: "Add to your texts",

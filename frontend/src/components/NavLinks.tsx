@@ -175,14 +175,16 @@ const LanguagesDropdown = () => {
       }}
     >
       <DropdownMenuTrigger className="ml-1 text-2xl">
-        <img
-          src={
-            courses?.find(
-              (courses) => courses.lang === selectedLearningLanguage
-            )?.flag
-          }
-          className="object-fill w-11 h-11 rounded-full"
-        />{" "}
+        <div className="overflow-hidden w-11 h-11 rounded-full">
+          <img
+            className="object-cover w-full h-full"
+            src={
+              courses?.find(
+                (courses) => courses.lang === selectedLearningLanguage
+              )?.flag
+            }
+          />
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="px-4 w-[200px] py-5 mt-2 bg-popover">
         {user?.languages.map((userLanguage) => {

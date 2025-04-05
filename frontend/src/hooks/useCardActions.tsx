@@ -28,7 +28,7 @@ const useCardActions = () => {
     onError: (error, variables, context: any) => {
       context.toast.setToastData({
         title: "Failed to update card",
-        isError: true,
+        type: "error",
       });
     },
     mutationFn: (data: CardType) => {

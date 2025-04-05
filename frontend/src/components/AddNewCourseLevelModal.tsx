@@ -68,7 +68,7 @@ const AddNewcourseLevelModal = ({
         .catch(() => {
           toast.setToastData({
             title: "Failed To Add courseLevel",
-            isError: true,
+            type: "error",
           });
         })
         .finally(() => setIsLoading(false));
@@ -89,13 +89,13 @@ const AddNewcourseLevelModal = ({
       await axios.patch(`courseLevel/${editId}`, data);
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["courseLevel", lessonId] });
-      toast.setToastData({ title: "courseLevel Updated!", isCompleted: true });
+      toast.setToastData({ title: "courseLevel Updated!", type: "success" });
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
       toast.setToastData({
         title: "Failed To Update courseLevel",
-        isError: true,
+        type: "error",
       });
     } finally {
       setIsLoading(false);

@@ -7,7 +7,7 @@ const textSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
 
     content: {
       type: String,
@@ -16,6 +16,20 @@ const textSchema = new mongoose.Schema(
     defaultCollectionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Collection",
+    },
+    listId: { type: String, index: true },
+    lessonId: { type: String, index: true },
+    topicOrder: {
+      type: Number,
+      default: 0,
+    },
+    topicId: {
+      type: mongoose.Types.ObjectId,
+      index: true,
+      ref: "Topic",
+    },
+    image: {
+      type: String,
     },
     language: {
       type: String,

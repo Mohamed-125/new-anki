@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { sectionType } from "./useSectionMutations";
+import { sectionType } from "./useSectionMutations.ts";
 import { useMemo } from "react";
 
 type GetSectionsResponse = {

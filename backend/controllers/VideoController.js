@@ -140,31 +140,12 @@ const VideoModel = require("../models/VideoModel");
 //   }
 // };
 module.exports.createVideo = async (req, res, next) => {
-  const {
-    url,
-    title,
-    thumbnail,
-    availableCaptions,
-    defaultCaptionData,
-    playlistId,
-    userId,
-  } = req.body;
-
-  if (!url) return res.status(400).send("you have to enter the video url");
-
-  console.log(defaultCaptionData.transcript);
   try {
     const createdVideo = await VideoModel.create({
-      url,
-      userId: req.user?._id || userId || null,
-      title,
-      thumbnail,
-      availableCaptions,
-      defaultCaptionData,
-      playlistId,
+      ...req.body,
+      userId: req?.user?._id,
     });
 
-    console.log("created Video", createdVideo);
     res.set({
       "Access-Control-Allow-Origin": req.headers.origin || "*",
       "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, HEAD, OPTIONS",
@@ -284,21 +265,18 @@ module.exports.batchMove = async (req, res) => {
 };
 module.exports.forkVideo = async (req, res) => {
   try {
-    const originalVideo = await VideoModel.findOne({ _id: req.params.id });
+    const originalVideo = await VideoModel.findOne({
+      _id: req.params.id,
+    }).lean();
     if (!originalVideo) {
       return res.status(404).send("Video not found");
     }
 
+    if (originalVideo?.topicId) delete originalVideo?.topicId;
+
     const forkedVideo = await VideoModel.create({
       userId: req.user?._id,
-      title: originalVideo.title,
-      thumbnail: originalVideo.thumbnail,
-      videoId: originalVideo.videoId,
-      defaultCaptionData: {
-        transcript: originalVideo.defaultCaptionData.transcript,
-        translatedTranscript:
-          originalVideo.defaultCaptionData.translatedTranscript,
-      },
+      ...originalVideo,
     });
 
     res.status(200).send(forkedVideo);

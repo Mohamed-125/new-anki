@@ -1,5 +1,5 @@
 import { LessonType } from "./useLessonMutations";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 type GetLessonsResponse = {
@@ -17,9 +17,18 @@ const useGetLessons = ({
   query?: string;
   enabled?: boolean;
 }) => {
-  const queryKey = ["lessons", courseLevelId];
+  const queryKey = ["courseLevelLessons", courseLevelId];
+
+  const queryClient = useQueryClient();
+
   if (query) queryKey.push(query);
 
+  console.log(
+    queryClient
+      .getQueryCache()
+      .getAll()
+      .map((query) => query.queryKey)
+  );
   const {
     data,
     isLoading,

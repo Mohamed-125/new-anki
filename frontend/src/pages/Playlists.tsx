@@ -89,7 +89,7 @@ const Playlists = () => {
         setIsLoading(false);
         toast.setToastData({
           title: "Failed to create playlist",
-          isError: true,
+          type: "error",
         });
       },
     });
@@ -117,7 +117,7 @@ const Playlists = () => {
       .catch(() => {
         toast.setToastData({
           title: "Failed to update playlist",
-          isError: true,
+          type: "error",
         });
       })
       .finally(() => {
@@ -140,7 +140,7 @@ const Playlists = () => {
       .catch(() => {
         toast.setToastData({
           title: "Failed to delete playlist",
-          isError: true,
+          type: "error",
         });
       });
   };

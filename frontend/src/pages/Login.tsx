@@ -8,6 +8,8 @@ import { AuthFormSchema, AuthFormSchemaType } from "@/utils/AuthFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import useGetCurrentUser, { UserType } from "@/hooks/useGetCurrentUser";
+import useToasts from "@/hooks/useToasts";
+import { title } from "process";
 
 const Login = () => {
   const {
@@ -24,10 +26,14 @@ const Login = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setSelectedLearningLanguage } = useGetCurrentUser();
+  const { addToast } = useToasts();
 
   const onSubmit = (values: AuthFormSchemaType) => {
     console.log(values);
     let data = values;
+
+    const toast = addToast("Logging....", "promise");
+
     axios
       .post("auth/login", data)
       .then((res) => {
@@ -36,10 +42,18 @@ const Login = () => {
         });
         console.log(res.data as UserType);
         setSelectedLearningLanguage(res.data?.languages?.[0]);
-
+        toast.setToastData({
+          title: "Logged in successfully",
+          isCompleted: true,
+        });
         navigate("/");
       })
-      .catch((err) => err);
+      .catch((err) => {
+        toast.setToastData({
+          title: "Wrong email or password",
+          type: "error",
+        });
+      });
   };
 
   return (

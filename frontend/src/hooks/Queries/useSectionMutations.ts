@@ -6,7 +6,12 @@ export type sectionType = {
   description?: string;
   img?: string;
   _id: string;
+  order: number;
   lessonId: string;
+  type: string;
+  content: {
+    questions: any[];
+  };
 };
 
 const useSectionMutations = (lessonId: string) => {

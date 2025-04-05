@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { FormEvent, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
 import axios from "axios";
 import Form from "../components/Form";
@@ -11,15 +11,17 @@ import MoveCollectionModal from "@/components/MoveCollectionModal";
 import useUseEditor from "@/hooks/useUseEditor";
 import { IoClose } from "react-icons/io5";
 import useModalsStates from "@/hooks/useModalsStates";
-import useGetCollections from "@/hooks/useGetCollections";
 import useGetCollectionById from "@/hooks/useGetCollectionById";
 import useToasts from "@/hooks/useToasts";
-import { text } from "stream/consumers";
 
 const AddNewText = () => {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const id = useParams()?.id;
+  const { state } = useLocation();
+  const topicId = state?.topicId;
+
+  console.log(topicId);
 
   const {
     data: text = {},
@@ -64,23 +66,25 @@ const AddNewText = () => {
       const data = {
         title,
         content: editor.getHTML(),
+        topicId,
         defaultCollectionId: defaultValues?.defaultCollectionId,
       };
 
-      const toast = addToast("Text added successfully", "promise");
+      const toast = addToast("Adding Text...", "promise");
+
       axios
         .post(`text/`, data)
         .then((res) => {
           invalidateTextQueries();
-          navigate("/texts/" + res.data._id);
-
-          setToasts((pre) => {
-            return pre.map((currentToast) => {
-              if (currentToast.id === toast.id) {
-                return { ...currentToast, isComplete: true };
-              }
-              return currentToast;
-            });
+          if (topicId) {
+            navigate("/admin/topics/" + topicId, { replace: true });
+          } else {
+            navigate("/texts/" + res.data._id);
+          }
+          toast.setToastData({
+            title: "Text Added!",
+            isCompleted: true,
+            type: "success",
           });
         })
         .catch((err) => err);
@@ -101,9 +105,17 @@ const AddNewText = () => {
     axios
       .patch(`text/${text._id}`, data)
       .then((res) => {
-        navigate("/texts/" + res.data._id);
+        if (topicId) {
+          navigate("/admin/topics/" + topicId, { replace: true });
+        } else {
+          navigate("/texts/" + res.data._id);
+        }
         invalidateTextQueries();
-        toast.setToastData({ title: "Text Updated!", isCompleted: true });
+        toast.setToastData({
+          title: "Text Updated!",
+          isCompleted: true,
+          type: "success",
+        });
       })
       .catch((err) => err);
   };
@@ -153,34 +165,35 @@ const AddNewText = () => {
               onChange={(e) => setTitle(e.target.value)}
             />
           </Form.Field>
-          <Form.Field>
-            <Form.Label>
-              {collection?.name && (
-                <span className="flex gap-2 items-center">
-                  Default Collection
-                  {"" + " : " + collection?.name}
-                  <Button
-                    onClick={() => {
-                      setDefaultValues({ defaultCollectionId: null });
-                    }}
-                    variant="danger"
-                    className="grid w-6 h-6 transition-colors !p-0 duration-200 rounded-full place-items-center hover:bg-red-400"
-                  >
-                    <IoClose className="text-[18px] font-medium" />
-                  </Button>{" "}
-                </span>
-              )}
-            </Form.Label>
-            <Button
-              type="button"
-              onClick={() => {
-                setIsMoveToCollectionOpen(true);
-              }}
-            >
-              Choose Default Collection
-            </Button>
-          </Form.Field>
-
+          {!topicId && (
+            <Form.Field>
+              <Form.Label>
+                {collection?.name && (
+                  <span className="flex gap-2 items-center">
+                    Default Collection
+                    {"" + " : " + collection?.name}
+                    <Button
+                      onClick={() => {
+                        setDefaultValues({ defaultCollectionId: null });
+                      }}
+                      variant="danger"
+                      className="grid w-6 h-6 transition-colors !p-0 duration-200 rounded-full place-items-center hover:bg-red-400"
+                    >
+                      <IoClose className="text-[18px] font-medium" />
+                    </Button>{" "}
+                  </span>
+                )}
+              </Form.Label>
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsMoveToCollectionOpen(true);
+                }}
+              >
+                Choose Default Collection
+              </Button>
+            </Form.Field>
+          )}
           <Form.Field className={"grow"}>
             <Form.Label>Text Content</Form.Label>
             <TipTapEditor editor={editor} />
@@ -195,9 +208,17 @@ const AddNewText = () => {
             variant={"danger"}
             onClick={() => {
               if (text?.title) {
-                navigate("/texts/" + id, { replace: true });
+                if (topicId) {
+                  navigate("/admin/topics/" + topicId, { replace: true });
+                } else {
+                  navigate("/texts/" + id, { replace: true });
+                }
               } else {
-                navigate("/texts", { replace: true });
+                if (topicId) {
+                  navigate("/admin/topics/" + topicId, { replace: true });
+                } else {
+                  navigate("/texts/", { replace: true });
+                }
               }
             }}
           >

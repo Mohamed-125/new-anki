@@ -21,7 +21,7 @@ router
   //   Authorization,
   //   getVideoAvailavailableCaptions
   // )
-  .post("/", createVideo)
+  .post("/", Authorization, createVideo)
   .post("/fork/:id", Authorization, forkVideo)
   .get("/", Authorization, getUserVideos)
   // .get("/getVideoData/:videoId", getVideoData)

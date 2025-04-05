@@ -21,6 +21,9 @@ const courseRouter = require("../routes/courseRouter");
 const sectionRouter = require("../routes/sectionRouter");
 const courseLevelRouter = require("../routes/courseLevelRouter.js");
 const lessonRouter = require("../routes/lessonRouter");
+const progressRouter = require("../routes/progressRouter.js");
+const transcriptRouter = require("../routes/transcriptRouter.js");
+const topicRouter = require("../routes/topicRouter");
 const cookieParser = require("cookie-parser");
 const CourseModel = require("../models/CourseModel.js");
 const CourseLevel = require("../models/CourseLevelModel.js");
@@ -94,6 +97,9 @@ app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/courseLevel", courseLevelRouter);
 app.use("/api/v1/section", sectionRouter);
 app.use("/api/v1/lesson", lessonRouter);
+app.use("/api/v1/progress", progressRouter);
+app.use("/api/v1/transcript", transcriptRouter);
+app.use("/api/v1/topic", topicRouter);
 
 const PORT = process.env.PORT || 5000;
 
@@ -101,7 +107,6 @@ app.get("/", (req, res) => res.send("server is running "));
 app.listen(PORT, () => {
   console.log("App running in port: " + PORT);
 });
-
 const seedDatabase = async () => {
   try {
     await CourseModel.deleteMany();
@@ -118,11 +123,6 @@ const seedDatabase = async () => {
         lang: "German",
         flag: "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
       },
-      {
-        name: "French Course",
-        lang: "French",
-        flag: "https://upload.wikimedia.org/wikipedia/en/c/c3/Flag_of_France.svg",
-      },
     ];
 
     const courses = await CourseModel.insertMany(coursesData);
@@ -131,10 +131,12 @@ const seedDatabase = async () => {
       courses.map((c) => c.name)
     );
 
-    // 2. Create Levels for each Course
+    // 2. Create Levels
     const levels = [];
+    const levelNames = ["A1", "A2", "B1", "B2"];
+
     for (const course of courses) {
-      ["A1", "A2", "B1", "B2"].forEach((level) => {
+      levelNames.forEach((level) => {
         levels.push({
           name: level,
           description: `This is the ${level} level of the ${course.name}.`,
@@ -149,18 +151,129 @@ const seedDatabase = async () => {
       courseLevels.map((l) => l.name)
     );
 
-    // 3. Create Lessons
-    const lessonsData = [];
-    const lessonTopics = [
-      "Sich vorstellen (Introducing Yourself)",
-      "Wegbeschreibung (Giving Directions)",
-      "Essen und Trinken (Food and Drinks)",
-      "Freizeitaktivitäten (Leisure Activities)",
-      "Berufe und Arbeit (Jobs and Work)",
-    ];
+    // 3. Define Lessons by CEFR Levels
+    const lessonTopicsByLevel = {
+      A1: [
+        "Begrüßungen und Verabschiedungen",
+        "Zahlen und Uhrzeit",
+        "Familie und Freunde",
+        "Essen und Getränke",
+        "Tagesablauf",
+        "Hobbys und Freizeit",
+        "Einkaufen und Preise",
+        "Wegbeschreibung",
+        "Wetter und Jahreszeiten",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+        "Berufe und Arbeit",
+      ],
+      A2: [
+        "Vergangenheit und Erlebnisse",
+        "Gesundheit und Arztbesuche",
+        "Mein Zuhause",
+        "Reisen und Urlaub",
+        "Medien und Technologie",
+        "Kleidung und Mode",
+        "Feste und Feiertage",
+        "Verkehrsmittel",
+        "Berufswelt",
+        "Gefühle und Emotionen",
+      ],
+      B1: [
+        "Umwelt und Nachhaltigkeit",
+        "Gesellschaft und Politik",
+        "Arbeit und Karriere",
+        "Gesund leben",
+        "Kunst und Kultur",
+        "Technologische Entwicklungen",
+        "Sport und Bewegung",
+        "Migration und Integration",
+        "Zwischenmenschliche Beziehungen",
+        "Psychologie und Persönlichkeit",
+      ],
+      B2: [
+        "Wissenschaft und Forschung",
+        "Philosophie und Ethik",
+        "Geschichte Deutschlands",
+        "Wirtschaft und Finanzen",
+        "Gesundheitspolitik",
+        "Technologie der Zukunft",
+        "Umweltkrisen und Lösungen",
+        "Literatur und deutsche Autoren",
+        "Politische Systeme",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+        "Berufliche Weiterentwicklung",
+      ],
+    };
 
+    // 4. Generate Lessons
+    const lessonsData = [];
     for (const level of courseLevels) {
-      lessonTopics.forEach((topic) => {
+      const topics = lessonTopicsByLevel[level.name] || [];
+      topics.forEach((topic) => {
         lessonsData.push({
           name: topic,
           type: "lesson",
@@ -179,20 +292,29 @@ const seedDatabase = async () => {
       lessons.map((l) => l.name)
     );
 
-    // 4. Create Sections (Texts & Exercises)
+    // 5. Create Sections
+    const youtubeResources = [
+      "https://www.youtube.com/watch?v=R1v3O_0Fum4",
+      "https://www.youtube.com/watch?v=D9w4VLw2fm0",
+      "https://www.youtube.com/watch?v=ZpFhDkXTSro",
+      "https://www.youtube.com/watch?v=F5X4bHG1Zj8",
+    ];
+
     const sectionsData = lessons.flatMap((lesson) => [
       {
         name: "Reading Text",
         type: "text",
-        content: faker.lorem.paragraphs(3),
+        content: `Hier ist ein Beispieltext für das Thema '${
+          lesson.name
+        }'. ${faker.lorem.paragraphs(3)}`,
         lessonId: lesson._id,
       },
       {
         name: "Grammar Explanation",
         type: "text",
-        content: `Grammar topic related to ${
+        content: `Die Grammatik zu '${
           lesson.name
-        }: ${faker.lorem.sentences(3)}`,
+        }' ist folgendes: ${faker.lorem.sentences(3)}`,
         lessonId: lesson._id,
       },
       {
@@ -201,26 +323,29 @@ const seedDatabase = async () => {
         content: {
           questions: [
             {
-              question: "Was bedeutet 'Guten Tag'?",
-              choices: ["Good Morning", "Good Day", "Good Night", "Hello"],
+              question: `Was bedeutet '${lesson.name}'?`,
+              choices: ["Option 1", "Option 2", "Option 3", "Option 4"],
               answer: "2",
               type: "choose",
               id: Math.random(),
             },
             {
-              question: "Wie fragt man nach dem Weg?",
-              answer: "Entschuldigung, wie komme ich zum Bahnhof?",
+              question: `Schreiben Sie einen Satz mit '${lesson.name}'.`,
+              answer: "",
               type: "text",
               id: Math.random(),
             },
-            {
-              question: "Welches Wort ist ein Beruf?",
-              choices: ["Tisch", "Arzt", "Auto", "Lampe"],
-              answer: "2",
-              type: "choose",
-              id: Math.random(),
-            },
           ],
+        },
+        lessonId: lesson._id,
+      },
+      {
+        name: "Resources",
+        type: "resources",
+        content: {
+          resourses: youtubeResources
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 2),
         },
         lessonId: lesson._id,
       },

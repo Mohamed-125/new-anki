@@ -11,6 +11,8 @@ const useGetCourse = ({
   lang?: string;
   enabled?: boolean;
 }) => {
+  console.log(courseId);
+
   const queryKey = ["course"];
   if (courseId) {
     queryKey.push(courseId);

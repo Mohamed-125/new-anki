@@ -8,44 +8,28 @@ import {
   BookOpen,
   GraduationCap,
   ChevronDown,
-  ChevronUp,
+  Check,
 } from "lucide-react";
-import { useQueries } from "@tanstack/react-query";
-import axios from "axios";
-import { courseLevelType } from "@/hooks/Queries/useCourseLevelMutations";
 import { useLocalStorage } from "react-use";
-
-const fetchLessonsByCourseLevel = async (courseLevelId: string) => {
-  let url = `lesson?courseLevelId=${courseLevelId}`;
-  const response = await axios.get(url);
-  return response;
-};
-
-const useGetAllLessons = (courseLevels: courseLevelType[] | []) => {
-  return useQueries({
-    queries: courseLevels.map((level) => ({
-      queryKey: ["lessons", level._id], // Unique query key for each level
-      queryFn: () => fetchLessonsByCourseLevel(level._id), // Function to fetch lessons
-      enabled: !!level._id, // Only fetch if ID exists
-    })),
-  });
-};
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import Modal from "@/components/Modal";
+import Button from "@/components/Button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CoursePage = () => {
-  // const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-
   const [selectedLearningLanguage] = useLocalStorage(
     "selectedLearningLanguage"
   );
+  const { user } = useGetCurrentUser();
+  const [selectedLevel, setSelectedLevel] = useState<string>("");
+  const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
 
-  // const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>(
-  //   {}
-  // );
-  // const [levelLessons, setLevelLessons] = useState<Record<string, any>>({});
-  // const [loadingLessons, setLoadingLessons] = useState<Record<string, boolean>>(
-  //   {}
-  // );
+  // Fetch lessons for selected level
+  const { lessons, isLoading } = useGetLessons({
+    courseLevelId: selectedLevel,
+    enabled: Boolean(selectedLevel),
+  });
 
   // Fetch course data
 
@@ -67,17 +51,27 @@ const CoursePage = () => {
     enabled: Boolean(course?._id),
   });
 
+  // Set default selected level to user's proficiency level
+  useEffect(() => {
+    if (user && courseLevels) {
+      const userLevel = courseLevels.find((level) =>
+        level.name.toLowerCase().includes(user.proficiencyLevel.toLowerCase())
+      );
+      if (userLevel) {
+        setSelectedLevel(userLevel._id);
+      }
+    }
+  }, [user, courseLevels]);
+
+  // const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>(
+  //   {}
+  // );
+  // const [levelLessons, setLevelLessons] = useState<Record<string, any>>({});
+  // const [loadingLessons, setLoadingLessons] = useState<Record<string, boolean>>(
+  //   {}
+  // );
+
   // Fetch lessons only when courseLevels are available
-  const lessonQueries = useGetAllLessons(courseLevels || []);
-
-  // Handle loading state
-  const isLessonsLoading = lessonQueries.some((q) => q.isLoading);
-  const isLessonsError = lessonQueries.some((q) => q.isError);
-
-  // Combine lessons from all levels
-  const allLessons = lessonQueries.flatMap((q) => {
-    return q.data || [];
-  });
 
   // Handle loading states
   if (isCourseLoading || isLevelsLoading) {
@@ -125,95 +119,182 @@ const CoursePage = () => {
             <p className="text-gray-600">{course?.lang}</p>
           </div>
         </div>
-        <button
-          onClick={() => navigate("/courses")}
-          className="px-4 py-2 text-blue-600 rounded-md border border-blue-600 hover:bg-blue-50"
-        >
-          Back to Courses
-        </button>
       </div>
 
       {/* Course Content */}
       <div className="container mx-auto">
         <div className="p-6 bg-white rounded-lg shadow-md">
-          <h2 className="mb-6 text-2xl font-semibold">Course Content</h2>
-
-          {courseLevels && courseLevels.length > 0 ? (
-            <div className="space-y-6">
-              {courseLevels.map((level, levelIndex) => {
-                const lessons = allLessons[levelIndex]?.data?.lessons;
-                return (
-                  <div
-                    key={level._id}
-                    className="overflow-hidden rounded-lg border border-gray-200"
-                  >
-                    {/* Level Header */}
-                    <div className="flex justify-between items-center p-4 bg-gray-50 cursor-pointer">
-                      <div className="flex gap-3 items-center">
-                        <div className="p-2 bg-blue-50 rounded-full">
-                          <GraduationCap className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold">{level.name}</h3>
-                      </div>
-                    </div>
-
-                    {/* Level Lessons */}
-                    <div className="p-4">
-                      {lessons?.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-3">
-                          {lessons?.map((lesson: any) => (
-                            <div
-                              key={lesson._id}
-                              className="p-4 rounded-lg border border-gray-200 transition cursor-pointer hover:border-blue-300 hover:shadow-md"
-                              onClick={() => {
-                                // Navigate to lesson page
-                                navigate(`/learn/${lesson._id}`);
-                              }}
-                            >
-                              <div className="flex gap-4 items-center">
-                                <div className="p-3 bg-blue-50 rounded-full">
-                                  {lesson.type === "lesson" ? (
-                                    <Book className="w-5 h-5 text-blue-600" />
-                                  ) : lesson.type === "revision" ? (
-                                    <BookOpen className="w-5 h-5 text-green-600" />
-                                  ) : (
-                                    <GraduationCap className="w-5 h-5 text-purple-600" />
-                                  )}
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold">
-                                    {lesson.name}
-                                  </h3>
-                                  {lesson.description && (
-                                    <p className="text-sm text-gray-600">
-                                      {lesson.description}
-                                    </p>
-                                  )}
-                                  <span className="inline-block px-2 py-1 mt-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
-                                    {lesson.type.charAt(0).toUpperCase() +
-                                      lesson.type.slice(1)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-8 text-center text-gray-500">
-                          <BookOpen className="mx-auto mb-4 w-12 h-12 text-gray-400" />
-                          <p>No lessons available for this level yet.</p>
-                        </div>
-                      )}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex gap-4 items-center">
+              <h2 className="text-2xl font-semibold">Course Content</h2>
+            </div>
+            <Button
+              onClick={() => setIsLevelModalOpen(true)}
+              className="flex gap-2 items-center px-4 py-2 text-gray-700 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <span className="font-medium">
+                {courseLevels?.find((level) => level._id === selectedLevel)
+                  ?.name || "Select Level"}
+              </span>
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            </Button>
+          </div>
+          {/* Level Selection Modal */}
+          <Modal isOpen={isLevelModalOpen} setIsOpen={setIsLevelModalOpen}>
+            <Modal.Header
+              title="Select Your Level"
+              setIsOpen={setIsLevelModalOpen}
+            />
+            <div className="space-y-2">
+              {courseLevels?.map((level) => (
+                <div
+                  key={level._id}
+                  onClick={() => {
+                    setSelectedLevel(level._id);
+                    setIsLevelModalOpen(false);
+                  }}
+                  className={`flex items-center gap-3 p-4 cursor-pointer rounded-lg border transition-all ${
+                    selectedLevel === level._id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300"
+                  }`}
+                >
+                  <div className="relative w-12 h-12">
+                    <svg
+                      className="w-full h-full -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="16"
+                        fill="none"
+                        className="stroke-[3] text-gray-200"
+                        stroke="currentColor"
+                      />
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="16"
+                        fill="none"
+                        className="stroke-[3] text-blue-500"
+                        stroke="currentColor"
+                        strokeDasharray={`${level.completionPercentage} 100`}
+                      />
+                    </svg>
+                    <div className="flex absolute inset-0 justify-center items-center text-sm font-medium">
+                      {level.completionPercentage}%
                     </div>
                   </div>
-                );
-              })}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">
+                      {level.name}
+                    </h3>
+                    {level.description && (
+                      <p className="text-sm text-gray-600">
+                        {level.description}
+                      </p>
+                    )}
+                  </div>
+                  {selectedLevel === level._id && (
+                    <Check className="w-5 h-5 text-blue-600" />
+                  )}
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="p-8 text-center text-gray-500">
-              <p>No course levels available for this course yet.</p>
+          </Modal>
+          <div className="space-y-6">
+            <div className="p-4">
+              {isLoading ? (
+                <div className="grid grid-cols-1 gap-3">
+                  {[...Array(3)].map((_, index) => (
+                    <div
+                      key={index}
+                      className="p-4 rounded-lg border border-gray-200"
+                    >
+                      <div className="flex gap-4 items-center">
+                        <Skeleton className="w-12 h-12 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="w-3/4 h-4" />
+                          <Skeleton className="w-1/2 h-3" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : lessons && lessons?.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3">
+                  {lessons?.map((lesson: any) => (
+                    <div
+                      key={lesson._id}
+                      className={`p-4 rounded-lg border transition cursor-pointer hover:border-blue-300 hover:shadow-md ${
+                        lesson.isCompleted
+                          ? "bg-green-50 border-green-200"
+                          : "border-gray-200"
+                      }`}
+                      onClick={() => {
+                        // Navigate to lesson page
+                        navigate(
+                          `/learn/${lesson.courseLevelId}/${lesson._id}`
+                        );
+                      }}
+                    >
+                      <div className="flex gap-4 items-center">
+                        <div
+                          className={`p-3 rounded-full ${
+                            lesson.isCompleted ? "bg-green-50" : "bg-blue-50"
+                          }`}
+                        >
+                          {lesson.type === "lesson" ? (
+                            <Book className="w-5 h-5 text-blue-600" />
+                          ) : lesson.type === "revision" ? (
+                            <BookOpen className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <GraduationCap className="w-5 h-5 text-purple-600" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="flex gap-2 items-center font-semibold">
+                            {lesson.name}
+                            {lesson.isCompleted && (
+                              <svg
+                                className="w-5 h-5 text-green-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </h3>
+                          {lesson.description && (
+                            <p className="text-sm text-gray-600">
+                              {lesson.description}
+                            </p>
+                          )}
+                          <span className="inline-block px-2 py-1 mt-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                            {lesson.type.charAt(0).toUpperCase() +
+                              lesson.type.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center text-gray-500">
+                  <BookOpen className="mx-auto mb-4 w-12 h-12 text-gray-400" />
+                  <p>No lessons available for this level yet.</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

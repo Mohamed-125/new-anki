@@ -42,13 +42,9 @@ module.exports.createText = async (req, res) => {
   if (!req.body.title || !req.body.content) {
     return res.status(400).send("Title and content are required");
   }
-  const { title, content, defaultCollectionId, language } = req.body;
   const createdText = await TextModel.create({
+    ...req.body,
     userId: req.user?._id,
-    title,
-    content,
-    defaultCollectionId,
-    language,
   });
   res.send(createdText);
 };
@@ -81,15 +77,15 @@ module.exports.batchDelete = async (req, res) => {
 
 module.exports.forkText = async (req, res) => {
   try {
-    const originalText = await TextModel.findOne({ _id: req.params.id });
+    const originalText = await TextModel.findOne({ _id: req.params.id }).lean();
     if (!originalText) {
       return res.status(404).send("Text not found");
     }
+    if (originalVideo?.topicId) delete originalVideo?.topicId;
 
     const forkedText = await TextModel.create({
       userId: req.user?._id,
-      title: originalText.title,
-      content: originalText.content,
+      ...originalText,
     });
 
     res.status(200).send(forkedText);

@@ -1,10 +1,11 @@
+const SectionModel = require("../models/SectionModel");
 const Section = require("../models/SectionModel");
 const asyncHandler = require("express-async-handler");
 
 // Create a new section
 const createSection = asyncHandler(async (req, res) => {
   const lessonId = req.query.lessonId;
-  const section = await Section.create({ ...req.body, lessonId });
+  const section = await SectionModel.create({ ...req.body, lessonId });
   res.status(201).json({
     status: "success",
     data: section,
@@ -18,14 +19,16 @@ const getAllSections = asyncHandler(async (req, res) => {
   let page = +pageNumber || 0;
 
   try {
-    const sectionsCount = await Section.countDocuments({ lessonId });
+    const sectionsCount = await SectionModel.countDocuments({ lessonId });
     const skipNumber = page * limit;
     const remaining = Math.max(0, sectionsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
-    const sections = await Section.find({ lessonId })
+    const sections = await SectionModel.find({ lessonId })
+      .sort({ order: 1 })
       .skip(skipNumber)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.status(200).json({
       sections,
@@ -39,7 +42,7 @@ const getAllSections = asyncHandler(async (req, res) => {
 });
 // Get a single section
 const getSection = asyncHandler(async (req, res) => {
-  const section = await Section.findById(req.params.id);
+  const section = await SectionModel.findById(req.params.id);
   if (!section) {
     res.status(404);
     throw new Error("Section not found");
@@ -50,10 +53,14 @@ const getSection = asyncHandler(async (req, res) => {
 // Update a section
 const updateSection = asyncHandler(async (req, res) => {
   console.log("upadate");
-  const section = await Section.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const section = await SectionModel.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
   if (!section) {
     res.status(404);
     throw new Error("Section not found");
@@ -64,9 +71,27 @@ const updateSection = asyncHandler(async (req, res) => {
   });
 });
 
+const updateOrder = asyncHandler(async (req, res) => {
+  const { sections } = req.body;
+
+  const bulkOps = sections.map((section) => ({
+    updateOne: {
+      filter: { _id: section._id },
+      update: { $set: { order: section.order } },
+    },
+  }));
+
+  try {
+    await SectionModel.bulkWrite(bulkOps);
+    res.status(200).json({ message: "Order updated" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update order", error });
+  }
+});
+
 // Delete a section
 const deleteSection = asyncHandler(async (req, res) => {
-  const section = await Section.findByIdAndDelete(req.params.id);
+  const section = await SectionModel.findByIdAndDelete(req.params.id);
   if (!section) {
     res.status(404);
     throw new Error("Section not found");
@@ -82,5 +107,6 @@ module.exports = {
   getAllSections,
   getSection,
   updateSection,
+  updateOrder,
   deleteSection,
 };

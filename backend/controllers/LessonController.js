@@ -1,5 +1,7 @@
 const Lesson = require("../models/LessonModel");
 const asyncHandler = require("express-async-handler");
+const { verify } = require("jsonwebtoken");
+const ProgressModel = require("../models/ProgressModel");
 
 // Create a new lesson
 const createLesson = asyncHandler(async (req, res) => {
@@ -13,7 +15,8 @@ const getAllLessons = asyncHandler(async (req, res) => {
   const { page: pageNumber, courseLevelId } = req.query;
   const limit = 10;
   let page = +pageNumber || 0;
-
+  const token = req.cookies?.token;
+  const { id: userId } = verify(token, process.env.JWT_KEY);
   try {
     const lessonsCount = await Lesson.countDocuments({ courseLevelId });
     const skipNumber = page * limit;
@@ -22,10 +25,26 @@ const getAllLessons = asyncHandler(async (req, res) => {
 
     const lessons = await Lesson.find({ courseLevelId })
       .skip(skipNumber)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    const progress = await ProgressModel.find();
+
+    const promises = lessons.map((lesson) => {
+      return ProgressModel.findOne({
+        userId: userId,
+        completedLessons: { $in: [lesson._id] },
+      }).lean();
+    });
+
+    const results = await Promise.all(promises);
+
+    lessons.forEach((doc, index) => {
+      Object.assign(doc, { isCompleted: results[index] ? true : false });
+    });
 
     res.status(200).json({
-      lessons,
+      lessons: lessons,
       nextPage,
       lessonsCount,
     });

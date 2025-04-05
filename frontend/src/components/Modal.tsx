@@ -79,7 +79,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
             transition: "transform 450ms ease, opacity 400ms ease",
           }}
           className={twMerge(
-            "bg-white  !w-[90%] max-w-[550px] modal-content   translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
+            "bg-white !w-[90%] max-w-[550px] modal-content   translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
             isOpen
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",

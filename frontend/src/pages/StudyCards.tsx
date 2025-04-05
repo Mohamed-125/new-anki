@@ -51,7 +51,7 @@ const StudyCards = () => {
   } = useGetCards({ collectionId, study: true });
 
   const { user } = useGetCurrentUser();
-  const isSameUser = cards?.[0].userId === user?._id;
+  const isSameUser = cards?.[0]?.userId === user?._id;
   // Determine loading state
   const isLoading = isIntialLoading;
 
@@ -130,9 +130,11 @@ const StudyCards = () => {
   const { editor, setContent } = useUseEditor(true);
 
   useEffect(() => {
-    if (cards) setContent(cards[currentCard].content || "");
+    if (cards) setContent(cards[currentCard]?.content || "");
   }, [currentCard]);
 
+  console.log(cards);
+  if (!cards || !cards.length) return <p>there is no cards to study</p>;
   if (isLoading) {
     return <Loading />;
   }
