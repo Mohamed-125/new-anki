@@ -1,23 +1,34 @@
 const TopicModel = require("../models/TopicModel");
 const TextModel = require("../models/TextModel");
 const VideoModel = require("../models/VideoModel");
+const mongoose = require("mongoose");
+const textModel = require("../models/TextModel");
+const Channel = require("../models/ChannelModel");
+const CourseModel = require("../models/CourseModel");
 
 module.exports.getTopics = async (req, res) => {
-  const { page: pageNumber, searchQuery, language } = req.query;
+  const { page: pageNumber, searchQuery, courseId, topicLanguage } = req.query;
+
   const limit = 5;
   let page = +pageNumber || 0;
 
   try {
-    const query = {
-      userId: req.user?._id,
-    };
+    const query = {};
 
     if (searchQuery) {
       query.title = { $regex: searchQuery, $options: "i" };
     }
-    if (language) {
-      query.language = language;
+    if (courseId) {
+      query.courseId = courseId;
     }
+    if (courseId) {
+      query.courseId = courseId;
+    }
+    if (topicLanguage) {
+      query.topicLanguage = topicLanguage;
+    }
+
+    console.log("topics query", query);
     const topicsCount = await TopicModel.countDocuments(query);
 
     const skipNumber = page * limit;
@@ -29,29 +40,9 @@ module.exports.getTopics = async (req, res) => {
       .limit(limit)
       .lean();
 
-    // Get associated texts and videos for each topic
-    const topicsWithResources = await Promise.all(
-      topics.map(async (topic) => {
-        const [texts, videos] = await Promise.all([
-          TextModel.find({ topicId: topic._id }).sort({ topicOrder: 1 }).lean(),
-          VideoModel.find({ topicId: topic._id })
-            .sort({ topicOrder: 1 })
-            .lean(),
-        ]);
-
-        const lessons = [
-          ...texts.map((text) => ({ ...text, type: "text" })),
-          ...videos.map((video) => ({ ...video, type: "video" })),
-        ].sort((a, b) => a.topicOrder - b.topicOrder);
-
-        return { ...topic, lessons };
-      })
-    );
-
-    res
-      .status(200)
-      .send({ topics: topicsWithResources, nextPage, topicsCount });
+    res.status(200).send({ topics, topicsCount, nextPage });
   } catch (err) {
+    console.log("error getting topics", err);
     res.status(400).send(err);
   }
 };
@@ -64,29 +55,117 @@ module.exports.getTopic = async (req, res) => {
       return res.status(404).send("Topic not found");
     }
 
-    // Get associated texts and videos
-    const [texts, videos] = await Promise.all([
-      TextModel.find({ topicId: topic._id }).sort({ topicOrder: 1 }).lean(),
-      VideoModel.find({ topicId: topic._id }).sort({ topicOrder: 1 }).lean(),
-    ]);
-
-    // Transform texts and videos into lessons array with type information
-    const lessons = [
-      ...texts.map((text) => ({ ...text, type: "text" })),
-      ...videos.map((video) => ({ ...video, type: "video" })),
-    ].sort((a, b) => a.topicOrder - b.topicOrder);
-
-    // Add lessons array to the response
-    const topicWithResources = {
-      ...topic,
-      lessons,
-    };
-
-    res.send(topicWithResources);
+    res.send(topic);
   } catch (err) {
+    console.log(err);
     res.status(400).send(err);
   }
 };
+
+module.exports.getTopicTexts = async (req, res) => {
+  const topicId = req.params?.id;
+  const pageNumber = req.query?.page;
+
+  if (!topicId) return res.status(400).send("you have to send the topicId");
+
+  const limit = 5;
+  let page = +pageNumber || 0;
+  const skipNumber = page * limit;
+  const textsCount = await textModel.countDocuments({ topicId });
+
+  const remaining = Math.max(0, textsCount - limit * (page + 1));
+  const nextPage = remaining > 0 ? page + 1 : null;
+
+  try {
+    const texts = await textModel
+      .find({ topicId })
+      .skip(skipNumber)
+      .limit(limit);
+
+    res.send({ texts, textsCount, nextPage });
+  } catch (err) {
+    console.log("topic controller get texts error", texts);
+    res.status(400).send(err);
+  }
+};
+
+module.exports.getTopicVideos = async (req, res) => {
+  const topicId = req.params?.id;
+  const pageNumber = req.query?.page;
+  if (!topicId) return res.status(400).send("you have to send the topicId");
+
+  const limit = 5;
+  let page = +pageNumber || 0;
+  const skipNumber = page * limit;
+  const videosCount = await VideoModel.countDocuments({ topicId });
+
+  const remaining = Math.max(0, videosCount - limit * (page + 1));
+  const nextPage = remaining > 0 ? page + 1 : null;
+
+  try {
+    const videos = await VideoModel.find({ topicId })
+      .skip(skipNumber)
+      .limit(limit);
+
+    res.send({ videos, videosCount, nextPage });
+  } catch (err) {
+    console.log("topic controller get videos error", videos);
+    res.status(400).send(err);
+  }
+};
+module.exports.getTopicChannels = async (req, res) => {
+  const topicId = req.params?.id;
+  const pageNumber = req.query?.page;
+  if (!topicId) return res.status(400).send("you have to send the topicId");
+
+  const limit = 5;
+  let page = +pageNumber || 0;
+  const skipNumber = page * limit;
+  const channelsCount = await Channel.countDocuments({ topicId });
+
+  const remaining = Math.max(0, channelsCount - limit * (page + 1));
+  const nextPage = remaining > 0 ? page + 1 : null;
+
+  try {
+    const channels = await Channel.find({ topicId })
+      .skip(skipNumber)
+      .limit(limit);
+
+    res.send({ channels, channelsCount, nextPage });
+  } catch (err) {
+    console.log("topic controller get channels error", err);
+    res.status(400).send(err);
+  }
+};
+
+// module.exports.getTopicChannels = async (req, res) => {
+//   const topicId = req.params?.topicId;
+//   if (!topicId) return res.status(400).send("you have to send the topicId");
+
+//   const limit = 5;
+//   let page = +pageNumber || 0;
+//   const skipNumber = page * limit;
+
+//   const remaining = Math.max(
+//     0,
+//     topicWithResources?.lessonsCount - limit * (page + 1)
+//   );
+//   const nextPage = remaining > 0 ? page + 1 : null;
+
+//   try {
+//     const channels = await channelModel
+//       .find({ topicId })
+//       .skip(skipNumber)
+//       .limit(limit);
+
+//     const channelsCount = await channelModel.countDocuments({ topicId });
+
+//     res.send({ channels, channelsCount, nextPage });
+//   } catch (err) {
+//     console.log("topic controller get channels error", channels);
+//     res.status(400).send(err);
+//   }
+// };
 
 module.exports.createTopic = async (req, res) => {
   if (!req.body.title) {
@@ -94,7 +173,10 @@ module.exports.createTopic = async (req, res) => {
   }
 
   try {
-    const createdTopic = await TopicModel.create(req.body);
+    const createdTopic = await TopicModel.create({
+      ...req.body,
+      userId: req.user?.id,
+    });
 
     res.status(201).send(createdTopic);
   } catch (err) {
@@ -126,7 +208,6 @@ module.exports.deleteTopic = async (req, res) => {
   try {
     const deletedTopic = await TopicModel.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user?._id,
     });
 
     if (!deletedTopic) {
@@ -158,107 +239,3 @@ module.exports.batchDelete = async (req, res) => {
     res.status(400).send(err);
   }
 };
-
-// module.exports.addVideoToTopic = async (req, res) => {
-//   try {
-//     const { topicId, videoId } = req.body;
-
-//     if (!topicId || !videoId) {
-//       return res.status(400).send("Topic ID and Video ID are required");
-//     }
-
-//     const updatedTopic = await TopicModel.findOneAndUpdate(
-//       { _id: topicId, userId: req.user?._id },
-//       { $addToSet: { videos: videoId } },
-//       { new: true }
-//     );
-
-//     if (!updatedTopic) {
-//       return res
-//         .status(404)
-//         .send("Topic not found or you don't have permission");
-//     }
-
-//     res.send(updatedTopic);
-//   } catch (err) {
-//     res.status(400).send(err);
-//   }
-// };
-
-// module.exports.addTextToTopic = async (req, res) => {
-//   try {
-//     const { topicId, textId } = req.body;
-
-//     if (!topicId || !textId) {
-//       return res.status(400).send("Topic ID and Text ID are required");
-//     }
-
-//     const updatedTopic = await TopicModel.findOneAndUpdate(
-//       { _id: topicId, userId: req.user?._id },
-//       { $addToSet: { texts: textId } },
-//       { new: true }
-//     );
-
-//     if (!updatedTopic) {
-//       return res
-//         .status(404)
-//         .send("Topic not found or you don't have permission");
-//     }
-
-//     res.send(updatedTopic);
-//   } catch (err) {
-//     res.status(400).send(err);
-//   }
-// };
-
-// module.exports.removeVideoFromTopic = async (req, res) => {
-//   try {
-//     const { topicId, videoId } = req.body;
-
-//     if (!topicId || !videoId) {
-//       return res.status(400).send("Topic ID and Video ID are required");
-//     }
-
-//     const updatedTopic = await TopicModel.findOneAndUpdate(
-//       { _id: topicId, userId: req.user?._id },
-//       { $pull: { videos: videoId } },
-//       { new: true }
-//     );
-
-//     if (!updatedTopic) {
-//       return res
-//         .status(404)
-//         .send("Topic not found or you don't have permission");
-//     }
-
-//     res.send(updatedTopic);
-//   } catch (err) {
-//     res.status(400).send(err);
-//   }
-// };
-
-// module.exports.removeTextFromTopic = async (req, res) => {
-//   try {
-//     const { topicId, textId } = req.body;
-
-//     if (!topicId || !textId) {
-//       return res.status(400).send("Topic ID and Text ID are required");
-//     }
-
-//     const updatedTopic = await TopicModel.findOneAndUpdate(
-//       { _id: topicId, userId: req.user?._id },
-//       { $pull: { texts: textId } },
-//       { new: true }
-//     );
-
-//     if (!updatedTopic) {
-//       return res
-//         .status(404)
-//         .send("Topic not found or you don't have permission");
-//     }
-
-//     res.send(updatedTopic);
-//   } catch (err) {
-//     res.status(400).send(err);
-//   }
-// };

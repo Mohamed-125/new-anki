@@ -4,10 +4,15 @@ import Button from "../components/Button";
 import Search from "../components/Search";
 import useGetTopics, { TopicType } from "../hooks/useGetTopics";
 import useDebounce from "../hooks/useDebounce";
-import useInfiniteScroll from "../hooks/useInfiniteScroll";
+import useInfiniteScroll from "../components/InfiniteScroll";
 import TopicCard from "../components/TopicCard";
 import TopicsSkeleton from "../components/TopicsSkeleton";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
+import useGetTopicVideos from "@/hooks/useGetTopicVideos";
+import useGetTopicTexts from "@/hooks/useGetTopicTexts";
+import InfiniteScroll from "../components/InfiniteScroll";
+import VideoSkeleton from "@/components/VideoSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Tab component for switching between content types
 const ContentTabs = ({
@@ -38,12 +43,17 @@ const ContentTabs = ({
 };
 
 // Content card component for lessons and lists
-const ContentCard = ({ item }: { item: LibraryItem }) => {
-  console.log(item.type);
+const ContentCard = ({
+  topic,
+  item,
+}: {
+  topic: TopicType;
+  item: LibraryItem;
+}) => {
   return (
-    <div className="min-w-[280px] h-full flex-shrink-0 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 hover:translate-y-[-3px]">
+    <div className="max-w-[300px] min-w-[260px] flex-1 h-full flex-shrink-0 bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 hover:translate-y-[-3px]">
       <Link
-        to={`/${item.type === "video" ? "videos" : "texts"}/${item._id}`}
+        to={`/${topic.type === "videos" ? "videos" : "texts"}/${item._id}`}
         className="block h-full"
       >
         <div className="relative h-[160px] overflow-hidden">
@@ -58,7 +68,7 @@ const ContentCard = ({ item }: { item: LibraryItem }) => {
             className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
           />
           <div className="absolute top-3 right-3 px-2.5 py-1 text-xs font-medium text-white bg-primary bg-opacity-90 rounded-md">
-            {item.type}
+            {topic.type.substring(0, topic.type.length - 1)}
           </div>
           <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t to-transparent from-black/50"></div>
         </div>
@@ -75,22 +85,33 @@ const ContentCard = ({ item }: { item: LibraryItem }) => {
 
 // Section component with title, view all button, and horizontal slider
 const LibrarySection = ({
-  title,
-  items,
-  type,
-  activeTab,
-}: {
-  title: string;
-  items: LibraryItem[];
-  type: "video" | "text";
-  activeTab: "lessons" | "lists";
+  topic,
+}: // activeTab,
+{
+  topic: TopicType;
+  // activeTab: "lessons" | "lists";
 }) => {
+  const {
+    texts,
+    fetchNextPage: fetchTextsNextPage,
+    isFetchingNextPage: isTextsFetchingNextPage,
+    hasNextPage: hasTextsNextPage,
+  } = useGetTopicTexts(topic._id as string, topic.type === "texts");
+  const {
+    videos,
+    fetchNextPage: fetchVideosNextPage,
+    isFetchingNextPage: isVideosFetchingNextPage,
+    hasNextPage: hasVideosNextPage,
+  } = useGetTopicVideos(topic._id as string, topic.type === "videos");
+
+  const items = videos || texts;
+
   return (
     <div className="mb-12">
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <Link
-          to={`/${activeTab === "lessons" ? "texts" : "lists"}`}
+        <h2 className="text-2xl font-bold text-gray-800">{topic.title}</h2>
+        {/* <Link
+          to={`/${activeTab === "videos" ? "texts" : "lists"}`}
           className="flex items-center font-medium text-primary hover:underline"
         >
           View all
@@ -106,15 +127,40 @@ const LibrarySection = ({
               clipRule="evenodd"
             />
           </svg>
-        </Link>
+        </Link> */}
       </div>
-      <div className="flex overflow-x-auto gap-5 px-4 pb-4 -mx-4">
-        {items?.map((item) => (
-          <div key={item._id} className="snap-start">
-            <ContentCard item={item} />
+
+      <InfiniteScroll
+        fetchNextPage={texts ? fetchTextsNextPage : fetchVideosNextPage}
+        hasNextPage={texts ? hasTextsNextPage : hasVideosNextPage}
+        loadingElement={
+          <div className="flex gap-5 min-h-[230px] px-4 -mx-4  snap-x">
+            {new Array(3).fill(0).map((_, i) => {
+              return (
+                <div
+                  key={i}
+                  className="min-w-[270px]  items-center max-w-full  bg-white border shadow-md cursor-pointer rounded-2xl border-neutral-300"
+                >
+                  <Skeleton className="w-full h-[65%]" />
+                  <div className="flex flex-col h-[30%] overflow-hidden gap-2 px-8 py-4 whitespace-normal break-words grow text-ellipsis">
+                    <Skeleton className="w-full h-5" />
+                    <Skeleton className="w-[90%] h-5" />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        }
+        className="flex overflow-x-auto gap-5 px-4 pb-4 -mx-4 h-full snap-x"
+      >
+        {items?.map((item: any) => {
+          return (
+            <div key={item._id} className="snap-start">
+              <ContentCard topic={topic} item={item} />
+            </div>
+          );
+        })}
+      </InfiniteScroll>
     </div>
   );
 };
@@ -137,6 +183,7 @@ const Library = () => {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query);
 
+  const { selectedLearningLanguage } = useGetCurrentUser();
   // Fetch topics from backend
   const {
     topics,
@@ -144,12 +191,10 @@ const Library = () => {
     isInitialLoading,
     isFetchingNextPage,
     hasNextPage,
-  } = useGetTopics({ query: debouncedQuery });
-
-  // Implement infinite scroll
-  useInfiniteScroll(fetchNextPage, hasNextPage);
-
-  console.log(topics);
+  } = useGetTopics({
+    query: debouncedQuery,
+    topicLanguage: selectedLearningLanguage,
+  });
 
   // For backward compatibility, still use the static data for the tabs
   return (
@@ -165,23 +210,22 @@ const Library = () => {
         ) : (
           <>
             {topics.length ? (
-              <div>
+              <InfiniteScroll
+                fetchNextPage={fetchNextPage}
+                hasNextPage={hasNextPage}
+                loadingElement={<TopicsSkeleton />}
+              >
                 <div>
                   {topics.map((topic) => {
-                    console.log(topic);
-
                     return (
                       <LibrarySection
-                        title={topic.title}
-                        items={topic.lessons as any[]}
-                        type="text"
-                        activeTab={activeTab}
+                        topic={topic}
+                        //  activeTab={activeTab}
                       />
                     );
                   })}
                 </div>{" "}
-                {isFetchingNextPage && <TopicsSkeleton />}
-              </div>
+              </InfiniteScroll>
             ) : (
               <div className="flex flex-col items-center justify-center min-h-[40vh]">
                 <p className="text-lg text-gray-500">No topics</p>

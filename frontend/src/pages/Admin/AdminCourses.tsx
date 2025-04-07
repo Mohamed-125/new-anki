@@ -39,16 +39,6 @@ export type CoursecourseLevelType = {
   // completed lessons count for a progress bar
 };
 
-export type CourseType = {
-  name: string;
-  lang: string;
-  _id: string;
-  flag: string;
-  courseLevel: CoursecourseLevelType;
-  //   courseLevel count
-  // lessons count
-};
-
 const AdminCourses = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<string>();

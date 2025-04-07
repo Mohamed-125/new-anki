@@ -14,7 +14,7 @@ import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useGetPlaylists from "@/hooks/useGetPlaylists";
 import useDebounce from "@/hooks/useDebounce";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 import useToasts from "@/hooks/useToasts";
 import { VideoType } from "@/hooks/useGetVideos";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";

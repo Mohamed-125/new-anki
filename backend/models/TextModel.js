@@ -43,6 +43,7 @@ textSchema.pre("find", function (next) {
   this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
   next();
 });
+
 const textModel = mongoose.model("Text", textSchema);
 
 module.exports = textModel;

@@ -171,7 +171,7 @@ module.exports.getUserVideos = async (req, res, next) => {
   let page = +pageNumber || 0;
 
   try {
-    const query = { userId: req.user._id };
+    const query = { userId: req.user._id, topicId: { $exists: false } };
     if (searchQuery) {
       query.title = { $regex: searchQuery, $options: "i" };
     }

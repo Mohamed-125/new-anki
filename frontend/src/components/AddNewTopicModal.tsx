@@ -6,16 +6,18 @@ import useTopicMutations from "@/hooks/Queries/useTopicMutations";
 import { useQueryClient } from "@tanstack/react-query";
 import useToasts from "@/hooks/useToasts";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
-import useGetCourses from "@/hooks/Queries/useGetCourses";
+import useGetCourses, { CourseType } from "@/hooks/Queries/useGetCourses";
+import { useParams } from "react-router-dom";
 
 type AddNewTopicModalProps = {
   isOpen: boolean;
+  course: CourseType;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   editId?: string;
   defaultValues?: {
     title?: string;
     description?: string;
-    language?: string;
+
     type: string;
   };
   setDefaultValues: React.Dispatch<
@@ -23,7 +25,6 @@ type AddNewTopicModalProps = {
       | {
           title?: string;
           description?: string;
-          language?: string;
           type: string;
         }
       | undefined
@@ -37,38 +38,34 @@ const AddNewTopicModal = ({
   editId,
   defaultValues,
   setDefaultValues,
+  course,
 }: AddNewTopicModalProps) => {
+  console.log(course.lang);
   const { createTopic, updateTopic } = useTopicMutations();
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
-  const { selectedLearningLanguage } = useGetCurrentUser();
+  const {} = useGetCurrentUser();
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { courses, isLoading: isCoursesLoading } = useGetCourses();
 
   const [formData, setFormData] = useState({
     title: "",
-    type: "lessons",
-    language: selectedLearningLanguage || "",
+    type: "videos",
   });
-
-  console.log(formData);
 
   useEffect(() => {
     if (defaultValues) {
       setFormData({
         title: defaultValues.title || "",
-        type: defaultValues.type || "lessons",
-        language: defaultValues.language || selectedLearningLanguage || "",
+        type: defaultValues.type || "videos",
       });
     } else {
       setFormData({
         title: "",
-        type: "lessons",
-        language: selectedLearningLanguage || "",
+        type: "videos",
       });
     }
-  }, [defaultValues, selectedLearningLanguage]);
+  }, [defaultValues]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,8 +90,13 @@ const AddNewTopicModal = ({
         });
       } else {
         // Create new topic
+
         //@ts-ignore
-        await createTopic.mutateAsync(formData);
+        await createTopic.mutateAsync({
+          ...formData,
+          courseId: course._id,
+          topicLanguage: course.lang,
+        });
         toast.setToastData({
           title: "Topic Created!",
           type: "success",
@@ -105,7 +107,6 @@ const AddNewTopicModal = ({
       setFormData({
         title: "",
         type: "",
-        language: selectedLearningLanguage || "",
       });
       setDefaultValues(undefined);
       setIsOpen(false);
@@ -125,6 +126,14 @@ const AddNewTopicModal = ({
     setDefaultValues(undefined);
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        title: "",
+        type: "videos",
+      });
+    }
+  }, [isOpen]);
   return (
     <Modal
       loading={isLoading || createTopic.isPending || updateTopic.isPending}
@@ -163,29 +172,29 @@ const AddNewTopicModal = ({
               className="px-4 py-2 mb-0 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
-              <option value="lessons">Lessons</option>
-              <option value="lists">Lists</option>
+              <option value="videos">Videos</option>
+              <option value="texts">Texts</option>
+              <option value="channels">Channels</option>
             </Form.Select>
           </Form.Field>
-
-          <Form.Field>
-            <Form.Label>Language</Form.Label>
+          {/* <Form.Field>
+            <Form.Label>TopicLanguage</Form.Label>
             <Form.Select
-              value={formData.language}
+              value={formData.topicLanguage}
               onChange={(e) =>
-                setFormData({ ...formData, language: e.target.value })
+                setFormData({ ...formData, topicLanguage: e.target.value })
               }
               className="px-4 py-2 mb-0 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
-              <option value="">Select a language</option>
+              <option value="">Select a topicLanguage</option>
               {courses?.map((course) => (
                 <option key={course._id} value={course.lang}>
                   {course.lang}
                 </option>
               ))}
             </Form.Select>
-          </Form.Field>
+          </Form.Field> */}
         </Form.FieldsContainer>
 
         <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">

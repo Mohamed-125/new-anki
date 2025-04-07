@@ -21,7 +21,7 @@ const AddNewText = () => {
   const { state } = useLocation();
   const topicId = state?.topicId;
 
-  console.log(topicId);
+  console.log("topicId", topicId, "state", state);
 
   const {
     data: text = {},

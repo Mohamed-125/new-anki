@@ -91,7 +91,7 @@ app.use("/api/v1/video", videoRouter);
 app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/note", noteRouter);
 app.use("/api/v1/translate", translateRouter);
-app.use("/api/v1/channels", channelsRouter);
+app.use("/api/v1/channel", channelsRouter);
 app.use("/api/v1/text", textRouter);
 app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/courseLevel", courseLevelRouter);
@@ -99,6 +99,7 @@ app.use("/api/v1/section", sectionRouter);
 app.use("/api/v1/lesson", lessonRouter);
 app.use("/api/v1/progress", progressRouter);
 app.use("/api/v1/transcript", transcriptRouter);
+app.use("/api/v1/topic", topicRouter);
 app.use("/api/v1/topic", topicRouter);
 
 const PORT = process.env.PORT || 5000;

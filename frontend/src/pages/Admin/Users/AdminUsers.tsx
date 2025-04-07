@@ -5,7 +5,7 @@ import { UserType } from "@/hooks/useGetCurrentUser";
 import { useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { ColumnFilter, ColumnFiltersState } from "@tanstack/react-table";
 export default function AdminUsers() {

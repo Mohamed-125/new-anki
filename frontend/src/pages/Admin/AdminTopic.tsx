@@ -1,17 +1,21 @@
 import { Link, useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import Button from "@/components/Button";
 import { TopicType } from "@/hooks/useGetTopics";
 import Modal from "@/components/Modal";
 import Form from "@/components/Form";
-import ItemCard from "@/components/ui/ItemCard";
-import { Text } from "lucide-react";
+import { Text, Youtube, Tv2 } from "lucide-react";
 import VideoCard from "@/components/VideoCard";
-import { text } from "stream/consumers";
+import Button from "@/components/Button";
+import useGetTopicTexts from "@/hooks/useGetTopicTexts";
+import useGetTopicVideos from "@/hooks/useGetTopicVideos";
+import useGetTopicChannels from "@/hooks/useGetTopicChannels";
+import useAddVideoHandler from "@/hooks/useAddVideoHandler";
+import InfiniteScroll from "@/components/InfiniteScroll";
+import ChannelCard from "@/components/ChannelCard";
 
 const useGetTopic = (topicId: string) => {
   return useQuery({
@@ -23,63 +27,70 @@ const useGetTopic = (topicId: string) => {
   });
 };
 
-const useGetTranscript = () => {
-  return useMutation({
-    mutationFn: async ({ url, lang }: { url: string; lang: string }) => {
-      const response = await axios.post("transcript/get-transcript", {
-        url,
-        lang,
-      });
-      return response.data;
-    },
-  });
-};
+// useGetTranscript hook has been moved to useAddVideoHandler custom hook
 
 const AdminTopic = () => {
   const { topicId } = useParams();
-  const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [channelUrl, setChannelUrl] = useState("");
+  const [isChannelDialogOpen, setIsChannelDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("videos");
 
   const { data: topic, isLoading } = useGetTopic(topicId!);
-  const getTranscript = useGetTranscript();
 
-  const addVideoHandler = async () => {
+  const topicType = topic?.type;
+
+  const {
+    texts,
+    isFetchingNextPage: isTextsFetchingNextPage,
+    hasNextPage: hasTextsNextPage,
+    fetchNextPage: fetchNextTopicVideosPage,
+  } = useGetTopicTexts(topicId as string, topicType === "texts");
+
+  const {
+    videos,
+    isFetchingNextPage: isVideosFetchingNextPage,
+    hasNextPage: hasVideosNextPage,
+    fetchNextPage: fetchNextTopicTextsPage,
+  } = useGetTopicVideos(
+    topicId as string,
+    topicType === "videos" || activeTab === "videos"
+  );
+
+  const {
+    channels,
+    isFetchingNextPage: isChannelsFetchingNextPage,
+    hasNextPage: hasChannelsNextPage,
+    fetchNextPage: fetchNextTopicChannelsPage,
+  } = useGetTopicChannels(topicId as string, activeTab === "channels");
+
+  // Using the custom hook for video handling
+  const {
+    youtubeUrl,
+    setYoutubeUrl,
+    isVideoDialogOpen,
+    setIsVideoDialogOpen,
+    getTranscript,
+    addVideoHandler,
+  } = useAddVideoHandler({ topic, lang: topic?.topicLanguage });
+
+  console.log(topic);
+  const addChannelHandler = async () => {
     try {
-      const data = await getTranscript.mutateAsync({
-        url: youtubeUrl,
-        lang: "de",
-      });
-      const { translatedTranscript, transcript, title, thumbnail } = data;
-
-      console.log(translatedTranscript, transcript, title, thumbnail);
-      await axios.post("/video", {
-        url: youtubeUrl,
-        defaultCaptionData: {
-          translatedTranscript,
-          transcript,
-        },
+      await axios.post("/channel", {
+        url: channelUrl,
         topicId: topic?._id,
-        title,
-        thumbnail,
       });
-
-      setYoutubeUrl("");
-      setIsDialogOpen(false);
+      setChannelUrl("");
+      setIsChannelDialogOpen(false);
     } catch (error) {
-      console.error("Error fetching transcript:", error);
+      console.error("Error adding channel:", error);
     }
   };
 
-  const topicVideos =
-    topic?.lessons?.filter((lesson) => lesson.type === "video") || [];
-  const topicLessons =
-    topic?.lessons?.filter((lesson) => lesson.type === "text") || [];
-
-  if (isLoading) return <div>Loading...</div>;
   if (!topic) return <div>Topic not found</div>;
 
   return (
-    <div className="p-6 mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl">
       <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">{topic.title}</h1>
         {topic.language && (
@@ -87,109 +98,196 @@ const AdminTopic = () => {
             Language: {topic.language.toUpperCase()}
           </p>
         )}
-      </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="videos">Videos</TabsTrigger>
-          <TabsTrigger value="texts">Texts</TabsTrigger>
-        </TabsList>
+        {topicType === "videos" ? (
+          <Tabs
+            defaultValue="videos"
+            className="mt-4 w-full"
+            onValueChange={setActiveTab}
+          >
+            <TabsList className="mb-4">
+              <TabsTrigger value="videos" className="flex gap-2 items-center">
+                <Youtube className="w-4 h-4" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="channels" className="flex gap-2 items-center">
+                <Tv2 className="w-4 h-4" />
+                Channels
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="all">
-          <div className="grid grid-cols-1 gap-4">
-            {topic?.lessons?.map((lesson) => {
-              console.log("lesson", lesson);
-              if (lesson.type === "text") {
-                return (
-                  <ItemCard
-                    key={lesson._id}
-                    id={lesson._id}
-                    name={lesson.title}
-                    Icon={<Text />}
-                    select={false}
+            <TabsContent value="videos">
+              <Button
+                onClick={() => setIsVideoDialogOpen(true)}
+                className="mb-4"
+              >
+                Add Video
+              </Button>
+              <div className="mb-4">
+                <Modal
+                  isOpen={isVideoDialogOpen}
+                  loading={getTranscript.isPending}
+                  setIsOpen={setIsVideoDialogOpen}
+                  className="w-full max-w-lg"
+                >
+                  <Modal.Header
+                    setIsOpen={setIsVideoDialogOpen}
+                    title="Add YouTube Video"
                   />
-                );
-              } else {
-                return <VideoCard key={lesson._id} video={lesson} />;
-              }
-            })}
-          </div>
-        </TabsContent>
+                  <Form className="p-0 space-y-6" onSubmit={addVideoHandler}>
+                    <Form.FieldsContainer className="space-y-4">
+                      <Form.Field>
+                        <Form.Label>YouTube URL</Form.Label>
+                        <Form.Input
+                          type="text"
+                          value={youtubeUrl}
+                          onChange={(e) => setYoutubeUrl(e.target.value)}
+                          className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Enter YouTube URL"
+                          required
+                        />
+                      </Form.Field>
+                    </Form.FieldsContainer>
+                    <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                      <Button
+                        onClick={() => setIsVideoDialogOpen(false)}
+                        size="parent"
+                        type="button"
+                        variant="danger"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="parent"
+                        disabled={!youtubeUrl}
+                      >
+                        Get Transcript
+                      </Button>
+                    </Modal.Footer>
+                  </Form>
+                </Modal>
+              </div>
+              {videos?.length ? (
+                <InfiniteScroll
+                  fetchNextPage={fetchNextTopicTextsPage}
+                  hasNextPage={hasVideosNextPage}
+                  loadingElement={<p>loading...</p>}
+                  className="grid grid-cols-1 gap-4"
+                >
+                  {videos?.map((video) => (
+                    <VideoCard key={video._id} video={video} />
+                  ))}
+                </InfiniteScroll>
+              ) : (
+                <p className="text-gray-500">No videos available</p>
+              )}
+            </TabsContent>
 
-        <TabsContent value="videos">
-          <Button onClick={() => setIsDialogOpen(true)}>Add Video</Button>
-          <div className="mb-4">
-            <Modal
-              isOpen={isDialogOpen}
-              setIsOpen={setIsDialogOpen}
-              className="w-full max-w-lg"
+            <TabsContent value="channels">
+              <Button
+                onClick={() => setIsChannelDialogOpen(true)}
+                className="mb-4"
+              >
+                Add Channel
+              </Button>
+              <div className="mb-4">
+                <Modal
+                  isOpen={isChannelDialogOpen}
+                  setIsOpen={setIsChannelDialogOpen}
+                  className="w-full max-w-lg"
+                >
+                  <Modal.Header
+                    setIsOpen={setIsChannelDialogOpen}
+                    title="Add Channel"
+                  />
+                  <Form className="p-0 space-y-6" onSubmit={addChannelHandler}>
+                    <Form.FieldsContainer className="space-y-4">
+                      <Form.Field>
+                        <Form.Label>Channel URL</Form.Label>
+                        <Form.Input
+                          type="text"
+                          value={channelUrl}
+                          onChange={(e) => setChannelUrl(e.target.value)}
+                          className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Enter Channel URL"
+                          required
+                        />
+                      </Form.Field>
+                    </Form.FieldsContainer>
+                    <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                      <Button
+                        onClick={() => setIsChannelDialogOpen(false)}
+                        size="parent"
+                        type="button"
+                        variant="danger"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="parent"
+                        disabled={!channelUrl}
+                      >
+                        Add Channel
+                      </Button>
+                    </Modal.Footer>
+                  </Form>
+                </Modal>
+              </div>
+              {channels?.length ? (
+                <InfiniteScroll
+                  fetchNextPage={fetchNextTopicChannelsPage}
+                  hasNextPage={hasChannelsNextPage}
+                  loadingElement={<p>loading...</p>}
+                  className="grid grid-cols-1 gap-4"
+                >
+                  {channels?.map((channel) => (
+                    <ChannelCard key={channel._id} channel={channel} />
+                  ))}
+                </InfiniteScroll>
+              ) : (
+                <p className="text-gray-500">No channels available</p>
+              )}
+            </TabsContent>
+          </Tabs>
+        ) : topicType === "texts" ? (
+          <>
+            <Link to={"/texts/new"} state={{ topicId: topic._id }}>
+              <Button className="mb-6">Add New Text</Button>
+            </Link>{" "}
+            <InfiniteScroll
+              fetchNextPage={fetchNextTopicTextsPage}
+              hasNextPage={hasTextsNextPage}
+              className="grid grid-cols-1 gap-4"
             >
-              <Modal.Header
-                setIsOpen={setIsDialogOpen}
-                title="Add YouTube Video"
-              />
-              <Form className="p-0 space-y-6" onSubmit={addVideoHandler}>
-                <Form.FieldsContainer className="space-y-4">
-                  <Form.Field>
-                    <Form.Label>YouTube URL</Form.Label>
-                    <Form.Input
-                      type="text"
-                      value={youtubeUrl}
-                      onChange={(e) => setYoutubeUrl(e.target.value)}
-                      className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Enter YouTube URL"
-                      required
-                    />
-                  </Form.Field>
-                </Form.FieldsContainer>
-                <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                  <Button
-                    onClick={() => setIsDialogOpen(false)}
-                    size="parent"
-                    type="button"
-                    variant="danger"
+              {texts?.map((text) => (
+                <Link to={"/texts/" + text._id} key={text._id}>
+                  <div
+                    id={text._id}
+                    className="rounded-lg border  p-6 py-7 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]"
                   >
-                    Cancel
-                  </Button>
-                  <Button type="submit" size="parent" disabled={!youtubeUrl}>
-                    Get Transcript
-                  </Button>
-                </Modal.Footer>
-              </Form>
-            </Modal>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            {topicVideos?.map((video) => (
-              <VideoCard key={video._id} video={video} />
-            ))}
-          </div>
-          {(topicVideos || (topicVideos as any[])?.length === 0) && (
-            <p className="text-gray-500">No videos available</p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="texts">
-          <Link to={"/texts/new"} state={{ topicId: topic._id }}>
-            <Button className="mb-6">Add New Text</Button>
-          </Link>{" "}
-          <div className="grid grid-cols-1 gap-4">
-            {topicLessons?.map((text) => (
-              <ItemCard
-                key={text._id}
-                id={text._id}
-                name={text.title}
-                Icon={<Text />}
-                select={false}
-              />
-            ))}
-          </div>
-          {(!topicLessons || topicLessons?.length === 0) && (
-            <p className="text-gray-500">No texts available</p>
-          )}
-        </TabsContent>
-      </Tabs>
+                    <div className="flex flex-1 gap-4 items-center">
+                      <div
+                        data-lov-name="div"
+                        data-component-line="70"
+                        className="p-3 bg-blue-100 *:w-6 *:h-6 text-primary rounded-lg dark:bg-indigo-900/30"
+                      >
+                        <Text />{" "}
+                      </div>
+                      <div>
+                        <p className="flex-1 font-semibold">{text.title}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </InfiniteScroll>
+          </>
+        ) : (
+          <p>lessons</p>
+        )}
+      </div>
     </div>
   );
 };

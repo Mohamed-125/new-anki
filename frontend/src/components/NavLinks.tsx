@@ -167,6 +167,7 @@ const LanguagesDropdown = () => {
     courses?.find((courses) => courses.lang === selectedLearningLanguage)
   );
 
+  console.log(courses);
   return (
     <DropdownMenu
       modal={false}

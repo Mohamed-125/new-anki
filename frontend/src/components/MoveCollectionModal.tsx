@@ -18,7 +18,7 @@ import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import { twMerge } from "tailwind-merge";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 
 //! make sure to replace every collections.find to work with the new structure
 
@@ -316,7 +316,8 @@ const MoveCollectionModal = ({
       id={"moveCollectionModal"}
       onAnimationEnd={onAnimationEnd}
       className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
-        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""}`}
+        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
+      }`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >

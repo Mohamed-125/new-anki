@@ -312,7 +312,10 @@ function App() {
                   path="courses/:courseId/:courseLevelId/:lessonId"
                   element={<AdminLesson />}
                 />
-                <Route path="topics" element={<AdminTopics />} />
+                <Route
+                  path="courses/:courseId/topics"
+                  element={<AdminTopics />}
+                />
                 <Route path="topics/:topicId" element={<AdminTopic />} />
               </Route>
 

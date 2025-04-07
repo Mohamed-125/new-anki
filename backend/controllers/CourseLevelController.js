@@ -17,8 +17,8 @@ const createCourseLevel = asyncHandler(async (req, res) => {
 // Get all courseLevels
 const getAllCourseLevels = asyncHandler(async (req, res) => {
   const { page: pageNumber, courseId } = req.query;
-  const token = req.cookies?.token;
-  const { id: userId } = verify(token, process.env.JWT_KEY);
+
+  const { id: userId } = verify(req.cookies?.token || "", process.env.JWT_KEY);
 
   const limit = 10;
   let page = +pageNumber || 0;

@@ -11,8 +11,6 @@ const useGetCourse = ({
   lang?: string;
   enabled?: boolean;
 }) => {
-  console.log(courseId);
-
   const queryKey = ["course"];
   if (courseId) {
     queryKey.push(courseId);
@@ -34,7 +32,6 @@ const useGetCourse = ({
 
       const response = await axios.get(url, { signal });
 
-      console.log(response.data);
       return response.data as CourseType;
     },
     enabled,

@@ -20,12 +20,13 @@ import { Link, useLocation } from "react-router-dom";
 import MoveCollectionModal from "../components/MoveCollectionModal";
 import { toastContext } from "../context/ToastContext";
 import useToasts from "../hooks/useToasts";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 import CardsSkeleton from "@/components/CardsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import Form from "@/components/Form";
 import AddNewCollectionModal from "@/components/AddNewCollectionModal";
 import useModalStates from "@/hooks/useModalsStates";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 const Home = () => {
   const { user } = useGetCurrentUser();
@@ -41,8 +42,6 @@ const Home = () => {
     cardsCount,
     hasNextPage,
   } = useGetCards({ query: debouncedQuery }); // Pass the query here
-
-  useInfiniteScroll(fetchNextPage, hasNextPage);
 
   const states = useModalStates();
 
@@ -92,10 +91,13 @@ const Home = () => {
       ) : (
         <>
           {userCards.length ? (
-            <div>
+            <InfiniteScroll
+              fetchNextPage={fetchNextPage}
+              hasNextPage={hasNextPage}
+              loadingElement={<CardsSkeleton />}
+            >
               {CardsJSX}
-              {isFetchingNextPage && <CardsSkeleton />}
-            </div>
+            </InfiniteScroll>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[40vh]">
               <Button

@@ -13,7 +13,7 @@ import AddNewCollectionModal from "../components/AddNewCollectionModal.tsx";
 import Collection from "../components/Collection.tsx";
 import MoveCollectionModal from "../components/MoveCollectionModal.tsx";
 import { CollectionType } from "@/hooks/useGetCollections.tsx";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll.tsx";
+import useInfiniteScroll from "@/components/InfiniteScroll.tsx";
 import CardsSkeleton from "@/components/CardsSkeleton.tsx";
 import Search from "@/components/Search.tsx";
 import useModalsStates from "@/hooks/useModalsStates.tsx";

@@ -15,7 +15,9 @@ export type TopicType = {
   language?: string;
   lessons?: any[];
   lists?: any[];
-  type: "lessons" | "lists";
+  courseId: string;
+  topicLanguage: string;
+  type: "videos" | "texts" | "channels";
   userId?: string;
 };
 
@@ -29,15 +31,24 @@ const useGetTopics = ({
   enabled = true,
   query,
   language,
+  courseId,
+  topicLanguage,
 }: {
   enabled?: boolean;
   query?: string;
   language?: string;
-} = {}) => {
+  courseId?: string;
+  topicLanguage?: string;
+}) => {
   const { selectedLearningLanguage } = useGetCurrentUser();
 
+  console.log("topics enabled", enabled);
   // Build query key based on parameters
-  let queryKey = query ? ["topics", query] : ["topics"];
+  let queryKey = ["topics"];
+
+  if (query) queryKey.push(query);
+  if (courseId) queryKey.push(courseId);
+  if (topicLanguage) queryKey.push(topicLanguage);
 
   // Add language to query key if available
   if (language || selectedLearningLanguage) {
@@ -58,10 +69,12 @@ const useGetTopics = ({
     queryKey,
     queryFn: async ({ signal, pageParam }) => {
       let url = `topic/?page=${pageParam}`;
-
       if (query) url += `&searchQuery=${query}`;
-      if (language || selectedLearningLanguage) {
-        url += `&language=${language || selectedLearningLanguage}`;
+      if (courseId) {
+        url += `&courseId=${courseId}`;
+      }
+      if (topicLanguage) {
+        url += `&topicLanguage=${topicLanguage}`;
       }
 
       try {

@@ -8,7 +8,7 @@ import ItemCard from "@/components/ui/ItemCard";
 import { Text } from "lucide-react";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useGetTexts from "@/hooks/useGetTexts";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 import Search from "@/components/Search";
 import { useState } from "react";
 import useDebounce from "@/hooks/useDebounce";

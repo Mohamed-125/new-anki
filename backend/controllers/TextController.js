@@ -8,6 +8,7 @@ module.exports.getTexts = async (req, res) => {
   try {
     const query = {
       userId: req.user?._id,
+      topicId: { $exists: false },
     };
 
     if (searchQuery) {
@@ -42,6 +43,7 @@ module.exports.createText = async (req, res) => {
   if (!req.body.title || !req.body.content) {
     return res.status(400).send("Title and content are required");
   }
+
   const createdText = await TextModel.create({
     ...req.body,
     userId: req.user?._id,
@@ -81,7 +83,7 @@ module.exports.forkText = async (req, res) => {
     if (!originalText) {
       return res.status(404).send("Text not found");
     }
-    if (originalVideo?.topicId) delete originalVideo?.topicId;
+    if (originalText?.topicId) delete originalText?.topicId;
 
     const forkedText = await TextModel.create({
       userId: req.user?._id,

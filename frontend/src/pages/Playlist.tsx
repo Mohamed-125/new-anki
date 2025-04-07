@@ -12,7 +12,7 @@ import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
 import { CaptionType } from "./video/Video.tsx";
 import useDebounce from "@/hooks/useDebounce.tsx";
 import useGetVideos from "@/hooks/useGetVideos.tsx";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll.tsx";
+import useInfiniteScroll from "@/components/InfiniteScroll.tsx";
 import MoveVideoModal from "@/components/MoveVideoModal.tsx";
 import ItemCard from "@/components/ui/ItemCard.tsx";
 import { MdOutlinePlaylistPlay } from "react-icons/md";

@@ -7,7 +7,7 @@ import SelectedItemsController from "../components/SelectedItemsController";
 import VideoSkeleton from "@/components/VideoSkeleton";
 import useGetVideos from "@/hooks/useGetVideos";
 import useDebounce from "@/hooks/useDebounce";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 import MoveVideoModal from "@/components/MoveVideoModal";
 import ShareModal from "@/components/ShareModal";
 

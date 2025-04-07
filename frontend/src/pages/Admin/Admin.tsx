@@ -61,11 +61,11 @@ const AdminSidebar = () => {
       url: "courses",
       icon: Inbox,
     },
-    {
-      title: "Topics",
-      url: "topics",
-      icon: MdOutlineTopic,
-    },
+    // {
+    //   title: "Topics",
+    //   url: "topics",
+    //   icon: MdOutlineTopic,
+    // },
     {
       title: "Search",
       url: "#",

@@ -5,11 +5,13 @@ import { ChevronDown, ChevronUp, Trash } from "lucide-react";
 import ActionsDropdown from "@/components/ActionsDropdown";
 import Button from "@/components/Button";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import DragableComponent from "@/components/DraggableComponent";
 import AddNewTopicModal from "@/components/AddNewTopicModal";
+import InfiniteScroll from "@/components/InfiniteScroll";
+import { CourseType } from "@/hooks/Queries/useGetCourses";
 
-const AdminTopics = () => {
+const AdminTopics = ({ course }: { course: CourseType }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<string>();
   const [defaultValues, setDefaultValues] = useState<{
@@ -20,12 +22,19 @@ const AdminTopics = () => {
   }>();
   const queryClient = useQueryClient();
   const [expandedTopics, setExpandedTopics] = useState<string[]>([]);
+  const { courseId } = useParams();
 
   const {
     topics,
     isInitialLoading: topicsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     refetch,
-  } = useGetTopics({ enabled: true });
+  } = useGetTopics({
+    enabled: Boolean(courseId),
+    courseId: courseId || undefined,
+  });
 
   const { deleteTopic, reorderTopics } = useTopicMutations();
 
@@ -52,7 +61,7 @@ const AdminTopics = () => {
   if (topicsLoading) return <div>Loading...</div>;
 
   return (
-    <div className="p-6 mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Topics</h2>
 
@@ -71,13 +80,19 @@ const AdminTopics = () => {
 
       <AddNewTopicModal
         isOpen={isModalOpen}
+        course={course}
         setIsOpen={setIsModalOpen}
         editId={editId}
         defaultValues={defaultValues}
         setDefaultValues={setDefaultValues}
       />
 
-      <div className="grid gap-8">
+      <InfiniteScroll
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+        loadingElement={<p>loading</p>}
+        className="grid gap-8"
+      >
         {arrangedTopics?.map((topic, index) => (
           <DragableComponent
             key={topic._id}
@@ -92,7 +107,10 @@ const AdminTopics = () => {
                   className="flex-1 cursor-pointer"
                   onClick={() => toggleExpand(topic._id)}
                 >
-                  <Link to={`${topic._id}`} className="flex gap-2 items-center">
+                  <Link
+                    to={`/admin/topics/${topic._id}`}
+                    className="flex gap-2 items-center"
+                  >
                     {expandedTopics.includes(topic._id) ? (
                       <ChevronUp className="w-5 h-5" />
                     ) : (
@@ -132,62 +150,10 @@ const AdminTopics = () => {
                   ? "opacity-100"
                   : "opacity-0 max-h-0 overflow-hidden"
               }`}
-            >
-              {/* <div className="p-4 bg-white rounded-b-lg border-b border-x">
-                <div className="mb-4">
-                  <h3 className="mb-2 text-lg font-medium">Videos</h3>
-                  {topic.lessons && topic.lessons.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {topic.lessons.map((lesson) => (
-                        <div
-                          key={lesson._id}
-                          className="p-3 bg-gray-50 rounded-md border"
-                        >
-                          <div className="overflow-hidden mb-2 rounded-md aspect-lesson">
-                            <img
-                              src={lesson.thumbnail}
-                              alt={lesson.title}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                          <h4 className="mb-1 text-sm font-medium text-gray-900 line-clamp-1">
-                            {lesson.title}
-                          </h4>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No videos in this topic</p>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="mb-2 text-lg font-medium">Texts</h3>
-                  {topic.texts && topic.texts.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {topic.texts.map((text) => (
-                        <div
-                          key={text._id}
-                          className="p-3 bg-gray-50 rounded-md border"
-                        >
-                          <h4 className="mb-1 text-sm font-medium text-gray-900 line-clamp-1">
-                            {text.title}
-                          </h4>
-                          <p className="text-xs text-gray-600 line-clamp-2">
-                            {text.content}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No texts in this topic</p>
-                  )}
-                </div>
-              </div> */}
-            </div>
+            ></div>
           </DragableComponent>
         ))}
-      </div>
+      </InfiniteScroll>
 
       {arrangedTopics?.length === 0 && (
         <div className="p-8 text-center bg-gray-50 rounded-lg">

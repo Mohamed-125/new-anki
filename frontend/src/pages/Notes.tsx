@@ -7,7 +7,7 @@ import { StickyNote } from "lucide-react";
 import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useGetNotes from "@/hooks/useGetNotes";
-import useInfiniteScroll from "@/hooks/useInfiniteScroll";
+import useInfiniteScroll from "@/components/InfiniteScroll";
 import Search from "@/components/Search";
 import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";

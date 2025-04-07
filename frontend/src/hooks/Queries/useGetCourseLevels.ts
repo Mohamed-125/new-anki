@@ -18,7 +18,6 @@ const useGetCourseLevels = ({
   query?: string;
   enabled?: boolean;
 }) => {
-  console.log(courseId);
   const queryKey = ["courseLevel", courseId];
   if (query) queryKey.push(query);
 

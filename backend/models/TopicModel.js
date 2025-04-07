@@ -10,16 +10,17 @@ const topicSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["lessons", "lists"],
-      default: "lessons",
+      enum: ["videos", "lessons", "texts"],
+      default: "videos",
     },
     description: {
       type: String,
     },
-    language: {
-      type: String,
-      index: true,
+    courseId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Collection",
     },
+    topicLanguage: String,
   },
   { timestamps: true, lean: true }
 );

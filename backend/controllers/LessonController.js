@@ -16,6 +16,7 @@ const getAllLessons = asyncHandler(async (req, res) => {
   const limit = 10;
   let page = +pageNumber || 0;
   const token = req.cookies?.token;
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
   const { id: userId } = verify(token, process.env.JWT_KEY);
   try {
     const lessonsCount = await Lesson.countDocuments({ courseLevelId });
