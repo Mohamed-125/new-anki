@@ -37,7 +37,10 @@ const ActionsDropdown = ({
 }: ActionsDropdownProps) => {
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="p-2 text-2xl rounded-md transition-all hover:bg-gray-100">
+      <DropdownMenuTrigger
+        onClick={(e) => e.stopPropagation()}
+        className="p-2 text-2xl rounded-md transition-all hover:bg-gray-100"
+      >
         <BsThreeDotsVertical onClick={(e) => e.stopPropagation()} />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mt-6 font-semibold !max-w-[250px]  bg-white dropdown-content">

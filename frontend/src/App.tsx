@@ -52,6 +52,8 @@ import GetTranscript from "./pages/GetTranscript";
 import AdminTopics from "./pages/Admin/AdminTopics.tsx";
 import AdminTopic from "./pages/Admin/AdminTopic.tsx";
 import LandingPage from "./pages/LandingPage.tsx";
+import AdminChannel from "./pages/AdminChannel.tsx";
+import Channel from "./pages/Channel.tsx";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
@@ -113,6 +115,14 @@ function App() {
                 }
               />
 
+              <Route
+                path="/library/:channelId"
+                element={
+                  <ProtectedRoute>
+                    <Channel />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/videos"
                 element={
@@ -226,15 +236,6 @@ function App() {
               />
 
               <Route
-                path="/channels"
-                element={
-                  <ProtectedRoute>
-                    <ImportantChannelsAndVideos />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
                 path="/article"
                 element={
                   <ProtectedRoute>
@@ -312,11 +313,13 @@ function App() {
                   path="courses/:courseId/:courseLevelId/:lessonId"
                   element={<AdminLesson />}
                 />
-                <Route
-                  path="courses/:courseId/topics"
-                  element={<AdminTopics />}
-                />
+
                 <Route path="topics/:topicId" element={<AdminTopic />} />
+
+                <Route
+                  path="topics/:topicId/:channelId"
+                  element={<AdminChannel />}
+                />
               </Route>
 
               <Route path="/landing" element={<LandingPage />} />

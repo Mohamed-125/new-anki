@@ -37,6 +37,11 @@ const VideoSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    channelId: {
+      type: mongoose.Types.ObjectId,
+      index: true,
+      ref: "Channel",
+    },
     topicId: {
       type: mongoose.Types.ObjectId,
       index: true,

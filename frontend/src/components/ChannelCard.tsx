@@ -22,46 +22,46 @@ const ChannelCard: React.FC<ChannelCardProps> = ({ channel }) => {
     }
   };
   return (
-    <Link
-      to={"/channels/" + channel._id}
-      className="rounded-lg border p-6 py-7 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]"
-    >
+    <div className="rounded-lg border p-6 py-7 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]">
       <div className="flex flex-1 gap-4 items-center">
-        {channel.thumbnail ? (
-          <div className="overflow-hidden w-12 h-12 rounded-full">
-            <img
-              src={channel.thumbnail}
-              alt={channel.name}
-              className="object-cover w-full h-full"
-            />
-          </div>
-        ) : (
-          <div className="flex justify-center items-center w-12 h-12 bg-gray-200 rounded-full">
-            <span className="text-lg font-bold text-gray-500">
-              {channel.name.charAt(0)}
-            </span>
-          </div>
-        )}
-        <div className="flex-1">
-          <h3 className="font-semibold">{channel.name}</h3>
-          {channel?.description && (
-            <p className="text-sm text-gray-500 line-clamp-2">
-              {channel?.description}
-            </p>
+        <Link to={`${channel._id}`} className="flex flex-1 gap-4 items-center">
+          {channel.thumbnail ? (
+            <div className="overflow-hidden w-12 h-12 rounded-full">
+              <img
+                src={channel.thumbnail}
+                alt={channel.name}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          ) : (
+            <div className="flex justify-center items-center w-12 h-12 bg-gray-200 rounded-full">
+              <span className="text-lg font-bold text-gray-500">
+                {channel.name.charAt(0)}
+              </span>
+            </div>
           )}
+          <div className="flex-1">
+            <h3 className="font-semibold">{channel.name}</h3>
+            {channel?.description && (
+              <p className="text-sm text-gray-500 line-clamp-2">
+                {channel?.description}
+              </p>
+            )}
+          </div>
+        </Link>
+        <div className="flex gap-4 items-center">
+          <a
+            href={channel.url}
+            target="_blank"
+            className="text-sm text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Visit Channel
+          </a>
+          <ActionsDropdown itemId={channel._id} deleteHandler={deleteHandler} />
         </div>
-        <a
-          href={channel.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          Visit Channel
-        </a>
-        <ActionsDropdown itemId={channel._id} deleteHandler={deleteHandler} />
       </div>
-    </Link>
+    </div>
   );
 };
 

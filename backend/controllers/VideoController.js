@@ -139,11 +139,21 @@ const VideoModel = require("../models/VideoModel");
 //     });
 //   }
 // };
+const UserVideosModel = require("../models/UserVideosModel").default;
+
 module.exports.createVideo = async (req, res, next) => {
   try {
+    // Create the video
     const createdVideo = await VideoModel.create({
       ...req.body,
       userId: req?.user?._id,
+    });
+
+    // Create user-video association
+    await UserVideosModel.create({
+      userId: req?.user?._id,
+      videoId: createdVideo._id,
+      playlistId: req.body.playlistId || null,
     });
 
     res.set({
@@ -171,31 +181,43 @@ module.exports.getUserVideos = async (req, res, next) => {
   let page = +pageNumber || 0;
 
   try {
-    const query = { userId: req.user._id, topicId: { $exists: false } };
-    if (searchQuery) {
-      query.title = { $regex: searchQuery, $options: "i" };
-    }
+    // Get user's video associations
+    const userVideoQuery = { userId: req.user._id };
     if (playlistId) {
-      query.playlistId = playlistId;
+      userVideoQuery.playlistId = playlistId;
     }
-    // if (language) {
-    //   query.language = language;
-    // }
-    const videosCount = await VideoModel.countDocuments(query);
 
-    const skipNumber = page * limit;
+    const userVideos = await UserVideosModel.find(userVideoQuery)
+      .sort({ addedAt: -1 })
+      .skip(page * limit)
+      .limit(limit)
+      .lean();
+
+    const videoIds = userVideos.map((uv) => uv.videoId);
+
+    // Get the actual videos
+    let videoQuery = {
+      _id: { $in: videoIds },
+    };
+
+    if (searchQuery) {
+      videoQuery.title = { $regex: searchQuery, $options: "i" };
+    }
+
+    const videosCount = await UserVideosModel.countDocuments(userVideoQuery);
     const remaining = Math.max(0, videosCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
-    const videos = await VideoModel.find(
-      query,
-      { defaultCaptionData: 0 },
-      { sort: { createdAt: -1 } }
-    )
-      .skip(skipNumber)
-      .limit(limit);
+    const videos = await VideoModel.find(videoQuery, {
+      defaultCaptionData: 0,
+    }).lean();
 
-    res.status(200).send({ videos, nextPage, videosCount });
+    // Sort videos in the same order as userVideos
+    const sortedVideos = videoIds
+      .map((id) => videos.find((v) => v._id.toString() === id.toString()))
+      .filter(Boolean);
+
+    res.status(200).send({ videos: sortedVideos, nextPage, videosCount });
   } catch (err) {
     console.log(err);
     res.status(400).send(err);
@@ -214,13 +236,10 @@ module.exports.getVideo = async (req, res, next) => {
 };
 
 module.exports.updateVideo = async (req, res, next) => {
-  const { playlistId, defaultCaptionData } = req.body;
-
-  console.log(req.body);
   try {
     const updatedVideo = await VideoModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { playlistId, defaultCaptionData },
+      req.body,
       {
         new: true,
       }
@@ -232,10 +251,23 @@ module.exports.updateVideo = async (req, res, next) => {
 };
 module.exports.deleteVideo = async (req, res, next) => {
   try {
-    const deletedTodo = await VideoModel.findByIdAndDelete({
-      _id: req.params.id,
+    const video = await VideoModel.findById(req.params.id);
+    if (!video) {
+      return res.status(404).send("Video not found");
+    }
+
+    // Only delete the video if the user is the owner
+    if (video.userId.toString() === req.user._id.toString()) {
+      await VideoModel.findByIdAndDelete(req.params.id);
+    }
+
+    // Always delete the user's association with the video
+    await UserVideosModel.deleteOne({
+      userId: req.user._id,
+      videoId: req.params.id,
     });
-    res.status(200).send("deleted!!");
+
+    res.status(200).send("Video removed successfully");
   } catch (err) {
     res.status(400).send(err);
   }
@@ -244,42 +276,73 @@ module.exports.deleteVideo = async (req, res, next) => {
 module.exports.batchDelete = async (req, res) => {
   const { ids } = req.body;
   try {
-    await VideoModel.deleteMany({ _id: { $in: ids } });
-    res.status(200).send({ message: "videos deleted successfully" });
+    // Get videos owned by the user
+    const videos = await VideoModel.find({
+      _id: { $in: ids },
+      userId: req.user._id,
+    });
+
+    const ownedVideoIds = videos.map((v) => v._id);
+
+    // Delete owned videos
+    if (ownedVideoIds.length > 0) {
+      await VideoModel.deleteMany({ _id: { $in: ownedVideoIds } });
+    }
+
+    // Delete all user-video associations
+    await UserVideosModel.deleteMany({
+      userId: req.user._id,
+      videoId: { $in: ids },
+    });
+
+    res.status(200).send({ message: "Videos removed successfully" });
   } catch (error) {
-    res.status(500).send({ error: "Error deleting videos" });
+    res.status(500).send({ error: "Error removing videos" });
   }
 };
 module.exports.batchMove = async (req, res) => {
   const { ids, selectedParent } = req.body;
 
   try {
-    await VideoModel.updateMany(
-      { _id: { $in: ids } },
+    // Update user-video associations with new playlist
+    await UserVideosModel.updateMany(
+      {
+        userId: req.user._id,
+        videoId: { $in: ids },
+      },
       { playlistId: selectedParent }
     );
-    res.status(200).send({ message: "videos moved successfully" });
+
+    res.status(200).send({ message: "Videos moved successfully" });
   } catch (error) {
-    res.status(500).send({ error: "Error moveing videos" });
+    res.status(500).send({ error: "Error moving videos" });
   }
 };
-module.exports.forkVideo = async (req, res) => {
+module.exports.shareVideo = async (req, res) => {
   try {
-    const originalVideo = await VideoModel.findOne({
-      _id: req.params.id,
-    }).lean();
-    if (!originalVideo) {
+    const video = await VideoModel.findById(req.params.id);
+    if (!video) {
       return res.status(404).send("Video not found");
     }
 
-    if (originalVideo?.topicId) delete originalVideo?.topicId;
-
-    const forkedVideo = await VideoModel.create({
-      userId: req.user?._id,
-      ...originalVideo,
+    // Check if user already has this video
+    const existingUserVideo = await UserVideosModel.findOne({
+      userId: req.user._id,
+      videoId: video._id,
     });
 
-    res.status(200).send(forkedVideo);
+    if (existingUserVideo) {
+      return res.status(400).send("Video already in your library");
+    }
+
+    // Create user-video association
+    const userVideo = await UserVideosModel.create({
+      userId: req.user._id,
+      videoId: video._id,
+      playlistId: req.body.playlistId || null,
+    });
+
+    res.status(200).send({ message: "Video shared successfully", userVideo });
   } catch (err) {
     res.status(400).send(err);
   }

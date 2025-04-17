@@ -5,12 +5,10 @@ const {
   getUserVideos,
   getVideo,
   updateVideo,
-  getVideoData,
   deleteVideo,
-  getTranscript,
   batchDelete,
   batchMove,
-  forkVideo,
+  shareVideo,
 } = require("../controllers/VideoController");
 
 const Authorization = require("../middleware/Authorization");
@@ -22,7 +20,7 @@ router
   //   getVideoAvailavailableCaptions
   // )
   .post("/", Authorization, createVideo)
-  .post("/fork/:id", Authorization, forkVideo)
+  .post("/fork/:id", Authorization, shareVideo)
   .get("/", Authorization, getUserVideos)
   // .get("/getVideoData/:videoId", getVideoData)
   .get("/:id", Authorization, getVideo)

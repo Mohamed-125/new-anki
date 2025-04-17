@@ -16,6 +16,7 @@ import useGetTopicChannels from "@/hooks/useGetTopicChannels";
 import useAddVideoHandler from "@/hooks/useAddVideoHandler";
 import InfiniteScroll from "@/components/InfiniteScroll";
 import ChannelCard from "@/components/ChannelCard";
+import AddVideoModal from "./AddVideoModal";
 
 const useGetTopic = (topicId: string) => {
   return useQuery({
@@ -63,16 +64,6 @@ const AdminTopic = () => {
     fetchNextPage: fetchNextTopicChannelsPage,
   } = useGetTopicChannels(topicId as string, activeTab === "channels");
 
-  // Using the custom hook for video handling
-  const {
-    youtubeUrl,
-    setYoutubeUrl,
-    isVideoDialogOpen,
-    setIsVideoDialogOpen,
-    getTranscript,
-    addVideoHandler,
-  } = useAddVideoHandler({ topic, lang: topic?.topicLanguage });
-
   console.log(topic);
   const addChannelHandler = async () => {
     try {
@@ -86,6 +77,12 @@ const AdminTopic = () => {
       console.error("Error adding channel:", error);
     }
   };
+
+  // Using the custom hook for video handling
+  const { isVideoModalOpen, setIsVideoModalOpen } = useAddVideoHandler({
+    topicId: topic?._id,
+    videoLang: "de",
+  });
 
   if (!topic) return <div>Topic not found</div>;
 
@@ -117,57 +114,18 @@ const AdminTopic = () => {
             </TabsList>
 
             <TabsContent value="videos">
+              <AddVideoModal
+                topicId={topic._id}
+                isVideoModalOpen={isVideoModalOpen}
+                setIsVideoModalOpen={setIsVideoModalOpen}
+              />
               <Button
-                onClick={() => setIsVideoDialogOpen(true)}
+                onClick={() => setIsVideoModalOpen(true)}
                 className="mb-4"
               >
                 Add Video
               </Button>
-              <div className="mb-4">
-                <Modal
-                  isOpen={isVideoDialogOpen}
-                  loading={getTranscript.isPending}
-                  setIsOpen={setIsVideoDialogOpen}
-                  className="w-full max-w-lg"
-                >
-                  <Modal.Header
-                    setIsOpen={setIsVideoDialogOpen}
-                    title="Add YouTube Video"
-                  />
-                  <Form className="p-0 space-y-6" onSubmit={addVideoHandler}>
-                    <Form.FieldsContainer className="space-y-4">
-                      <Form.Field>
-                        <Form.Label>YouTube URL</Form.Label>
-                        <Form.Input
-                          type="text"
-                          value={youtubeUrl}
-                          onChange={(e) => setYoutubeUrl(e.target.value)}
-                          className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
-                          placeholder="Enter YouTube URL"
-                          required
-                        />
-                      </Form.Field>
-                    </Form.FieldsContainer>
-                    <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                      <Button
-                        onClick={() => setIsVideoDialogOpen(false)}
-                        size="parent"
-                        type="button"
-                        variant="danger"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        size="parent"
-                        disabled={!youtubeUrl}
-                      >
-                        Get Transcript
-                      </Button>
-                    </Modal.Footer>
-                  </Form>
-                </Modal>
-              </div>
+              <div className="mb-4"></div>
               {videos?.length ? (
                 <InfiniteScroll
                   fetchNextPage={fetchNextTopicTextsPage}

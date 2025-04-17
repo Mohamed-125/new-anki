@@ -39,6 +39,7 @@ const extractYoutubeVideoId = (url) => {
 module.exports.getTranscript = asyncHandler(async (req, res) => {
   const { url, videoId: providedVideoId, lang = "en" } = req.body;
 
+  console.log("get transcrpit works here is the url: ", url);
   // Get video ID either from direct input or by extracting from URL
   const videoId = providedVideoId || extractYoutubeVideoId(url);
 

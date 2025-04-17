@@ -13,6 +13,7 @@ import useGetTopicTexts from "@/hooks/useGetTopicTexts";
 import InfiniteScroll from "../components/InfiniteScroll";
 import VideoSkeleton from "@/components/VideoSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
+import useGetTopicChannels from "@/hooks/useGetTopicChannels";
 
 // Tab component for switching between content types
 const ContentTabs = ({
@@ -84,82 +85,130 @@ const ContentCard = ({
 };
 
 // Section component with title, view all button, and horizontal slider
-const LibrarySection = ({
-  topic,
-}: // activeTab,
-{
-  topic: TopicType;
-  // activeTab: "lessons" | "lists";
-}) => {
+const LibrarySection = ({ topic }: { topic: TopicType }) => {
+  const [activeTab, setActiveTab] = useState<"lessons" | "channels">("lessons");
+
   const {
     texts,
     fetchNextPage: fetchTextsNextPage,
     isFetchingNextPage: isTextsFetchingNextPage,
     hasNextPage: hasTextsNextPage,
-  } = useGetTopicTexts(topic._id as string, topic.type === "texts");
+  } = useGetTopicTexts(
+    topic._id as string,
+    topic.type === "texts" && activeTab === "lessons"
+  );
   const {
     videos,
     fetchNextPage: fetchVideosNextPage,
     isFetchingNextPage: isVideosFetchingNextPage,
     hasNextPage: hasVideosNextPage,
-  } = useGetTopicVideos(topic._id as string, topic.type === "videos");
+  } = useGetTopicVideos(
+    topic._id as string,
+    topic.type === "videos" && activeTab === "lessons"
+  );
+  const {
+    channels,
+    fetchNextPage: fetchChannelsNextPage,
+    hasNextPage: hasChannelsNextPage,
+  } = useGetTopicChannels(topic._id as string, activeTab === "channels");
 
-  const items = videos || texts;
+  const items = activeTab === "lessons" ? videos || texts : channels;
 
   return (
     <div className="mb-12">
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-2xl font-bold text-gray-800">{topic.title}</h2>
-        {/* <Link
-          to={`/${activeTab === "videos" ? "texts" : "lists"}`}
-          className="flex items-center font-medium text-primary hover:underline"
-        >
-          View all
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="ml-1 w-4 h-4"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab("lessons")}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              activeTab === "lessons"
+                ? "bg-primary text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
           >
-            <path
-              fillRule="evenodd"
-              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </Link> */}
+            Lessons
+          </button>
+          <button
+            onClick={() => setActiveTab("channels")}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              activeTab === "channels"
+                ? "bg-primary text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Channels
+          </button>
+        </div>
       </div>
 
       <InfiniteScroll
-        fetchNextPage={texts ? fetchTextsNextPage : fetchVideosNextPage}
-        hasNextPage={texts ? hasTextsNextPage : hasVideosNextPage}
+        fetchNextPage={
+          activeTab === "lessons"
+            ? texts
+              ? fetchTextsNextPage
+              : fetchVideosNextPage
+            : fetchChannelsNextPage
+        }
+        hasNextPage={
+          activeTab === "lessons"
+            ? texts
+              ? hasTextsNextPage
+              : hasVideosNextPage
+            : hasChannelsNextPage
+        }
         loadingElement={
-          <div className="flex gap-5 min-h-[230px] px-4 -mx-4  snap-x">
-            {new Array(3).fill(0).map((_, i) => {
-              return (
-                <div
-                  key={i}
-                  className="min-w-[270px]  items-center max-w-full  bg-white border shadow-md cursor-pointer rounded-2xl border-neutral-300"
-                >
-                  <Skeleton className="w-full h-[65%]" />
-                  <div className="flex flex-col h-[30%] overflow-hidden gap-2 px-8 py-4 whitespace-normal break-words grow text-ellipsis">
-                    <Skeleton className="w-full h-5" />
-                    <Skeleton className="w-[90%] h-5" />
-                  </div>
+          <div className="flex gap-5 min-h-[230px] px-4 -mx-4 snap-x">
+            {new Array(3).fill(0).map((_, i) => (
+              <div
+                key={i}
+                className="min-w-[270px] items-center max-w-full bg-white border shadow-md cursor-pointer rounded-2xl border-neutral-300"
+              >
+                <Skeleton className="w-full h-[65%]" />
+                <div className="flex flex-col h-[30%] overflow-hidden gap-2 px-8 py-4 whitespace-normal break-words grow text-ellipsis">
+                  <Skeleton className="w-full h-5" />
+                  <Skeleton className="w-[90%] h-5" />
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         }
         className="flex overflow-x-auto gap-5 px-4 pb-4 -mx-4 h-full snap-x"
       >
-        {items?.map((item: any) => {
-          return (
-            <div key={item._id} className="snap-start">
+        {items?.map((item: any) => (
+          <div key={item._id} className="snap-start">
+            {activeTab === "lessons" ? (
               <ContentCard topic={topic} item={item} />
-            </div>
-          );
-        })}
+            ) : (
+              <div className="max-w-[300px] min-w-[260px] flex-1 h-full flex-shrink-0">
+                <Link to={`/library/${item._id}`} className="block p-4 h-full">
+                  <div className="flex flex-col gap-4 items-center">
+                    {item.thumbnail ? (
+                      <div className="overflow-hidden w-full h-full rounded-full border max-w-36">
+                        <img
+                          src={item.thumbnail}
+                          alt={item.name}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex justify-center items-center w-16 h-16 bg-gray-200 rounded-full">
+                        <span className="text-xl font-bold text-gray-500">
+                          {item.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-lg font-medium text-center text-gray-800">
+                        {item.name}
+                      </h3>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            )}
+          </div>
+        ))}
       </InfiniteScroll>
     </div>
   );

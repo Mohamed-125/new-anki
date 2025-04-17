@@ -103,7 +103,7 @@ module.exports.getTopicVideos = async (req, res) => {
   const nextPage = remaining > 0 ? page + 1 : null;
 
   try {
-    const videos = await VideoModel.find({ topicId })
+    const videos = await VideoModel.find({ topicId }, { defaultCaptionData: 0 })
       .skip(skipNumber)
       .limit(limit);
 

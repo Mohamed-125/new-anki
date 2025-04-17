@@ -38,7 +38,6 @@ const Video = () => {
     queryKey: ["video", id],
     queryFn: () => axios.get("video/" + id).then((res) => res.data),
   });
-  const { addToast } = useToasts();
 
   const {
     cardsCount,
@@ -51,9 +50,7 @@ const Video = () => {
     videoId: video?._id,
   });
 
-  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [caption, setCaption] = useState<CaptionType[]>([]);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const playerRef = useRef<any | null>(null);
 
@@ -66,25 +63,21 @@ const Video = () => {
   useEffect(() => {
     setCaption(video?.defaultCaptionData.transcript);
   }, [video]);
-
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === video?.userId;
-
-  const forkHandler = async () => {
-    const toast = addToast("Forking video...", "promise");
-    try {
-      const response = await axios.post(`video/fork/${video._id}`);
-      navigate(`/videos/${response.data._id}`);
-      queryClient.invalidateQueries({ queryKey: ["videos"] });
-      toast.setToastData({
-        title: "Video forked successfully!",
-        type: "success",
-        isCompleted: true,
-      });
-    } catch (err) {
-      toast.setToastData({ title: "Failed to fork video", type: "error" });
+  useEffect(() => {
+    if (video && !isSameUser) {
+      const addToUserVideos = async () => {
+        try {
+          await axios.post(`video/fork/${video._id}`);
+          queryClient.invalidateQueries({ queryKey: ["videos"] });
+        } catch (err) {
+          console.error("Failed to add video to user's videos", err);
+        }
+      };
+      addToUserVideos();
     }
-  };
+  }, [video, user, isSameUser]);
 
   if (isLoading) {
     return <Loading />;
@@ -113,11 +106,6 @@ const Video = () => {
           subtitleContainerRef={subtitleContainerRef}
         />
         <div className="mt-5">
-          {!isSameUser || !video?.topicId ? (
-            <Button onClick={forkHandler} className="mb-7">
-              Add to your videos
-            </Button>
-          ) : null}
           {isIntialLoading && <CardsSkeleton />}
           {videoCards?.map((card: CardType) => (
             <Card key={card._id} card={card} id={card._id} />

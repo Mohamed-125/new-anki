@@ -6,8 +6,10 @@ import useGetCurrentUser from "./useGetCurrentUser";
 export type VideoType = {
   _id: string;
   title: string;
+  topicId: string;
+  channelId: string;
   url: string;
-  availableCaptions: string[];
+  // availableCaptions: string[];
   defaultCaptionData: {
     name: string;
     transcript?: {

@@ -4,8 +4,9 @@ import axios from "axios";
 import { TopicType } from "./useGetTopics";
 
 type UseAddVideoHandlerProps = {
-  topic?: TopicType;
-  lang: string | undefined;
+  topicId?: string;
+  videoLang?: string;
+  channelId?: string;
 };
 
 type TranscriptData = {
@@ -15,16 +16,20 @@ type TranscriptData = {
   thumbnail: string;
 };
 
-const useAddVideoHandler = ({ topic, lang }: UseAddVideoHandlerProps) => {
+const useAddVideoHandler = ({
+  topicId,
+  videoLang,
+  channelId,
+}: UseAddVideoHandlerProps) => {
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // Extract the transcript fetching logic into a custom hook
   const getTranscript = useMutation({
     mutationFn: async ({ url, lang }: { url: string; lang?: string }) => {
       const response = await axios.post("transcript/get-transcript", {
         url,
-        lang,
+        lang: videoLang,
       });
       return response.data as TranscriptData;
     },
@@ -35,7 +40,7 @@ const useAddVideoHandler = ({ topic, lang }: UseAddVideoHandlerProps) => {
     try {
       const data = await getTranscript.mutateAsync({
         url: youtubeUrl,
-        lang,
+        lang: videoLang,
       });
       const { translatedTranscript, transcript, title, thumbnail } = data;
       await axios.post("/video", {
@@ -44,13 +49,14 @@ const useAddVideoHandler = ({ topic, lang }: UseAddVideoHandlerProps) => {
           translatedTranscript,
           transcript,
         },
-        topicId: topic?._id,
+        channelId,
+        topicId,
         title,
         thumbnail,
       });
 
       setYoutubeUrl("");
-      setIsVideoDialogOpen(false);
+      setIsVideoModalOpen(false);
     } catch (error) {
       console.error("Error fetching transcript:", error);
     }
@@ -59,8 +65,8 @@ const useAddVideoHandler = ({ topic, lang }: UseAddVideoHandlerProps) => {
   return {
     youtubeUrl,
     setYoutubeUrl,
-    isVideoDialogOpen,
-    setIsVideoDialogOpen,
+    isVideoModalOpen,
+    setIsVideoModalOpen,
     getTranscript,
     addVideoHandler,
   };

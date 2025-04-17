@@ -31,6 +31,7 @@ router.post("/", async (req, res, next) => {
     const data = response.data[0].map((arr) => arr[0]);
     res.send(data.join(" "));
   } catch (err) {
+    console.log("translate router error", err);
     res.send(err.message);
   }
   // }
