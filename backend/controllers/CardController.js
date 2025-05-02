@@ -1,7 +1,8 @@
 const CardModel = require("../models/CardModel");
 
 module.exports.createCard = async (req, res, next) => {
-  const { front, back, content, collectionId, videoId, language } = req.body;
+  const { front, back, content, collectionId, videoId, language, sectionId } =
+    req.body;
 
   if (!front || !back)
     return res
@@ -9,15 +10,18 @@ module.exports.createCard = async (req, res, next) => {
       .send("you have to enter the front and the back name");
 
   try {
-    const createdCard = await CardModel.create({
+    const cardData = {
       front,
       back,
       content,
       collectionId,
-      userId: req.user?._id,
       videoId,
       language,
-    });
+      sectionId,
+      userId: sectionId ? undefined : req.user?._id,
+    };
+
+    const createdCard = await CardModel.create(cardData);
     res.status(200).send(createdCard);
   } catch (err) {
     res.status(400).send(err);
@@ -32,6 +36,7 @@ module.exports.getUserCards = async (req, res, next) => {
     videoId,
     study,
     language,
+    sectionId,
   } = req.query;
 
   const query = {};
@@ -44,7 +49,9 @@ module.exports.getUserCards = async (req, res, next) => {
     ];
   }
 
-  if (collectionId) {
+  if (sectionId) {
+    query.sectionId = sectionId;
+  } else if (collectionId) {
     query.collectionId = collectionId;
   } else {
     query.userId = req.user?._id;
@@ -54,6 +61,9 @@ module.exports.getUserCards = async (req, res, next) => {
   }
   if (language) {
     query.language = language;
+  }
+  if (sectionId) {
+    query.sectionId = sectionId;
   }
   if (study) {
     options.sort = { easeFactor: 1 };

@@ -14,9 +14,11 @@ import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 type CollectionProps = {
   collection: CollectionType;
+  sectionId?: string;
+  to?: string;
 };
 
-const Collection = ({ collection }: CollectionProps) => {
+const Collection = ({ collection, sectionId, to }: CollectionProps) => {
   const id = collection._id;
 
   const {
@@ -65,8 +67,10 @@ const Collection = ({ collection }: CollectionProps) => {
 
   return (
     <ItemCard
-      isSameUser={isSameUser}
+      isSameUser={isSameUser || Boolean(sectionId)}
       id={id}
+      to={to}
+      sectionId={sectionId}
       Icon={<Folder />}
       name={collection.name}
       editHandler={editHandler}

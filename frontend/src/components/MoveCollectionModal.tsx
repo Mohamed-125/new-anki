@@ -19,15 +19,19 @@ import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import { twMerge } from "tailwind-merge";
 import useInfiniteScroll from "@/components/InfiniteScroll";
+import InfiniteScroll from "@/components/InfiniteScroll";
+import useGetSectionCollections from "@/hooks/useGetSectionCollections";
 
 //! make sure to replace every collections.find to work with the new structure
 
 const MoveCollectionModal = ({
   cards,
   text,
+  sectionId,
 }: {
   cards?: CardType[];
   text?: boolean;
+  sectionId?: string;
 }) => {
   const [selectedCollectionsIds, setSelectedCollectionIds] = useState<string[]>(
     []
@@ -52,7 +56,11 @@ const MoveCollectionModal = ({
 
   const toMoveCollectionId = toMoveCollection?._id || "";
   const { collections, isLoading, fetchNextPage, hasNextPage } =
-    useGetCollections({ all: true, enabled: isMoveToCollectionOpen });
+    useGetSectionCollections({
+      sectionId: sectionId as string,
+      enabled: isMoveToCollectionOpen && Boolean(sectionId),
+    });
+
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
   let lastSelectedCollectionId =
@@ -310,14 +318,12 @@ const MoveCollectionModal = ({
     setParentCollectionId("");
   }, [setSelectedCollectionIds, setParentCollectionId]);
 
-  useInfiniteScroll(fetchNextPage, hasNextPage, "moveCollectionModal");
   return (
     <Modal
       id={"moveCollectionModal"}
       onAnimationEnd={onAnimationEnd}
       className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
-        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
-      }`}
+        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""}`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >
@@ -416,7 +422,10 @@ const MoveCollectionModal = ({
               {collectionLoading ? (
                 <CollectionSkeleton />
               ) : (
-                <>
+                <InfiniteScroll
+                  fetchNextPage={fetchNextPage}
+                  hasNextPage={hasNextPage}
+                >
                   {(selectedCollection?.subCollections || collections)?.map(
                     (collection) => {
                       const isParentCollection =
@@ -540,7 +549,7 @@ const MoveCollectionModal = ({
                       );
                     }
                   )}
-                </>
+                </InfiniteScroll>
               )}
               {isLoading ? <CollectionSkeleton /> : null}
             </>

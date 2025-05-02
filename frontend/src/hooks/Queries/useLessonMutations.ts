@@ -1,3 +1,4 @@
+import { LessoncourseLevelType } from "./../../pages/Admin/AdminCourses";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
@@ -7,7 +8,12 @@ export type LessonType = {
   img: string;
   type: "lesson" | "revision" | "exam";
   _id: string;
+  isCompleted: boolean;
+  courseLevel: string; // Reference to CourseLevel document
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
   courseLevelId: string;
+  // courseLevel: LessoncourseLevelType[];
 };
 
 const useLessonMutations = (courseLevelId: string) => {

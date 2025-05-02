@@ -1,5 +1,9 @@
+import { ResourceType } from "./../../pages/LessonPage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { CollectionType } from "../useGetCollections";
+import { CardType } from "../useGetCards";
+import { NoteType } from "../useGetNotes";
 
 export type sectionType = {
   name: string;
@@ -9,7 +13,12 @@ export type sectionType = {
   order: number;
   lessonId: string;
   type: string;
+  collections: CollectionType[];
+  cards: CardType[];
+  notes: NoteType[];
   content: {
+    resources: ResourceType[];
+    text: string;
     questions: any[];
   };
 };

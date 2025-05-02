@@ -40,7 +40,6 @@ const AddNewTopicModal = ({
   setDefaultValues,
   course,
 }: AddNewTopicModalProps) => {
-  console.log(course.lang);
   const { createTopic, updateTopic } = useTopicMutations();
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
@@ -49,8 +48,8 @@ const AddNewTopicModal = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: "",
-    type: "videos",
+    title: defaultValues?.title || "",
+    type: defaultValues?.type || "videos",
   });
 
   useEffect(() => {
@@ -59,13 +58,17 @@ const AddNewTopicModal = ({
         title: defaultValues.title || "",
         type: defaultValues.type || "videos",
       });
-    } else {
+    } else if (isOpen) {
       setFormData({
         title: "",
         type: "videos",
       });
     }
-  }, [defaultValues]);
+  }, [defaultValues, isOpen]);
+
+  useEffect(() => {
+    console.log("formData", formData);
+  }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,7 +155,7 @@ const AddNewTopicModal = ({
             <Form.Label>Topic Title</Form.Label>
             <Form.Input
               type="text"
-              value={formData.title}
+              defaultValue={defaultValues?.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
@@ -165,7 +168,7 @@ const AddNewTopicModal = ({
           <Form.Field>
             <Form.Label>Topic Type</Form.Label>
             <Form.Select
-              value={formData.type}
+              defaultValue={defaultValues?.type}
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value })
               }

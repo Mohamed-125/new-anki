@@ -38,6 +38,14 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null,
+  },
 });
 
 UserSchema.pre("save", async function (next) {
@@ -74,6 +82,24 @@ UserSchema.methods.generateRefreshToken = async function (res) {
 UserSchema.methods.isMatch = async function (password) {
   const isVaild = await bcrypt.compare(password, this.password);
   return isVaild;
+};
+
+UserSchema.methods.generateResetPasswordToken = async function () {
+  const resetToken = jwt.sign({ id: this._id }, process.env.JWT_KEY, {
+    expiresIn: "1h",
+  });
+  this.resetPasswordToken = resetToken;
+  this.resetPasswordExpires = Date.now() + 3600000; // 1 hpour
+  await this.save();
+  return resetToken;
+};
+
+UserSchema.methods.validateResetPasswordToken = function () {
+  return (
+    this.resetPasswordExpires &&
+    this.resetPasswordToken &&
+    Date.now() <= this.resetPasswordExpires
+  );
 };
 UserSchema.set("toObject", { virtuals: true });
 UserSchema.set("toJSON", { virtuals: true });

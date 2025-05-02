@@ -3,80 +3,134 @@ const CollectionModel = require("../models/CollectionModel");
 const { getUserCards } = require("./CardController");
 
 module.exports.createCollection = async (req, res, next) => {
-  const { name, public = false, parentCollectionId, language } = req.body;
+  const {
+    name,
+    public = false,
+    parentCollectionId,
+    language,
+    sectionId,
+  } = req.body;
 
   if (!name)
     return res.status(400).send("you have to enter the collection name");
 
   try {
-    const createdCollection = await CollectionModel.create({
+    const collectionData = {
       name,
       public,
       parentCollectionId,
-      userId: req.user?._id,
       language,
-    });
+      sectionId,
+      userId: sectionId ? undefined : req.user?._id,
+    };
+
+    const createdCollection = await CollectionModel.create(collectionData);
     res.status(200).send(createdCollection);
   } catch (err) {
     res.status(400).send(err);
   }
 };
 
-const forkCollection = async (originalCollectionId, userId) => {
-  const originalCollection = await Collection.findById(originalCollectionId)
-    .populate("subCollections")
-    .exec();
+module.exports.forkCollection = async (req, res) => {
+  const mongoose = require("mongoose");
+  const originalCollectionId = req.params.id;
+  const userId = req.user?._id;
 
-  if (!originalCollection) {
-    throw new Error("Collection not found");
-  }
+  try {
+    const originalCollection = await CollectionModel.findById(
+      originalCollectionId
+    )
+      .populate({
+        path: "subCollections",
+        populate: {
+          path: "subCollections",
+        },
+      })
+      .exec();
 
-  // Create a new collection for the user
-  const newCollection = new Collection({
-    name: originalCollection.name,
-    slug: originalCollection.slug,
-    public: false, // Forked collections are private by default
-    userId: userId,
-    forkedFrom: originalCollection._id, // Track the original collection
-  });
+    if (!originalCollection) {
+      return res.status(404).send("Collection not found");
+    }
 
-  await newCollection.save();
+    // Internal helper function to recursively fork collections
+    const forkCollectionHelper = async (
+      collection,
+      userId,
+      parentId = null
+    ) => {
+      // Create a new collection
+      const newCollection = new CollectionModel({
+        name: collection.name,
+        slug: collection.slug,
+        public: false,
+        userId: userId,
+        language: collection.language,
+        forkedFrom: collection._id,
+        parentCollectionId: parentId,
+      });
 
-  // Copy all cards from the original collection to the new collection
-  const originalCards = await Card.find({
-    collectionId: originalCollection._id,
-  });
-  for (const card of originalCards) {
-    const newCard = new Card({
-      ...card.toObject(), // Copy all fields
-      _id: new mongoose.Types.ObjectId(), // Generate a new ID
-      userId: userId, // Assign to the new user
-      collectionId: newCollection._id, // Link to the new collection
-    });
-    await newCard.save();
-  }
+      await newCollection.save();
 
-  // Recursively fork child collections
-  for (const childCollectionId of originalCollection.subCollections) {
-    const forkedChildCollection = await forkCollection(
-      childCollectionId,
+      // Copy all cards from the original collection
+      const originalCards = await CardModel.find({
+        collectionId: collection._id,
+      }).lean();
+
+      const cardPromises = originalCards.map((card) => {
+        const newCard = new CardModel({
+          ...card,
+          sectionId: null,
+          _id: new mongoose.Types.ObjectId(),
+          userId: userId,
+          collectionId: newCollection._id,
+        });
+        return newCard.save();
+      });
+
+      try {
+        await Promise.all(cardPromises);
+      } catch (err) {
+        console.log("forking card err : ", err);
+      }
+
+      // Recursively fork subcollections
+      if (collection.subCollections && collection.subCollections.length > 0) {
+        const subCollectionPromises = collection.subCollections.map(
+          (childCollection) =>
+            forkCollectionHelper(childCollection, userId, newCollection._id)
+        );
+
+        try {
+          await Promise.all(subCollectionPromises);
+        } catch (err) {
+          console.log("forking subCollection err : ", err);
+        }
+      }
+
+      return newCollection;
+    };
+
+    // Start the forking process with the original collection
+    const forkedCollection = await forkCollectionHelper(
+      originalCollection,
       userId
     );
+    res.send(forkedCollection);
+  } catch (err) {
+    console.log("fork collection err:", err);
+    res.status(500).send({ error: "Error forking collection" });
   }
-
-  await newCollection.save();
-
-  return newCollection;
 };
 
-module.exports.forkCollection = forkCollection;
-
 module.exports.getCollections = async (req, res, next) => {
-  const { searchQuery, public, page = 0, all, language } = req.query;
+  const { sectionId, searchQuery, public, page = 0, all, language } = req.query;
   const limit = 10; // Number of items per page
   const query = {};
 
-  if (!public) {
+  if (language) query.language = language;
+  if (sectionId) {
+    query.sectionId = sectionId;
+  } else if (!public) {
     query.userId = req.user?._id;
   } else {
     query.public = true;

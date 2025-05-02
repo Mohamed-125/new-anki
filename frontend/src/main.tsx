@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.js";
+import App from "./App.tsx";
 import "./index.css";
 import axios from "axios";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import Toasts from "./components/Toasts.js";
 import ToastContext from "./context/ToastContext.js";
 import StatesContext from "./context/StatesContext.js";
 import { LanguageProvider } from "./context/SelectedLearningLanguageContext.js";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
@@ -55,17 +56,19 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
-        <>
-          <ToastContext>
-            <StatesContext>
-              <Toasts />
-              <App />
-            </StatesContext>
-          </ToastContext>
-        </>
-      </QueryClientProvider>
-    </LanguageProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <LanguageProvider>
+        <QueryClientProvider client={queryClient}>
+          <>
+            <ToastContext>
+              <StatesContext>
+                <Toasts />
+                <App />
+              </StatesContext>
+            </ToastContext>
+          </>
+        </QueryClientProvider>
+      </LanguageProvider>
+    </GoogleOAuthProvider>
   </StrictMode>
 );

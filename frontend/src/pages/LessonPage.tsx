@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import useGetLesson from "../hooks/Queries/useGetLesson";
 import useGetSections from "../hooks/Queries/useGetSections";
@@ -7,6 +7,18 @@ import Button from "@/components/Button";
 import Question from "@/components/Question";
 import LessonNavigation from "@/components/LessonNavigation";
 import ResourceSection from "@/components/ResourceSection";
+import "@/styles/highlight.css";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import useUseEditor from "@/hooks/useUseEditor";
+import TipTapEditor from "@/components/TipTapEditor";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
 export type QuestionType = {
   id: number;
@@ -24,10 +36,9 @@ export type ResourceType = {
 };
 
 const LessonPage = () => {
-  const { lessonId, courseId, courseLevelId } = useParams<{
+  const { lessonId, courseLevelId } = useParams<{
     lessonId: string;
-    courseId: string;
-    courseLevelId: string;
+    courseLevelId?: string;
   }>();
   const navigate = useNavigate();
 
@@ -45,6 +56,7 @@ const LessonPage = () => {
   const { data: lesson, isLoading: isLessonLoading } = useGetLesson(
     lessonId as string
   );
+  const { user } = useGetCurrentUser();
 
   // Fetch sections data
   const {
@@ -67,6 +79,62 @@ const LessonPage = () => {
   );
   const length = sections.length + questions.length - questionSections.length;
 
+  const { editor, setContent } = useUseEditor(true);
+
+  useEffect(() => {
+    if (currentSection?.type === "text") {
+      setContent(currentSection?.content?.text);
+    }
+  }, [currentSection]);
+
+  // Process text content to highlight cards
+  const highlightedContent = useMemo(() => {
+    if (
+      !currentSection?.content?.text ||
+      !currentSection?.cards?.length ||
+      currentSection.type !== "text"
+    ) {
+      return currentSection?.content?.text;
+    }
+
+    const parser = new DOMParser();
+    //@ts-ignore
+    const doc = parser.parseFromString(
+      currentSection.content?.text,
+      "text/html"
+    );
+
+    const traverseNodes = (node: any) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const originalText = node.textContent;
+        let modifiedText = originalText;
+
+        currentSection.cards.forEach((card) => {
+          const regex = new RegExp(`\\b(${card.front.trim()})\\b`, "gi");
+          modifiedText = modifiedText.replace(
+            regex,
+            `<span class="highlight" data-id=${card._id}>$1</span>`
+          );
+        });
+
+        if (modifiedText !== originalText) {
+          const wrapper = document.createElement("span");
+          wrapper.innerHTML = modifiedText;
+          node.replaceWith(...wrapper.childNodes);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        Array.from(node.childNodes).forEach(traverseNodes);
+      }
+    };
+
+    Array.from(doc.body.childNodes).forEach(traverseNodes);
+    return doc.body.innerHTML;
+  }, [
+    currentSection?.content?.text,
+    currentSection?.cards,
+    currentSection?.type,
+  ]);
+
   // Add current question to viewed questions when component renders
 
   // Handle loading states
@@ -88,7 +156,7 @@ const LessonPage = () => {
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
           <div className="flex gap-4 items-center mb-4">
             <Button
-              onClick={() => navigate(`/courses/${courseId}`)}
+              onClick={() => navigate(-1)}
               className="px-4 py-2 text-blue-600 rounded-md border border-blue-600 hover:bg-blue-50"
             >
               Back to Course
@@ -120,23 +188,31 @@ const LessonPage = () => {
   return (
     <div className="container px-4 py-8 mx-auto">
       {/* Lesson Header */}
-      <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
-        <div className="flex gap-4 items-center mb-4">
-          <Button
-            onClick={() => navigate(`/learn`)}
-            className="px-4 py-2 text-blue-600 rounded-md border border-blue-600 hover:bg-blue-50"
-          >
-            Back to Course
-          </Button>
-        </div>
-        <h1 className="text-3xl font-bold">{lesson?.name}</h1>
+      <Button
+        onClick={() => navigate(`/learn`)}
+        variant="primary"
+        className="px-4 py-2 mb-3 rounded-md border"
+      >
+        Back
+      </Button>
+      {user?.isAdmin && (
+        <Button
+          onClick={() =>
+            navigate(
+              `/admin/courses/courseId/${lesson?.courseLevelId}/${lesson?._id}`
+            )
+          }
+          variant="primary"
+          className="px-4 py-2 mb-3 rounded-md border"
+        >
+          Edit
+        </Button>
+      )}
+      {/* <h1 className="text-3xl font-bold">{lesson?.name}</h1>
         <p className="text-gray-600">{lesson?.description}</p>
 
         <div className="mt-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-600">
-              Section {currentSectionIndex + 1} of {sections.length}
-            </span>
 
             <span className="text-sm font-medium text-gray-600">
               {Math.round((moves / length) * 100)}%
@@ -150,25 +226,110 @@ const LessonPage = () => {
               }}
             ></div>
           </div>
-        </div>
-      </div>
+        </div> */}
 
       {/* Section Content */}
-      <div className="p-6 bg-white rounded-lg shadow-md">
+      <div className="p-6 mb-28 bg-white rounded-lg shadow-md">
         <h2 className="mb-4 text-2xl font-semibold">{currentSection?.name}</h2>
         <p className="mb-6 text-gray-600">{currentSection?.description}</p>
         {/* Text Section */}
         {currentSection?.type === "text" && currentSection?.content && (
-          <div
-            className="max-w-none prose"
-            dangerouslySetInnerHTML={{ __html: currentSection.content }}
-          />
+          <TipTapEditor editor={editor} />
         )}
         {/* Resource Section */}
         {currentSection?.type === "resources" &&
           currentSection?.content?.resources && (
             <ResourceSection resources={currentSection.content.resources} />
           )}
+        {/* Collections and Cards Section */}
+        {currentSection?.collections &&
+          currentSection.collections.length > 0 && (
+            <div className="mt-4 mb-5">
+              <h4>Learned Words</h4>
+              {currentSection.collections.map((collection: any) => {
+                return (
+                  <div
+                    key={collection._id}
+                    className="overflow-hidden my-3 bg-white rounded-lg border border-gray-200 shadow-sm"
+                  >
+                    <div className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-200">
+                      <h3 className="text-2xl font-semibold text-gray-900">
+                        {collection.name}
+                      </h3>
+                    </div>
+                    {/* Cards Table */}
+                    {currentSection?.cards &&
+                      currentSection.cards.length > 0 && (
+                        <div className="px-3 mt-6">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Front</TableHead>
+                                <TableHead>Back</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {currentSection.cards
+                                .filter(
+                                  (card) => card.collectionId === collection._id
+                                )
+                                .map((card: any) => (
+                                  <TableRow key={card._id}>
+                                    <TableCell>{card.front}</TableCell>
+                                    <TableCell>{card.back}</TableCell>
+                                  </TableRow>
+                                ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        {/* Notes Section */}
+        {currentSection?.notes && currentSection.notes.length > 0 && (
+          <div className="mt-10 space-y-4">
+            <h4>Notes</h4>
+            {currentSection.notes.map((note: any) => (
+              <div
+                key={note._id}
+                className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm transition-colors duration-200 hover:border-blue-400"
+              >
+                <div className="flex gap-4 items-start">
+                  <div className="flex-shrink-0">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <svg
+                        className="w-6 h-6 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="mb-2 text-xl font-medium text-gray-900">
+                      {note.title}
+                    </h3>
+                    <div className="max-w-none text-gray-600 prose">
+                      {note.content}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Exercise Section */}
         {currentSection?.type === "excercises" && questions.length > 0 && (
           <div className="mt-6">
@@ -200,6 +361,7 @@ const LessonPage = () => {
         )}
       </div>
       <LessonNavigation
+        lesson={lesson}
         setCurrentSectionIndex={setCurrentSectionIndex}
         setCurrentQuestionIndex={setCurrentQuestionIndex}
         currentSectionIndex={currentSectionIndex}
@@ -215,8 +377,7 @@ const LessonPage = () => {
         CheckAnswerHandler={CheckAnswerHandler}
         setFeedbackMessage={setFeedbackMessage}
         textAnswer={textAnswer}
-        lessonId={lessonId as string}
-        courseLevelId={courseLevelId as string}
+        courseLevelId={courseLevelId}
         // questions={questions}
       />
     </div>

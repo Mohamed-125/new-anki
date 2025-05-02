@@ -12,19 +12,22 @@ const createLesson = asyncHandler(async (req, res) => {
 
 // Get all lessons
 const getAllLessons = asyncHandler(async (req, res) => {
-  const { page: pageNumber, courseLevelId } = req.query;
+  const { page: pageNumber, courseLevelId, category } = req.query;
   const limit = 10;
   let page = +pageNumber || 0;
   const token = req.cookies?.token;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
   const { id: userId } = verify(token, process.env.JWT_KEY);
   try {
-    const lessonsCount = await Lesson.countDocuments({ courseLevelId });
+    const query = {};
+    if (category) query.category = category;
+    if (courseLevelId) query.courseLevelId = courseLevelId;
+    const lessonsCount = await Lesson.countDocuments(query);
     const skipNumber = page * limit;
     const remaining = Math.max(0, lessonsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
-    const lessons = await Lesson.find({ courseLevelId })
+    const lessons = await Lesson.find(query)
       .skip(skipNumber)
       .limit(limit)
       .lean();
@@ -50,9 +53,10 @@ const getAllLessons = asyncHandler(async (req, res) => {
       lessonsCount,
     });
   } catch (error) {
-    res.status(500);
-    // throw new Error("Failed to fetch lessons", error);
-    throw new Error(error);
+    res.status(500).json({
+      message: "Failed to fetch lessons",
+      error: error.message,
+    });
   }
 });
 // Get a single lesson

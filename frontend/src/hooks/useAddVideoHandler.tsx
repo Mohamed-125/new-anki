@@ -21,7 +21,7 @@ const useAddVideoHandler = ({
   videoLang,
   channelId,
 }: UseAddVideoHandlerProps) => {
-  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeUrls, setYoutubeUrls] = useState("");
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // Extract the transcript fetching logic into a custom hook
@@ -35,36 +35,41 @@ const useAddVideoHandler = ({
     },
   });
 
-  // The main handler function for adding a video
+  // The main handler function for adding multiple videos
   const addVideoHandler = async () => {
     try {
-      const data = await getTranscript.mutateAsync({
-        url: youtubeUrl,
-        lang: videoLang,
-      });
-      const { translatedTranscript, transcript, title, thumbnail } = data;
-      await axios.post("/video", {
-        url: youtubeUrl,
-        defaultCaptionData: {
-          translatedTranscript,
-          transcript,
-        },
-        channelId,
-        topicId,
-        title,
-        thumbnail,
-      });
+      const urls = youtubeUrls.split("\n").filter((url) => url.trim());
 
-      setYoutubeUrl("");
+      for (const url of urls) {
+        const data = await getTranscript.mutateAsync({
+          url: url.trim(),
+          lang: videoLang,
+        });
+
+        const { translatedTranscript, transcript, title, thumbnail } = data;
+        await axios.post("/video", {
+          url: url.trim(),
+          defaultCaptionData: {
+            translatedTranscript,
+            transcript,
+          },
+          channelId,
+          topicId,
+          title,
+          thumbnail,
+        });
+      }
+
+      setYoutubeUrls("");
       setIsVideoModalOpen(false);
     } catch (error) {
-      console.error("Error fetching transcript:", error);
+      console.error("Error processing videos:", error);
     }
   };
 
   return {
-    youtubeUrl,
-    setYoutubeUrl,
+    youtubeUrls,
+    setYoutubeUrls,
     isVideoModalOpen,
     setIsVideoModalOpen,
     getTranscript,

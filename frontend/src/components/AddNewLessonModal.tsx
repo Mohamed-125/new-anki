@@ -5,13 +5,7 @@ import Form from "./Form";
 import Button from "./Button";
 import Modal from "./Modal";
 import useToasts from "@/hooks/useToasts";
-
-type LessonType = {
-  name: string;
-  description?: string;
-  type: "lesson" | "revision" | "exam";
-  _id: string;
-};
+import { LessonType } from "@/hooks/Queries/useLessonMutations";
 
 type AddNewLessonModalProps = {
   isOpen: boolean;

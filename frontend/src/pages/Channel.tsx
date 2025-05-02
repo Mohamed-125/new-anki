@@ -57,6 +57,7 @@ const Channel = () => {
       <InfiniteScroll
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
         className="grid grid-cols-3 gap-3 sm:grid-cols-1 lg:grid-cols-2"
         loadingElement={
           <div className="flex col-span-full justify-center py-4">

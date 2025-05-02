@@ -61,7 +61,7 @@ const AddNewSectionModal = ({
     const toast = addToast("Adding Section..", "promise");
     setIsLoading(true);
 
-    if (name && description) {
+    if (name) {
       const data = { name, description, sectionType };
 
       console.log("create section function");
@@ -70,11 +70,13 @@ const AddNewSectionModal = ({
           toast.setToastData({
             title: "Section Added!",
             isCompleted: true,
+            type: "success",
           });
         })
         .catch(() => {
           toast.setToastData({
             title: "Failed To Add Section",
+            isError: true,
             type: "error",
           });
         })
@@ -134,7 +136,6 @@ const AddNewSectionModal = ({
         title={defaultValues?.sectionName ? "Edit Section" : "Add New Section"}
       />
 
-      {"section"}
       <Form
         className="p-0 space-y-6"
         formRef={formRef}
@@ -164,7 +165,6 @@ const AddNewSectionModal = ({
               name="description"
               className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter Section description"
-              required
             />
           </Form.Field>
           <Form.Field>
@@ -173,7 +173,7 @@ const AddNewSectionModal = ({
               defaultValue={defaultValues?.type}
               type="text"
               onChange={(e) => setSectionType(e.target.value)}
-              name="description"
+              name="type"
               className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >

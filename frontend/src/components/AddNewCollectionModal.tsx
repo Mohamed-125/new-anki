@@ -12,7 +12,11 @@ import useToasts from "@/hooks/useToasts";
 import { isError } from "util";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 
-const AddNewCollectionModal = ({}: {}) => {
+const AddNewCollectionModal = ({
+  onCollectionCreated,
+}: {
+  onCollectionCreated?: (cardId: string) => Promise<void>;
+}) => {
   const {
     setIsCollectionModalOpen,
     parentCollectionId,
@@ -50,6 +54,7 @@ const AddNewCollectionModal = ({}: {}) => {
     onSuccess() {
       invalidateCollectionsQueries();
       setIsCollectionModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
     },
     mutationFn: async (data) => {
       return await axios.post("collection", data).then((res) => {
@@ -75,11 +80,13 @@ const AddNewCollectionModal = ({}: {}) => {
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
         language: selectedLearningLanguage,
+        sectionId: defaultValues?.sectionId || null,
       };
 
       mutateAsync(data)
-        .then(() => {
+        .then((res) => {
           toast.setToastData({ title: "Collection Added!", type: "success" });
+          onCollectionCreated && onCollectionCreated(res._id);
         })
         .catch(() => {
           toast.setToastData({

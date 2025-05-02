@@ -13,6 +13,7 @@ interface InfiniteScrollProps {
   children: ReactNode;
   className?: string;
   loadingElement?: ReactNode;
+  isFetchingNextPage?: boolean;
 }
 
 const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
@@ -20,6 +21,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
   hasNextPage,
   children,
   className = "",
+  isFetchingNextPage,
   loadingElement = <div>Loading...</div>,
 }) => {
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
       {
         root: null,
         rootMargin: "0px",
-        threshold: 0.1,
+        threshold: 0,
       }
     );
 
@@ -49,7 +51,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
         observer.unobserve(observerTarget.current);
       }
     };
-  }, [fetchNextPage, hasNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
     <div className={className}>

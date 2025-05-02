@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { FormEvent, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
 import axios from "axios";
 import Form from "../components/Form";
@@ -14,6 +14,8 @@ const AddNewNote = () => {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const id = useParams()?.id;
+  const { search } = useLocation();
+  const sectionId = new URLSearchParams(search).get("sectionId");
 
   const {
     data: note = {},
@@ -57,6 +59,7 @@ const AddNewNote = () => {
           title,
           content: editor.getHTML(),
           selectedLearningLanguage,
+          sectionId: sectionId || undefined,
         };
         const response = await axios.post(`note/`, data);
         invalidateNoteQueries();

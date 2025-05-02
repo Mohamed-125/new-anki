@@ -7,7 +7,6 @@ const useTopicMutations = () => {
 
   const createTopic = useMutation({
     mutationFn: async (topicData: Partial<TopicType>) => {
-      console.log("topicData", topicData);
       const response = await axios.post("topic", topicData);
       return response.data;
     },

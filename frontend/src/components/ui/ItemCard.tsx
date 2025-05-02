@@ -19,6 +19,8 @@ const ItemCard = ({
   shareHandler,
   isSameUser = true,
   select = true,
+  to,
+  sectionId,
 }: {
   moveHandler?: any;
   editHandler?: any;
@@ -31,6 +33,8 @@ const ItemCard = ({
   shareHandler?: () => void;
   isSameUser?: boolean;
   select?: boolean;
+  to?: string;
+  sectionId?: string;
 }) => {
   const { selectedItems, setSelectedItems } = useModalsStates();
   const linkContent = (
@@ -61,7 +65,8 @@ const ItemCard = ({
           linkContent
         ) : (
           <Link
-            to={`${location.pathname}/${id}`}
+            to={to || `${location.pathname}/${id}`}
+            state={{ sectionId }}
             className="flex flex-1 gap-4 items-center"
           >
             {linkContent}

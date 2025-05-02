@@ -1,6 +1,7 @@
 const SectionModel = require("../models/SectionModel");
 const Section = require("../models/SectionModel");
 const asyncHandler = require("express-async-handler");
+const NoteModel = require("../models/NoteModel");
 
 // Create a new section
 const createSection = asyncHandler(async (req, res) => {
@@ -28,26 +29,59 @@ const getAllSections = asyncHandler(async (req, res) => {
       .sort({ order: 1 })
       .skip(skipNumber)
       .limit(limit)
+      .populate({
+        path: "collections",
+        select: "_id name",
+        options: { lean: true },
+      })
+      .populate({
+        path: "cards",
+        select: "_id front back collectionId",
+        options: { lean: true },
+      })
+      .populate({
+        path: "notes",
+        select: "_id title ",
+        options: { lean: true },
+      })
       .lean();
 
-    res.status(200).json({
-      sections,
+    return res.status(200).json({
       nextPage,
+      sections,
       sectionsCount,
     });
   } catch (error) {
-    res.status(500);
-    throw new Error("Failed to fetch sections", error);
+    console.log("Failed to fetch sections", error);
+
+    return res.status(500).send(error);
   }
 });
 // Get a single section
 const getSection = asyncHandler(async (req, res) => {
-  const section = await SectionModel.findById(req.params.id);
+  const section = await SectionModel.findById(req.params.id)
+    .populate({
+      path: "collections",
+      select: "_id name",
+      options: { lean: true },
+    })
+    .populate({
+      path: "cards",
+      select: "_id front back collectionId",
+      options: { lean: true },
+    })
+    .populate({
+      path: "notes",
+      select: "_id title content",
+      options: { lean: true },
+    })
+    .lean();
+
   if (!section) {
     res.status(404);
     throw new Error("Section not found");
   }
-  res.status(200).json(section);
+  res.status(200).json({ section, notes });
 });
 
 // Update a section

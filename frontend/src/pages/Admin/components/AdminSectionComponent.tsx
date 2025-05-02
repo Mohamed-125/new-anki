@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import useToasts from "@/hooks/useToasts";
 import { sectionType } from "@/hooks/Queries/useSectionMutations";
@@ -10,9 +10,26 @@ import QuestionList from "./QuestionList";
 import QuestionForm from "./QuestionForm";
 import { useQueryClient } from "@tanstack/react-query";
 import useUseEditor from "@/hooks/useUseEditor";
+import useGetSectionCards from "@/hooks/useGetSectionCards";
+import useGetSectionCollections from "@/hooks/useGetSectionCollections";
+import useGetSectionNotes from "@/hooks/useGetSectionNotes";
+import Button from "@/components/Button";
+import { Plus, Edit, Trash, Eye, StickyNote } from "lucide-react";
+import useModalsStates from "@/hooks/useModalsStates";
+import AddNewCollectionModal from "@/components/AddNewCollectionModal";
+import { AddCardModal } from "@/components/AddCardModal";
+import AdminSectionCards from "./AdminSectionCards";
+import ItemCard from "@/components/ui/ItemCard";
+import { title } from "process";
+import { ResourceType } from "@/pages/LessonPage";
 
 interface AdminSectionComponentProps {
-  section: any; // The section data
+  isCollectionModalOpen?: boolean;
+  setIsCollectionModalOpen?: (open: boolean) => void;
+  parentCollectionId?: string;
+  defaultValues?: any;
+  setDefaultValues?: (values: any) => void;
+  section: sectionType; // The section data
   expandedSections: string[];
   setExpandedSections: React.Dispatch<React.SetStateAction<string[]>>;
   showQuestionDropdown: boolean;
@@ -64,53 +81,115 @@ const AdminSectionComponent = ({
 
   const queryClient = useQueryClient();
 
-  const [resources, setResources] = useState<
-    Array<{ type: "audio" | "video"; id: number; url: string }>
-  >([]);
+  const [resources, setResources] = useState<ResourceType[]>([]);
 
   const [copy, setCopy] = useState(false);
   const [addContentTab, setAddContentTab] = useState(false);
   const [pasteContent, setPasteContent] = useState("");
 
-  const handlePasteContent = () => {
+  const handlePasteContent = async (pasteContent: string) => {
+    const toast = addToast("Processing questions...", "promise");
     try {
-      const parsedContent = JSON.parse(pasteContent);
-      if (Array.isArray(parsedContent) && parsedContent.length > 0) {
-        const validQuestions = parsedContent
-          .filter(
-            (q) =>
-              q.type &&
-              (q.type === "choose" || q.type === "text") &&
-              q.question &&
-              ((q.type === "choose" &&
-                Array.isArray(q.choices) &&
-                q.choices.length === 4) ||
-                (q.type === "text" && q.answer))
-          )
-          .map((q) => ({ ...q, id: questionCounter + Math.random() }));
-
-        if (validQuestions.length > 0 && currentSectionId) {
-          setQuestionsBySectionId((prev: any) => ({
-            ...prev,
-            [currentSectionId]: [
-              ...(prev[currentSectionId] || []),
-              ...validQuestions,
-            ],
-          }));
-          setQuestionCounter((prev) => prev + validQuestions.length);
-          setPasteContent("");
-          addToast("Questions added successfully!", "success");
-        } else {
-          addToast("No valid questions found in the pasted content", "error");
+      // Try to parse the input as JSON, if it fails, try to evaluate it as a JavaScript object
+      let questions;
+      try {
+        questions = JSON.parse(pasteContent);
+      } catch (parseError) {
+        try {
+          // Remove any 'const', 'let', or 'var' declarations
+          const cleanedContent = pasteContent.replace(
+            /^(const|let|var)\s+\w+\s*=\s*/,
+            ""
+          );
+          // Safely evaluate the JavaScript object
+          questions = eval("(" + cleanedContent + ")");
+        } catch (evalError) {
+          throw new Error(
+            "Invalid input: Please provide a valid JSON array or JavaScript object"
+          );
         }
-      } else {
-        addToast("Please paste a valid array of questions", "error");
       }
-    } catch (err) {
-      addToast("Invalid JSON format", "error");
-      console.error(err);
+
+      if (!Array.isArray(questions)) {
+        throw new Error("Invalid format: Expected an array of questions");
+      }
+
+      if (!currentSectionId) {
+        throw new Error("No section selected");
+      }
+
+      // Validate and process each question
+      const validatedQuestions = questions.map((question) => {
+        if (!question || typeof question !== "object") {
+          throw new Error(
+            "Invalid question format: Each question must be an object"
+          );
+        }
+
+        if (
+          !question.type ||
+          !question.question ||
+          !question.choices ||
+          !question.answer
+        ) {
+          throw new Error(
+            "Invalid question format: Missing required fields (type, question, choices, answer)"
+          );
+        }
+
+        if (question.type !== "choose" && question.type !== "text") {
+          throw new Error(
+            `Invalid question type: ${question.type}. Must be either 'choose' or 'text'`
+          );
+        }
+
+        if (!Array.isArray(question.choices)) {
+          throw new Error("Invalid format: Choices must be an array");
+        }
+
+        return {
+          type: question.type,
+          question: question.question,
+          choices: question.choices,
+          answer: question.answer,
+          id: questionCounter + Math.random(),
+        };
+      });
+
+      // Add validated questions to the section
+      setQuestionsBySectionId((prev: any) => ({
+        ...prev,
+        [currentSectionId]: [
+          ...(prev[currentSectionId] || []),
+          ...validatedQuestions,
+        ],
+      }));
+
+      // Update question counter
+      setQuestionCounter((prev) => prev + validatedQuestions.length);
+
+      toast.setToastData({
+        title: `${validatedQuestions.length} questions added successfully!`,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error processing questions:", error);
+      toast.setToastData({
+        title:
+          error instanceof Error
+            ? error.message
+            : "Failed to process questions",
+        type: "error",
+      });
     }
   };
+
+  const {
+    defaultValues,
+    setDefaultValues,
+    setIsCollectionModalOpen,
+    setIsAddCardModalOpen,
+  } = useModalsStates();
 
   const submitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +197,7 @@ const AdminSectionComponent = ({
     const values = Object.fromEntries(formData) as object;
     const name = formData.get("section_name") as string;
     const description = formData.get("section_description") as string;
+    console.log(editor?.getHTML());
 
     const entries = Object.entries(values);
 
@@ -224,7 +304,7 @@ const AdminSectionComponent = ({
     });
   };
 
-  const { editor } = useUseEditor();
+  const { editor, setContent } = useUseEditor();
 
   const reorderSectionsHandler = (arrangedSections: sectionType[]) => {
     const sectionsData = arrangedSections.map((section) => {
@@ -240,36 +320,98 @@ const AdminSectionComponent = ({
     setResources(section.content?.resources || []);
   }, [section]);
 
+  const handleAddCard = () => {
+    setEditId("");
+    setDefaultValues({ sectionId: section._id });
+    setIsAddCardModalOpen(true);
+  };
+
+  const handleEditCard = (card: any) => {
+    setEditId(card._id);
+    setDefaultValues(card);
+    setIsAddCardModalOpen(true);
+  };
+
+  const handleDeleteCard = async (cardId: string) => {
+    const toast = addToast("Deleting Card..", "promise");
+    try {
+      await axios.delete(`card/${cardId}`);
+      queryClient.invalidateQueries({
+        queryKey: ["cards", "section", section._id],
+      });
+      toast.setToastData({ title: "Card Deleted!", type: "success" });
+    } catch (err) {
+      console.error(err);
+      toast.setToastData({ title: "Failed To Delete Card", type: "error" });
+    }
+  };
+
+  const handleAddCollection = () => {
+    setEditId("");
+    setDefaultValues({ sectionId: section._id });
+    setIsCollectionModalOpen(true);
+  };
+
+  const handleEditCollection = (collection: any) => {
+    setEditId(collection._id);
+    setDefaultValues(collection);
+    setIsCollectionModalOpen(true);
+  };
+
+  const handleDeleteCollection = async (collectionId: string) => {
+    const toast = addToast("Deleting Collection..", "promise");
+    try {
+      await axios.delete(`collection/${collectionId}`);
+      queryClient.invalidateQueries({
+        queryKey: ["collections", "section", section._id],
+      });
+      toast.setToastData({ title: "Collection Deleted!", type: "success" });
+    } catch (err) {
+      console.error(err);
+      toast.setToastData({
+        title: "Failed To Delete Collection",
+        type: "error",
+      });
+    }
+  };
+
+  const isExpanded = expandedSections.includes(section._id);
+  const navigate = useNavigate();
+
+  const { data: notes } = useGetSectionNotes(section._id);
   return (
-    <DragableComponent
-      reorderHandler={reorderSectionsHandler}
-      key={section._id}
-      setState={setArrangedSections}
-      state={arrangedSections}
-      order={index + 1}
-    >
-      <SectionHeader
-        sectionId={section._id}
-        sectionName={section.name}
-        isExpanded={expandedSections.includes(section._id)}
-        onToggleExpand={() => {
-          setExpandedSections((prev) =>
-            prev.includes(section._id)
-              ? prev.filter((_id) => _id !== section._id)
-              : [...prev, section._id]
-          );
-          setCurrentSectionId(section._id);
-        }}
-      />
+    <>
+      <DragableComponent
+        reorderHandler={reorderSectionsHandler}
+        setState={setArrangedSections}
+        state={arrangedSections}
+        order={index + 1}
+      >
+        <SectionHeader
+          sectionId={section._id}
+          sectionName={section.name}
+          isExpanded={expandedSections.includes(section._id)}
+          onToggleExpand={() => {
+            setExpandedSections((prev) =>
+              prev.includes(section._id)
+                ? prev.filter((_id) => _id !== section._id)
+                : [...prev, section._id]
+            );
+            setCurrentSectionId(section._id);
+          }}
+        />
+      </DragableComponent>
 
       <div
         className={`transition-all pb-0 duration-300 ease-in-out ${
-          expandedSections.includes(section._id)
-            ? "opacity-100 pb-24"
-            : "opacity-0 max-h-0 pb-0 overflow-hidden"
+          isExpanded
+            ? "pb-24 opacity-100"
+            : "overflow-hidden pb-0 max-h-0 opacity-0"
         }`}
       >
         <SectionForm
+          key={section._id}
+          editor={editor}
           section={section}
           sectionType={sectionType}
           setSectionType={setSectionType}
@@ -283,27 +425,52 @@ const AdminSectionComponent = ({
           handlePasteContent={handlePasteContent}
           resources={resources}
           setResources={setResources}
+          setContent={setContent}
           onCopy={() => {
             setEditId(section._id);
             setCopy(true);
           }}
         ></SectionForm>
 
-        {/* <div className="p-4">
-                 <p className="text-gray-600">{section.content}</p>
-                 {section.audio && (
-                   <audio controls className="mt-4 w-full">
-                     <source src={section.audio} type="audio/mpeg" />
-                   </audio>
-                 )}
-                 {section.video && (
-                   <video controls className="mt-4 w-full">
-                     <source src={section.video} type="video/mp4" />
-                   </video>
-                 )}
-               </div> */}
+        {isExpanded && (
+          <>
+            <AdminSectionCards sectionId={section._id} />
+            <div className="mt-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Section Notes</h3>
+                <Button
+                  onClick={() =>
+                    navigate(`/notes/new?sectionId=${section._id}`)
+                  }
+                  className="flex gap-2 items-center"
+                >
+                  <Plus size={20} />
+                  Add Note
+                </Button>
+              </div>
+              <div className="grid gap-4 grid-container">
+                {notes?.map((note) => (
+                  <div
+                    key={note._id}
+                    onClick={() => navigate(`/notes/edit/${note._id}`)}
+                  >
+                    <ItemCard
+                      isNotes={true}
+                      select={false}
+                      isSameUser={true}
+                      id={note._id}
+                      Icon={<StickyNote />}
+                      name={note.title}
+                      // deleteHandler={deleteNoteHandler}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    </DragableComponent>
+    </>
   );
 };
 

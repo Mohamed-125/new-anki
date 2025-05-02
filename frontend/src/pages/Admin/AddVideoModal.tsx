@@ -18,7 +18,7 @@ const AddVideoModal = ({
   videoLang?: string;
 }) => {
   // Using the custom hook for video handling
-  const { youtubeUrl, setYoutubeUrl, getTranscript, addVideoHandler } =
+  const { youtubeUrls, setYoutubeUrls, getTranscript, addVideoHandler } =
     useAddVideoHandler({ topicId, videoLang, channelId });
 
   return (
@@ -32,13 +32,12 @@ const AddVideoModal = ({
       <Form className="p-0 space-y-6" onSubmit={addVideoHandler}>
         <Form.FieldsContainer className="space-y-4">
           <Form.Field>
-            <Form.Label>YouTube URL</Form.Label>
-            <Form.Input
-              type="text"
-              value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
-              className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Enter YouTube URL"
+            <Form.Label>YouTube URLs (one per line)</Form.Label>
+            <textarea
+              value={youtubeUrls}
+              onChange={(e) => setYoutubeUrls(e.target.value)}
+              className="px-4 py-2 w-full h-32 text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Enter YouTube URLs (one per line)"
               required
             />
           </Form.Field>
@@ -52,8 +51,8 @@ const AddVideoModal = ({
           >
             Cancel
           </Button>
-          <Button type="submit" size="parent" disabled={!youtubeUrl}>
-            Get Transcript
+          <Button type="submit" size="parent" disabled={!youtubeUrls?.trim()}>
+            Get Transcripts
           </Button>
         </Modal.Footer>
       </Form>

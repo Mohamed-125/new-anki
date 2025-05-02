@@ -11,6 +11,7 @@ const {
 } = require("../controllers/LessonController");
 
 router.route("/").post(Authorization, createLesson).get(getAllLessons);
+router.route("/grammar").get(getAllLessons);
 router
   .route("/:id")
   .get(getLesson)

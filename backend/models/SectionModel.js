@@ -31,6 +31,22 @@ const sectionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+sectionSchema.virtual("collections", {
+  ref: "Collection",
+  localField: "_id",
+  foreignField: "sectionId",
+});
+sectionSchema.virtual("cards", {
+  ref: "Card",
+  localField: "_id",
+  foreignField: "sectionId",
+});
+sectionSchema.virtual("notes", {
+  ref: "Note",
+  localField: "_id",
+  foreignField: "sectionId",
+});
+
 const SectionModel = mongoose.model("Section", sectionSchema);
 
 module.exports = SectionModel;

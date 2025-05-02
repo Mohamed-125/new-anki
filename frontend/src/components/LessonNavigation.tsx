@@ -3,13 +3,17 @@ import Button from "./Button";
 import { QuestionType } from "@/pages/LessonPage";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
+import { sectionType } from "@/hooks/Queries/useSectionMutations";
+import { LessonType } from "@/hooks/Queries/useLessonMutations";
+import { promises } from "dns";
+import ShortcutKey from "./ShortcutKey";
 
 interface LessonNavigationProps {
   setCurrentSectionIndex: React.Dispatch<React.SetStateAction<number>>;
   setCurrentQuestionIndex: React.Dispatch<React.SetStateAction<number>>;
   currentSectionIndex: number;
   currentQuestionIndex: number;
-  sections: Array<{ content: { questions: QuestionType[] }; type: string }>;
+  sections: sectionType[];
   currentSection: { content: { questions: QuestionType[] }; type: string };
   length: number;
   moves: number;
@@ -20,8 +24,8 @@ interface LessonNavigationProps {
   CheckAnswerHandler: () => void;
   setFeedbackMessage: React.Dispatch<React.SetStateAction<string | null>>;
   textAnswer: string;
-  lessonId: string;
-  courseLevelId: string;
+  courseLevelId?: string;
+  lesson: LessonType | undefined;
 }
 
 const LessonNavigation = ({
@@ -40,9 +44,11 @@ const LessonNavigation = ({
   CheckAnswerHandler,
   setFeedbackMessage,
   textAnswer,
-  lessonId,
+  lesson,
   courseLevelId,
 }: LessonNavigationProps) => {
+  const lessonId = lesson?._id;
+
   const goToPre = () => {
     setMoves((pre) => pre - 1);
     setIsAnswered(false);
@@ -88,15 +94,11 @@ const LessonNavigation = ({
     isDisabled = false;
   }
 
-  const queryClient = useQueryClient();
-  return (
-    <div className="px-2 py-3 mt-5 bg-white rounded-lg shadow-md">
-      <Button onClick={goToPre} disabled={currentSectionIndex === 0}>
-        Pre
-      </Button>
-
-      <Button
-        onClick={() => {
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        if (!isDisabled) {
           if (moves !== length - 1) {
             if (currentSection.type === "excercises") {
               if (currentQuestion.type !== "text") {
@@ -109,26 +111,157 @@ const LessonNavigation = ({
             } else {
               goToNext();
             }
-          } else {
-            axios
-              .post("/progress", { courseLevelId, lessonId })
-              .then(() =>
-                queryClient.invalidateQueries({
-                  queryKey: ["courseLevel", courseLevelId],
-                })
-              );
           }
-        }}
-        disabled={isDisabled}
-      >
-        <NextBtn
-          currentSection={currentSection}
-          moves={moves}
-          length={length}
-          isAnswered={isAnswered}
-          currentQuestion={currentQuestion}
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [moves, length, currentSection, currentQuestion, isAnswered, isDisabled]);
+  const queryClient = useQueryClient();
+  return (
+    <div className="flex fixed top-0 right-0 left-0 z-50 justify-center w-full bg-white border-b border-gray-200 shadow-sm">
+      <div className="container flex justify-between items-center px-6 py-2 mx-auto max-w-4xl">
+        <Button
+          onClick={goToPre}
+          disabled={currentSectionIndex === 0}
+          className="flex gap-2 items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg transition-all hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15 18L9 12L15 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Previous
+        </Button>
+
+        <Button
+          onClick={() => {
+            if (moves !== length - 1) {
+              if (currentSection.type === "excercises") {
+                if (currentQuestion.type !== "text") {
+                  goToNext();
+                } else if (!isAnswered) {
+                  CheckAnswerHandler();
+                } else {
+                  goToNext();
+                }
+              } else {
+                goToNext();
+              }
+            } else {
+              // Fork collections and notes before marking lesson as complete
+              if (!lesson?.isCompleted) {
+                const forkPromises = sections.flatMap((section) => {
+                  const promises = [];
+
+                  // Fork collections if they exist
+                  if (section.collections?.length > 0) {
+                    promises.push(
+                      ...section.collections.map((collection) =>
+                        axios.post(`/collection/fork/${collection._id}`)
+                      )
+                    );
+                  }
+
+                  // Fork notes if they exist
+                  if (section.notes?.length > 0) {
+                    promises.push(
+                      ...section.notes.map((note) =>
+                        axios.post(`/note/fork/${note._id}`)
+                      )
+                    );
+                  }
+
+                  return promises;
+                });
+
+                // After forking is complete, mark the lesson as complete
+                Promise.all(forkPromises)
+                  .then(() => {
+                    const body = { lessonId } as {
+                      lessonId: string;
+                      courseLevelId?: string;
+                    };
+                    if (courseLevelId) body.courseLevelId = courseLevelId;
+                    return axios.post("/progress", body);
+                  })
+                  .then(() => {
+                    queryClient.invalidateQueries({
+                      queryKey: ["cards"],
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["collections"],
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["courseLevel", courseLevelId],
+                    });
+                  })
+                  .catch((error) => {
+                    console.error("Error forking content:", error);
+                  });
+              } else {
+                const body = { lessonId } as {
+                  lessonId: string;
+                  courseLevelId?: string;
+                };
+                if (courseLevelId) body.courseLevelId = courseLevelId;
+                axios.post("/progress", body).then(() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["courseLevel", courseLevelId],
+                  });
+                });
+              }
+            }
+          }}
+          disabled={isDisabled}
+          className={`flex gap-2 items-center px-6 relative py-3 rounded-lg transition-all ${
+            moves === length - 1
+              ? "bg-green-500 hover:bg-green-600 text-white"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+        >
+          {/* <ShortcutKey text="Enter" /> */}
+
+          <NextBtn
+            currentSection={currentSection}
+            moves={moves}
+            length={length}
+            isAnswered={isAnswered}
+            currentQuestion={currentQuestion}
+          />
+          <svg
+            className="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9 6L15 12L9 18"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Button>
+      </div>
+      <div className="absolute right-0 left-0 bottom-full w-full bg-gray-100">
+        <div
+          className="h-1 bg-green-500 transition-all duration-300 ease-out"
+          style={{ width: `${Math.round((moves / length) * 100)}%` }}
         />
-      </Button>
+      </div>
     </div>
   );
 };
@@ -168,7 +301,7 @@ const NextBtn = ({
     buttonText = "Finish Lesson";
   }
 
-  return <p>{buttonText}</p>;
+  return <div className="relative">{buttonText}</div>;
 };
 
 export default LessonNavigation;

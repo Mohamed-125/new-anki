@@ -1,19 +1,13 @@
 import React, { useState } from "react";
 import { Play, Volume2, Image as ImageIcon } from "lucide-react";
-
-interface Resource {
-  type: "audio" | "video" | "image";
-  url: string;
-  title?: string;
-  description?: string;
-}
+import { ResourceType } from "@/pages/LessonPage";
 
 interface ResourceSectionProps {
-  resources: Resource[];
+  resources: ResourceType[];
 }
 
 const ResourceSection: React.FC<ResourceSectionProps> = ({ resources }) => {
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(
+  const [selectedResource, setSelectedResource] = useState<ResourceType | null>(
     null
   );
   const [activeTab, setActiveTab] = useState<"video" | "image" | "audio">(
@@ -31,7 +25,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({ resources }) => {
     }
     acc[type].push(resource);
     return acc;
-  }, {} as Record<string, Resource[]>);
+  }, {} as Record<string, ResourceType[]>);
 
   const getYouTubeVideoId = (url: string): string | null => {
     const regExp =
@@ -40,7 +34,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({ resources }) => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  const renderAudioPlayer = (resource: Resource) => (
+  const renderAudioPlayer = (resource: ResourceType) => (
     <div className="p-4 max-w-full bg-white rounded-lg shadow-md transition-shadow hover:shadow-lg">
       <div className="flex gap-3 items-center mb-2">
         <div className="p-2 bg-blue-100 rounded-full">
@@ -58,7 +52,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({ resources }) => {
     </div>
   );
 
-  const renderVideoPlayer = (resource: Resource) => {
+  const renderVideoPlayer = (resource: ResourceType) => {
     if (isYouTubeUrl(resource.url)) {
       const videoId = getYouTubeVideoId(resource.url);
       return (
@@ -109,7 +103,7 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({ resources }) => {
     );
   };
 
-  const renderImageResource = (resource: Resource) => (
+  const renderImageResource = (resource: ResourceType) => (
     <div className="p-4 bg-white rounded-lg shadow-md transition-shadow cursor-pointer hover:shadow-lg group">
       <div className="flex gap-3 items-center mb-2">
         <div className="p-2 bg-green-100 rounded-full">
@@ -209,42 +203,64 @@ const ResourceSection: React.FC<ResourceSectionProps> = ({ resources }) => {
     }
     acc[type].push(resource);
     return acc;
-  }, {} as Record<string, Resource[]>);
+  }, {} as Record<string, ResourceType[]>);
+
+  console.log(groupedFilteredResources, filteredResources, resources);
+
+  // Get available resource types
+  const availableTypes = Object.keys(groupedResources) as Array<
+    "video" | "image" | "audio"
+  >;
+
+  // Set initial active tab to first available type
+  React.useEffect(() => {
+    if (availableTypes.length > 0 && !availableTypes.includes(activeTab)) {
+      setActiveTab(availableTypes[0]);
+    }
+  }, [availableTypes]);
 
   return (
     <div className="">
-      <div className="flex gap-2 p-2 bg-gray-100 rounded-lg">
-        <button
-          onClick={() => setActiveTab("video")}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            activeTab === "video"
-              ? "bg-white shadow-sm font-medium"
-              : "hover:bg-white/50"
-          }`}
-        >
-          Videos
-        </button>
-        <button
-          onClick={() => setActiveTab("image")}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            activeTab === "image"
-              ? "bg-white shadow-sm font-medium"
-              : "hover:bg-white/50"
-          }`}
-        >
-          Images
-        </button>
-        <button
-          onClick={() => setActiveTab("audio")}
-          className={`px-4 py-2 rounded-md transition-colors ${
-            activeTab === "audio"
-              ? "bg-white shadow-sm font-medium"
-              : "hover:bg-white/50"
-          }`}
-        >
-          Audio
-        </button>
-      </div>
+      {availableTypes.length > 1 && (
+        <div className="flex gap-2 p-2 bg-gray-100 rounded-lg">
+          {availableTypes.includes("video") && (
+            <button
+              onClick={() => setActiveTab("video")}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                activeTab === "video"
+                  ? "bg-white shadow-sm font-medium"
+                  : "hover:bg-white/50"
+              }`}
+            >
+              Videos
+            </button>
+          )}
+          {availableTypes.includes("image") && (
+            <button
+              onClick={() => setActiveTab("image")}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                activeTab === "image"
+                  ? "bg-white shadow-sm font-medium"
+                  : "hover:bg-white/50"
+              }`}
+            >
+              Images
+            </button>
+          )}
+          {availableTypes.includes("audio") && (
+            <button
+              onClick={() => setActiveTab("audio")}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                activeTab === "audio"
+                  ? "bg-white shadow-sm font-medium"
+                  : "hover:bg-white/50"
+              }`}
+            >
+              Audio
+            </button>
+          )}
+        </div>
+      )}
       {Object.entries(groupedFilteredResources).map(([type, resources]) => (
         <div key={type} className="space-y-4">
           <h2 className="mt-6 text-xl font-semibold capitalize">{type}s</h2>

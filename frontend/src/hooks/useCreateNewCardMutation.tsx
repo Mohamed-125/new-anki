@@ -48,7 +48,7 @@ const useCreateNewCard = ({ optimistic }: Params = {}) => {
   const { selectedLearningLanguage } = useGetCurrentUser();
 
   const createCardHandler = async (
-    e: React.FormEvent<HTMLFormElement>,
+    e: React.FormEvent<HTMLFormElement> | null,
     additionalData: any = {}
   ) => {
     e?.preventDefault();

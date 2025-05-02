@@ -11,24 +11,28 @@ type GetLessonsResponse = {
 const useGetLessons = ({
   courseLevelId,
   query,
+  lessonType,
   enabled = true,
 }: {
-  courseLevelId: string;
+  courseLevelId?: string;
   query?: string;
+  lessonType?: "lesson" | "revision" | "exam" | "grammar";
   enabled?: boolean;
 }) => {
-  const queryKey = ["courseLevelLessons", courseLevelId];
+  const queryKey = ["lessons"];
+
+  if (courseLevelId) {
+    queryKey.push(courseLevelId);
+  }
+  if (lessonType) {
+    queryKey.push(lessonType);
+  }
 
   const queryClient = useQueryClient();
 
   if (query) queryKey.push(query);
+  if (lessonType) queryKey.push(lessonType);
 
-  console.log(
-    queryClient
-      .getQueryCache()
-      .getAll()
-      .map((query) => query.queryKey)
-  );
   const {
     data,
     isLoading,
@@ -40,8 +44,9 @@ const useGetLessons = ({
   } = useInfiniteQuery({
     queryKey,
     queryFn: async ({ signal, pageParam }) => {
-      console.log("raaan");
-      let url = `lesson?courseLevelId=${courseLevelId}`;
+      let url = `lesson`;
+      if (lessonType) url += `?type=${lessonType}`;
+      if (courseLevelId) url += `?courseLevelId=${courseLevelId}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetLessonsResponse;

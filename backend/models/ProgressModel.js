@@ -11,7 +11,7 @@ const progressSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "CourseLevel",
     index: true,
-    required: true,
+    required: false,
   },
   completedLessons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lesson" }],
 });

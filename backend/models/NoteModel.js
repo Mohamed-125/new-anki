@@ -4,9 +4,10 @@ const Schema = require("mongoose").Schema;
 const NoteSchema = new Schema(
   {
     title: { type: String, required: true, index: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    userId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     content: { type: String, required: true },
     language: { type: String, index: true },
+    sectionId: { type: Schema.Types.ObjectId, ref: "Section", index: true },
   },
   { timestamps: true, lean: true }
 );

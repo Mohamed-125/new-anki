@@ -7,12 +7,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(user);
+    console.log(user?.languages?.length);
     if (!isLoading) {
       if (!user) {
         console.log("protected route worked");
         navigate("/login");
       }
+      // if (!user?.languages || (user?.languages?.length as number) === 0) {
+      //   navigate("/user-profile");
+      // }
     }
   }, [user, isLoading]);
 

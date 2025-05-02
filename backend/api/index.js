@@ -3,6 +3,10 @@ const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
+const https = require("https");
+const fs = require("fs");
+
+// Apply TLS options to mongoose connection
 require("dotenv").config({
   path: path.resolve(__dirname, "../config.env"),
 });
@@ -29,12 +33,15 @@ const CourseModel = require("../models/CourseModel.js");
 const CourseLevel = require("../models/CourseLevelModel.js");
 const Lesson = require("../models/LessonModel.js");
 const Section = require("../models/SectionModel.js");
+const { decode } = require("he");
+const LessonModel = require("../models/LessonModel.js");
+const SectionModel = require("../models/SectionModel.js");
 
 // Mongo DB Connections
 mongoose
   .connect(process.env.MONGO_DB_URL)
   .then((response) => {
-    console.log("MongoDB Connection Succeeded.");
+    console.log("MongoDB Connection Succeeded with SSL/TLS.");
   })
   .catch((error) => {
     console.log("Error in DB connection: " + error);
@@ -108,257 +115,3 @@ app.get("/", (req, res) => res.send("server is running "));
 app.listen(PORT, () => {
   console.log("App running in port: " + PORT);
 });
-const seedDatabase = async () => {
-  try {
-    await CourseModel.deleteMany();
-    await CourseLevel.deleteMany();
-    await Lesson.deleteMany();
-    await Section.deleteMany();
-
-    console.log("Database cleared...");
-
-    // 1. Create Courses
-    const coursesData = [
-      {
-        name: "German Course",
-        lang: "German",
-        flag: "https://upload.wikimedia.org/wikipedia/en/b/ba/Flag_of_Germany.svg",
-      },
-    ];
-
-    const courses = await CourseModel.insertMany(coursesData);
-    console.log(
-      "Courses created:",
-      courses.map((c) => c.name)
-    );
-
-    // 2. Create Levels
-    const levels = [];
-    const levelNames = ["A1", "A2", "B1", "B2"];
-
-    for (const course of courses) {
-      levelNames.forEach((level) => {
-        levels.push({
-          name: level,
-          description: `This is the ${level} level of the ${course.name}.`,
-          courseId: course._id,
-        });
-      });
-    }
-
-    const courseLevels = await CourseLevel.insertMany(levels);
-    console.log(
-      "Levels created:",
-      courseLevels.map((l) => l.name)
-    );
-
-    // 3. Define Lessons by CEFR Levels
-    const lessonTopicsByLevel = {
-      A1: [
-        "Begrüßungen und Verabschiedungen",
-        "Zahlen und Uhrzeit",
-        "Familie und Freunde",
-        "Essen und Getränke",
-        "Tagesablauf",
-        "Hobbys und Freizeit",
-        "Einkaufen und Preise",
-        "Wegbeschreibung",
-        "Wetter und Jahreszeiten",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-        "Berufe und Arbeit",
-      ],
-      A2: [
-        "Vergangenheit und Erlebnisse",
-        "Gesundheit und Arztbesuche",
-        "Mein Zuhause",
-        "Reisen und Urlaub",
-        "Medien und Technologie",
-        "Kleidung und Mode",
-        "Feste und Feiertage",
-        "Verkehrsmittel",
-        "Berufswelt",
-        "Gefühle und Emotionen",
-      ],
-      B1: [
-        "Umwelt und Nachhaltigkeit",
-        "Gesellschaft und Politik",
-        "Arbeit und Karriere",
-        "Gesund leben",
-        "Kunst und Kultur",
-        "Technologische Entwicklungen",
-        "Sport und Bewegung",
-        "Migration und Integration",
-        "Zwischenmenschliche Beziehungen",
-        "Psychologie und Persönlichkeit",
-      ],
-      B2: [
-        "Wissenschaft und Forschung",
-        "Philosophie und Ethik",
-        "Geschichte Deutschlands",
-        "Wirtschaft und Finanzen",
-        "Gesundheitspolitik",
-        "Technologie der Zukunft",
-        "Umweltkrisen und Lösungen",
-        "Literatur und deutsche Autoren",
-        "Politische Systeme",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-        "Berufliche Weiterentwicklung",
-      ],
-    };
-
-    // 4. Generate Lessons
-    const lessonsData = [];
-    for (const level of courseLevels) {
-      const topics = lessonTopicsByLevel[level.name] || [];
-      topics.forEach((topic) => {
-        lessonsData.push({
-          name: topic,
-          type: "lesson",
-          content: faker.lorem.paragraphs(2),
-          courseLevelId: level._id,
-          img: faker.image.urlLoremFlickr({ category: "education" }),
-          audio: faker.internet.url(),
-          video: faker.internet.url(),
-        });
-      });
-    }
-
-    const lessons = await Lesson.insertMany(lessonsData);
-    console.log(
-      "Lessons created:",
-      lessons.map((l) => l.name)
-    );
-
-    // 5. Create Sections
-    const youtubeResources = [
-      "https://www.youtube.com/watch?v=R1v3O_0Fum4",
-      "https://www.youtube.com/watch?v=D9w4VLw2fm0",
-      "https://www.youtube.com/watch?v=ZpFhDkXTSro",
-      "https://www.youtube.com/watch?v=F5X4bHG1Zj8",
-    ];
-
-    const sectionsData = lessons.flatMap((lesson) => [
-      {
-        name: "Reading Text",
-        type: "text",
-        content: `Hier ist ein Beispieltext für das Thema '${
-          lesson.name
-        }'. ${faker.lorem.paragraphs(3)}`,
-        lessonId: lesson._id,
-      },
-      {
-        name: "Grammar Explanation",
-        type: "text",
-        content: `Die Grammatik zu '${
-          lesson.name
-        }' ist folgendes: ${faker.lorem.sentences(3)}`,
-        lessonId: lesson._id,
-      },
-      {
-        name: "Exercises",
-        type: "excercises",
-        content: {
-          questions: [
-            {
-              question: `Was bedeutet '${lesson.name}'?`,
-              choices: ["Option 1", "Option 2", "Option 3", "Option 4"],
-              answer: "2",
-              type: "choose",
-              id: Math.random(),
-            },
-            {
-              question: `Schreiben Sie einen Satz mit '${lesson.name}'.`,
-              answer: "",
-              type: "text",
-              id: Math.random(),
-            },
-          ],
-        },
-        lessonId: lesson._id,
-      },
-      {
-        name: "Resources",
-        type: "resources",
-        content: {
-          resourses: youtubeResources
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 2),
-        },
-        lessonId: lesson._id,
-      },
-    ]);
-
-    const sections = await Section.insertMany(sectionsData);
-    console.log("Sections created:", sections.length);
-
-    console.log("Seeding completed successfully!");
-  } catch (error) {
-    console.error("Error seeding database:", error);
-  }
-};
-
-// seedDatabase();

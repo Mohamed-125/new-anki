@@ -15,6 +15,7 @@ import {
 import { useLocalStorage } from "react-use";
 import { useState } from "react";
 import useGetCourses from "@/hooks/Queries/useGetCourses";
+import { googleLogout } from "@react-oauth/google";
 
 type NavLinkProps = {
   links: LinkType[];
@@ -96,6 +97,7 @@ const ProfileDropdown = ({
 
   const logoutHandler = () => {
     axios.post("auth/logout").then(() => {
+      googleLogout();
       queryClient.setQueryData(["me"], null);
       queryClient.clear();
       navigate("/login");

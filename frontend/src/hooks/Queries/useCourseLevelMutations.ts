@@ -6,6 +6,7 @@ export type courseLevelType = {
   description?: string;
   img?: string;
   _id: string;
+  completionPercentage: string | number;
   courseId: string;
 };
 

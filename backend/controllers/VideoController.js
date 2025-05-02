@@ -204,7 +204,9 @@ module.exports.getUserVideos = async (req, res, next) => {
       videoQuery.title = { $regex: searchQuery, $options: "i" };
     }
 
-    const videosCount = await UserVideosModel.countDocuments(userVideoQuery);
+    console.log("videoQuery", videoQuery);
+
+    const videosCount = await VideoModel.countDocuments(videoQuery);
     const remaining = Math.max(0, videosCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
@@ -257,7 +259,7 @@ module.exports.deleteVideo = async (req, res, next) => {
     }
 
     // Only delete the video if the user is the owner
-    if (video.userId.toString() === req.user._id.toString()) {
+    if (video.userId?.toString() === req.user._id?.toString()) {
       await VideoModel.findByIdAndDelete(req.params.id);
     }
 
@@ -269,6 +271,7 @@ module.exports.deleteVideo = async (req, res, next) => {
 
     res.status(200).send("Video removed successfully");
   } catch (err) {
+    console.log("error deleting the video", err);
     res.status(400).send(err);
   }
 };

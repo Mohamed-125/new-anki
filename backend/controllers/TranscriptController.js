@@ -54,23 +54,18 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
     // Check if transcript already exists in database
 
     // Fetch transcript using youtube-transcript library
-    const transcriptData = await YoutubeTranscript.fetchTranscript(videoId, {
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId, {
       lang,
     });
 
-    if (!transcriptData || transcriptData.length === 0) {
+    if (!transcript || transcript.length === 0) {
       return res.status(404).json({
         success: false,
         message: "No transcript available for this video",
       });
     }
 
-    // Format transcript data to match our schema
-    const formattedTranscript = transcriptData.map((item) => ({
-      text: item.text,
-      start: item.start,
-      duration: item.duration,
-    }));
+    console.log("transcript", transcript);
 
     const translateText = async (text) => {
       const { data: translatedText } = await axios.post(
@@ -118,7 +113,7 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
 
     return res.status(200).send({
       translatedTranscript,
-      transcript: formattedTranscript,
+      transcript,
       title,
       thumbnail,
     });

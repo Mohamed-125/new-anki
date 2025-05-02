@@ -7,7 +7,6 @@ router.post("/", async (req, res, next) => {
   let { text } = req.body;
   const { targetLanguage, examples = false } = req.query;
 
-  console.log(targetLanguage);
   // if (examples) {
   //   const reverso = new Reverso();
   //   try {
@@ -29,9 +28,10 @@ router.post("/", async (req, res, next) => {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodedText}`;
     const response = await axios.get(url);
     const data = response.data[0].map((arr) => arr[0]);
+    console.log("success! translated text : ", data.join(" "));
     res.send(data.join(" "));
   } catch (err) {
-    console.log("translate router error", err);
+    console.log("translate router error", err.message);
     res.send(err.message);
   }
   // }

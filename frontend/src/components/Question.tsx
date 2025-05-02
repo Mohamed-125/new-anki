@@ -2,6 +2,7 @@ import { QuestionType } from "@/pages/LessonPage";
 import { CheckCircle, ChevronLeft, ChevronRight, XCircle } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import Button from "./Button";
+import ShortcutKey from "./ShortcutKey";
 
 interface QuestionProps {
   currentQuestion: QuestionType;
@@ -21,6 +22,27 @@ const Question = ({
   feedbackMessage,
   setIsAnswered,
 }: QuestionProps) => {
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (currentQuestion?.type !== "choose" || feedbackMessage) return;
+
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 4) {
+        if (currentQuestion?.choices) {
+          const answer = document.getElementById(
+            currentQuestion?.choices[num - 1]
+          );
+          answer?.click();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [currentQuestion, feedbackMessage]);
+
   return (
     <div>
       {currentQuestion?.type === "choose" && currentQuestion?.choices && (
@@ -35,6 +57,7 @@ const Question = ({
                 currentQuestion={currentQuestion}
                 setFeedbackMessage={setFeedbackMessage}
                 setIsAnswered={setIsAnswered}
+                parentSetIsAnswerCorrect={setIsAnswerCorrect}
               />
             );
           })}
@@ -47,28 +70,33 @@ const Question = ({
 
       {feedbackMessage && (
         <div
-          className={`flex justify-between items-center px-3 py-3 mt-6  rounded-md ${
-            feedbackMessage.includes("Correct") ? "bg-green-100" : "bg-red-100"
+          className={`flex justify-between items-center p-4 mt-6 rounded-xl border-2 transition-all duration-300 ${
+            isAnswerCorrect
+              ? "text-green-700 bg-green-50 border-green-500"
+              : "text-red-700 bg-red-50 border-red-500"
           }`}
         >
-          <div
-            className={`flex gap-2 items-center ${
-              feedbackMessage.includes("Correct")
-                ? "text-green-500"
-                : "text-red-500"
-            }`}
-          >
-            {feedbackMessage.includes("Correct") ? (
-              <CheckCircle className="w-6 h-6" />
-            ) : (
-              <XCircle className="w-6 h-6" />
-            )}
-            {feedbackMessage}
+          <div className="flex gap-3 items-center">
+            <div
+              className={`p-2 rounded-full ${
+                isAnswerCorrect ? "bg-green-100" : "bg-red-100"
+              }`}
+            >
+              {isAnswerCorrect ? (
+                <CheckCircle className="w-6 h-6" />
+              ) : (
+                <XCircle className="w-6 h-6" />
+              )}
+            </div>
+            <div>
+              <p className="font-medium">{feedbackMessage}</p>
+              {!isAnswerCorrect && currentQuestion.answer && (
+                <p className="mt-1 text-sm text-gray-600">
+                  Correct answer: {currentQuestion.answer}
+                </p>
+              )}
+            </div>
           </div>
-          {/* {currentQuestionIndex <
-                    currentSection.content.questions.length - 1 ? ( */}
-          {/* <Button onClick={goToNextQuestion}>Next</Button> */}
-          {/* ) : null} */}
         </div>
       )}
     </div>
@@ -100,14 +128,19 @@ type ChoiceProps = {
   setFeedbackMessage: React.Dispatch<React.SetStateAction<string | null>>;
   feedbackMessage: string | null;
   setIsAnswered: React.Dispatch<React.SetStateAction<boolean>>;
+  parentSetIsAnswerCorrect: React.Dispatch<
+    React.SetStateAction<boolean | null>
+  >;
 };
 
 const Choice = ({
   choice,
+  index,
   currentQuestion,
   setFeedbackMessage,
   feedbackMessage,
   setIsAnswered,
+  parentSetIsAnswerCorrect,
 }: ChoiceProps) => {
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
 
@@ -117,6 +150,17 @@ const Choice = ({
   // }, [currentQuestion.id]); // Add dependency on question ID
 
   // Handle answer selection
+  const successMessages = [
+    "Great job!",
+    "You're on fire!",
+    "Amazing work!",
+    "Fantastic!",
+    "Keep it up!",
+    "You're crushing it!",
+    "Brilliant!",
+    "Well done!",
+  ];
+
   const handleAnswerSelect = (answer: string) => {
     // Check if this is a new answer (not previously answered)
 
@@ -125,78 +169,43 @@ const Choice = ({
     const correct = answer === a;
 
     setIsAnswerCorrect(correct);
+    parentSetIsAnswerCorrect(correct);
     setIsAnswered(true);
     // Set feedback message
     if (correct) {
-      setFeedbackMessage("Correct! Well done.");
+      const randomMessage =
+        successMessages[Math.floor(Math.random() * successMessages.length)];
+      setFeedbackMessage(randomMessage);
     } else {
-      setFeedbackMessage("Incorrect");
+      setFeedbackMessage(`Incorrect. The correct answer is: ${a}`);
     }
   };
 
   return (
     <div
-      key={currentQuestion.id}
-      className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+      key={currentQuestion.id || Math.random()}
+      id={choice}
+      className={`flex items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 relative ${
         isAnswerCorrect !== null
           ? isAnswerCorrect
-            ? "bg-green-50 border-green-500 shadow-md"
-            : "bg-red-50 border-red-500 shadow-md"
-          : "bg-gray-500"
+            ? "bg-green-50 border-green-500 shadow-lg"
+            : "bg-red-50 border-red-500 shadow-lg"
+          : "bg-white border-gray-200 hover:border-blue-400 hover:shadow-md"
+      } ${
+        feedbackMessage
+          ? "cursor-not-allowed"
+          : "hover:transform hover:scale-[1.02]"
       }`}
       onClick={() => (feedbackMessage ? null : handleAnswerSelect(choice))}
     >
-      {isAnswerCorrect}
-      {choice}
+      <div className="flex gap-4 items-center">
+        <span className="flex justify-center items-center w-6 h-6 text-sm font-medium text-gray-500 bg-gray-100 rounded-full">
+          {index + 1}
+        </span>
+        {choice}
+      </div>
     </div>
   );
 };
 
 export default Question;
-
-type QuestionNavigationProps = {
-  currentQuestionIndex: number;
-  currentSection: { content: { questions: QuestionType[] } };
-  currentSectionIndex: number;
-  sectionsLength: number;
-  goToPreviousSection: () => void;
-  goToNextQuestion: () => void;
-  currentQuestion: QuestionType;
-};
-
-const QuestionNavigation = ({
-  currentSectionIndex,
-  goToPreviousSection,
-  goToNextQuestion,
-  currentQuestion,
-}: QuestionNavigationProps) => {
-  return (
-    <div className={`flex justify-between items-center mt-6`}>
-      <p>question Navigation</p>
-
-      <Button
-        onClick={goToPreviousSection}
-        className="flex gap-2 justify-self-start items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg shadow-sm transition-all duration-200 hover:bg-gray-200"
-        disabled={currentSectionIndex === 0}
-      >
-        <ChevronLeft className="h-5 5" />
-        Previous
-      </Button>
-
-      <>
-        {currentQuestion.type === "text" ? (
-          <Button
-            onClick={() => {
-              goToNextQuestion();
-            }}
-            className={`flex gap-2 items-center px-4 py-2 text-white bg-green-500 rounded-lg shadow-sm duration-200 hover:bg-green-600`}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
-        ) : (
-          <Button onClick={goToNextQuestion}>Next</Button>
-        )}
-      </>
-    </div>
-  );
-};

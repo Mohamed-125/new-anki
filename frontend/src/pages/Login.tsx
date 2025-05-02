@@ -10,6 +10,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import useGetCurrentUser, { UserType } from "@/hooks/useGetCurrentUser";
 import useToasts from "@/hooks/useToasts";
 import { title } from "process";
+import { useEffect } from "react";
+// @ts-ignore
+import googleOneTap from "google-one-tap";
 
 const Login = () => {
   const {
@@ -28,6 +31,58 @@ const Login = () => {
   const { setSelectedLearningLanguage } = useGetCurrentUser();
   const { addToast } = useToasts();
 
+  // const options = {
+  //   client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  //   auto_select: false,
+  //   cancel_on_tap_outside: false,
+  //   context: "signin",
+  // };
+
+  // useEffect(() => {
+  //   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+  //     console.error("Google Client ID is not configured");
+  //     return;
+  //   }
+
+  //   googleOneTap(options, async (response) => {
+  //     console.log(response);
+  //     // try {
+  //     //   if (!import.meta.env.VITE_API_URL) {
+  //     //     throw new Error("API URL is not configured");
+  //     //   }
+
+  //     //   const res = await fetch(
+  //     //     `${import.meta.env.VITE_API_URL}/auth/google-login`,
+  //     //     {
+  //     //       method: "POST",
+  //     //       body: JSON.stringify({
+  //     //         token: response.credential,
+  //     //       }),
+  //     //       headers: {
+  //     //         "Content-Type": "application/json",
+  //     //       },
+  //     //     }
+  //     //   );
+
+  //     //   if (!res.ok) {
+  //     //     throw new Error("Failed to authenticate with Google");
+  //     //   }
+
+  //     //   const data = await res.json();
+  //     //   queryClient.setQueryData(["me"], () => data);
+  //     //   setSelectedLearningLanguage(data?.languages?.[0]);
+  //     //   addToast("Logged in successfully", "success");
+  //     //   navigate("/");
+  //     // } catch (error) {
+  //     //   console.error("Google login error:", error);
+  //     //   addToast(
+  //     //     "Failed to authenticate with Google. Please try again later.",
+  //     //     "error"
+  //     //   );
+  //     // }
+  //   });
+  // }, []);
+
   const onSubmit = (values: AuthFormSchemaType) => {
     console.log(values);
     let data = values;
@@ -45,6 +100,7 @@ const Login = () => {
         toast.setToastData({
           title: "Logged in successfully",
           isCompleted: true,
+          type: "success",
         });
         navigate("/");
       })
@@ -114,7 +170,7 @@ const Login = () => {
             <span className="px-2 text-gray-500 bg-white">Or</span>
           </div>
         </div>
-        <GoogleAuthButton />
+        <GoogleAuthButton onSuccess={onSubmit} />
         <Form.Message center={true} className="mt-4">
           You don't have an account?{" "}
           <Link to={"/register"}>

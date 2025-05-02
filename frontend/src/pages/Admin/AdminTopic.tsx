@@ -5,8 +5,6 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { TopicType } from "@/hooks/useGetTopics";
-import Modal from "@/components/Modal";
-import Form from "@/components/Form";
 import { Text, Youtube, Tv2 } from "lucide-react";
 import VideoCard from "@/components/VideoCard";
 import Button from "@/components/Button";
@@ -17,6 +15,7 @@ import useAddVideoHandler from "@/hooks/useAddVideoHandler";
 import InfiniteScroll from "@/components/InfiniteScroll";
 import ChannelCard from "@/components/ChannelCard";
 import AddVideoModal from "./AddVideoModal";
+import AddChannelModal from "./AddChannelModal";
 
 const useGetTopic = (topicId: string) => {
   return useQuery({
@@ -32,8 +31,7 @@ const useGetTopic = (topicId: string) => {
 
 const AdminTopic = () => {
   const { topicId } = useParams();
-  const [channelUrl, setChannelUrl] = useState("");
-  const [isChannelDialogOpen, setIsChannelDialogOpen] = useState(false);
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("videos");
 
   const { data: topic, isLoading } = useGetTopic(topicId!);
@@ -63,20 +61,6 @@ const AdminTopic = () => {
     hasNextPage: hasChannelsNextPage,
     fetchNextPage: fetchNextTopicChannelsPage,
   } = useGetTopicChannels(topicId as string, activeTab === "channels");
-
-  console.log(topic);
-  const addChannelHandler = async () => {
-    try {
-      await axios.post("/channel", {
-        url: channelUrl,
-        topicId: topic?._id,
-      });
-      setChannelUrl("");
-      setIsChannelDialogOpen(false);
-    } catch (error) {
-      console.error("Error adding channel:", error);
-    }
-  };
 
   // Using the custom hook for video handling
   const { isVideoModalOpen, setIsVideoModalOpen } = useAddVideoHandler({
@@ -144,55 +128,16 @@ const AdminTopic = () => {
 
             <TabsContent value="channels">
               <Button
-                onClick={() => setIsChannelDialogOpen(true)}
+                onClick={() => setIsChannelModalOpen(true)}
                 className="mb-4"
               >
                 Add Channel
               </Button>
-              <div className="mb-4">
-                <Modal
-                  isOpen={isChannelDialogOpen}
-                  setIsOpen={setIsChannelDialogOpen}
-                  className="w-full max-w-lg"
-                >
-                  <Modal.Header
-                    setIsOpen={setIsChannelDialogOpen}
-                    title="Add Channel"
-                  />
-                  <Form className="p-0 space-y-6" onSubmit={addChannelHandler}>
-                    <Form.FieldsContainer className="space-y-4">
-                      <Form.Field>
-                        <Form.Label>Channel URL</Form.Label>
-                        <Form.Input
-                          type="text"
-                          value={channelUrl}
-                          onChange={(e) => setChannelUrl(e.target.value)}
-                          className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
-                          placeholder="Enter Channel URL"
-                          required
-                        />
-                      </Form.Field>
-                    </Form.FieldsContainer>
-                    <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                      <Button
-                        onClick={() => setIsChannelDialogOpen(false)}
-                        size="parent"
-                        type="button"
-                        variant="danger"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        size="parent"
-                        disabled={!channelUrl}
-                      >
-                        Add Channel
-                      </Button>
-                    </Modal.Footer>
-                  </Form>
-                </Modal>
-              </div>
+              <AddChannelModal
+                topicId={topic._id}
+                isChannelModalOpen={isChannelModalOpen}
+                setIsChannelModalOpen={setIsChannelModalOpen}
+              />
               {channels?.length ? (
                 <InfiniteScroll
                   fetchNextPage={fetchNextTopicChannelsPage}
@@ -201,7 +146,11 @@ const AdminTopic = () => {
                   className="grid grid-cols-1 gap-4"
                 >
                   {channels?.map((channel) => (
-                    <ChannelCard key={channel._id} channel={channel} />
+                    <ChannelCard
+                      topicId={topic._id}
+                      key={channel._id}
+                      channel={channel}
+                    />
                   ))}
                 </InfiniteScroll>
               ) : (

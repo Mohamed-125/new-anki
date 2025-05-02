@@ -367,25 +367,25 @@ const UserProfile = () => {
                     <Form.Label className="font-medium">
                       Choose a Language to Learn
                     </Form.Label>
-                    <div className="grid grid-cols-2 gap-6 mt-4">
+                    <div className="">
                       {courses?.map((course) => (
                         <div
                           key={course.lang}
                           onClick={() => selectedLanguage(course.lang)}
-                          className={`flex flex-col justify-center items-center p-6 h-32 text-center rounded-lg border-2 cursor-pointer transition-all ${
+                          className={`flex    items-center px-6 py-3 h-32 text-center rounded-lg border-b-2 cursor-pointer transition-all ${
                             watchLanguage === course.lang
                               ? "border-primary bg-blue-50"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
-                          <div className="flex flex-col items-center">
+                          <div className="flex items-center">
                             <img
                               src={course.flag}
-                              className="object-cover mb-2 w-16 h-10 rounded-md border border-gray-200"
+                              className="object-cover mr-3 mb-2 w-16 h-16 rounded-full border border-gray-200"
                               alt={`${course.lang} flag`}
                             />
                             <span className="text-lg font-medium">
-                              {course.lang}
+                              {course.name}
                             </span>
                           </div>
                         </div>

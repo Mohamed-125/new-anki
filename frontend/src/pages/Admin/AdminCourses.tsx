@@ -20,15 +20,6 @@ export type LessoncourseLevelType = {
   _id: string;
 };
 
-export type LessonType = {
-  name: string;
-  img: string;
-  _id: string;
-  type: "lesson" | "revision" | "exam";
-  description?: string;
-  courseLevel: LessoncourseLevelType[];
-};
-
 export type CoursecourseLevelType = {
   name: string;
   img: string;

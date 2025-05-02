@@ -32,6 +32,11 @@ const CollectionSchema = new mongoose.Schema(
       type: String,
       index: true,
     },
+    sectionId: {
+      type: mongoose.Types.ObjectId,
+      ref: "Section",
+      index: true,
+    },
   },
   { timestamps: true, lean: true }
 );

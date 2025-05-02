@@ -128,6 +128,7 @@ const AdminTopics = ({ course }: { course: CourseType }) => {
                   <ActionsDropdown
                     itemId={topic._id}
                     editHandler={() => {
+                      console.log(topic._id);
                       setEditId(topic._id);
                       setDefaultValues({
                         title: topic.title,

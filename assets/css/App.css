@@ -364,8 +364,15 @@ iframe {
   transition: 120ms opacity ease-in-out;
   box-shadow: inset 1em 1em rgb(255, 255, 255);
   transform-origin: bottom left;
-  -webkit-clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-          clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  -webkit-clip-path: polygon(
+    14% 44%,
+    0 65%,
+    50% 100%,
+    100% 16%,
+    80% 0%,
+    43% 62%
+  );
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
 .checkInput:checked::before {
@@ -449,12 +456,12 @@ iframe {
   border-left: 4px solid #ccc;
   padding-left: 12px;
   font-style: italic;
-  color: #666;
+  /* color: #666; */
   margin: 10px 0;
 }
 .ProseMirror pre {
   background: #282c34;
-  color: #ffffff;
+  /* color: #ffffff; */
   padding: 12px;
   border-radius: 6px;
   overflow-x: auto;
@@ -462,7 +469,7 @@ iframe {
 }
 .ProseMirror code {
   background: #f4f4f4;
-  color: #d63384;
+  /* color: #d63384; */
   padding: 2px 4px;
   border-radius: 4px;
   font-family: "Courier New", monospace;
@@ -474,12 +481,12 @@ iframe {
 }
 .ProseMirror strong {
   font-weight: bold;
-  color: #222;
+  /* color: #222; */
 }
 .ProseMirror em {
   font-style: italic;
-  color: #444;
+  /* color: #444; */
 }
 .ProseMirror u {
   text-decoration: underline;
-}/*# sourceMappingURL=App.css.map */
+} /*# sourceMappingURL=App.css.map */

@@ -180,7 +180,7 @@ const LibrarySection = ({ topic }: { topic: TopicType }) => {
             {activeTab === "lessons" ? (
               <ContentCard topic={topic} item={item} />
             ) : (
-              <div className="max-w-[300px] min-w-[260px] flex-1 h-full flex-shrink-0">
+              <div className="max-w-[300px] min-w-[170px] flex-1 h-full flex-shrink-0">
                 <Link to={`/library/${item._id}`} className="block p-4 h-full">
                   <div className="flex flex-col gap-4 items-center">
                     {item.thumbnail ? (
@@ -199,9 +199,9 @@ const LibrarySection = ({ topic }: { topic: TopicType }) => {
                       </div>
                     )}
                     <div>
-                      <h3 className="text-lg font-medium text-center text-gray-800">
+                      <h5 className="font-medium text-center text-gray-800 text-md">
                         {item.name}
-                      </h3>
+                      </h5>
                     </div>
                   </div>
                 </Link>

@@ -6,7 +6,7 @@ import { size } from "lodash";
 import { boolean, string } from "zod";
 
 type AnchorTypeProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-  link: string; // Anchor buttons will have a link
+  link?: string; // Anchor buttons will have a link
 };
 
 type ButtonTypeProps = React.ButtonHTMLAttributes<HTMLButtonElement>;

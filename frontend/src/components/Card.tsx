@@ -18,10 +18,12 @@ type CardProps = {
   navigateTo?: any;
   collectionId?: string;
   collection?: CollectionType;
+  sectionId?: string;
 };
 
 const Card = ({
   id,
+  sectionId,
   card,
   playlistName,
   video,
@@ -45,7 +47,7 @@ const Card = ({
 
   const { user } = useGetCurrentUser();
 
-  const isSameUser = user?._id === card.userId;
+  const isSameUser = user?._id === card.userId || Boolean(sectionId);
 
   const { updateCardHandler } = useCardActions();
 

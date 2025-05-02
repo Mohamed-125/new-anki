@@ -19,6 +19,8 @@ import Search from "@/components/Search.tsx";
 import useModalsStates from "@/hooks/useModalsStates.tsx";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery.ts";
 import useGetCollectionById from "@/hooks/useGetCollectionById.tsx";
+import InfiniteScroll from "@/components/InfiniteScroll.tsx";
+import useToasts from "@/hooks/useToasts.tsx";
 
 const CollectionPage = React.memo(function CollectionPage({}) {
   const location = useLocation();
@@ -88,6 +90,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
         key={card._id}
         id={card._id}
         card={card}
+        sectionId={location?.state?.sectionId}
         collectionId={collection?._id}
       />
     ));
@@ -98,8 +101,6 @@ const CollectionPage = React.memo(function CollectionPage({}) {
       <Collection collection={collection} key={collection._id} />
     ));
   }, [collection?.subCollections]);
-
-  useInfiniteScroll(fetchNextPage, hasNextPage);
 
   const [query, setQuery] = useState("");
 
@@ -115,10 +116,16 @@ const CollectionPage = React.memo(function CollectionPage({}) {
       return "cards";
     }
   }, [selectedItems]);
-  const isSameUser = user?._id === collection?.userId;
+
   if (isCollectionLoading) {
     return <Loading />;
   }
+
+  const isSameUser =
+    user?._id === collection?.userId ||
+    (collection?.sectionId && user?.isAdmin);
+
+  const { addToast } = useToasts();
 
   return (
     <div className="">
@@ -173,7 +180,10 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                             <Button
                               className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
                               onClick={() => {
-                                setDefaultValues({ collectionId: id });
+                                setDefaultValues({
+                                  collectionId: id,
+                                  sectionId: collection?.sectionId,
+                                });
                                 setIsAddCardModalOpen(true);
                               }}
                             >
@@ -184,6 +194,26 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                           <Button
                             variant="primary"
                             className="flex gap-2 items-center"
+                            onClick={async () => {
+                              const toast = addToast(
+                                "Forking collection...",
+                                "promise"
+                              );
+                              try {
+                                await axios.post(`/collection/fork/${id}`);
+                                invalidateCollectionsQueries();
+                                toast.setToastData({
+                                  title: "Collection forked successfully!",
+                                  type: "success",
+                                });
+                              } catch (err) {
+                                console.error("Error forking collection:", err);
+                                toast.setToastData({
+                                  title: "Failed to fork collection",
+                                  type: "error",
+                                });
+                              }
+                            }}
                           >
                             Add to your collections
                           </Button>
@@ -244,10 +274,15 @@ const CollectionPage = React.memo(function CollectionPage({}) {
 
                 {isIntialLoading && <CardsSkeleton />}
                 {collectionCards?.length ? (
-                  <div className="">
+                  <InfiniteScroll
+                    hasNextPage={hasNextPage}
+                    loadingElement={<CardsSkeleton />}
+                    fetchNextPage={fetchNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    className=""
+                  >
                     {memoizedCards}
-                    {isFetchingNextPage && <CardsSkeleton />}
-                  </div>
+                  </InfiniteScroll>
                 ) : (
                   <div className="flex flex-col justify-center items-center py-16 bg-white rounded-lg border-gray-200 border-dashed mt-6border-2 ed-xl white">
                     <p className="mb-4 text-gray-500">

@@ -10,12 +10,15 @@ router.post("/", Authorization, async (req, res) => {
     const userId = req.user._id;
     const { courseLevelId, lessonId } = req.body;
 
-    let progress = await ProgressModel.findOne({ userId, courseLevelId });
+    const query = { userId };
+    if (courseLevelId) query.courseLevelId = courseLevelId;
+
+    let progress = await ProgressModel.findOne(query);
 
     if (!progress) {
       progress = new ProgressModel({
         userId,
-        courseLevelId,
+        ...(courseLevelId && { courseLevelId }),
         completedLessons: [],
       });
     }

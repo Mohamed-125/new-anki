@@ -7,6 +7,9 @@ module.exports.getNotes = async (req, res) => {
 
   try {
     const query = { userId: req.user?._id };
+    if (req.query.sectionId) {
+      query.sectionId = req.query.sectionId;
+    }
     if (searchQuery) {
       query.title = { $regex: searchQuery, $options: "i" };
     }
@@ -38,12 +41,13 @@ module.exports.createNote = async (req, res) => {
   if (!req.body.title || !req.body.content) {
     return res.status(400).send("Title and content are required");
   }
-  const { title, content, language } = req.body;
+  const { title, content, language, sectionId } = req.body;
   const createdNote = await NoteModel.create({
     userId: req.user?._id,
     title,
     content,
     language,
+    sectionId,
   });
   res.send(createdNote);
 };

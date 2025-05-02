@@ -1,5 +1,5 @@
 const UserModel = require("../models/UserModel");
-
+const jwt = require("jsonwebtoken");
 module.exports.registerUserController = async (req, res, next) => {
   const { password, email } = req.body;
   if (!password || !email) {
@@ -179,4 +179,88 @@ module.exports.logUserOutController = async (req, res, next) => {
   });
 
   return res.status(200).send("user logged out ");
+};
+
+module.exports.requestPasswordResetController = async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).send("Email is required");
+  }
+
+  try {
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    const resetToken = await user.generateResetPasswordToken();
+    // Here you would typically send an email with the reset token
+    // For now, we'll just return it in the response
+    res.status(200).json({
+      message: "Password reset token generated successfully",
+      resetToken,
+    });
+  } catch (err) {
+    console.log("Password reset request error:", err);
+    res.status(500).send("Error processing password reset request");
+  }
+};
+
+module.exports.resetPasswordController = async (req, res, next) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).send("Token and new password are required");
+  }
+
+  try {
+    const user = await UserModel.findOne({
+      resetPasswordToken: token,
+    });
+
+    if (!user || !user.validateResetPasswordToken()) {
+      return res.status(400).send("Invalid or expired reset token");
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password has been reset successfully",
+    });
+  } catch (err) {
+    console.log("Password reset error:", err);
+    res.status(500).send("Error resetting password");
+  }
+};
+
+module.exports.googleLoginController = async (req, res, next) => {
+  const { credential } = req.body;
+
+  try {
+    const decoded = jwt.decode(credential);
+
+    // Check if user exists
+    let user = await UserModel.findOne({ email: decoded.email });
+
+    if (!user) {
+      // Create new user if doesn't exist
+      user = await UserModel.create({
+        email: decoded.email,
+        googleId: decoded.sub,
+        password: Math.random().toString(36).slice(-8), // Generate random password
+        username: decoded.name,
+      });
+    }
+
+    // Generate tokens
+    await user.generateNewToken(res);
+    await user.generateRefreshToken(res);
+
+    res.status(200).send(user);
+  } catch (err) {
+    console.log("Google login error:", err);
+    res.status(400).send(err.message);
+  }
 };

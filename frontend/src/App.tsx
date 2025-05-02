@@ -68,7 +68,6 @@ function App() {
     { name: "word article", path: "/article" },
     { name: "My Texts", path: "/texts" },
     { name: "Library", path: "/library" },
-    { name: "channels", path: "/channels" },
   ];
 
   return (
@@ -273,6 +272,14 @@ function App() {
                 }
               />
 
+              <Route
+                path="/learn/:lessonId"
+                element={
+                  <ProtectedRoute>
+                    <LessonPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/learn/:courseLevelId/:lessonId"
                 element={

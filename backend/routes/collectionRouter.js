@@ -16,7 +16,7 @@ const Authorization = require("../middleware/Authorization");
 
 router
   .post("/", Authorization, createCollection)
-  .post("/forkCollection/:id", Authorization, forkCollection)
+  .post("/fork/:id", Authorization, forkCollection)
   .get("/", Authorization, getCollections)
   .get("/public", Authorization, getPublicCollections)
   .get("/:id", Authorization, getCollection)

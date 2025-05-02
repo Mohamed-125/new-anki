@@ -187,7 +187,7 @@ module.exports.createTopic = async (req, res) => {
 module.exports.updateTopic = async (req, res) => {
   try {
     const updatedTopic = await TopicModel.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user?._id },
+      { _id: req.params.id },
       req.body,
       { new: true }
     );

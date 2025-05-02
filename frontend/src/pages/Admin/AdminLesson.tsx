@@ -40,6 +40,7 @@ const AdminLesson = () => {
 
   const [arrangedSections, setArrangedSections] = useState(sections || []);
 
+  console.log(arrangedSections);
   useEffect(() => {
     if (sections) {
       setArrangedSections(sections);
@@ -77,6 +78,7 @@ const AdminLesson = () => {
     <div>
       {lesson ? (
         <div>
+          trst
           <AddNewSectionModal
             isOpen={isSectionModalOpen}
             setDefaultValues={setDefaultValues}
@@ -113,7 +115,6 @@ const AdminLesson = () => {
               </div>
             </div>
           </div>
-
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">sections</h2>
             <Button
@@ -126,12 +127,12 @@ const AdminLesson = () => {
               Add new section
             </Button>
           </div>
-
           <div className="">
             {arrangedSections?.map((section, index) => {
               return (
                 <AdminSectionComponent
                   index={index}
+                  // key={section._id}
                   setQuestionsBySectionId={setQuestionsBySectionId}
                   section={section}
                   expandedSections={expandedSections}

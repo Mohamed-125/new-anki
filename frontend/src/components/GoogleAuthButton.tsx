@@ -1,24 +1,33 @@
 import { FcGoogle } from "react-icons/fc";
 import Button from "./Button";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
-const GoogleAuthButton = () => {
-  const handleGoogleAuth = async () => {
-    // try {
-    //   window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
-    // } catch (error) {
-    //   console.error("Google auth error:", error);
-    // }
-  };
-
+const GoogleAuthButton = ({ onSuccess }: { onSuccess: any }) => {
   return (
-    <Button
-      onClick={handleGoogleAuth}
-      size="parent"
-      className="flex justify-center items-center py-2 mt-4 w-full text-gray-700 bg-white rounded-md border-2 border-gray-200 transition-colors hover:bg-gray-50"
-    >
-      <FcGoogle className="mr-2 text-xl" />
-      Continue with Google
-    </Button>
+    <div className="google-btn">
+      <GoogleLogin
+        useOneTap={true}
+        size="large"
+        width={"100%"}
+        context={"use"}
+        auto_select={true}
+        onSuccess={async (res) => {
+          try {
+            const response = await axios.post("auth/google-login", {
+              credential: res.credential,
+            });
+            onSuccess(response.data);
+          } catch (err) {
+            console.error("Google login error:", err);
+          }
+        }}
+        onError={() => {
+          console.log("err");
+        }}
+      />
+    </div>
   );
 };
 

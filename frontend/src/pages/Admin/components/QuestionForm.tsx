@@ -64,7 +64,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           </button>
         </div>
       ) : (
-        <div className="absolute -bottom-40 left-1/2 -translate-x-1/2">
+        <div className="absolute left-1/2 -translate-x-1/2">
           <button
             onClick={() => setShowQuestionDropdown(!showQuestionDropdown)}
             type="button"

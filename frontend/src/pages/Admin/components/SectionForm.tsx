@@ -1,19 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Form from "@/components/Form";
 import TipTapEditor from "@/components/TipTapEditor";
 import Button from "@/components/Button";
-import useUseEditor from "@/hooks/useUseEditor";
 import QuestionList from "./QuestionList";
 import QuestionForm from "./QuestionForm";
 import ResourceForm from "./ResourceForm";
+import { Editor } from "@tiptap/react";
+import { sectionType } from "@/hooks/Queries/useSectionMutations";
 
 interface SectionFormProps {
-  section: {
-    _id: string;
-    name: string;
-    description: string;
-    type: string;
-  };
+  section: sectionType;
   sectionType: string;
   setSectionType: (type: string) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -24,9 +20,11 @@ interface SectionFormProps {
   showQuestionDropdown: boolean;
   setShowQuestionDropdown: React.Dispatch<React.SetStateAction<boolean>>;
   addQuestionHandler: (type: "choose" | "text") => void;
-  handlePasteContent: () => void;
+  handlePasteContent: any;
   resources: any;
   setResources: any;
+  editor: Editor | null;
+  setContent: React.Dispatch<React.SetStateAction<string>>;
 }
 
 interface Resource {
@@ -50,9 +48,9 @@ const SectionForm: React.FC<SectionFormProps> = ({
   handlePasteContent,
   resources,
   setResources,
+  editor,
+  setContent,
 }) => {
-  const { editor } = useUseEditor();
-
   const handleAddResource = (resource: Resource) => {
     setResources([...resources, resource]);
   };
@@ -60,6 +58,14 @@ const SectionForm: React.FC<SectionFormProps> = ({
   const handleRemoveResource = (index: number) => {
     setResources(resources.filter((_: any, i: number) => i !== index));
   };
+
+  useEffect(() => {
+    if (section) {
+      setContent(section.content?.text);
+    }
+  }, [section]);
+
+  console.log(section);
 
   return (
     <Form onSubmit={onSubmit} className="pt-3">
@@ -87,7 +93,6 @@ const SectionForm: React.FC<SectionFormProps> = ({
         <Form.Field>
           <Form.Label>Section Description</Form.Label>
           <Form.Input
-            required
             defaultValue={section.description}
             name="section_description"
           />
@@ -128,7 +133,7 @@ const SectionForm: React.FC<SectionFormProps> = ({
           />
         </>
       )}
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2 mt-32">
         <Button type="submit" onClick={() => setEditId(section._id)}>
           Save
         </Button>

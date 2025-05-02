@@ -3,8 +3,9 @@ const axios = require("axios");
 const Channel = require("../models/ChannelModel");
 const Video = require("../models/VideoModel");
 const VideoModel = require("../models/VideoModel");
-
+const mongoose = require("mongoose");
 const router = express.Router();
+const he = require("he");
 
 // Replace with your YouTube API key
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
@@ -34,7 +35,6 @@ router.post("/", async (req, res) => {
   try {
     const { type, value } = extractChannelId(url);
 
-    console.log("value ", value);
     // 🧠 Get detailed info about the channel
 
     let params = {};
@@ -59,29 +59,39 @@ router.post("/", async (req, res) => {
       }
     );
 
+    if (
+      !channelDetailsRes.data.items ||
+      channelDetailsRes.data.items.length === 0
+    ) {
+      return res.status(404).json({
+        error: "Channel not found. Please check the URL and try again.",
+      });
+    }
+
     const details = channelDetailsRes.data.items[0].snippet;
     const channelId = channelDetailsRes.data.items[0].id;
-    // const newChannel = new Channel({
-    //   name: details.title,
-    //   description: details.description,
-    //   thumbnail: details.thumbnails.default.url,
-    //   url,
-    //   channelId,
-    //   topicId,
-    //   topicOrder,
-    // });
 
-    // await newChannel.save();
+    const newChannel = await Channel.create({
+      name: he.decode(details.title).trim(),
+      description: he.decode(details.description).trim(),
+      thumbnail: details.thumbnails.default.url,
+      url,
+      channelId,
+      topicId,
+      topicOrder,
+    });
 
-    // 📹 Get most popular 50 videos from this channel
     const videosRes = await axios.get(
       `https://www.googleapis.com/youtube/v3/search`,
       {
         params: {
           part: "snippet",
           channelId,
-          maxResults: 30,
+          maxResults: 40,
           key: YOUTUBE_API_KEY,
+          type: "video", // REQUIRED to use videoDuration
+          videoDuration: "medium", // options: any | short | medium | long
+          order: "viewCount", // optional: to get most popular
         },
       }
     );
@@ -90,7 +100,7 @@ router.post("/", async (req, res) => {
       .map((video) => {
         return {
           url: `https://www.youtube.com/watch?v=${video?.id?.videoId}`,
-          title: video.snippet.title,
+          title: he.decode(video.snippet.title).trim(),
           thumbnail: video.snippet.thumbnails.medium.url,
           publishedAt: video.snippet.publishedAt,
           videoId: video?.id?.videoId,
@@ -105,14 +115,11 @@ router.post("/", async (req, res) => {
     // Fetch transcripts with improved error handling
     const transcriptPromises = videos.map((video) => {
       return axios
-        .post(
-          "https://new-anki-one.vercel.app/api/v1/transcript/get-transcript",
-
-          {
-            url: video.url,
-            lang: "de",
-          }
-        )
+        .post("http://localhost:5000/api/v1/transcript/get-transcript", {
+          url: video.url,
+          lang: "de",
+          timeout: 900000,
+        })
         .catch((error) => {
           console.error(
             `Failed to fetch transcript for video ${video.url}:`,
@@ -124,90 +131,144 @@ router.post("/", async (req, res) => {
 
     const transcriptsArr = await Promise.allSettled(transcriptPromises);
 
-    // // Process only successful transcript fetches
-    // const successfulTranscripts = transcriptsArr
-    //   .map((result, idx) => {
-    //     if (result.status === "fulfilled" && result.value?.data?.transcript) {
-    //       return {
-    //         transcript: result.value.data.transcript,
-    //         videoIndex: idx,
-    //       };
-    //     }
-    //     return null;
-    //   })
-    //   .filter(Boolean);
+    // Process only successful transcript fetches
+    const successfulTranscripts = transcriptsArr
+      .map((result, idx) => {
+        if (result.status === "fulfilled" && result.value?.data?.transcript) {
+          const sanitizedTranscript = result.value.data.transcript.map(
+            (item) => ({
+              ...item,
+              text: he.decode(item.text).trim(),
+            })
+          );
+          return {
+            transcript: sanitizedTranscript,
+            videoIndex: idx,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
 
-    // // Prepare translation requests only for successful transcripts
-    // const translationPromises = successfulTranscripts.flatMap(
-    //   ({ transcript }) => {
-    //     return transcript.map((t) => {
-    //       return axios
-    //         .post(
-    //           "https://new-anki-server.vercel.app/api/v1/translate?targetLanguage=en",
-    //           { text: t.text }
-    //         )
-    //         .catch((error) => {
-    //           console.error(
-    //             `Translation failed for text: ${t.text}`,
-    //             error.message
-    //           );
-    //           return null;
-    //         });
-    //     });
-    //   }
-    // );
+    const translateText = async (text) => {
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second delay between retries
 
-    // const translationResults = await Promise.allSettled(translationPromises);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const { data: translatedText } = await axios.post(
+            "http://localhost:5000/api/v1/translate",
+            { text },
+            {
+              timeout: 300000, // 30 seconds timeout
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          return translatedText;
+        } catch (error) {
+          if (attempt === maxRetries) throw error;
+          await new Promise((resolve) =>
+            setTimeout(resolve, retryDelay * attempt)
+          );
+        }
+      }
+    };
 
-    // // Process videos with successful transcripts and translations
-    // const videosWithTranscripts = videos
-    //   .map((video, idx) => {
-    //     const transcriptData = successfulTranscripts.find(
-    //       (t) => t.videoIndex === idx
-    //     );
+    const batchTranslate = async (texts, batchSize) => {
+      const batchedResults = [];
+      let processedCount = 0;
+      const delayBetweenBatches = 500; // 500ms delay between batches
 
-    //     if (!transcriptData) return null;
+      for (let i = 0; i < texts.length; i += batchSize) {
+        const batch = texts.slice(i, i + batchSize);
+        try {
+          const batchResults = await Promise.allSettled(
+            batch.map((textItem) => translateText(textItem.text))
+          );
 
-    //     const transcript = transcriptData.transcript;
-    //     const startIndex = transcriptData.videoIndex * transcript.length;
-    //     const endIndex = startIndex + transcript.length;
-    //     const videoTranslations = translationResults
-    //       .slice(startIndex, endIndex)
-    //       .map((result) =>
-    //         result.status === "fulfilled"
-    //           ? result.value?.data?.translatedText
-    //           : null
-    //       )
-    //       .filter(Boolean);
+          const translatedBatch = batchResults.map((result) =>
+            result.status === "fulfilled" ? result.value : null
+          );
 
-    //     return {
-    //       ...video,
-    //       defaultCaptionData: {
-    //         transcript,
-    //         translatedTranscript: videoTranslations,
-    //       },
-    //     };
-    //   })
-    //   .filter(Boolean);
+          batchedResults.push(...translatedBatch);
+          processedCount += batch.length;
 
-    // // Save videos to database with reference to the channel
-    // const videosToSave = videosWithTranscripts.map((video) => {
-    //   return {
-    //     ...video,
-    //     topicId: topicId,
-    //     topicOrder: topicOrder,
-    //     channelId: newChannel._id,
-    //   };
-    // });
+          if (i + batchSize < texts.length) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, delayBetweenBatches)
+            );
+          }
+        } catch (error) {
+          console.error(`Error in batch ${i / batchSize + 1}:`, error);
+          batchedResults.push(...new Array(batch.length).fill(null));
+        }
+      }
+      return batchedResults;
+    };
+
+    // Process translations for each successful transcript
+    const translationResults = await Promise.all(
+      successfulTranscripts.map(async (successfulTranscript) => {
+        const translatedTexts = await batchTranslate(
+          successfulTranscript.transcript,
+          3
+        ); // Batch size 10
+
+        // Combine original transcript data with translated text
+        const translations = successfulTranscript.transcript.map(
+          (item, index) => ({
+            ...item,
+            translatedText: translatedTexts[index], // Will be null if translation failed
+          })
+        );
+
+        return {
+          translations, // Array of {text, start, duration, translatedText}
+          videoIndex: successfulTranscript.videoIndex,
+        };
+      })
+    );
+
+    // Process videos with successful transcripts and translations
+    const videosWithTranscripts = videos
+      .map((video, idx) => {
+        const translationData = translationResults.find(
+          (t) => t.videoIndex === idx
+        );
+        // Ensure translationData and its translations exist
+        if (!translationData || !translationData.translations) return null;
+
+        return {
+          ...video,
+          defaultCaptionData: {
+            // Store the combined transcript and translation data
+            transcript: translationData.translations,
+            translatedTranscript: translationData.translations.map(
+              (t) => t.translatedText
+            ),
+          },
+        };
+      })
+      .filter(Boolean);
+
+    // Save videos to database with reference to the channel
+    const videosToSave = videosWithTranscripts.map((video) => {
+      return {
+        ...video,
+        channelId: newChannel._id,
+        topicOrder: topicOrder,
+      };
+    });
 
     // Insert all videos in a single batch operation
-    // await Video.insertMany(videosToSave);
+    await Video.insertMany(videosToSave);
 
     res.status(201).send({
-      // channel: newChannel,
-      // popularVideos: videosWithTranscripts,
-      transcriptsArr,
-      // translationResults: translationResults,
+      channel: newChannel,
+      popularVideos: videosWithTranscripts,
+      // translationResults,
       // translationPromises,
     });
   } catch (error) {
@@ -238,7 +299,6 @@ router.get("/get-videos", async (req, res) => {
       defaultCaptionData: 0,
     }).sort({ createdAt: -1 });
 
-    console.log("channel videos", allVideos);
     res.send({ videos, videosCount, nextPage });
   } catch (err) {
     res.status(500).json({ error: err.message });

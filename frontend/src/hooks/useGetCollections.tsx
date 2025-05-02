@@ -15,6 +15,7 @@ export type CollectionType = {
   public: boolean;
   childCollectionId: string;
   _id: string;
+  sectionId: string;
 };
 
 type GetCollectionsResponse = {
@@ -28,11 +29,13 @@ const useGetCollections = ({
   query,
   all = false,
   enabled = true,
+  sectionId,
 }: {
   publicCollections?: boolean;
   query?: string;
   enabled?: boolean;
   all?: boolean;
+  sectionId?: string;
 } = {}) => {
   const { selectedLearningLanguage } = useGetCurrentUser();
 
@@ -67,6 +70,7 @@ const useGetCollections = ({
       if (all) url += `&all=${true}`;
       if (selectedLearningLanguage)
         url += `&language=${selectedLearningLanguage}`;
+      if (sectionId) url += `&sectionId=${sectionId}`;
 
       const response = await axios.get(url, { signal });
       return response.data as GetCollectionsResponse;
