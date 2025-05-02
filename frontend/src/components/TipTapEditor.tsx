@@ -459,7 +459,7 @@ export default ({ editor = null }: { editor: Editor | null }) => {
       {editor?.isEditable && <MenuBar editor={editor} />}
       <EditorContent
         editor={editor}
-        className="  min-h-[200px] border-t  focus:ring-2 focus:ring-blue-400"
+        className=" max-h-[600px]  min-h-[200px] border-t overflow-auto  focus:ring-2 focus:ring-blue-400"
       />
     </div>
   );

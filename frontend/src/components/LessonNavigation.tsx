@@ -121,7 +121,7 @@ const LessonNavigation = ({
   }, [moves, length, currentSection, currentQuestion, isAnswered, isDisabled]);
   const queryClient = useQueryClient();
   return (
-    <div className="flex fixed top-0 right-0 left-0 z-50 justify-center w-full bg-white border-b border-gray-200 shadow-sm">
+    <div className="flex fixed right-0 bottom-0 left-0 z-50 justify-center w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="container flex justify-between items-center px-6 py-2 mx-auto max-w-4xl">
         <Button
           onClick={goToPre}

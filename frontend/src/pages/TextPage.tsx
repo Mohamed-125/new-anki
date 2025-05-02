@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { FaEdit } from "react-icons/fa";
 import { FaTrashCan } from "react-icons/fa6";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -17,6 +17,8 @@ import ActionsDropdown from "@/components/ActionsDropdown";
 import ShareModal from "@/components/ShareModal";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import useToasts from "@/hooks/useToasts";
+import TipTapEditor from "@/components/TipTapEditor";
+import useUseEditor from "@/hooks/useUseEditor";
 
 const TextPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -164,7 +166,7 @@ const TextPage = () => {
                   }
                   isSameUser={isSameUser}
                   editHandler={() => {
-                    navigate("/texts/edit/${id}");
+                    navigate(`/texts/edit/${id}`);
                   }}
                   deleteHandler={deleteTextHandler}
                 />
@@ -198,24 +200,16 @@ const Text = React.memo(function ({
   userCards: CardType[] | undefined;
   onCardClick: (card: any) => void;
 }) {
+  const { editor, setContent } = useUseEditor(true);
+
+  useEffect(() => {
+    if (highlightText) setContent(highlightText);
+  }, [highlightText]);
+
   return (
     <div className="text-div">
-      <div
-        className="max-w-none leading-relaxed text-gray-800 select-text prose prose-lg"
-        dangerouslySetInnerHTML={{ __html: highlightText || "" }}
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          if (target?.classList.contains("highlight")) {
-            const cardId = target.getAttribute("data-id");
-            const card = userCards?.find((c: CardType) => c._id === cardId);
-            if (card) onCardClick(card);
-          }
-        }}
-        style={{
-          fontSize: "1.125rem",
-          lineHeight: "1.75",
-        }}
-      ></div>
+      <TipTapEditor editor={editor} />
+
       <style>{`
         .highlight {
           position: relative;

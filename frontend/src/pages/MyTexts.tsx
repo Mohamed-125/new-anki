@@ -13,6 +13,7 @@ import Search from "@/components/Search";
 import { useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 export type TextType = {
   title: string;
@@ -62,9 +63,13 @@ const MyTexts = () => {
     return;
   };
 
-  const { setEditId, setIsTextModalOpen } = useModalsStates();
-
-  useInfiniteScroll(fetchNextPage, hasNextPage);
+  const {
+    setEditId,
+    setIsTextModalOpen,
+    setIsShareModalOpen,
+    setShareItemId,
+    setShareItemName,
+  } = useModalsStates();
 
   const navigate = useNavigate();
   const editHandler = (text: TextType & { _id: string }) => {
@@ -90,22 +95,34 @@ const MyTexts = () => {
         >
           Add new text
         </Button>
-        <div className="grid gap-4 grid-container">
-          {texts?.map((text) => (
-            <ItemCard
-              Icon={<Text />}
-              editHandler={() =>
-                editHandler(text as TextType & { _id: string })
-              }
-              deleteHandler={() => deleteTextHandler(text._id)}
-              name={text.title}
-              key={text._id}
-              id={text._id}
-            />
-          ))}
-
-          {isLoading && <CollectionSkeleton />}
-        </div>
+        <InfiniteScroll
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          loadingElement={<CollectionSkeleton />}
+          className="grid gap-4 grid-container"
+        >
+          {texts?.map((text) => {
+            const shareHandler = () => {
+              setIsShareModalOpen(true);
+              setShareItemId(text._id);
+              setShareItemName(text.title);
+            };
+            return (
+              <ItemCard
+                Icon={<Text />}
+                editHandler={() =>
+                  editHandler(text as TextType & { _id: string })
+                }
+                shareHandler={shareHandler}
+                deleteHandler={() => deleteTextHandler(text._id)}
+                name={text.title}
+                key={text._id}
+                id={text._id}
+              />
+            );
+          })}
+        </InfiniteScroll>
       </>
     </div>
   );

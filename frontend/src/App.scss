@@ -323,15 +323,21 @@ iframe {
   font-size: 14px !important;
   font-family: var(--font);
 }
+.tiptap table {
+  margin: 10px !important;
+}
+
 .tiptap-editor {
   .ProseMirror[contenteditable="false"] {
     padding: 0px;
   }
-  :has([contenteditable="false"]) {
+
+  & > :has([contenteditable="false"]) {
     & {
       box-shadow: none;
       border: none;
       outline: none;
+      max-height: 100%;
       * {
         background-color: transparent;
       }
@@ -512,7 +518,7 @@ iframe {
 
   h2 {
     font-size: 1.75rem;
-    font-weight: 600;
+    font-weight: bold;
     line-height: 37px;
     margin-top: 14px !important;
     margin-bottom: 7px !important;
@@ -520,14 +526,14 @@ iframe {
 
   h3 {
     font-size: 1.5rem;
-    font-weight: 500;
+    font-weight: bold;
     margin-top: 12px !important;
     margin-bottom: 6px !important;
   }
 
   h4 {
     font-size: 1.25rem;
-    font-weight: 500;
+    font-weight: bold;
     margin-top: 10px !important;
     margin-bottom: 5px !important;
   }

@@ -49,6 +49,9 @@ const useGetCollections = ({
   } else if (all) {
     queryKey.push("all");
   }
+  if (sectionId) {
+    queryKey.push("section", sectionId);
+  }
 
   queryKey.push(selectedLearningLanguage);
 
@@ -79,6 +82,7 @@ const useGetCollections = ({
     getNextPageParam: (lastPage) => lastPage?.nextPage,
     enabled,
   });
+
   const collections = useMemo(() => {
     return data?.pages.flatMap((page) => page.collections);
   }, [data]);
@@ -91,7 +95,7 @@ const useGetCollections = ({
     hasNextPage,
     isFetchingNextPage,
     refetch,
-    collectionsCount: data?.pages[0].collectionsCount,
+    collectionsCount: data?.pages[0]?.collectionsCount,
   };
 };
 

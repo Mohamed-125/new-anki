@@ -55,10 +55,10 @@ const MoveCollectionModal = ({
   } = useModalStates();
 
   const toMoveCollectionId = toMoveCollection?._id || "";
+
   const { collections, isLoading, fetchNextPage, hasNextPage } =
-    useGetSectionCollections({
+    useGetCollections({
       sectionId: sectionId as string,
-      enabled: isMoveToCollectionOpen && Boolean(sectionId),
     });
 
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
@@ -71,7 +71,11 @@ const MoveCollectionModal = ({
     enabled: Boolean(lastSelectedCollectionId), // disable this query from automatically running
     queryFn: () =>
       axios
-        .get("collection/" + lastSelectedCollectionId)
+        .get(
+          lastSelectedCollectionId
+            ? "collection/" + lastSelectedCollectionId
+            : "collection"
+        )
         .then((res) => res.data as CollectionType),
   });
 
