@@ -84,6 +84,8 @@ module.exports.forkText = async (req, res) => {
       return res.status(404).send("Text not found");
     }
     if (originalText?.topicId) delete originalText?.topicId;
+    delete originalText?._id;
+    delete originalText?.userId;
 
     const forkedText = await TextModel.create({
       userId: req.user?._id,
@@ -92,6 +94,7 @@ module.exports.forkText = async (req, res) => {
 
     res.status(200).send(forkedText);
   } catch (err) {
+    console.log("fork text error ", err);
     res.status(400).send(err);
   }
 };
