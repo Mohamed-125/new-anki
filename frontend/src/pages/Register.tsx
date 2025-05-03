@@ -27,6 +27,7 @@ const Register = () => {
   });
 
   const onSubmit = (values: AuthFormSchemaType) => {
+    console.log("submit");
     const toast = addToast("Creating your account", "promise");
 
     axios
@@ -39,6 +40,7 @@ const Register = () => {
         toast.setToastData({
           title: "Account created successfully",
           isCompleted: true,
+          type: "success",
         });
       })
       .catch((err) => {
@@ -101,7 +103,7 @@ const Register = () => {
             <span className="px-2 text-gray-500 bg-white">Or</span>
           </div>
         </div>
-        <GoogleAuthButton />
+        <GoogleAuthButton onSuccess={onSubmit} />
         <Form.Message center={true} className="mt-4">
           You already have an account?{" "}
           <Link to={"/login"}>

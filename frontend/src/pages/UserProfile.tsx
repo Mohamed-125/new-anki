@@ -190,7 +190,11 @@ const UserProfile = () => {
 
       setSelectedLearningLanguage(data.language);
       addToast("Profile updated successfully", "success");
-      navigate("/");
+
+      // After successful login in your Login component
+      const redirectPath = sessionStorage.getItem("redirectPath") || "/";
+      sessionStorage.removeItem("redirectPath"); // Clean up
+      navigate(redirectPath);
     } catch (error) {
       addToast("Failed to update profile", "error");
     }

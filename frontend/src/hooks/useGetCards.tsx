@@ -37,19 +37,24 @@ const useGetCards = ({
   study?: boolean;
 } = {}) => {
   const { selectedLearningLanguage } = useGetCurrentUser();
-  let queryKey = query
-    ? ["cards", query]
-    : collectionId
-    ? study
-      ? ["cards", "study", collectionId]
-      : ["cards", collectionId]
-    : videoId
-    ? ["cards", videoId]
-    : study
-    ? ["cards", "study"]
-    : ["cards"];
+  let queryKey: any[] = ["cards"];
 
-  queryKey.push(selectedLearningLanguage);
+  if (study) {
+    queryKey.push("study");
+  }
+
+  if (query) {
+    queryKey.push(query);
+  } else if (collectionId) {
+    queryKey.push(collectionId);
+  } else if (videoId) {
+    queryKey.push(videoId);
+  }
+
+  if (selectedLearningLanguage) {
+    queryKey.push(selectedLearningLanguage);
+  }
+
   const {
     data,
     error,
@@ -59,6 +64,7 @@ const useGetCards = ({
     isLoading: isIntialLoading,
     isFetchingNextPage,
     status,
+    isLoading,
     refetch,
   } = useInfiniteQuery({
     queryKey,
@@ -97,6 +103,7 @@ const useGetCards = ({
     refetch,
     hasNextPage,
     isFetchingNextPage,
+    isLoading,
   };
 };
 

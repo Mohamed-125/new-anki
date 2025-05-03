@@ -1,23 +1,25 @@
 import React, { useContext, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useGetCurrentUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    console.log(user?.languages?.length);
     if (!isLoading) {
       if (!user) {
-        console.log("protected route worked");
+        // Store the current location before redirecting
+        sessionStorage.setItem("redirectPath", location.pathname);
         navigate("/login");
       }
-      // if (!user?.languages || (user?.languages?.length as number) === 0) {
+      // else if (!user?.languages || user?.languages?.length === 0) {
+      //   // Only redirect to user-profile if they haven't set their language
       //   navigate("/user-profile");
       // }
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, location]);
 
   return <>{user && children}</>;
 };

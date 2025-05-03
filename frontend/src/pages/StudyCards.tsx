@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/Select";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import useUseEditor from "@/hooks/useUseEditor";
+import { promises } from "dns";
+import { useRef } from "react";
 
 const StudyCards = () => {
   const collectionId = useParams()?.collectionId;
@@ -30,6 +32,9 @@ const StudyCards = () => {
 
   const [currentCard, setCurrentCard] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [promises, setPromises] = useState([]);
+
+  const queryClient = useQueryClient();
 
   // Define the query for when `collectionId` exists
   const { data: collection, isLoading: collectionLoading } = useQuery({
@@ -40,6 +45,7 @@ const StudyCards = () => {
         .then((res) => res.data as CollectionType),
     enabled: !!collectionId, // Query only runs if `collectionId` is not null or undefined
   });
+  const promiseRef = useRef<(() => Promise<any>)[]>([]);
 
   // Define the query for when `collectionId` does not exist
   const {
@@ -48,12 +54,37 @@ const StudyCards = () => {
     fetchNextPage,
     isFetchingNextPage,
     isIntialLoading,
+    isLoading: cardsLoading,
   } = useGetCards({ collectionId, study: true });
+
+  useEffect(() => {
+    queryClient.removeQueries({ queryKey: ["cards", "study"] });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      const fns = promiseRef.current;
+      Promise.all(fns.map((fn) => fn()))
+        .then((res) => console.log("Patch results:", res))
+        .catch((err) => console.error("Patch errors:", err));
+    };
+  }, []);
+
+  useEffect(() => {
+    if (cards) {
+      console.log("cards", cards);
+    }
+  }, [cards]);
+
+  useEffect(() => {
+    console.log("promises", promises);
+  }, [promises]);
 
   const { user } = useGetCurrentUser();
   const isSameUser = cards?.[0]?.userId === user?._id;
   // Determine loading state
-  const isLoading = isIntialLoading;
+  const isLoading =
+    isIntialLoading || isFetchingNextPage || collectionLoading || cardsLoading;
 
   const submitAnswer = async (answer = "") => {
     if (!cards?.length) return;
@@ -70,9 +101,14 @@ const StudyCards = () => {
 
     easeFactor = easeFactor > 1 ? 1 : easeFactor < 0 ? 0 : easeFactor;
 
-    const res = await axios.patch(`card/${cards[currentCard]._id}`, {
-      easeFactor,
-    });
+    const addPromise = (newPromiseFn: () => Promise<any>) => {
+      promiseRef.current.push(newPromiseFn);
+    };
+
+    addPromise(() =>
+      axios.patch(`card/${cards[currentCard]._id}`, { easeFactor })
+    );
+
     setShowAnswer(false);
     setCurrentCard((pre) => {
       if (pre === cardsCount - 1) {
@@ -99,7 +135,6 @@ const StudyCards = () => {
 
   const { languages, voices } = useVoices();
 
-  console.log(voices);
   useEffect(() => {
     if (voices.length > 0) {
       setVoice(voices[0]); // Set the first available voice as default
@@ -133,11 +168,10 @@ const StudyCards = () => {
     if (cards) setContent(cards[currentCard]?.content || "");
   }, [currentCard]);
 
-  console.log(cards);
-  if (!cards || !cards.length) return <p>there is no cards to study</p>;
   if (isLoading) {
     return <Loading />;
   }
+  if (!cards || !cards.length) return <p>there is no cards to study</p>;
 
   return (
     <div className="container flex flex-col min-h-[calc(100vh-170px)] mt-3 study-cards__div">
@@ -186,8 +220,8 @@ const StudyCards = () => {
           <div>
             <p className="text-xl font-semibold text-center">
               {studyCardsView === "normal"
-                ? cards[currentCard].front
-                : cards[currentCard].back}
+                ? cards[currentCard]?.front
+                : cards[currentCard]?.back}
             </p>
             <hr className="mt-8" />
             <div className="flex flex-col gap-2 justify-center items-center">

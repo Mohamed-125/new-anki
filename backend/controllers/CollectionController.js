@@ -79,6 +79,8 @@ module.exports.forkCollection = async (req, res) => {
       const cardPromises = originalCards.map((card) => {
         const newCard = new CardModel({
           ...card,
+          easeFactor: 0,
+          easeFactorDate: Date.now(),
           sectionId: null,
           _id: new mongoose.Types.ObjectId(),
           userId: userId,

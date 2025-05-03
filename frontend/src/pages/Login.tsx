@@ -102,7 +102,10 @@ const Login = () => {
           isCompleted: true,
           type: "success",
         });
-        navigate("/");
+        // After successful login in your Login component
+        const redirectPath = sessionStorage.getItem("redirectPath") || "/";
+        sessionStorage.removeItem("redirectPath"); // Clean up
+        navigate(redirectPath);
       })
       .catch((err) => {
         toast.setToastData({
