@@ -332,15 +332,14 @@ iframe {
     padding: 0px;
   }
 
-  & > :has([contenteditable="false"]) {
-    & {
-      box-shadow: none;
-      border: none;
-      outline: none;
-      max-height: 100%;
-      * {
-        background-color: transparent;
-      }
+  div:has(.ProseMirror[contenteditable="false"]) {
+    padding: 0px;
+    box-shadow: none;
+    border: none;
+    outline: none;
+    max-height: none;
+    * {
+      background-color: transparent;
     }
     .editor-menu {
       display: none;

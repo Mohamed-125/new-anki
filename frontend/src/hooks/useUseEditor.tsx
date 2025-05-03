@@ -13,7 +13,6 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import Text from "@tiptap/extension-text";
-import { EditorContent } from "@tiptap/react";
 
 const useUseEditor = (readonly: boolean = false) => {
   const [content, setContent] = useState("");

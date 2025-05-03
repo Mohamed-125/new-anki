@@ -14,6 +14,7 @@ import { useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";
 import InfiniteScroll from "@/components/InfiniteScroll";
+import ShareModal from "@/components/ShareModal";
 
 export type TextType = {
   title: string;
@@ -81,25 +82,24 @@ const MyTexts = () => {
   return (
     <div className="container">
       <h1 className="my-6 text-5xl font-bold text-black">Texts</h1>
-
       {/* <AddNewTextModal /> */}
-      <>
-        <SelectedItemsController isItemsTexts={true} />
-        <Search query={query} setQuery={setQuery} searchingFor="texts" />
-        <h6 className="mt-4 text-lg font-bold text-gray-400">
-          Number of texts : {textsCount}
-        </h6>{" "}
-        <Button
-          onClick={() => navigate("/texts/new")}
-          className="py-4 my-6 mr-0 ml-auto text-white bg-blue-600 border-none"
-        >
-          Add new text
-        </Button>
+      <ShareModal sharing="texts" />
+      <SelectedItemsController isItemsTexts={true} />
+      <Search query={query} setQuery={setQuery} searchingFor="texts" />
+      <h6 className="mt-4 text-lg font-bold text-gray-400">
+        Number of texts : {textsCount}
+      </h6>{" "}
+      <Button
+        onClick={() => navigate("/texts/new")}
+        className="py-4 my-6 mr-0 ml-auto text-white bg-blue-600 border-none"
+      >
+        Add new text
+      </Button>
+      <div>
         <InfiniteScroll
           fetchNextPage={fetchNextPage}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
-          loadingElement={<CollectionSkeleton />}
           className="grid gap-4 grid-container"
         >
           {texts?.map((text) => {
@@ -122,8 +122,9 @@ const MyTexts = () => {
               />
             );
           })}
+          {isLoading && <CollectionSkeleton />}
         </InfiniteScroll>
-      </>
+      </div>
     </div>
   );
 };

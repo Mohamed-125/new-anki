@@ -53,11 +53,14 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
     };
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+  console.log(hasNextPage && isFetchingNextPage, isFetchingNextPage);
   return (
     <div className={className}>
       {children}
       <div ref={observerTarget} style={{}}>
-        {hasNextPage && loadingElement}
+        {(hasNextPage && isFetchingNextPage) || isFetchingNextPage
+          ? loadingElement
+          : null}
       </div>
     </div>
   );
