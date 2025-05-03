@@ -7,6 +7,7 @@ import { sectionType } from "@/hooks/Queries/useSectionMutations";
 import { LessonType } from "@/hooks/Queries/useLessonMutations";
 import { promises } from "dns";
 import ShortcutKey from "./ShortcutKey";
+import { useNavigate } from "react-router-dom";
 
 interface LessonNavigationProps {
   setCurrentSectionIndex: React.Dispatch<React.SetStateAction<number>>;
@@ -120,6 +121,8 @@ const LessonNavigation = ({
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [moves, length, currentSection, currentQuestion, isAnswered, isDisabled]);
   const queryClient = useQueryClient();
+
+  const navigate = useNavigate();
   return (
     <div className="flex fixed right-0 bottom-0 left-0 z-50 justify-center w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="container flex justify-between items-center px-6 py-2 mx-auto max-w-4xl">
@@ -206,7 +209,9 @@ const LessonNavigation = ({
                     queryClient.invalidateQueries({
                       queryKey: ["courseLevel", courseLevelId],
                     });
+                    navigate("/learn");
                   })
+
                   .catch((error) => {
                     console.error("Error forking content:", error);
                   });
