@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@radix-ui/react-dialog";
@@ -14,6 +14,7 @@ import {
   Star,
   Info,
 } from "lucide-react";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import Button from "./Button";
 import { motion } from "framer-motion";
 
@@ -76,6 +77,7 @@ interface Achievement {
   isCompleted: boolean;
 }
 
+// Update the UserStats interface to include the streak-related fields
 interface UserStats {
   streak: number;
   totalWords: number;
@@ -196,20 +198,24 @@ const dummyProfile: UserProfile = {
   },
 };
 
-// Mock API function
+// API function to fetch user profile data
 const fetchUserProfile = async (userId: string): Promise<UserProfile> => {
+  // If we have a real API endpoint, we would use it here
+  // For now, we'll use the dummy data but enhance it with real user data from getCurrentUser
   return new Promise((resolve) => {
     setTimeout(() => resolve(dummyProfile), 500);
   });
 };
 
 const SetProfile = () => {
-  const userId = "1";
+  const { user } = useGetCurrentUser();
+  const userId = user?._id || "1";
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("de");
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [previewAchievement, setPreviewAchievement] =
     useState<Achievement | null>(null);
+  const [userLoginDates, setUserLoginDates] = useState<Date[]>([]);
 
   // Helper function to generate calendar days
   const getDaysInMonth = (date: Date) => {
@@ -234,6 +240,18 @@ const SetProfile = () => {
 
   // Get calendar days for the selected month
   const calendarDays = getDaysInMonth(selectedMonth);
+
+  // Parse the lastLoginDate from user data
+  useEffect(() => {
+    if (user?.lastLoginDate) {
+      console.log(user);
+      // For demonstration, let's create some login dates around the last login date
+      const lastLogin = new Date(user.lastLoginDate);
+      const loginDates = [lastLogin];
+
+      setUserLoginDates(loginDates);
+    }
+  }, [user]);
 
   const {
     data: profile,
@@ -389,28 +407,30 @@ const SetProfile = () => {
                 </div>
               </div>
             </div>
+
             <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
               <div className="flex gap-3 items-center">
                 <div className="p-2 text-green-500 bg-green-100 rounded-lg">
+                  <Calendar size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Active Days</p>
+                  <p className="text-xl font-bold">
+                    {user?.activeDays || profile.stats.activeDays} days
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex gap-3 items-center">
+                <div className="p-2 text-purple-500 bg-purple-100 rounded-lg">
                   <BookOpen size={20} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Total Words</p>
                   <p className="text-xl font-bold">
                     {profile.stats.totalWords}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex gap-3 items-center">
-                <div className="p-2 text-purple-500 bg-purple-100 rounded-lg">
-                  <Calendar size={20} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Active Days</p>
-                  <p className="text-xl font-bold">
-                    {profile.stats.activeDays}
                   </p>
                 </div>
               </div>
@@ -437,36 +457,46 @@ const SetProfile = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Learning Streak</h2>
-                  <p className="text-gray-600">{profile.stats.streak} days</p>
+                  <p className="text-gray-600">
+                    {user?.streak || profile.stats.streak} days
+                  </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    const newDate = new Date(selectedMonth);
-                    newDate.setMonth(newDate.getMonth() - 1);
-                    setSelectedMonth(newDate);
-                  }}
-                  className="p-2 rounded-lg hover:bg-gray-100"
+                  onClick={() => setSelectedMonth(new Date())}
+                  className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                 >
-                  ←
+                  Today
                 </button>
-                <div className="flex items-center px-3 font-medium">
-                  {selectedMonth.toLocaleString("default", {
-                    month: "long",
-                    year: "numeric",
-                  })}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const newDate = new Date(selectedMonth);
+                      newDate.setMonth(newDate.getMonth() - 1);
+                      setSelectedMonth(newDate);
+                    }}
+                    className="p-2 rounded-lg hover:bg-gray-100"
+                  >
+                    ←
+                  </button>
+                  <div className="flex items-center px-3 font-medium min-w-[140px] justify-center">
+                    {selectedMonth.toLocaleString("default", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newDate = new Date(selectedMonth);
+                      newDate.setMonth(newDate.getMonth() + 1);
+                      setSelectedMonth(newDate);
+                    }}
+                    className="p-2 rounded-lg hover:bg-gray-100"
+                  >
+                    →
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    const newDate = new Date(selectedMonth);
-                    newDate.setMonth(newDate.getMonth() + 1);
-                    setSelectedMonth(newDate);
-                  }}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                >
-                  →
-                </button>
               </div>
             </div>
 
@@ -487,24 +517,23 @@ const SetProfile = () => {
 
                 const isToday =
                   new Date().toDateString() === day.toDateString();
-                const hasActivity = profile.stats.weeklyProgress.some(
-                  (progress) =>
-                    new Date(progress.date).toDateString() ===
-                    day.toDateString()
+                // Check if this day is in the user's login dates
+                const hasActivity = userLoginDates.some(
+                  (loginDate) => loginDate.toDateString() === day.toDateString()
                 );
 
                 return (
                   <div
                     key={day.toISOString()}
                     className={`aspect-square p-1 ${
-                      isToday ? "border-2 border-blue-500" : ""
+                      isToday ? "rounded-full border-2 border-blue-200" : ""
                     }`}
                   >
                     <div
                       className={`flex justify-center items-center w-full h-full rounded-full text-sm
                     ${
                       hasActivity
-                        ? "text-white bg-orange-500"
+                        ? "text-white bg-primary"
                         : "hover:bg-gray-100"
                     }`}
                     >

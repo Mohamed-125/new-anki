@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FaEdit } from "react-icons/fa";
 import { FaTrashCan } from "react-icons/fa6";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -8,6 +8,7 @@ import Button from "../components/Button";
 import Loading from "../components/Loading";
 import TranslationWindow from "../components/TranslationWindow";
 import AddCardModal from "../components/AddCardModal";
+import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
 
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import useSelection from "@/hooks/useSelection";
@@ -19,9 +20,13 @@ import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import useToasts from "@/hooks/useToasts";
 import TipTapEditor from "@/components/TipTapEditor";
 import useUseEditor from "@/hooks/useUseEditor";
+import WordInfoSidebar from "@/components/WordInfoSidebar";
+import { languageCodeMap } from "@/languages";
 
 const TextPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [selectedWord, setSelectedWord] = useState<string>("");
+  const [isWordInfoOpen, setIsWordInfoOpen] = useState<boolean>(false);
   const id = useParams()?.id;
   const { data: text, isLoading } = useQuery({
     queryKey: ["text", id],
@@ -191,6 +196,18 @@ const TextPage = () => {
   );
 };
 
+// Function to open Reverso Context in a popup window
+const openReversoPopup = (
+  word: string,
+  sourceLang: string,
+  targetLang: string
+) => {
+  const url = `https://context.reverso.net/translation/${sourceLang}-${targetLang}/${encodeURIComponent(
+    word
+  )}`;
+  window.open(url, "_blank", "width=800,height=600");
+};
+
 const Text = React.memo(function ({
   highlightText,
   userCards,
@@ -201,15 +218,71 @@ const Text = React.memo(function ({
   onCardClick: (card: any) => void;
 }) {
   const { editor, setContent } = useUseEditor(true);
+  const [selectedWord, setSelectedWord] = useState<string>("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const { setDefaultValues, setIsAddCardModalOpen } = useModalsStates();
+  const { selectedLearningLanguage } = useGetCurrentUser();
 
   useEffect(() => {
     if (highlightText) setContent(highlightText);
   }, [highlightText]);
 
+  // Function to handle word click
+  const handleWordClick = (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+
+    // Skip if clicking on an existing highlight (card)
+    if (target.classList.contains("highlight")) {
+      return;
+    }
+
+    // Get the clicked word
+    const word = target.textContent?.trim();
+    if (word && word.length > 1) {
+      // Only process words with at least 2 characters
+      setSelectedWord(word);
+      setIsSidebarOpen(true);
+
+      // If user holds Ctrl/Cmd key while clicking, open Reverso Context
+      if (event.ctrlKey || event.metaKey) {
+        const sourceLang =
+          languageCodeMap[selectedLearningLanguage.toLowerCase()] || "english";
+        const targetLang = "english"; // Default to English as target language
+        openReversoPopup(word, sourceLang, targetLang);
+      }
+    }
+  };
+
+  // Function to handle adding a word to flashcards
+  const handleAddWordToCards = (data: {
+    front: string;
+    back: string;
+    content?: string;
+  }) => {
+    setDefaultValues({
+      front: data.front,
+      back: data.back,
+      content: data.content,
+    });
+    setIsAddCardModalOpen(true);
+  };
+
   return (
     <div className="text-div">
-      <TipTapEditor editor={editor} />
+      <TipTapEditor editor={editor} onClick={handleWordClick} />
 
+      {/* Word Info Sidebar */}
+      <WordInfoSidebar
+        word={selectedWord}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onAddCard={handleAddWordToCards}
+      />
+
+      <div className="mt-4 text-xs italic text-gray-500">
+        Tip: Hold Ctrl/Cmd while clicking a word to open Reverso Context
+        directly.
+      </div>
       <style>{`
         .highlight {
           position: relative;
@@ -221,6 +294,22 @@ const Text = React.memo(function ({
         }
         .highlight:hover {
           background-color: rgba(255, 255, 0, 0.4);
+        }
+        
+        /* Style for clickable words */
+        .ProseMirror p {
+          cursor: default;
+        }
+        
+        .ProseMirror span[data-word] {
+          cursor: pointer;
+          display: inline-block;
+          position: relative;
+        }
+        
+        .ProseMirror span[data-word]:hover {
+          background-color: rgba(59, 130, 246, 0.1);
+          border-radius: 2px;
         }
       `}</style>
     </div>

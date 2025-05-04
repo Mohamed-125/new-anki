@@ -1,0 +1,25 @@
+// Language code mapping for Reverso Context
+export const languageCodeMap: Record<string, string> = {
+  en: "english",
+  es: "spanish",
+  fr: "french",
+  de: "german",
+  it: "italian",
+  pt: "portuguese",
+  nl: "dutch",
+  pl: "polish",
+  ru: "russian",
+  ja: "japanese",
+  zh: "chinese",
+  ar: "arabic",
+  he: "hebrew",
+  tr: "turkish",
+  sv: "swedish",
+  ro: "romanian",
+  cs: "czech",
+  el: "greek",
+  fi: "finnish",
+  hu: "hungarian",
+  uk: "ukrainian",
+  // Add more languages as needed
+};

@@ -13,7 +13,7 @@ const GrammarLessons = () => {
 
   if (isLoading) {
     return (
-      <div className="container px-4 py-8 mx-auto">
+      <div className="container">
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
           <Skeleton className="mb-4 w-48 h-8" />
           <Skeleton className="w-full h-24" />
@@ -28,14 +28,14 @@ const GrammarLessons = () => {
   }
 
   return (
-    <div className="px-4 py-8 mx-auto">
+    <div className="">
       {/* Grammar Header */}
-      <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
+      <div className="p-6 mb-8 bg-white rounded-lg shadow-md sm:py-3">
         <div className="flex gap-4 items-center mb-4">
           <Book className="w-8 h-8 text-blue-600" />
           <div>
-            <h1 className="text-3xl font-bold">Grammar Lessons</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold sm:text-xl">Grammar Lessons</h1>
+            <p className="text-gray-600 sm:text-md">
               Master the fundamentals of grammar through structured lessons
             </p>
           </div>
@@ -49,7 +49,7 @@ const GrammarLessons = () => {
             <div
               key={lesson._id}
               onClick={() => navigate(`/learn/${lesson._id}`)}
-              className={`p-6 cursor-pointer bg-white rounded-lg shadow-md transition-all hover:shadow-lg hover:scale-[1.02] ${
+              className={`p-6 sm:py-3 cursor-pointer bg-white rounded-lg shadow-md transition-all hover:shadow-lg hover:scale-[1.02] ${
                 lesson?.isCompleted && "!bg-green-400"
               }`}
             >

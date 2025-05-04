@@ -10,6 +10,9 @@ export type UserType = {
   username: string;
   isPremium: boolean;
   isAdmin: boolean;
+  streak: number;
+  activeDays: number;
+  lastLoginDate: string;
 };
 
 const useGetCurrentUser = () => {

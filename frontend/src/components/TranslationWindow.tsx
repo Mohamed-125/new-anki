@@ -10,12 +10,14 @@ import axios from "axios";
 import Loading from "./Loading";
 import Form from "./Form";
 import { px } from "framer-motion";
-import { BookType } from "lucide-react";
+import { BookType, ExternalLink } from "lucide-react";
 import { root } from "postcss";
 import container from "quill/blots/container";
 import { twMerge } from "tailwind-merge";
 import { createPortal } from "react-dom";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
+import { languageCodeMap } from "@/languages";
 
 const TranslationWindow = ({
   selectionData,
@@ -38,12 +40,25 @@ const TranslationWindow = ({
   //   selectionData?.ele?.parentElement?.parentElement?.parentElement;
   // const rect = parent.getBoundingClientRect();
   const [translatedText, setTranslatedText] = useState("");
-  const [targetLanguage, setTargetLanguage] = useState("en"); // Default to Spanish
+  const [targetLanguage, setTargetLanguage] = useState("en"); // Default to English
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
   const [isTranslationBoxOpen, setIsTraslationBoxOpen] = useState(false);
+  const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
   // useEffect(() => {
   //   setEleHeight(rect?.bottom - rect?.top);
   // }, []);
+
+  // Function to open Reverso Context in a popup window
+  const openReversoPopup = (
+    word: string,
+    sourceLang: string,
+    targetLang: string
+  ) => {
+    const url = `https://conjugator.reverso.net/conjugation-${
+      languageCodeMap[selectedLearningLanguage]
+    }-verb-${encodeURIComponent(word)}.html`;
+    window.open(url, "_blank", "width=800,height=600");
+  };
 
   useEffect(() => {
     if (selectionData.text && targetLanguage && isTranslationBoxOpen) {
@@ -340,20 +355,41 @@ const TranslationWindow = ({
               <p>{isTranslationLoading ? <Loading /> : translatedText}</p>
             </div>
           </div>
-          <Button
-            className={"mt-3 text-base"}
-            disabled={isTranslationLoading}
-            onClick={() => {
-              setIsAddCardModalOpen(true);
-              setDefaultValues({
-                front: selectionData.text,
-                back: translatedText,
-                content: "",
-              });
-            }}
-          >
-            Save to your cards
-          </Button>
+          <div className="flex gap-2 mt-3">
+            <Button
+              className={"flex-1 text-base"}
+              disabled={isTranslationLoading}
+              onClick={() => {
+                setIsAddCardModalOpen(true);
+                setDefaultValues({
+                  front: selectionData.text,
+                  back: translatedText,
+                  content: "",
+                });
+              }}
+            >
+              Save to your cards
+            </Button>
+            <Button
+              className={
+                "flex justify-center items-center text-base bg-purple-500 hover:bg-purple-600"
+              }
+              onClick={() => {
+                // Get the source language (learning language) and target language (user's native language)
+                const sourceLang =
+                  languageCodeMap[selectedLearningLanguage.toLowerCase()] ||
+                  "english";
+                const targetLang =
+                  languageCodeMap[targetLanguage.toLowerCase()] || "english";
+
+                // Open Reverso Context in a popup
+                openReversoPopup(selectionData.text, sourceLang, targetLang);
+              }}
+              title="Open in Reverso Context"
+            >
+              <ExternalLink size={18} className="mr-1" /> Reverso
+            </Button>
+          </div>
         </div>
       )}
     </div>,

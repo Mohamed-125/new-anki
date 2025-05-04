@@ -109,12 +109,51 @@ module.exports.loginUserController = async (req, res, next) => {
         .status(400)
         .send("please enter the correct email and password");
 
+    // Update streak and active days
+    userFound.updateStreak();
+    await userFound.save();
+
     userFound.generateNewToken(res);
     userFound.generateRefreshToken(res);
 
     res.status(201).send(userFound);
   } catch (err) {
     console.log("login error", err.message);
+    res.status(400).send(err.message);
+  }
+};
+
+// Also update the Google login controller to track streaks
+module.exports.googleLoginController = async (req, res, next) => {
+  const { credential } = req.body;
+
+  try {
+    const decoded = jwt.decode(credential);
+
+    // Check if user exists
+    let user = await UserModel.findOne({ email: decoded.email });
+
+    if (!user) {
+      // Create new user if doesn't exist
+      user = await UserModel.create({
+        email: decoded.email,
+        googleId: decoded.sub,
+        password: Math.random().toString(36).slice(-8), // Generate random password
+        username: decoded.name,
+      });
+    }
+
+    // Update streak and active days
+    user.updateStreak();
+    await user.save();
+
+    // Generate tokens
+    await user.generateNewToken(res);
+    await user.generateRefreshToken(res);
+
+    res.status(200).send(user);
+  } catch (err) {
+    console.log("Google login error:", err);
     res.status(400).send(err.message);
   }
 };

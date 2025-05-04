@@ -115,11 +115,11 @@ const CoursePage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8 mx-auto max-w-6xl">
         {/* Course Header */}
-        <div className="p-8 mb-8 bg-white rounded-xl shadow-lg">
-          <div className="flex gap-6 items-center mb-6">
-            <div className="overflow-hidden w-20 h-20 rounded-2xl shadow-md">
+        <div className="py-3 mb-6 rouned-xl sm:p-4">
+          <div className="flex gap-3 items-center">
+            <div className="overflow-hidden w-20 h-20 rounded-2xl">
               <img
-                className="object-cover w-full h-full"
+                className="object-cover w-full h-full rounded-full"
                 src={course?.flag}
                 alt={`${course?.name} flag`}
               />
@@ -128,16 +128,15 @@ const CoursePage = () => {
               <h1 className="mb-2 text-4xl font-bold text-gray-900">
                 {course?.name}
               </h1>
-              <p className="text-lg text-gray-600">{course?.lang}</p>
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-4 mb-8 sm:gap-2">
           <button
             onClick={() => setActiveTab("course")}
-            className={`flex gap-3 items-center px-8 py-4 text-lg font-medium rounded-xl transition-all shadow-sm ${
+            className={`flex border gap-3 items-center sm:px-3 sm:py-2 sm:text-sm   px-4 py-3 text-lg font-medium rounded-xl transition-all shadow-sm ${
               activeTab === "course"
                 ? "bg-blue-600 text-white shadow-blue-100"
                 : "bg-white text-gray-700 hover:bg-gray-50"
@@ -148,7 +147,7 @@ const CoursePage = () => {
           </button>
           <button
             onClick={() => setActiveTab("grammar")}
-            className={`flex gap-3 items-center px-8 py-4 text-lg font-medium rounded-xl transition-all shadow-sm ${
+            className={`flex border gap-3 items-center  sm:px-3 sm:py-2 sm:text-sm  px-4 py-3 text-lg font-medium rounded-xl transition-all shadow-sm ${
               activeTab === "grammar"
                 ? "bg-blue-600 text-white shadow-blue-100"
                 : "bg-white text-gray-700 hover:bg-gray-50"
@@ -163,15 +162,15 @@ const CoursePage = () => {
         <div className="mx-auto">
           {activeTab === "course" ? (
             <div className="overflow-hidden bg-white rounded-xl shadow-lg">
-              <div className="flex justify-between items-center p-8 border-b border-gray-100">
-                <div className="flex gap-4 items-center">
-                  <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex flex-wrap justify-between items-center p-8 border-b border-gray-100">
+                <div className="flex flex-wrap gap-4 items-center">
+                  <h2 className="text-2xl font-bold text-gray-900 sm:text-xl">
                     Course Content
                   </h2>
                 </div>
                 <Button
                   onClick={() => setIsLevelModalOpen(true)}
-                  className="flex gap-2 items-center px-6 py-3 text-lg font-medium text-gray-700 bg-white rounded-xl border-2 border-gray-200 transition-all hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex gap-2 items-center px-4 py-2 font-medium text-gray-700 bg-white rounded-xl border-2 border-gray-200 transition-all text-md sm:px-4 sm:py-2 sm:text-sm hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <span>
                     {courseLevels?.find((level) => level._id === selectedLevel)
@@ -245,7 +244,7 @@ const CoursePage = () => {
                 </div>
               </Modal>
               <div className="space-y-6">
-                <div className="">
+                <div className="px-4">
                   {isLoading ? (
                     <div className="grid grid-cols-1 gap-3">
                       {[...Array(3)].map((_, index) => (
@@ -264,11 +263,11 @@ const CoursePage = () => {
                       ))}
                     </div>
                   ) : lessons && lessons?.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-3 mb-8">
                       {lessons?.map((lesson: any) => (
                         <div
                           key={lesson._id}
-                          className={`p-6 rounded-xl border-2 transition-all cursor-pointer hover:border-blue-300 hover:shadow-lg transform hover:-translate-y-1 ${
+                          className={`p-4 sm:p-3 rounded-xl border-2 transition-all cursor-pointer hover:border-blue-300 hover:shadow-lg transform hover:-translate-y-1 ${
                             lesson.isCompleted
                               ? "bg-green-50 border-green-300"
                               : "border-gray-200 hover:bg-gray-50"
@@ -289,11 +288,11 @@ const CoursePage = () => {
                               }`}
                             >
                               {lesson.type === "lesson" ? (
-                                <Book className="w-5 h-5 text-blue-600" />
+                                <Book className="w-6 h-6 text-blue-600" />
                               ) : lesson.type === "revision" ? (
-                                <BookOpen className="w-5 h-5 text-green-600" />
+                                <BookOpen className="w-6 h-6 text-green-600" />
                               ) : (
-                                <GraduationCap className="w-5 h-5 text-purple-600" />
+                                <GraduationCap className="w-6 h-6 text-purple-600" />
                               )}
                             </div>
                             <div>

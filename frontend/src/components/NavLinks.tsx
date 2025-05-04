@@ -205,7 +205,7 @@ const LanguagesDropdown = () => {
                 }}
               >
                 <img src={language?.flag} className="w-8 h-8 rounded-full" />{" "}
-                <p>{language?.lang}</p>
+                <p>{language?.name}</p>
               </DropdownMenuItem>
             </>
           );
@@ -235,7 +235,7 @@ const LanguagesDropdown = () => {
                       src={filteredLanguage?.flag}
                       className="w-8 h-8 rounded-full"
                     />{" "}
-                    <p>{filteredLanguage?.lang}</p>
+                    <p>{filteredLanguage?.name}</p>
                   </DropdownMenuItem>
                 </>
               );

@@ -46,6 +46,19 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // Add streak-related fields
+  streak: {
+    type: Number,
+    default: 0,
+  },
+  lastLoginDate: {
+    type: Date,
+    default: null,
+  },
+  activeDays: {
+    type: Number,
+    default: 0,
+  },
 });
 
 UserSchema.pre("save", async function (next) {
@@ -89,7 +102,7 @@ UserSchema.methods.generateResetPasswordToken = async function () {
     expiresIn: "1h",
   });
   this.resetPasswordToken = resetToken;
-  this.resetPasswordExpires = Date.now() + 3600000; // 1 hpour
+  this.resetPasswordExpires = Date.now() + 3600000; // 1
   await this.save();
   return resetToken;
 };
@@ -101,6 +114,41 @@ UserSchema.methods.validateResetPasswordToken = function () {
     Date.now() <= this.resetPasswordExpires
   );
 };
+UserSchema.methods.updateStreak = function () {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to beginning of day for accurate comparison
+
+  if (!this.lastLoginDate) {
+    // First login
+    this.streak = 1;
+    this.activeDays = 1;
+    this.lastLoginDate = today;
+    return;
+  }
+
+  const lastLogin = new Date(this.lastLoginDate);
+  lastLogin.setHours(0, 0, 0, 0);
+
+  // Calculate the difference in days
+  const diffTime = Math.abs(today - lastLogin);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    // Already logged in today, no streak update needed
+    return;
+  } else if (diffDays === 1) {
+    // Consecutive day login - increase streak
+    this.streak += 1;
+    this.activeDays += 1;
+  } else {
+    // Streak broken - reset to 1
+    this.streak = 1;
+    this.activeDays += 1;
+  }
+
+  this.lastLoginDate = today;
+};
+
 UserSchema.set("toObject", { virtuals: true });
 UserSchema.set("toJSON", { virtuals: true });
 
