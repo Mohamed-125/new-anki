@@ -10,7 +10,7 @@ import axios from "axios";
 import Loading from "./Loading";
 import Form from "./Form";
 import { px } from "framer-motion";
-import { BookType, ExternalLink } from "lucide-react";
+import { BookType, ExternalLink, Save, Plus } from "lucide-react";
 import { root } from "postcss";
 import container from "quill/blots/container";
 import { twMerge } from "tailwind-merge";
@@ -49,6 +49,9 @@ const TranslationWindow = ({
   // }, []);
 
   // Function to open Reverso Context in a popup window
+  const [showReversoIframe, setShowReversoIframe] = useState(false);
+  const [reversoUrl, setReversoUrl] = useState("");
+
   const openReversoPopup = (
     word: string,
     sourceLang: string,
@@ -57,7 +60,13 @@ const TranslationWindow = ({
     const url = `https://conjugator.reverso.net/conjugation-${
       languageCodeMap[selectedLearningLanguage]
     }-verb-${encodeURIComponent(word)}.html`;
-    window.open(url, "_blank", "width=800,height=600");
+
+    if (window.innerWidth <= 768) {
+      setReversoUrl(url);
+      setShowReversoIframe(true);
+    } else {
+      window.open(url, "_blank", "width=800,height=600");
+    }
   };
 
   useEffect(() => {
@@ -237,12 +246,28 @@ const TranslationWindow = ({
   }, [selectionData, isTranslationBoxOpen]);
 
   return [
-    // createPortal(
+    showReversoIframe && (
+      <div className="flex fixed inset-0 z-50 justify-center items-center bg-black/50">
+        <div className="relative mx-4 w-full max-w-2xl h-full bg-white rounded-lg shadow-xl">
+          <button
+            onClick={() => setShowReversoIframe(false)}
+            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700"
+          >
+            Close
+          </button>
+          <iframe
+            src={reversoUrl}
+            className="w-full h-full rounded-lg"
+            title="Reverso Conjugation"
+          />
+        </div>
+      </div>
+    ),
     <div
       id="translationContainer"
       className={twMerge(
-        "absolute z-50   opacity-0  max-w-[270px]  ",
-        selectionData.text && "opacity-100  "
+        "absolute z-40 opacity-0 max-w-[300px] shadow-md",
+        selectionData.text && "opacity-100"
       )}
       style={{
         top: document.getElementById("captions-div")
@@ -264,7 +289,7 @@ const TranslationWindow = ({
       ) : (
         <div
           id="translationWindow"
-          className={`px-4 py-7 bg-white rounded-xl border border-gray-200 translationWindow text-wrap bordrer`}
+          className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap`}
         >
           <div id="translationWindow">
             {" "}
@@ -355,40 +380,44 @@ const TranslationWindow = ({
               <p>{isTranslationLoading ? <Loading /> : translatedText}</p>
             </div>
           </div>
-          <div className="flex gap-2 mt-3">
-            <Button
-              className={"flex-1 text-base"}
-              disabled={isTranslationLoading}
-              onClick={() => {
-                setIsAddCardModalOpen(true);
-                setDefaultValues({
-                  front: selectionData.text,
-                  back: translatedText,
-                  content: "",
-                });
-              }}
-            >
-              Save to your cards
-            </Button>
-            <Button
-              className={
-                "flex justify-center items-center text-base bg-purple-500 hover:bg-purple-600"
-              }
-              onClick={() => {
-                // Get the source language (learning language) and target language (user's native language)
-                const sourceLang =
-                  languageCodeMap[selectedLearningLanguage.toLowerCase()] ||
-                  "english";
-                const targetLang =
-                  languageCodeMap[targetLanguage.toLowerCase()] || "english";
+          <div className="mt-3">
+            <p className="mb-2 text-xs font-medium text-gray-500">Actions</p>
+            <div className="flex overflow-x-auto gap-2 pb-1">
+              <Button
+                className={"flex items-center p-2 h-9 text-sm"}
+                disabled={isTranslationLoading}
+                onClick={() => {
+                  setIsAddCardModalOpen(true);
+                  setDefaultValues({
+                    front: selectionData.text,
+                    back: translatedText,
+                    content: "",
+                  });
+                }}
+                title="Save to your cards"
+              >
+                <Save size={16} className="mr-1" /> Save
+              </Button>
+              <Button
+                className={
+                  "flex items-center p-2 h-9 text-sm bg-purple-500 hover:bg-purple-600"
+                }
+                onClick={() => {
+                  // Get the source language (learning language) and target language (user's native language)
+                  const sourceLang =
+                    languageCodeMap[selectedLearningLanguage.toLowerCase()] ||
+                    "english";
+                  const targetLang =
+                    languageCodeMap[targetLanguage.toLowerCase()] || "english";
 
-                // Open Reverso Context in a popup
-                openReversoPopup(selectionData.text, sourceLang, targetLang);
-              }}
-              title="Open in Reverso Context"
-            >
-              <ExternalLink size={18} className="mr-1" /> Reverso
-            </Button>
+                  // Open Reverso Context in a popup
+                  openReversoPopup(selectionData.text, sourceLang, targetLang);
+                }}
+                title="Open in Reverso Context"
+              >
+                <ExternalLink size={16} className="mr-1" /> Reverso
+              </Button>
+            </div>
           </div>
         </div>
       )}

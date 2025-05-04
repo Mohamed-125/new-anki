@@ -115,29 +115,30 @@ UserSchema.methods.validateResetPasswordToken = function () {
   );
 };
 UserSchema.methods.updateStreak = function () {
-  const today = new Date();
+  const now = new Date();
+  const today = new Date(now);
   today.setHours(0, 0, 0, 0); // Set to beginning of day for accurate comparison
 
   if (!this.lastLoginDate) {
-    // First login
+    // First activity
     this.streak = 1;
     this.activeDays = 1;
     this.lastLoginDate = today;
     return;
   }
 
-  const lastLogin = new Date(this.lastLoginDate);
-  lastLogin.setHours(0, 0, 0, 0);
+  const lastActivity = new Date(this.lastLoginDate);
+  lastActivity.setHours(0, 0, 0, 0);
 
   // Calculate the difference in days
-  const diffTime = Math.abs(today - lastLogin);
+  const diffTime = Math.abs(today - lastActivity);
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    // Already logged in today, no streak update needed
+    // Already active today, no streak update needed
     return;
   } else if (diffDays === 1) {
-    // Consecutive day login - increase streak
+    // Consecutive day activity - increase streak
     this.streak += 1;
     this.activeDays += 1;
   } else {
