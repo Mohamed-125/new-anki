@@ -6,6 +6,7 @@ import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
 import useModalStates from "@/hooks/useModalsStates";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import { TextToSpeech } from "./TextToSpeech";
 
 type CardProps = {
   id: string;
@@ -116,7 +117,10 @@ const Card = ({
       )}
 
       <div className="overflow-hidden whitespace-normal break-words grow text-ellipsis">
-        <p className="text-lg sm:text-base">{front}</p>
+        <div className="flex gap-2 items-center">
+          <p className="text-lg sm:text-base">{front}</p>
+          <TextToSpeech text={front} />
+        </div>
         <small className="text-base text-gray-500 truncate">{back}</small>
       </div>
       <div onClick={(e) => e.stopPropagation()}>

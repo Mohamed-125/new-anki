@@ -28,6 +28,21 @@ import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { TextToSpeech } from "./TextToSpeech";
+import { fetchConjugations } from "@/utils/conjugations";
+import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
+import { languageCodeMap } from "../languages";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Loading from "./Loading";
+import { Skeleton } from "./ui/skeleton";
+import MoveCollectionModal from "./MoveCollectionModal";
 
 type CardData = {
   front: string;
@@ -69,6 +84,11 @@ export function AddCardModal({
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
+  const [conjugations, setConjugations] = useState<
+    { tense: string; conjugations: { person: string; form: string }[] }[]
+  >([]);
+  const [isLoadingConjugations, setIsLoadingConjugations] = useState(false);
+  const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
   const [cards, setCards] = useState<CardData[]>([]);
 
   const sampleCardJson = {
@@ -129,12 +149,6 @@ export function AddCardModal({
   const isEdit = !!editId;
   useAddModalShortcuts(setIsAddCardModalOpen);
   const { editor, setContent } = useUseEditor();
-
-  useEffect(() => {
-    // setDefaultValues((pre) => {
-    //   return { ...pre, collectionId };
-    // });
-  }, [collectionId]);
 
   useEffect(() => {
     if (defaultValues?.content) {
@@ -203,7 +217,6 @@ export function AddCardModal({
   const [backValue, setBackValue] = useState("");
 
   const translateHandler = async (examples?: boolean) => {
-    console.log("hey");
     if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
@@ -233,15 +246,11 @@ export function AddCardModal({
   useEffect(() => {
     if (!isAddCardModalOpen) {
       setContent("");
+      setConjugations([]);
       setDefaultValues(null);
       setEditId?.("");
       setFrontValue("");
       setBackValue("");
-    }
-  }, [isAddCardModalOpen]);
-
-  useEffect(() => {
-    if (!isAddCardModalOpen) {
       setIsTranslationLoading(false);
     }
   }, [isAddCardModalOpen]);
@@ -252,11 +261,12 @@ export function AddCardModal({
     defaultValues?.collectionId || collectionId
   );
 
-  const { collections } = useGetCollections({
-    enabled: isMoveToCollectionOpen,
-    sectionId: defaultValues?.sectionId || null,
-  });
+  // const { collections } = useGetCollections({
+  //   enabled: isMoveToCollectionOpen,
+  //   sectionId: defaultValues?.sectionId || null,
+  // });
 
+  console.log(conjugations);
   return (
     <Modal
       loading={isLoading || isCollectionLoading}
@@ -265,6 +275,7 @@ export function AddCardModal({
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
+      <MoveCollectionModal />
       <Modal.Header
         setIsOpen={setIsAddCardModalOpen}
         title={isEdit ? "Edit Card" : "Add New Card"}
@@ -286,21 +297,148 @@ export function AddCardModal({
             <Form.FieldsContainer className="space-y-4">
               <Form.Field>
                 <Form.Label>Card Front Side</Form.Label>
-                <Form.Textarea
-                  value={defaultValues?.front || frontValue}
-                  onChange={(e) => {
-                    setFrontValue(e.target.value);
-                    setDefaultValues((pre: {}) => {
-                      return { ...pre, front: null };
-                    });
-                  }}
-                  type="text"
-                  name="card_word"
-                  ref={frontRef}
-                  required
-                  className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter the front side content"
-                />
+                <div className="space-y-2">
+                  <Form.Textarea
+                    value={defaultValues?.front || frontValue}
+                    onChange={(e) => {
+                      setFrontValue(e.target.value);
+                      setDefaultValues((pre: {}) => {
+                        return { ...pre, front: null };
+                      });
+                      setConjugations([]);
+                    }}
+                    type="text"
+                    name="card_word"
+                    ref={frontRef}
+                    required
+                    className="px-4 py-2 w-full text-gray-900 rounded-lg border border-gray-200 transition-all focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Enter the front side content"
+                  />
+                  <div className="flex gap-2 items-center">
+                    {defaultValues?.front || frontValue ? (
+                      <>
+                        <TextToSpeech
+                          text={defaultValues?.front || frontValue}
+                        />
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="text-sm"
+                          disabled={!frontValue && !defaultValues?.front}
+                          onClick={async () => {
+                            const sourceLang =
+                              languageCodeMap[
+                                selectedLearningLanguage.toLowerCase()
+                              ] || "english";
+                            const result = await fetchConjugations(
+                              frontValue || defaultValues?.front,
+                              sourceLang,
+                              (message) => addToast(message, "error"),
+                              setIsLoadingConjugations
+                            );
+                            setConjugations(result);
+                          }}
+                        >
+                          Conjugate Verb
+                        </Button>
+                      </>
+                    ) : null}
+                  </div>
+                  {isLoadingConjugations && (
+                    <Card className="mt-4">
+                      <CardContent className="p-4">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>
+                                {" "}
+                                <Skeleton className="w-11 h-4 rounded-sm" />
+                              </TableHead>
+                              {[1, 2, 3, 4, 5, 6].map((conj, idx) => (
+                                <TableHead>
+                                  <Skeleton className="w-11 h-4 rounded-sm" />
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {conjugations.map((_, personIdx) => {
+                              if (personIdx >= 6) {
+                                return;
+                              }
+                              return (
+                                <TableRow key={personIdx}>
+                                  <TableCell className="font-medium">
+                                    <Skeleton className="w-11 h-4 rounded-sm" />
+                                  </TableCell>
+                                  {conjugations.map((conj, tenseIdx) => {
+                                    return (
+                                      <TableCell key={tenseIdx}>
+                                        <Skeleton className="w-11 h-4 rounded-sm" />
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {conjugations.length > 0 && (
+                    <Card className="mt-4">
+                      <CardContent className="p-4">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="whitespace-nowrap bg-gray-100">
+                                Personal pronouns{" "}
+                              </TableHead>
+                              {conjugations.map((conj, idx) => (
+                                <TableHead
+                                  className="w-max whitespace-nowrap bg-gray-100 border-l"
+                                  key={idx}
+                                >
+                                  {conj.tense}
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {conjugations.map((_, personIdx) => {
+                              if (personIdx >= 6) {
+                                return;
+                              }
+                              return (
+                                <TableRow key={personIdx}>
+                                  <TableCell className="font-medium bg-gray-100">
+                                    {
+                                      conjugations[personIdx].conjugations[
+                                        personIdx
+                                      ]?.person
+                                    }
+                                  </TableCell>
+                                  {conjugations.map((conj, tenseIdx) => {
+                                    return (
+                                      <TableCell
+                                        className="w-max border-l"
+                                        key={tenseIdx}
+                                      >
+                                        {conj.conjugations[personIdx]?.form}
+                                      </TableCell>
+                                    );
+                                  })}
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </Form.Field>
               <Form.Field>
                 <Button

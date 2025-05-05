@@ -21,23 +21,7 @@ import useToasts from "@/hooks/useToasts";
 import TipTapEditor from "@/components/TipTapEditor";
 import useUseEditor from "@/hooks/useUseEditor";
 import WordInfoSidebar from "@/components/WordInfoSidebar";
-import { languageCodeMap } from "@/languages";
-
-const SpeechButton = ({ text, lang = "Deutsch Female" }) => {
-  const speak = () => {
-    if (window.responsiveVoice) {
-      window.responsiveVoice.speak(text, lang);
-    } else {
-      console.error("ResponsiveVoice not loaded.");
-    }
-  };
-
-  return (
-    <button onClick={speak} className="p-2 text-white bg-blue-500 rounded">
-      🔊 Speak
-    </button>
-  );
-};
+import { languageCodeMap } from "../languages";
 
 const TextPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -156,11 +140,6 @@ const TextPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8 mx-auto max-w-7xl">
-        {" "}
-        <SpeechButton
-          text="Guten Morgen! Wie geht es dir?"
-          lang="Deutsch Female"
-        />
         <AddCardModal collectionId={text?.defaultCollectionId} />
         <ShareModal sharing="texts" />
         <TranslationWindow
@@ -170,6 +149,7 @@ const TextPage = () => {
           isSameUser={isSameUser}
           selectionData={selectionData}
         />
+
         <div className="overflow-hidden bg-white rounded-xl shadow-sm">
           {/* Header courseLevel */}
           <div className="px-6 py-4 border-b border-gray-200">
@@ -217,20 +197,12 @@ const TextPage = () => {
 };
 
 // Function to open Reverso Context in a popup window
-// const openReversoPopup = (
-//   word: string,
-//   sourceLang: string,
-//   targetLang: string
-// ) => {
-//   const url = `https://context.reverso.net/translation/${sourceLang}-${targetLang}/${encodeURIComponent(
-//     word
-//   )}`;
-//   window.open(url, "_blank", "width=800,height=600");
-// };
-
-// Function to open Verbix conjugation in a popup window
-const openVerbixPopup = (word: string, language: string) => {
-  const url = `https://api.verbix.com/conjugator/html/${language}/${encodeURIComponent(
+const openReversoPopup = (
+  word: string,
+  sourceLang: string,
+  targetLang: string
+) => {
+  const url = `https://context.reverso.net/translation/${sourceLang}-${targetLang}/${encodeURIComponent(
     word
   )}`;
   window.open(url, "_blank", "width=800,height=600");
@@ -271,11 +243,12 @@ const Text = React.memo(function ({
       setSelectedWord(word);
       setIsSidebarOpen(true);
 
-      // If user holds Ctrl/Cmd key while clicking, open Verbix conjugation
+      // If user holds Ctrl/Cmd key while clicking, open Reverso Context
       if (event.ctrlKey || event.metaKey) {
-        const language =
+        const sourceLang =
           languageCodeMap[selectedLearningLanguage.toLowerCase()] || "english";
-        openVerbixPopup(word, language);
+        const targetLang = "english"; // Default to English as target language
+        openReversoPopup(word, sourceLang, targetLang);
       }
     }
   };

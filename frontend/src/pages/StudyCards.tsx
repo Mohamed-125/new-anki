@@ -25,6 +25,7 @@ import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import useUseEditor from "@/hooks/useUseEditor";
 import { promises } from "dns";
 import { useRef } from "react";
+import { TextToSpeech } from "@/components/TextToSpeech";
 
 const StudyCards = () => {
   const collectionId = useParams()?.collectionId;
@@ -223,9 +224,8 @@ const StudyCards = () => {
                 ? cards[currentCard]?.front
                 : cards[currentCard]?.back}
             </p>
-            <hr className="mt-8" />
             <div className="flex flex-col gap-2 justify-center items-center">
-              <Form.Field className="flex gap-2 mt-11">
+              {/* <Form.Field className="flex gap-2 mt-11">
                 <label>Voice:</label>
                 <Form.Select
                   value={voice}
@@ -239,17 +239,10 @@ const StudyCards = () => {
                       </option>
                     ))}
                 </Form.Select>
-              </Form.Field>
-              <HiMiniSpeakerWave
-                className="mb-6 text-5xl cursor-pointer hover:scale-110"
-                onClick={() => {
-                  if (speechStatus) {
-                    stop();
-                  }
-                  start();
-                }}
-              />
+              </Form.Field> */}
+              <TextToSpeech text={cards[currentCard]?.front} />
             </div>
+            <hr className="mt-6" />
 
             {showAnswer && (
               <div className="mt-5 text-lg text-center">

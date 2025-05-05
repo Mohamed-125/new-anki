@@ -10,6 +10,9 @@ import Button from "./Button";
 import { IoClose } from "react-icons/io5";
 import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import useMediaQuery from "@/hooks/useMediaQuery";
+import { Drawer, DrawerContent, DrawerHeader, DrawerFooter } from "./ui/Drawer";
+import { useWindowSize } from "react-use";
 
 // Define the props for the Modal component
 interface ModalProps {
@@ -55,6 +58,54 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
       }
     }, [isOpen]);
 
+    const isMobile = useWindowSize().width < 700;
+
+    if (isMobile) {
+      return (
+        <Drawer open={isOpen} onOpenChange={setIsOpen}>
+          <DrawerContent
+            className={cn(
+              "px-4 transition-transform duration-300 ease-out transform",
+              big && "max-w-[1000px]",
+              className,
+              "pr-0 pl-5 drawer",
+              !isOpen && "translate-y-[2%] opacity-0"
+            )}
+          >
+            {loading ? (
+              <div className="">
+                <div className="grid absolute inset-0 z-50 place-items-center w-full h-full bg-white">
+                  <div className="w-12 h-12 rounded-full border-4 border-blue-200 animate-spin border-t-primary"></div>
+                </div>
+                <div
+                  id={id}
+                  ref={modalRef}
+                  className={cn(
+                    "overflow-auto pb-32 modalScroll z-10 relative max-h-[650px] transition-all duration-300 ease-out",
+                    big && "max-h-[90vh]"
+                  )}
+                >
+                  {isOpen ? children : null}
+                </div>
+              </div>
+            ) : (
+              <div
+                id={id}
+                ref={modalRef}
+                className={cn(
+                  "overflow-auto *:transform-gpu  *:translate-x-0 pb-5 pr-5 modalScroll relative max-h-[650px]",
+                  big && "max-h-[90vh]",
+                  !isOpen && "translate-y-[2%] opacity-0"
+                )}
+              >
+                {isOpen ? children : null}
+              </div>
+            )}
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+
     return (
       <div
         onTransitionEnd={isOpen ? undefined : onAnimationEnd}
@@ -79,7 +130,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
             transition: "transform 450ms ease, opacity 400ms ease",
           }}
           className={twMerge(
-            "bg-white !w-[90%] max-w-[550px] modal-content   translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
+            "bg-white !w-[90%] max-w-[550px] modal-content translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
             isOpen
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",
@@ -177,11 +228,14 @@ const Footer: ComponentType<{
   children?: ReactNode;
   className?: string;
 }> = React.memo(function Header({ children, className }) {
+  const isMobile = useWindowSize().width < 700;
+
   return (
     <div
       className={cn(
         "fixed right-0 bottom-0 left-0 px-10 py-6 mt-6 bg-white border-t border-light-gray",
-        className
+        className,
+        isMobile && "static"
       )}
     >
       {children}

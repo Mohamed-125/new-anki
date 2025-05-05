@@ -28,6 +28,7 @@ const lessonRouter = require("../routes/lessonRouter");
 const progressRouter = require("../routes/progressRouter.js");
 const transcriptRouter = require("../routes/transcriptRouter.js");
 const topicRouter = require("../routes/topicRouter");
+const conjugationRouter = require("../routes/conjugationRouter");
 const cookieParser = require("cookie-parser");
 const CourseModel = require("../models/CourseModel.js");
 const CourseLevel = require("../models/CourseLevelModel.js");
@@ -98,6 +99,7 @@ app.use("/api/v1/video", videoRouter);
 app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/note", noteRouter);
 app.use("/api/v1/translate", translateRouter);
+app.use("/api/v1/conjugation", conjugationRouter);
 app.use("/api/v1/channel", channelsRouter);
 app.use("/api/v1/text", textRouter);
 app.use("/api/v1/course", courseRouter);
@@ -107,7 +109,7 @@ app.use("/api/v1/lesson", lessonRouter);
 app.use("/api/v1/progress", progressRouter);
 app.use("/api/v1/transcript", transcriptRouter);
 app.use("/api/v1/topic", topicRouter);
-app.use("/api/v1/topic", topicRouter);
+app.use("/api/v1/scrape-conjugations", conjugationRouter);
 
 const PORT = process.env.PORT || 5000;
 

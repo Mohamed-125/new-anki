@@ -11,13 +11,20 @@ import Loading from "./Loading";
 import Form from "./Form";
 import { px } from "framer-motion";
 import { BookType, ExternalLink, Save, Plus } from "lucide-react";
+
+import { TextToSpeech } from "./TextToSpeech";
 import { root } from "postcss";
 import container from "quill/blots/container";
 import { twMerge } from "tailwind-merge";
 import { createPortal } from "react-dom";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
-import { languageCodeMap } from "@/languages";
+import { languageCodeMap } from "../languages";
+import { useWindowSize } from "react-use";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/Drawer";
+import useToasts from "@/hooks/useToasts";
+import { error } from "console";
+import { fetchConjugations } from "../utils/conjugations";
 
 const TranslationWindow = ({
   selectionData,
@@ -51,20 +58,37 @@ const TranslationWindow = ({
   // Function to open Reverso Context in a popup window
   const [showReversoIframe, setShowReversoIframe] = useState(false);
   const [reversoUrl, setReversoUrl] = useState("");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const isSmallScreen = useWindowSize().width < 765;
+
+  const [conjugations, setConjugations] = useState<
+    { tense: string; conjugations: { person: string; form: string }[] }[]
+  >([]);
+  const [isLoadingConjugations, setIsLoadingConjugations] = useState(false);
+  const { addToast } = useToasts();
+
+  const handleFetchConjugations = async (word: string, sourceLang: string) => {
+    const result = await fetchConjugations(
+      word,
+      sourceLang,
+      (message) => addToast(message, "error"),
+      setIsLoadingConjugations
+    );
+    setConjugations(result);
+  };
 
   const openReversoPopup = (
     word: string,
     sourceLang: string,
     targetLang: string
   ) => {
-    const url = `https://conjugator.reverso.net/conjugation-${
-      languageCodeMap[selectedLearningLanguage]
-    }-verb-${encodeURIComponent(word)}.html`;
-
-    if (window.innerWidth <= 768) {
-      setReversoUrl(url);
-      setShowReversoIframe(true);
+    if (isSmallScreen) {
+      fetchConjugations(word, sourceLang);
+      setIsDrawerOpen(true);
     } else {
+      const url = `https://context.reverso.net/translation/${sourceLang}-${targetLang}/${encodeURIComponent(
+        word
+      )}`;
       window.open(url, "_blank", "width=800,height=600");
     }
   };
@@ -77,6 +101,9 @@ const TranslationWindow = ({
         .post(`/translate?targetLanguage=${targetLanguage}`, { text })
         .then((res) => {
           setTranslatedText(res.data);
+        })
+        .catch((err) => {
+          console.log("translation error", err);
         })
         .finally(() => {
           setIsTranslationLoading(false);
@@ -141,8 +168,6 @@ const TranslationWindow = ({
               translationContainer.style.transform = `translate(-50%)`;
             }
           } else {
-            console.log("ran");
-
             if (isTranslationBoxOpen) {
               translationContainer.style.transform = `translate(0px)`;
             } else {
@@ -246,27 +271,10 @@ const TranslationWindow = ({
   }, [selectionData, isTranslationBoxOpen]);
 
   return [
-    showReversoIframe && (
-      <div className="flex fixed inset-0 z-50 justify-center items-center bg-black/50">
-        <div className="relative mx-4 w-full max-w-2xl h-full bg-white rounded-lg shadow-xl">
-          <button
-            onClick={() => setShowReversoIframe(false)}
-            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700"
-          >
-            Close
-          </button>
-          <iframe
-            src={reversoUrl}
-            className="w-full h-full rounded-lg"
-            title="Reverso Conjugation"
-          />
-        </div>
-      </div>
-    ),
     <div
       id="translationContainer"
       className={twMerge(
-        "absolute z-40 opacity-0 max-w-[300px] shadow-md",
+        "absolute z-30 opacity-0 max-w-[300px] shadow-md",
         selectionData.text && "opacity-100"
       )}
       style={{
@@ -374,10 +382,18 @@ const TranslationWindow = ({
               <option value="CY">Welsh</option>
               <option value="XH">Xhosa</option>
             </Form.Select>
-            <p>{selectionData.text}</p>
+            <div className="flex gap-1 items-center">
+              <TextToSpeech
+                text={selectionData.text}
+                language={selectedLearningLanguage.toLowerCase()}
+              />
+              <p>{selectionData.text}</p>
+            </div>
             <hr className="my-2"></hr>
             <div className="relative min-h-20">
-              <p>{isTranslationLoading ? <Loading /> : translatedText}</p>
+              <div className="flex gap-2 items-center">
+                <p>{isTranslationLoading ? <Loading /> : translatedText}</p>
+              </div>
             </div>
           </div>
           <div className="mt-3">
@@ -403,24 +419,73 @@ const TranslationWindow = ({
                   "flex items-center p-2 h-9 text-sm bg-purple-500 hover:bg-purple-600"
                 }
                 onClick={() => {
-                  // Get the source language (learning language) and target language (user's native language)
                   const sourceLang =
                     languageCodeMap[selectedLearningLanguage.toLowerCase()] ||
                     "english";
                   const targetLang =
                     languageCodeMap[targetLanguage.toLowerCase()] || "english";
 
-                  // Open Reverso Context in a popup
                   openReversoPopup(selectionData.text, sourceLang, targetLang);
                 }}
-                title="Open in Reverso Context"
+                title="View Conjugations"
               >
-                <ExternalLink size={16} className="mr-1" /> Reverso
+                <ExternalLink size={16} className="mr-1" /> Conjugate
               </Button>
+
+              {isLoadingConjugations && (
+                <div className="mt-4">
+                  <Loading />
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      <div>
+        {isSmallScreen && conjugations.length > 0 && (
+          <Drawer
+            open={isDrawerOpen}
+            disablePreventScroll={true}
+            shouldScaleBackground={true}
+            onOpenChange={setIsDrawerOpen}
+          >
+            <DrawerContent
+              onClick={(e) => e.stopPropagation()} // prevents background click
+              className=""
+            >
+              <DrawerHeader>
+                <DrawerTitle>Conjugations</DrawerTitle>
+                <div className="overflow-y-auto px-4 pb-8 h-[500px] space-y-4">
+                  {conjugations.map((conj, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-gray-50 rounded-lg shadow-sm"
+                    >
+                      <h4 className="mb-3 text-lg font-medium text-primary">
+                        {conj.tense}
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        {conj.conjugations.map((c, i) => (
+                          <div
+                            key={i}
+                            className="flex justify-between items-center text-sm"
+                          >
+                            <span className="text-muted-foreground">
+                              {c.person}
+                            </span>
+                            <span className="font-medium">{c.form}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DrawerHeader>
+            </DrawerContent>
+          </Drawer>
+        )}
+      </div>
     </div>,
   ];
 };
