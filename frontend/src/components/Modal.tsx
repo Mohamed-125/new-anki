@@ -65,11 +65,11 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent
             className={cn(
-              "px-4 transition-transform duration-300 ease-out transform",
+              "px-4 transition-all duration-300 ease-out transform",
               big && "max-w-[1000px]",
               className,
               "pr-0 pl-5 drawer",
-              !isOpen && "translate-y-[2%] opacity-0"
+              !isOpen && "translate-y-full opacity-0"
             )}
           >
             {loading ? (

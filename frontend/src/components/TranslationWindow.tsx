@@ -67,23 +67,15 @@ const TranslationWindow = ({
   const [isLoadingConjugations, setIsLoadingConjugations] = useState(false);
   const { addToast } = useToasts();
 
-  const handleFetchConjugations = async (word: string, sourceLang: string) => {
-    const result = await fetchConjugations(
-      word,
-      sourceLang,
-      (message) => addToast(message, "error"),
-      setIsLoadingConjugations
-    );
-    setConjugations(result);
-  };
-
   const openReversoPopup = (
     word: string,
     sourceLang: string,
     targetLang: string
   ) => {
     if (isSmallScreen) {
-      fetchConjugations(word, sourceLang);
+      fetchConjugations(word, sourceLang).then((conjugations) =>
+        setConjugations(conjugations)
+      );
       setIsDrawerOpen(true);
     } else {
       const url = `https://context.reverso.net/translation/${sourceLang}-${targetLang}/${encodeURIComponent(
@@ -92,6 +84,8 @@ const TranslationWindow = ({
       window.open(url, "_blank", "width=800,height=600");
     }
   };
+
+  console.log(conjugations);
 
   useEffect(() => {
     if (selectionData.text && targetLanguage && isTranslationBoxOpen) {
@@ -444,46 +438,48 @@ const TranslationWindow = ({
 
       <div>
         {isSmallScreen && conjugations.length > 0 && (
-          <Drawer
-            open={isDrawerOpen}
-            disablePreventScroll={true}
-            shouldScaleBackground={true}
-            onOpenChange={setIsDrawerOpen}
-          >
-            <DrawerContent
-              onClick={(e) => e.stopPropagation()} // prevents background click
-              className=""
+          <>
+            <Drawer
+              open={isDrawerOpen}
+              disablePreventScroll={true}
+              shouldScaleBackground={true}
+              onOpenChange={setIsDrawerOpen}
             >
-              <DrawerHeader>
-                <DrawerTitle>Conjugations</DrawerTitle>
-                <div className="overflow-y-auto px-4 pb-8 h-[500px] space-y-4">
-                  {conjugations.map((conj, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 bg-gray-50 rounded-lg shadow-sm"
-                    >
-                      <h4 className="mb-3 text-lg font-medium text-primary">
-                        {conj.tense}
-                      </h4>
-                      <div className="grid grid-cols-1 gap-3">
-                        {conj.conjugations.map((c, i) => (
-                          <div
-                            key={i}
-                            className="flex justify-between items-center text-sm"
-                          >
-                            <span className="text-muted-foreground">
-                              {c.person}
-                            </span>
-                            <span className="font-medium">{c.form}</span>
-                          </div>
-                        ))}
+              <DrawerContent
+                onClick={(e) => e.stopPropagation()} // prevents background click
+                className=""
+              >
+                <DrawerHeader>
+                  <DrawerTitle>Conjugations</DrawerTitle>
+                  <div className="overflow-y-auto px-4 pb-8 h-[500px] space-y-4">
+                    {conjugations.map((conj, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 bg-gray-50 rounded-lg shadow-sm"
+                      >
+                        <h4 className="mb-3 text-lg font-medium text-primary">
+                          {conj.tense}
+                        </h4>
+                        <div className="grid grid-cols-1 gap-3">
+                          {conj.conjugations.map((c, i) => (
+                            <div
+                              key={i}
+                              className="flex justify-between items-center text-sm"
+                            >
+                              <span className="text-muted-foreground">
+                                {c.person}
+                              </span>
+                              <span className="font-medium">{c.form}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </DrawerHeader>
-            </DrawerContent>
-          </Drawer>
+                    ))}
+                  </div>
+                </DrawerHeader>
+              </DrawerContent>
+            </Drawer>
+          </>
         )}
       </div>
     </div>,
