@@ -17,7 +17,6 @@ const textSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Collection",
     },
-    listId: { type: String, index: true },
     lessonId: { type: String, index: true },
     topicOrder: {
       type: Number,
@@ -28,12 +27,21 @@ const textSchema = new mongoose.Schema(
       index: true,
       ref: "Topic",
     },
+    listId: {
+      type: mongoose.Types.ObjectId,
+      ref: "List",
+      index: true,
+    },
     image: {
       type: String,
     },
     language: {
       type: String,
       index: true,
+    },
+    listOrder: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true, lean: true }

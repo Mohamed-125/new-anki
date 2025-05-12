@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, HelpCircle } from "lucide-react";
 
 interface QuestionFormProps {
   showQuestionDropdown: boolean;
@@ -7,6 +7,15 @@ interface QuestionFormProps {
   onAddQuestion: (type: "choose" | "text") => void;
   onPasteQuestions: (content: string) => void;
 }
+
+const exampleQuestions = [
+  {
+    type: "choose",
+    question: "Ich komme __ Deutschland?",
+    choices: ["nach", "an", "auf", "aus"],
+    answer: "4",
+  },
+];
 
 const QuestionForm: React.FC<QuestionFormProps> = ({
   showQuestionDropdown,
@@ -16,6 +25,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 }) => {
   const [addContentTab, setAddContentTab] = useState(false);
   const [pasteContent, setPasteContent] = useState("");
+  const [showExample, setShowExample] = useState(false);
 
   return (
     <div className="relative">
@@ -46,6 +56,23 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 
       {addContentTab ? (
         <div className="mb-6">
+          <div className="relative mb-2">
+            <button
+              type="button"
+              onClick={() => setShowExample(!showExample)}
+              className="flex gap-1 items-center text-sm text-gray-600 hover:text-gray-800"
+            >
+              <HelpCircle size={16} />
+              {showExample ? "Hide" : "Show"} Example Format
+            </button>
+            {showExample && (
+              <div className="p-4 mt-2 bg-gray-50 rounded-md">
+                <pre className="overflow-x-auto text-xs text-gray-700">
+                  {JSON.stringify(exampleQuestions, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
           <textarea
             className="p-4 w-full h-48 font-mono text-sm rounded-md border"
             placeholder="Paste your questions array here..."

@@ -1,28 +1,72 @@
 const CardModel = require("../models/CardModel");
+const CollectionModel = require("../models/CollectionModel");
 
 module.exports.createCard = async (req, res, next) => {
-  const { front, back, content, collectionId, videoId, language, sectionId } =
-    req.body;
+  const { cards, collectionId, videoId, language, sectionId } = req.body;
 
-  if (!front || !back)
-    return res
-      .status(400)
-      .send("you have to enter the front and the back name");
+  // Get collection's showCardsInHome value if collectionId exists
+  let shownInHome = true;
+  if (collectionId) {
+    const collection = await CollectionModel.findById(collectionId, {
+      showCardsInHome: 1,
+    });
+    if (collection) {
+      shownInHome = collection.showCardsInHome;
+    }
+  }
 
   try {
-    const cardData = {
-      front,
-      back,
-      content,
-      collectionId,
-      videoId,
-      language,
-      sectionId,
-      userId: sectionId ? undefined : req.user?._id,
-    };
+    if (Array.isArray(cards)) {
+      // Bulk creation
+      const cardsData = cards.map((card, index) => ({
+        ...card,
+        collectionId,
+        videoId,
+        language,
+        sectionId,
+        userId: sectionId ? undefined : req.user?._id,
+        order: index, // Add order field to maintain sequence
+        shownInHome,
+      }));
 
-    const createdCard = await CardModel.create(cardData);
-    res.status(200).send(createdCard);
+      // Validate all cards have front and back
+      const invalidCards = cardsData.filter(
+        (card) => !card.front || !card.back
+      );
+      if (invalidCards.length > 0) {
+        return res
+          .status(400)
+          .send("All cards must have front and back content");
+      }
+
+      const createdCards = await CardModel.insertMany(cardsData, {
+        ordered: true,
+      });
+      return res.status(200).send(createdCards);
+    } else {
+      // Single card creation
+      const { front, back, content } = req.body;
+      if (!front || !back) {
+        return res
+          .status(400)
+          .send("you have to enter the front and the back name");
+      }
+
+      const cardData = {
+        front,
+        back,
+        content,
+        collectionId,
+        videoId,
+        language,
+        sectionId,
+        userId: sectionId ? undefined : req.user?._id,
+        shownInHome,
+      };
+
+      const createdCard = await CardModel.create(cardData);
+      return res.status(200).send(createdCard);
+    }
   } catch (err) {
     res.status(400).send(err);
   }
@@ -37,6 +81,7 @@ module.exports.getUserCards = async (req, res, next) => {
     study,
     language,
     sectionId,
+    difficulty,
   } = req.query;
 
   const query = {};
@@ -49,11 +94,27 @@ module.exports.getUserCards = async (req, res, next) => {
     ];
   }
 
+  // Add difficulty filter based on easeFactor ranges
+  if (difficulty) {
+    switch (difficulty) {
+      case "easy":
+        query.easeFactor = { $gte: 0.75 };
+        break;
+      case "medium":
+        query.easeFactor = { $gte: 0.5, $lt: 0.75 };
+        break;
+      case "hard":
+        query.easeFactor = { $lt: 0.5 };
+        break;
+    }
+  }
+
   if (sectionId) {
     query.sectionId = sectionId;
   } else if (collectionId) {
     query.collectionId = collectionId;
   } else {
+    query.shownInHome = true;
     query.userId = req.user?._id;
   }
   if (videoId) {
@@ -81,7 +142,7 @@ module.exports.getUserCards = async (req, res, next) => {
       .skip(skipNumber)
       .limit(limit);
 
-    res.status(200).send({ cards, nextPage, cardsCount: cardsCount });
+    res.status(200).send({ cards, nextPage, cardsCount });
   } catch (err) {
     console.log("get cards error :", err);
     res.status(400).send(err);
@@ -101,9 +162,25 @@ module.exports.updateCard = async (req, res, next) => {
   const { front, back, content, collectionId, easeFactor } = req.body;
 
   try {
+    let shownInHome = true;
+    if (collectionId) {
+      const collection = await CollectionModel.findById(collectionId);
+      if (collection) {
+        shownInHome = collection.showCardsInHome;
+      }
+    }
+
     const updatedCard = await CardModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { front, back, content, collectionId, userId: req.user?._id, easeFactor },
+      {
+        front,
+        back,
+        content,
+        collectionId,
+        userId: req.user?._id,
+        easeFactor,
+        shownInHome,
+      },
       {
         new: true,
       }
@@ -142,9 +219,17 @@ module.exports.batchMove = async (req, res) => {
   const { ids, collectionId } = req.body;
 
   try {
+    let shownInHome = true;
+    if (collectionId) {
+      const collection = await CollectionModel.findById(collectionId);
+      if (collection) {
+        shownInHome = collection.showCardsInHome;
+      }
+    }
+
     await CardModel.updateMany(
       { _id: { $in: ids } },
-      { collectionId: collectionId }
+      { collectionId: collectionId, shownInHome: shownInHome }
     );
 
     res.status(200).send({ message: "cards moved successfully" });

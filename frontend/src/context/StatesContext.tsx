@@ -4,6 +4,7 @@ import React, {
   Dispatch,
   ReactNode,
   SetStateAction,
+  useEffect,
   useState,
 } from "react";
 
@@ -56,6 +57,9 @@ type StatesType = {
 
   targetCollectionId: string;
   setTargetCollectionId: React.Dispatch<React.SetStateAction<string>>;
+
+  setIsTranslationBoxOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isTranslationBoxOpen: boolean;
 };
 
 export const statesContext = createContext<StatesType | null>(null);
@@ -90,7 +94,13 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isTranslationBoxOpen, setIsTranslationBoxOpen] = useState(false);
 
+  useEffect(() => {
+    if (selectedItems.length) {
+      document.body.style.marginBottom = `40px`;
+    }
+  }, [selectedItems]);
   return (
     <statesContext.Provider
       value={{
@@ -126,6 +136,8 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
         isVideoModalOpen,
         setIsTextModalOpen,
         isTextModalOpen,
+        isTranslationBoxOpen,
+        setIsTranslationBoxOpen,
       }}
     >
       {children}

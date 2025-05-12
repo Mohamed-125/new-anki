@@ -8,21 +8,27 @@ import ActionsDropdown from "./ActionsDropdown";
 import SelectCheckBox from "./SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
 import useToasts from "@/hooks/useToasts";
+import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import { VideoType } from "@/hooks/useGetVideos";
 
 type VideoCardProps = {
-  video: {
-    _id: string;
-    thumbnail: string;
-    title: string;
-  };
+  video: VideoType;
   sideByside?: boolean;
   moveVideoHandler?: any;
+  listId?: string;
 };
 
-const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
+const VideoCard = ({
+  video,
+  sideByside,
+  moveVideoHandler,
+  listId,
+}: VideoCardProps) => {
   const id = video._id;
   const { selectedItems, setSelectedItems } = useModalsStates();
   const { addToast } = useToasts();
+  const { user } = useGetCurrentUser();
+  const isSameUser = video?.userId === user?._id || user?.isAdmin;
 
   const isSelected = selectedItems?.includes(id);
 
@@ -34,6 +40,8 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       .delete(`video/${id}`)
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ["videos"] });
+        if (listId)
+          queryClient.invalidateQueries({ queryKey: ["videos", listId] });
         toast.setToastData({
           title: "Video deleted successfully!",
           type: "success",
@@ -49,20 +57,20 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
     <div
       id={id}
       className={twMerge(
-        "bg-white flex flex-col rounded-xl items-center  border border-neutral-300 pb-3 mb-2 text-wrap",
+        "bg-white flex flex-col rounded-xl h-full items-center  border border-neutral-300 pb-3 mb-2 text-wrap",
         sideByside && "flex-row h-[180px] px-4 pb-0"
       )}
     >
       <Link
         to={"/videos/" + video._id}
         className={twMerge(
-          "overflow-hidden cursor-pointer h-full  rounded-t-xl",
+          "overflow-hidden cursor-pointer min-h-[50%] h-full  rounded-t-xl",
           sideByside && "min-w-[40%]"
         )}
       >
         <img
           className={twMerge(
-            "w-full object-cover h-full",
+            "w-full object-cover h-full  hover:scale-105 transition",
             sideByside && " h-full"
           )}
           src={video.thumbnail}
@@ -70,22 +78,25 @@ const VideoCard = ({ video, sideByside, moveVideoHandler }: VideoCardProps) => {
       </Link>
 
       <div className="flex gap-3 justify-between px-4 mt-4 grow">
-        <Link to={video._id}>{video.title}</Link>
+        <Link to={"/videos/" + video._id} className="line-clamp-2">
+          {video.title}
+        </Link>
         <div>
-          {!selectedItems?.length ? (
-            <ActionsDropdown
-              itemId={id as string}
-              deleteHandler={deleteHandler}
-              moveHandler={moveVideoHandler}
-              setSelectedItems={setSelectedItems}
-            />
-          ) : (
-            <SelectCheckBox
-              id={id}
-              selectedItems={selectedItems}
-              setSelectedItems={setSelectedItems}
-            />
-          )}
+          {isSameUser &&
+            (!selectedItems?.length ? (
+              <ActionsDropdown
+                itemId={id as string}
+                deleteHandler={deleteHandler}
+                moveHandler={moveVideoHandler}
+                setSelectedItems={setSelectedItems}
+              />
+            ) : (
+              <SelectCheckBox
+                id={id}
+                selectedItems={selectedItems}
+                setSelectedItems={setSelectedItems}
+              />
+            ))}
         </div>
       </div>
     </div>

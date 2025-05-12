@@ -152,7 +152,7 @@ const LessonPage = () => {
   // Handle case when no sections are available
   if (sections.length === 0) {
     return (
-      <div className="container px-4 py-8 mx-auto">
+      <div className="container px-4 py-8 mx-auto sm:px-2">
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
           <div className="flex gap-4 items-center mb-4">
             <Button
@@ -186,7 +186,7 @@ const LessonPage = () => {
   };
 
   return (
-    <div className="container px-4 py-8 mx-auto">
+    <div className="container px-4 py-8 mx-auto sm:px-2">
       {/* Lesson Header */}
       <Button
         onClick={() => navigate(`/learn`)}
@@ -340,23 +340,21 @@ const LessonPage = () => {
               </span>
             </div>
 
-            <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-md">
-              <h3 className="mb-4 text-xl font-medium">
-                {currentQuestion?.question}
-              </h3>
-              {/* Multiple choice question */}
-              <Question
-                currentQuestion={currentQuestion}
-                // CheckAnswerHandler={CheckAnswerHandler}
-                textAnswer={textAnswer}
-                setTextAnswer={setTextAnswer}
-                feedbackMessage={feedbackMessage}
-                setFeedbackMessage={setFeedbackMessage}
-                setIsAnswered={setIsAnswered}
-              />
+            <h3 className="mb-4 text-xl font-medium">
+              {currentQuestion?.question}
+            </h3>
+            {/* Multiple choice question */}
+            <Question
+              currentQuestion={currentQuestion}
+              // CheckAnswerHandler={CheckAnswerHandler}
+              textAnswer={textAnswer}
+              setTextAnswer={setTextAnswer}
+              feedbackMessage={feedbackMessage}
+              setFeedbackMessage={setFeedbackMessage}
+              setIsAnswered={setIsAnswered}
+            />
 
-              {/* Feedback message */}
-            </div>
+            {/* Feedback message */}
           </div>
         )}
       </div>

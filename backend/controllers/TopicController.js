@@ -28,7 +28,6 @@ module.exports.getTopics = async (req, res) => {
       query.topicLanguage = topicLanguage;
     }
 
-    console.log("topics query", query);
     const topicsCount = await TopicModel.countDocuments(query);
 
     const skipNumber = page * limit;

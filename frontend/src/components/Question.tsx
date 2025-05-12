@@ -185,7 +185,7 @@ const Choice = ({
     <div
       key={currentQuestion.id || Math.random()}
       id={choice}
-      className={`flex items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 relative ${
+      className={`flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 relative ${
         isAnswerCorrect !== null
           ? isAnswerCorrect
             ? "bg-green-50 border-green-500 shadow-lg"
@@ -194,7 +194,7 @@ const Choice = ({
       } ${
         feedbackMessage
           ? "cursor-not-allowed"
-          : "hover:transform hover:scale-[1.02]"
+          : "hover:transform hover:scale-[1.01]"
       }`}
       onClick={() => (feedbackMessage ? null : handleAnswerSelect(choice))}
     >

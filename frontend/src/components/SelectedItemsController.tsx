@@ -5,8 +5,10 @@ type SelectedItemsControllerProps = {
   isItemsNotes?: boolean;
   isItemsTexts?: boolean;
   isItemsCards?: boolean;
+  isItemsLists?: boolean;
   moving?: string;
   setMoveVideoModal?: React.Dispatch<React.SetStateAction<boolean>>;
+  allItems: string[];
 };
 import React from "react";
 import Button from "./Button";
@@ -25,8 +27,10 @@ const SelectedItemsController = ({
   isItemsNotes,
   isItemsTexts,
   isItemsCards,
+  isItemsLists,
   moving,
   setMoveVideoModal,
+  allItems = [],
 }: SelectedItemsControllerProps) => {
   const { selectedItems, setSelectedItems, setIsMoveToCollectionOpen } =
     useModalStates();
@@ -48,6 +52,24 @@ const SelectedItemsController = ({
           {selectedItems.length === 1 ? "item" : "items"}
         </span>
         <span className="text-gray-400">|</span>
+        {allItems && (
+          <button
+            onClick={() => {
+              if (selectedItems.length === allItems.length) {
+                setSelectedItems([]);
+              } else {
+                setSelectedItems(allItems);
+              }
+            }}
+            className="flex gap-2 items-center transition-colors text-primary hover:text-primary/80"
+          >
+            <span>
+              {selectedItems.length === allItems.length
+                ? "Deselect All"
+                : "Select All"}
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="flex gap-6 items-center text-[16px]">
@@ -82,6 +104,8 @@ const SelectedItemsController = ({
               ? `note/batch-delete`
               : isItemsTexts
               ? `text/batch-delete`
+              : isItemsLists
+              ? `list/batch-delete`
               : `card/batch-delete`;
 
             const confirmation = window.confirm(
@@ -108,6 +132,8 @@ const SelectedItemsController = ({
               } else if (isItemsTexts) {
                 queryClient.invalidateQueries({ queryKey: ["texts"] });
                 queryClient.invalidateQueries({ queryKey: ["text"] });
+              } else if (isItemsLists) {
+                queryClient.invalidateQueries({ queryKey: ["topic-lists"] });
               } else {
                 queryClient.invalidateQueries({ queryKey: ["cards"] });
                 queryClient.invalidateQueries({ queryKey: ["card"] });

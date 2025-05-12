@@ -14,6 +14,10 @@ const CollectionSchema = new mongoose.Schema(
     public: {
       type: Boolean,
     },
+    showCardsInHome: {
+      type: Boolean,
+      default: true,
+    },
     parentCollectionId: {
       type: mongoose.Types.ObjectId,
       ref: "Collection",

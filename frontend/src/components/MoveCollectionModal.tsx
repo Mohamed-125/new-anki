@@ -17,10 +17,8 @@ import CollectionSkeleton from "./CollectionsSkeleton";
 import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
-import { twMerge } from "tailwind-merge";
-import useInfiniteScroll from "@/components/InfiniteScroll";
 import InfiniteScroll from "@/components/InfiniteScroll";
-import useGetSectionCollections from "@/hooks/useGetSectionCollections";
+import { twMerge } from "tailwind-merge";
 
 //! make sure to replace every collections.find to work with the new structure
 
@@ -56,10 +54,15 @@ const MoveCollectionModal = ({
 
   const toMoveCollectionId = toMoveCollection?._id || "";
 
-  const { collections, isLoading, fetchNextPage, hasNextPage } =
-    useGetCollections({
-      sectionId: sectionId as string,
-    });
+  const {
+    collections,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetCollections({
+    sectionId: sectionId as string,
+  });
 
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
 
@@ -81,7 +84,6 @@ const MoveCollectionModal = ({
 
   //!this is the function that makes the modal open on the collection
   useEffect(() => {
-    console.log(selectedCollection);
     if (!isMoveToCollectionOpen) return;
     if (selectedCollection === null) return;
 
@@ -102,13 +104,6 @@ const MoveCollectionModal = ({
       )
         return;
 
-      console.log(
-        selectedCollection,
-        collections,
-        cardCollectionId,
-        collections?.find((collection) => collection._id === cardCollectionId)
-      );
-      console.log("ran");
       setSelectedCollectionIds([cardCollectionId as string]);
     }
 
@@ -190,7 +185,6 @@ const MoveCollectionModal = ({
   }, [selectedCollection]);
 
   useEffect(() => {
-    console.log(selectedCollectionsIds);
     if (lastSelectedCollectionId) {
       setParentCollectionId(lastSelectedCollectionId);
     }
@@ -326,8 +320,9 @@ const MoveCollectionModal = ({
     <Modal
       id={"moveCollectionModal"}
       onAnimationEnd={onAnimationEnd}
-      className={`max-w-lg  z-[3000] w-full bg-white rounded-xl shadow-lg ${
-        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""}`}
+      className={`max-w-lg md:max-w-none  z-[3000] w-full bg-white rounded-xl shadow-lg ${
+        isCollectionModalOpen ? "opacity-0 pointer-events-none" : ""
+      }`}
       isOpen={isMoveToCollectionOpen}
       setIsOpen={setIsMoveToCollectionOpen}
     >
@@ -423,139 +418,134 @@ const MoveCollectionModal = ({
                   </h4>
                 </div>
               )}
-              {collectionLoading ? (
-                <CollectionSkeleton />
-              ) : (
-                <InfiniteScroll
-                  fetchNextPage={fetchNextPage}
-                  hasNextPage={hasNextPage}
-                >
-                  {(selectedCollection?.subCollections || collections)?.map(
-                    (collection) => {
-                      const isParentCollection =
-                        collection?.subCollections?.length;
-                      {
-                        /* //! does this need edit ? */
+
+              <InfiniteScroll
+                fetchNextPage={fetchNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                loadingElement={<CollectionSkeleton />}
+                hasNextPage={hasNextPage}
+              >
+                {(selectedCollection?.subCollections || collections)?.map(
+                  (collection) => {
+                    const isParentCollection =
+                      collection?.subCollections?.length;
+                    {
+                      /* //! does this need edit ? */
+                    }
+
+                    const isInputDisabled = () => {
+                      let disabled;
+
+                      if (toMoveCollectionId) {
+                        // prevent moving child to parent
+                        disabled =
+                          collections?.find((c) => c._id === toMoveCollectionId)
+                            ?.parentCollectionId === collection._id ||
+                          //prevent moving to it self
+                          collection?._id === toMoveCollectionId;
+
+                        //  [p1 , c1 , to move c2 , c3 , c4]
+                        if (
+                          selectedCollectionsIds.includes(toMoveCollectionId)
+                        ) {
+                          const toMoveCollectionIndex =
+                            selectedCollectionsIds.indexOf(toMoveCollectionId);
+
+                          const targetCollectionIndex =
+                            selectedCollectionsIds.indexOf(collection._id);
+
+                          const targetParentCollectionIndex =
+                            selectedCollectionsIds.indexOf(
+                              selectedCollection?._id as string
+                            );
+
+                          disabled =
+                            toMoveCollectionIndex < targetCollectionIndex ||
+                            toMoveCollectionIndex <
+                              targetParentCollectionIndex ||
+                            toMoveCollectionId ===
+                              selectedCollectionsIds[
+                                selectedCollectionsIds.length - 1
+                              ];
+                        }
+                      } else {
+                        const cardCollectionId = cards?.find(
+                          (card) => card._id === editId
+                        )?.collectionId;
+
+                        disabled = cardCollectionId === collection?._id;
                       }
 
-                      const isInputDisabled = () => {
-                        let disabled;
+                      return disabled;
+                    };
 
-                        if (toMoveCollectionId) {
-                          // prevent moving child to parent
-                          disabled =
-                            collections?.find(
-                              (c) => c._id === toMoveCollectionId
-                            )?.parentCollectionId === collection._id ||
-                            //prevent moving to it self
-                            collection?._id === toMoveCollectionId;
-
-                          //  [p1 , c1 , to move c2 , c3 , c4]
-                          if (
-                            selectedCollectionsIds.includes(toMoveCollectionId)
-                          ) {
-                            const toMoveCollectionIndex =
-                              selectedCollectionsIds.indexOf(
-                                toMoveCollectionId
-                              );
-
-                            const targetCollectionIndex =
-                              selectedCollectionsIds.indexOf(collection._id);
-
-                            const targetParentCollectionIndex =
-                              selectedCollectionsIds.indexOf(
-                                selectedCollection?._id as string
-                              );
-
-                            disabled =
-                              toMoveCollectionIndex < targetCollectionIndex ||
-                              toMoveCollectionIndex <
-                                targetParentCollectionIndex ||
-                              toMoveCollectionId ===
-                                selectedCollectionsIds[
-                                  selectedCollectionsIds.length - 1
-                                ];
-                          }
-                        } else {
-                          const cardCollectionId = cards?.find(
-                            (card) => card._id === editId
-                          )?.collectionId;
-
-                          disabled = cardCollectionId === collection?._id;
-                        }
-
-                        return disabled;
-                      };
-
-                      return (
-                        <div
-                          key={collection?._id}
-                          id={collection?._id}
-                          onClick={() => {
-                            setSelectedCollectionIds((pre) => [
-                              ...pre,
-                              collection?._id as string,
-                            ]);
-                          }}
-                          className={twMerge(
-                            `
+                    return (
+                      <div
+                        key={collection?._id}
+                        id={collection?._id}
+                        onClick={() => {
+                          setSelectedCollectionIds((pre) => [
+                            ...pre,
+                            collection?._id as string,
+                          ]);
+                        }}
+                        className={twMerge(
+                          `
                 flex justify-between items-center p-3  cursor-pointer 
                 transition-colors duration-200 ease-in-out border-b border-light-gray
                  `,
-                            referenceCollectionIds.includes(collection?._id)
-                              ? "bg-yellow-50"
-                              : "bg-white  hover:bg-gray-50"
-                          )}
-                        >
-                          <span className="flex flex-1 gap-3 items-center">
-                            <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
-                              {collection?.name}
-                            </p>
-                            {isParentCollection ? (
-                              <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400 group-hover:text-gray-600" />
-                            ) : null}
-                          </span>
-                          {text ? (
-                            <Button
-                              onClick={(e: any) => {
-                                e.stopPropagation();
-                                setDefaultValues((pre) => {
-                                  return {
-                                    ...pre,
-                                    defaultCollectionId: collection._id,
-                                  };
-                                });
-                                setIsMoveToCollectionOpen(false);
-                              }}
-                              className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                            >
-                              Select{" "}
-                            </Button>
-                          ) : (
-                            <Button
-                              disabled={isInputDisabled()}
-                              onClick={(e: any) => {
-                                e.stopPropagation();
-                                !toMoveCollectionId
-                                  ? moveCardsHandler({
-                                      targetCollectionId: collection._id,
-                                    })
-                                  : moveCollectionsHandler({
-                                      targetCollectionId: collection._id,
-                                    });
-                              }}
-                              className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                            >
-                              Move
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    }
-                  )}
-                </InfiniteScroll>
-              )}
-              {isLoading ? <CollectionSkeleton /> : null}
+                          referenceCollectionIds.includes(collection?._id)
+                            ? "bg-yellow-50"
+                            : "bg-white  hover:bg-gray-50"
+                        )}
+                      >
+                        <span className="flex flex-1 gap-3 items-center">
+                          <p className="font-medium text-gray-700 transition-colors hover:text-gray-900">
+                            {collection?.name}
+                          </p>
+                          {isParentCollection ? (
+                            <MdOutlineKeyboardArrowRight className="text-2xl text-gray-400 group-hover:text-gray-600" />
+                          ) : null}
+                        </span>
+                        {text ? (
+                          <Button
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              setDefaultValues((pre) => {
+                                return {
+                                  ...pre,
+                                  defaultCollectionId: collection._id,
+                                };
+                              });
+                              setIsMoveToCollectionOpen(false);
+                            }}
+                            className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                          >
+                            Select{" "}
+                          </Button>
+                        ) : (
+                          <Button
+                            disabled={isInputDisabled()}
+                            onClick={(e: any) => {
+                              e.stopPropagation();
+                              !toMoveCollectionId
+                                ? moveCardsHandler({
+                                    targetCollectionId: collection._id,
+                                  })
+                                : moveCollectionsHandler({
+                                    targetCollectionId: collection._id,
+                                  });
+                            }}
+                            className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                          >
+                            Move
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  }
+                )}
+              </InfiniteScroll>
             </>
           }
         </div>

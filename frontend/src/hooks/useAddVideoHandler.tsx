@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { TopicType } from "./useGetTopics";
 
@@ -7,6 +7,7 @@ type UseAddVideoHandlerProps = {
   topicId?: string;
   videoLang?: string;
   channelId?: string;
+  listId?: string;
 };
 
 type TranscriptData = {
@@ -20,10 +21,11 @@ const useAddVideoHandler = ({
   topicId,
   videoLang,
   channelId,
+  listId,
 }: UseAddVideoHandlerProps) => {
   const [youtubeUrls, setYoutubeUrls] = useState("");
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-
+  const queryClient = useQueryClient();
   // Extract the transcript fetching logic into a custom hook
   const getTranscript = useMutation({
     mutationFn: async ({ url, lang }: { url: string; lang?: string }) => {
@@ -32,6 +34,9 @@ const useAddVideoHandler = ({
         lang: videoLang,
       });
       return response.data as TranscriptData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["videos", listId] });
     },
   });
 
@@ -56,6 +61,7 @@ const useAddVideoHandler = ({
           channelId,
           topicId,
           title,
+          listId,
           thumbnail,
         });
       }

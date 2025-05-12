@@ -67,41 +67,12 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
 
     console.log("transcript", transcript);
 
-    const translateText = async (text) => {
-      const { data: translatedText } = await axios.post(
-        "https://new-anki-server.vercel.app/api/v1/translate",
-        // "http://localhost:5000/api/v1/translate",
-        { text }
-        // { signal: newController.signal }
-      );
-      return translatedText;
-    };
-
-    const batchTranslate = async (texts, batchSize) => {
-      const batchedResults = [];
-      let processedCount = 0;
-
-      for (let i = 0; i < texts.length; i += batchSize) {
-        const batch = texts.slice(i, i + batchSize);
-        const translatedBatch = await Promise.all(
-          batch.map((text) => translateText(text.text))
-        );
-        batchedResults.push(...translatedBatch);
-        processedCount += batch.length;
-      }
-      return batchedResults;
-    };
-
-    // const translatedTranscript = await batchTranslate(formattedTranscript, 20);
-    const translatedTranscript = [];
-
-    const { title, thumbnail } = await axios
+    // Get video title
+    const { title } = await axios
       .get(url)
       .then(async (response) => {
         const $ = cheerio.load(response.data);
-        let title = $("title").text();
-        let thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-        return { title, thumbnail };
+        return { title: $("title").text() };
       })
       .catch((err) => {
         if (err.name === "AbortError") {
@@ -111,8 +82,34 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
         throw err;
       });
 
+    // Try different thumbnail resolutions
+    const thumbnailResolutions = [
+      "maxresdefault",
+      "hqdefault",
+      "mqdefault",
+      "default",
+    ];
+    let thumbnail = null;
+
+    for (const resolution of thumbnailResolutions) {
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/${resolution}.jpg`;
+      try {
+        const response = await axios.head(thumbnailUrl);
+        if (response.status === 200) {
+          thumbnail = thumbnailUrl;
+          break;
+        }
+      } catch (err) {
+        continue;
+      }
+    }
+
+    // Fallback to default thumbnail if none are available
+    if (!thumbnail) {
+      thumbnail = `https://img.youtube.com/vi/${videoId}/default.jpg`;
+    }
+
     return res.status(200).send({
-      translatedTranscript,
       transcript,
       title,
       thumbnail,

@@ -75,7 +75,7 @@ const AddChannelModal = ({
     <Modal
       isOpen={isChannelModalOpen}
       setIsOpen={setIsChannelModalOpen}
-      className="w-full max-w-lg"
+      className="w-full max-w-lg md:max-w-none"
     >
       <Modal.Header setIsOpen={setIsChannelModalOpen} title="Add Channels" />
       <Form className="p-0 space-y-6" onSubmit={addChannelHandler}>

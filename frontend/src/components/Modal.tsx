@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { Drawer, DrawerContent, DrawerHeader, DrawerFooter } from "./ui/Drawer";
 import { useWindowSize } from "react-use";
+import useModalsStates from "@/hooks/useModalsStates";
 
 // Define the props for the Modal component
 interface ModalProps {
@@ -45,14 +46,6 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
     useEffect(() => {
       if (isOpen) {
         document.body.style.overflow = "hidden";
-
-        const timeout = setTimeout(() => {
-          if (modalRef.current) {
-            modalRef.current.scrollTop = 0;
-          }
-        }, 0);
-
-        return () => clearTimeout(timeout);
       } else {
         document.body.style.overflow = "auto";
       }
@@ -68,7 +61,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
               "px-4 transition-all duration-300 ease-out transform",
               big && "max-w-[1000px]",
               className,
-              "pr-0 pl-5 drawer",
+              "pr-0 pl-0 drawer",
               !isOpen && "translate-y-full opacity-0"
             )}
           >
@@ -93,12 +86,12 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
                 id={id}
                 ref={modalRef}
                 className={cn(
-                  "overflow-auto *:transform-gpu  *:translate-x-0 pb-5 pr-5 modalScroll relative max-h-[650px]",
+                  "overflow-auto [&_*]:transform-gpu [&_*]:translate-x-0 pb-5 px-5 modalScroll relative max-h-[650px]",
                   big && "max-h-[90vh]",
                   !isOpen && "translate-y-[2%] opacity-0"
                 )}
               >
-                {isOpen ? children : null}
+                {children}
               </div>
             )}
           </DrawerContent>
@@ -130,7 +123,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
             transition: "transform 450ms ease, opacity 400ms ease",
           }}
           className={twMerge(
-            "bg-white !w-[90%] max-w-[550px] modal-content translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
+            "bg-white !w-[90%] max-w-[550px] modal-content overflow-hidden translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
             isOpen
               ? "opacity-1 translate-y-[-50%]"
               : "opacity-0 translate-y-[-30%]",
@@ -169,13 +162,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
                 big && "max-h-[90vh]"
               )}
             >
-              {isOpen ? (
-                children
-              ) : (
-                <div className="opacity-0 transition-opacity duration-75">
-                  {children}
-                </div>
-              )}
+              {children}
             </div>
           )}
         </div>
@@ -198,7 +185,7 @@ const Header: ComponentType<{
 }) {
   return (
     <div className="py-6 mb-6 border-b border-light-gray">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center [&_*]:transform-gpu [&_*]:translate-x-0">
         <h3 className="text-2xl font-bold text-gray-800">{title}</h3>
         <div className="flex gap-2">
           {title === "Move To Collection" && (

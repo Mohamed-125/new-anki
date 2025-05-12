@@ -7,8 +7,10 @@ import ActionsDropdown from "@/components/ActionsDropdown";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Button from "@/components/Button";
-import AddVideoModal from "./Admin/AddVideoModal";
+import AddVideoModal from "@/components/AddVideoModal";
 import useAddVideoHandler from "@/hooks/useAddVideoHandler";
+import useModalsStates from "@/hooks/useModalsStates";
+import SelectedItemsController from "@/components/SelectedItemsController";
 const AdminChannel = () => {
   const { channelId } = useParams();
   const queryClient = useQueryClient();
@@ -29,6 +31,8 @@ const AdminChannel = () => {
   const { isVideoModalOpen, setIsVideoModalOpen } = useAddVideoHandler({
     channelId: channel?._id,
   });
+
+  const { setSelectedItems } = useModalsStates();
 
   console.log("videos", videos);
   return (
@@ -68,6 +72,7 @@ const AdminChannel = () => {
         isVideoModalOpen={isVideoModalOpen}
         setIsVideoModalOpen={setIsVideoModalOpen}
       />
+      <SelectedItemsController />
       <InfiniteScroll
         fetchNextPage={fetchNextPage}
         hasNextPage={hasNextPage}
@@ -116,6 +121,7 @@ const AdminChannel = () => {
                 </span>
               </div>
               <ActionsDropdown
+                setSelectedItems={setSelectedItems}
                 itemId={video._id}
                 deleteHandler={async () => {
                   try {

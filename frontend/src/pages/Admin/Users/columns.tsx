@@ -23,6 +23,7 @@ export const columns: ColumnDef<UserType>[] = [
     header: ({ column }) => {
       return <div className="flex items-center space-x-2">ID</div>;
     },
+    size: 80,
   },
   {
     accessorKey: "username",

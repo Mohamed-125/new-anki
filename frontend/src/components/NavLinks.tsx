@@ -100,6 +100,7 @@ const ProfileDropdown = ({
       googleLogout();
       queryClient.setQueryData(["me"], null);
       queryClient.clear();
+      sessionStorage.removeItem("redirectPath");
       navigate("/login");
     });
     setIsNavOpen(false);

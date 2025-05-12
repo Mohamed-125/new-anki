@@ -10,6 +10,7 @@ const {
   deleteCollection,
   batchDelete,
   getPublicCollections,
+  getAllCollectionCards,
 } = require("../controllers/CollectionController");
 
 const Authorization = require("../middleware/Authorization");
@@ -20,6 +21,7 @@ router
   .get("/", Authorization, getCollections)
   .get("/public", Authorization, getPublicCollections)
   .get("/:id", Authorization, getCollection)
+  .get("/:id/cards", Authorization, getAllCollectionCards)
   .patch("/:id", Authorization, updateCollection)
   .delete("/:id", Authorization, deleteCollection)
   .post("/batch-delete", Authorization, batchDelete);

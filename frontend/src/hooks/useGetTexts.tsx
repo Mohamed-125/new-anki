@@ -7,6 +7,9 @@ export type TextType = {
   _id: string;
   title: string;
   content: string;
+  topicId?: string;
+  listId?: string;
+  userId: string;
   defaultCollectionId: string | undefined;
 };
 

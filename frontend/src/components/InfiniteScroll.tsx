@@ -38,7 +38,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
       {
         root: null,
         rootMargin: "0px",
-        threshold: 0,
+        threshold: 0.2,
       }
     );
 
@@ -53,12 +53,13 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
     };
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  console.log(hasNextPage && isFetchingNextPage, isFetchingNextPage);
   return (
-    <div className={className}>
+    <div className={`${className}`}>
       {children}
-      <div ref={observerTarget} style={{}}>
-        {(hasNextPage && isFetchingNextPage) || isFetchingNextPage
+      <div ref={observerTarget} style={{}} className="infinite-scroll">
+        {(hasNextPage && isFetchingNextPage) ||
+        isFetchingNextPage ||
+        hasNextPage
           ? loadingElement
           : null}
       </div>

@@ -5,7 +5,10 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { TopicType } from "@/hooks/useGetTopics";
-import { Text, Youtube, Tv2 } from "lucide-react";
+import { Text, Youtube, Tv2, List } from "lucide-react";
+import useGetTopicLists from "@/hooks/useGetTopicLists";
+import ListCard from "@/components/ListCard";
+import AddListModal from "@/components/AddListModal";
 import VideoCard from "@/components/VideoCard";
 import Button from "@/components/Button";
 import useGetTopicTexts from "@/hooks/useGetTopicTexts";
@@ -14,8 +17,9 @@ import useGetTopicChannels from "@/hooks/useGetTopicChannels";
 import useAddVideoHandler from "@/hooks/useAddVideoHandler";
 import InfiniteScroll from "@/components/InfiniteScroll";
 import ChannelCard from "@/components/ChannelCard";
-import AddVideoModal from "./AddVideoModal";
+import AddVideoModal from "@/components/AddVideoModal";
 import AddChannelModal from "./AddChannelModal";
+import SelectedItemsController from "@/components/SelectedItemsController";
 
 const useGetTopic = (topicId: string) => {
   return useQuery({
@@ -33,9 +37,21 @@ const AdminTopic = () => {
   const { topicId } = useParams();
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("videos");
+  const [isListModalOpen, setIsListModalOpen] = useState(false);
 
   const { data: topic, isLoading } = useGetTopic(topicId!);
 
+  const {
+    lists,
+    isFetchingNextPage: isListsFetchingNextPage,
+    hasNextPage: hasListsNextPage,
+    fetchNextPage: fetchNextTopicListsPage,
+  } = useGetTopicLists(
+    topicId as string,
+    Boolean(activeTab === "lists" && topicId)
+  );
+
+  console.log("lists", lists);
   const topicType = topic?.type;
 
   const {
@@ -62,7 +78,6 @@ const AdminTopic = () => {
     fetchNextPage: fetchNextTopicChannelsPage,
   } = useGetTopicChannels(topicId as string, activeTab === "channels");
 
-  // Using the custom hook for video handling
   const { isVideoModalOpen, setIsVideoModalOpen } = useAddVideoHandler({
     topicId: topic?._id,
     videoLang: "de",
@@ -94,6 +109,10 @@ const AdminTopic = () => {
               <TabsTrigger value="channels" className="flex gap-2 items-center">
                 <Tv2 className="w-4 h-4" />
                 Channels
+              </TabsTrigger>
+              <TabsTrigger value="lists" className="flex gap-2 items-center">
+                <List className="w-4 h-4" />
+                Lists
               </TabsTrigger>
             </TabsList>
 
@@ -155,6 +174,37 @@ const AdminTopic = () => {
                 </InfiniteScroll>
               ) : (
                 <p className="text-gray-500">No channels available</p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="lists">
+              <SelectedItemsController isItemsLists={true} />
+              <Button onClick={() => setIsListModalOpen(true)} className="mb-4">
+                Add List
+              </Button>
+              <AddListModal
+                topicId={topic._id}
+                isListModalOpen={isListModalOpen}
+                setIsListModalOpen={setIsListModalOpen}
+              />
+              {lists?.length ? (
+                <InfiniteScroll
+                  fetchNextPage={fetchNextTopicListsPage}
+                  hasNextPage={hasListsNextPage}
+                  loadingElement={<p>loading...</p>}
+                  className="grid grid-cols-1 gap-4"
+                >
+                  {lists?.map((list) => (
+                    <ListCard
+                      setIsListModalOpen={setIsListModalOpen}
+                      topicId={topicId as string}
+                      key={list?._id}
+                      list={list}
+                    />
+                  ))}
+                </InfiniteScroll>
+              ) : (
+                <p className="text-gray-500">No lists available</p>
               )}
             </TabsContent>
           </Tabs>

@@ -29,6 +29,7 @@ const progressRouter = require("../routes/progressRouter.js");
 const transcriptRouter = require("../routes/transcriptRouter.js");
 const topicRouter = require("../routes/topicRouter");
 const conjugationRouter = require("../routes/conjugationRouter");
+const listRouter = require("../routes/listRouter");
 const cookieParser = require("cookie-parser");
 const CourseModel = require("../models/CourseModel.js");
 const CourseLevel = require("../models/CourseLevelModel.js");
@@ -110,6 +111,7 @@ app.use("/api/v1/progress", progressRouter);
 app.use("/api/v1/transcript", transcriptRouter);
 app.use("/api/v1/topic", topicRouter);
 app.use("/api/v1/scrape-conjugations", conjugationRouter);
+app.use("/api/v1/list", listRouter);
 
 const PORT = process.env.PORT || 5000;
 

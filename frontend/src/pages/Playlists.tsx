@@ -1,23 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { FormEvent, useEffect, useState } from "react";
-import Loading from "../components/Loading";
+import React, { useEffect, useState } from "react";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
 import Form from "../components/Form";
 import Search from "../components/Search";
-import { Link } from "react-router-dom";
-import Actions from "../components/ActionsDropdown";
 import SelectedItemsController from "../components/SelectedItemsController";
-import { MdFeaturedPlayList, MdOutlinePlaylistPlay } from "react-icons/md";
+import { MdOutlinePlaylistPlay } from "react-icons/md";
 import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useGetPlaylists from "@/hooks/useGetPlaylists";
 import useDebounce from "@/hooks/useDebounce";
-import useInfiniteScroll from "@/components/InfiniteScroll";
 import useToasts from "@/hooks/useToasts";
 import { VideoType } from "@/hooks/useGetVideos";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 type PlaylistType = {
   name: string;
@@ -38,8 +35,6 @@ const Playlists = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useGetPlaylists({ query: debouncedQuery });
-
-  useInfiniteScroll(fetchNextPage, hasNextPage);
 
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
@@ -79,6 +74,7 @@ const Playlists = () => {
       onSuccess: () => {
         toast.setToastData({
           title: "Playlist created successfully!",
+          type: "success",
           isCompleted: true,
         });
         setIsPlayListModalOpen(false);
@@ -110,6 +106,7 @@ const Playlists = () => {
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
         setIsPlayListModalOpen(false);
         toast.setToastData({
+          type: "success",
           title: "Playlist updated successfully!",
           isCompleted: true,
         });
@@ -134,6 +131,7 @@ const Playlists = () => {
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
         toast.setToastData({
           title: "Playlist deleted successfully!",
+          type: "success",
           isCompleted: true,
         });
       })
@@ -189,7 +187,13 @@ const Playlists = () => {
 
         <SelectedItemsController isItemsPlaylists={true} />
 
-        <div className="grid gap-2 grid-container">
+        <InfiniteScroll
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          loadingElement={<CollectionSkeleton />}
+          className="grid gap-2 grid-container"
+        >
           {playlists?.map((playlist) => (
             <ItemCard
               key={playlist._id}
@@ -200,8 +204,7 @@ const Playlists = () => {
               id={playlist._id}
             />
           ))}
-          {(isInitialLoading || isFetchingNextPage) && <CollectionSkeleton />}
-        </div>
+        </InfiniteScroll>
       </>
     </div>
   );

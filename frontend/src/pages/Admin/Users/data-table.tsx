@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   ColumnFiltersState,
-  getFilteredRowModel,
 } from "@tanstack/react-table";
 
 import {
@@ -17,34 +15,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-import { MoreHorizontal } from "lucide-react";
-
-import Button from "@/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { columns } from "./columns";
 import { useEffect, useState } from "react";
+import InfiniteScroll from "@/components/InfiniteScroll";
+import VideoSkeleton from "@/components/VideoSkeleton";
+import useGetUsers from "@/hooks/useGetUsers";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  isLoading: boolean;
-  onFilterChange?: (filters: ColumnFiltersState) => void;
+interface DataTableProps {
+  debouncedQuery: string;
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  isLoading,
-  onFilterChange,
-}: DataTableProps<TData, TValue>) {
+export function DataTable({ debouncedQuery }: DataTableProps) {
+  const [isAdmin, setIsAdmin] = useState("");
+  const [isPremium, setIsPremium] = useState("");
+
+  const onFilterChange = (filters: ColumnFiltersState) => {
+    const isAdminFilter =
+      (filters.find((filter) => filter.id === "isAdmin")?.value as string) ||
+      "";
+    const isPremiumFilter =
+      (filters.find((filter) => filter.id === "isPremium")?.value as string) ||
+      "";
+
+    setIsAdmin(isAdminFilter);
+    setIsPremium(isPremiumFilter);
+  };
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const {
+    users,
+    isInitialLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetUsers({
+    query: debouncedQuery,
+    isAdmin,
+    isPremium,
+  });
 
   useEffect(() => {
     if (onFilterChange) {
@@ -53,7 +61,7 @@ export function DataTable<TData, TValue>({
   }, [columnFilters, onFilterChange]);
 
   const table = useReactTable({
-    data,
+    data: users || [],
     columns,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -61,50 +69,75 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <div className="container py-10 mx-auto">Loading...</div>
-          ) : table.getRowModel()?.rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+      <InfiniteScroll
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        loadingElement={<VideoSkeleton />}
+      >
+        {" "}
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableHeader>{" "}
+          <TableBody>
+            {isInitialLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  <VideoSkeleton />
+                </TableCell>
+              </TableRow>
+            ) : (
+              <>
+                {table.getRowModel().rows.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
+            )}
+          </TableBody>
+        </Table>
+      </InfiniteScroll>
     </div>
   );
 }

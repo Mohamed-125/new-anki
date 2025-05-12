@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import useGetChannelVideos from "@/hooks/useGetChannelVideos";
 import useGetChannel from "@/hooks/useGetChannel";
 import InfiniteScroll from "@/components/InfiniteScroll";
@@ -66,7 +66,8 @@ const Channel = () => {
         }
       >
         {videos?.map((video) => (
-          <div
+          <Link
+            to={`/videos/${video._id}`}
             key={video._id}
             className="flex relative flex-col p-3 rounded-lg border border-gray-200 transition-all hover:shadow-md"
           >
@@ -80,7 +81,7 @@ const Channel = () => {
             <h3 className="mb-2 text-sm font-medium text-gray-900 line-clamp-2">
               {video.title}
             </h3>
-          </div>
+          </Link>
         ))}
       </InfiniteScroll>
 

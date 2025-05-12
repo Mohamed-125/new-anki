@@ -12,7 +12,6 @@ import Select, { SingleValue } from "react-select";
 import useCardActions from "../hooks/useCardActions";
 import "react-quill/dist/quill.snow.css";
 import TipTapEditor from "./TipTapEditor";
-import { OptionType } from "./AddVideoModal";
 import useGetCollections from "../hooks/useGetCollections";
 import useCreateNewCard from "../hooks/useCreateNewCardMutation";
 import axios from "axios";
@@ -31,7 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TextToSpeech } from "./TextToSpeech";
 import { fetchConjugations } from "@/utils/conjugations";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
-import { languageCodeMap } from "../languages";
+import { languageCodeMap } from "../../../languages";
 import {
   Table,
   TableBody,
@@ -88,7 +87,7 @@ export function AddCardModal({
     { tense: string; conjugations: { person: string; form: string }[] }[]
   >([]);
   const [isLoadingConjugations, setIsLoadingConjugations] = useState(false);
-  const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
+  const { user, selectedLearningLanguage } = useGetCurrentUser();
   const [cards, setCards] = useState<CardData[]>([]);
 
   const sampleCardJson = {
@@ -122,14 +121,12 @@ export function AddCardModal({
     const toast = addToast("Creating cards...", "promise");
 
     try {
-      for (const card of cards) {
-        await createCardHandler(null, {
-          ...card,
-          collectionId: defaultValues?.collectionId || collectionId || null,
-          videoId,
-          sectionId: defaultValues?.sectionId || null,
-        });
-      }
+      const response = await createCardHandler(null, {
+        cards,
+        collectionId: defaultValues?.collectionId || collectionId || null,
+        videoId,
+        sectionId: defaultValues?.sectionId || null,
+      });
 
       toast.setToastData({
         title: `Successfully created ${cards.length} cards!`,
@@ -138,7 +135,7 @@ export function AddCardModal({
       setIsAddCardModalOpen(false);
     } catch (err) {
       toast.setToastData({
-        title: "Failed to create some cards",
+        title: "Failed to create cards",
         type: "error",
       });
     }
@@ -220,9 +217,14 @@ export function AddCardModal({
     if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
-        const { data } = await axios.post("/translate?examples=true", {
-          text: frontRef.current?.value,
-        });
+        const { data } = await axios.post(
+          `/translate?examples=true&language=${[
+            selectedLearningLanguage,
+          ]}&targetLanguage=${user?.nativeLanguage || "english"}`,
+          {
+            text: frontRef.current?.value,
+          }
+        );
 
         const translations = data.translations as string[];
 
@@ -266,12 +268,12 @@ export function AddCardModal({
   //   sectionId: defaultValues?.sectionId || null,
   // });
 
-  console.log(conjugations);
   return (
     <Modal
       loading={isLoading || isCollectionLoading}
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
-        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}`}
+        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
+      }`}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
@@ -547,7 +549,6 @@ export function AddCardModal({
                     ${example.target} `
                     );
 
-                    console.log(sources.join("<br /> "));
                     setContent((pre) => pre + sources.join("<br /> "));
                   }}
                 >

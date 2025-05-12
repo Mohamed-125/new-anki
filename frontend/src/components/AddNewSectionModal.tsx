@@ -62,7 +62,7 @@ const AddNewSectionModal = ({
     setIsLoading(true);
 
     if (name) {
-      const data = { name, description, sectionType };
+      const data = { name, description, type: sectionType };
 
       console.log("create section function");
       mutateAsync(data)
@@ -91,7 +91,7 @@ const AddNewSectionModal = ({
     const name = formData.get("section_name") as string;
     const description = formData.get("description") as string;
 
-    const data = { name, description, sectionType };
+    const data = { name, description, type: sectionType };
     const toast = addToast("Updating Section..", "promise");
 
     try {
@@ -129,7 +129,7 @@ const AddNewSectionModal = ({
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsOpen}
       isOpen={isOpen}
-      className="w-full max-w-lg"
+      className="w-full max-w-lg md:max-w-none"
     >
       <Modal.Header
         setIsOpen={setIsOpen}

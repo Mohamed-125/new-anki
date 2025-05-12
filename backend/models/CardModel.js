@@ -49,6 +49,15 @@ const CardSchema = new mongoose.Schema(
       ref: "Section",
       index: true,
     },
+    order: {
+      type: Number,
+      index: true,
+    },
+    shownInHome: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -57,7 +66,8 @@ const CardSchema = new mongoose.Schema(
 );
 
 CardSchema.pre("find", function (next) {
-  this.sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
+  // Sort by order first (if exists), then by createdAt in ascending order
+  this.sort({ order: 1, createdAt: 1 });
   next();
 });
 

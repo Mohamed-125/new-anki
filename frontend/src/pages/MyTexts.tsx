@@ -7,22 +7,13 @@ import useModalsStates from "@/hooks/useModalsStates";
 import ItemCard from "@/components/ui/ItemCard";
 import { Text } from "lucide-react";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
-import useGetTexts from "@/hooks/useGetTexts";
-import useInfiniteScroll from "@/components/InfiniteScroll";
+import useGetTexts, { TextType } from "@/hooks/useGetTexts";
 import Search from "@/components/Search";
 import { useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";
 import InfiniteScroll from "@/components/InfiniteScroll";
 import ShareModal from "@/components/ShareModal";
-
-export type TextType = {
-  title: string;
-  content: string;
-  userId: string;
-  topicId?: string;
-  defaultCollectionId: string | undefined;
-};
 
 const MyTexts = () => {
   const [query, setQuery] = useState("");
@@ -100,6 +91,7 @@ const MyTexts = () => {
           fetchNextPage={fetchNextPage}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
+          loadingElement={<CollectionSkeleton />}
           className="grid gap-4 grid-container"
         >
           {texts?.map((text) => {
@@ -122,7 +114,6 @@ const MyTexts = () => {
               />
             );
           })}
-          {isLoading && <CollectionSkeleton />}
         </InfiniteScroll>
       </div>
     </div>

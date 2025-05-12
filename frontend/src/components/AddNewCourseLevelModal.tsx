@@ -120,7 +120,7 @@ const AddNewcourseLevelModal = ({
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsOpen}
       isOpen={isOpen}
-      className="w-full max-w-lg"
+      className="w-full max-w-lg md:max-w-none"
     >
       <Modal.Header
         setIsOpen={setIsOpen}

@@ -13,7 +13,6 @@ import AddNewCollectionModal from "../components/AddNewCollectionModal.tsx";
 import Collection from "../components/Collection.tsx";
 import MoveCollectionModal from "../components/MoveCollectionModal.tsx";
 import { CollectionType } from "@/hooks/useGetCollections.tsx";
-import useInfiniteScroll from "@/components/InfiniteScroll.tsx";
 import CardsSkeleton from "@/components/CardsSkeleton.tsx";
 import Search from "@/components/Search.tsx";
 import useModalsStates from "@/hooks/useModalsStates.tsx";
@@ -21,6 +20,7 @@ import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollec
 import useGetCollectionById from "@/hooks/useGetCollectionById.tsx";
 import InfiniteScroll from "@/components/InfiniteScroll.tsx";
 import useToasts from "@/hooks/useToasts.tsx";
+import ExportJsonModal from "@/components/ExportJsonModal";
 
 const CollectionPage = React.memo(function CollectionPage({}) {
   const location = useLocation();
@@ -137,9 +137,11 @@ const CollectionPage = React.memo(function CollectionPage({}) {
           />
           <AddNewCollectionModal />
           <AddCardModal collectionId={collection?._id} />
+          <ExportJsonModal />
         </>
         {selectedItems.length > 0 && (
           <SelectedItemsController
+            allItems={collectionCards?.map((card) => card._id)}
             isItemsCards={moving === "cards" && true}
             isItemsCollections={moving === "collections" && true}
             moving={moving}
@@ -176,6 +178,65 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                                   📚 Study Now
                                 </span>
                               </Link>
+                            </Button>
+                            <Button
+                              variant="primary-outline"
+                              className="flex gap-2 items-center hover:bg-blue-50"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(
+                                    `/api/collections/${collection?._id}/cards`
+                                  );
+                                  if (!response.ok)
+                                    throw new Error("Failed to fetch cards");
+                                  const allCards = await response.json();
+
+                                  const cardsJson = {
+                                    cards: allCards.map((card) => ({
+                                      front: card.front,
+                                      back: card.back,
+                                      content: card.content || "",
+                                    })),
+                                  };
+                                  const jsonStr = JSON.stringify(
+                                    cardsJson,
+                                    null,
+                                    2
+                                  );
+
+                                  await navigator.clipboard.writeText(jsonStr);
+                                  addToast(
+                                    "All cards JSON copied to clipboard!",
+                                    "success"
+                                  );
+                                } catch (error) {
+                                  console.error("Error copying cards:", error);
+                                  // Show modal with JSON content for manual copying if available
+                                  if (collectionCards) {
+                                    const fallbackJson = {
+                                      cards: collectionCards.map((card) => ({
+                                        front: card.front,
+                                        back: card.back,
+                                        content: card.content || "",
+                                      })),
+                                    };
+                                    setDefaultValues({
+                                      exportJson: JSON.stringify(
+                                        fallbackJson,
+                                        null,
+                                        2
+                                      ),
+                                      isExportModalOpen: true,
+                                    });
+                                  } else {
+                                    addToast("Failed to copy cards", "error");
+                                  }
+                                }
+                              }}
+                            >
+                              <span className="flex gap-2 items-center">
+                                📋 Copy Cards JSON
+                              </span>
                             </Button>
                             <Button
                               className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
@@ -279,7 +340,6 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                     loadingElement={<CardsSkeleton />}
                     fetchNextPage={fetchNextPage}
                     isFetchingNextPage={isFetchingNextPage}
-                    className=""
                   >
                     {memoizedCards}
                   </InfiniteScroll>

@@ -44,9 +44,12 @@ const Collection = ({ collection, sectionId, to }: CollectionProps) => {
 
   const editHandler = () => {
     setEditId(id);
+
+    console.log(collection);
     setDefaultValues({
       collectionName: collection?.name,
       collectionPublic: collection?.public,
+      collectionShowCardsInHome: collection?.showCardsInHome,
     });
     setIsCollectionModalOpen(true);
   };

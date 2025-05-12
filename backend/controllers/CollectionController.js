@@ -9,6 +9,7 @@ module.exports.createCollection = async (req, res, next) => {
     parentCollectionId,
     language,
     sectionId,
+    showCardsInHome = true,
   } = req.body;
 
   if (!name)
@@ -21,6 +22,7 @@ module.exports.createCollection = async (req, res, next) => {
       parentCollectionId,
       language,
       sectionId,
+      showCardsInHome,
       userId: sectionId ? undefined : req.user?._id,
     };
 
@@ -67,6 +69,7 @@ module.exports.forkCollection = async (req, res) => {
         language: collection.language,
         forkedFrom: collection._id,
         parentCollectionId: parentId,
+        showCardsInHome: true,
       });
 
       await newCollection.save();
@@ -128,6 +131,18 @@ module.exports.getCollections = async (req, res, next) => {
   const { sectionId, searchQuery, public, page = 0, all, language } = req.query;
   const limit = 10; // Number of items per page
   const query = {};
+
+  // Update collections without showCardsInHome field
+  const updatedCollections = await CollectionModel.updateMany(
+    { showCardsInHome: { $exists: false } },
+    { $set: { showCardsInHome: true } }
+  );
+
+  // Update cards without shownInHome field
+  const updatedCards = await CardModel.updateMany(
+    { shownInHome: { $exists: false } },
+    { $set: { shownInHome: true } }
+  );
 
   if (language) query.language = language;
   if (sectionId) {
@@ -202,19 +217,27 @@ module.exports.getCollection = async (req, res, next) => {
   }
 };
 module.exports.updateCollection = async (req, res, next) => {
-  const { name, cards, public, parentCollectionId } = req.body;
+  const { name, cards, public, parentCollectionId, showCardsInHome } = req.body;
 
-  console.log(req.body);
   try {
-    const updateCollection = await CollectionModel.findByIdAndUpdate(
+    // Update the collection
+    const updatedCollection = await CollectionModel.findByIdAndUpdate(
       { _id: req.params.id },
-      { name, cards, public, parentCollectionId },
-      {
-        new: true,
-      }
+      { name, cards, public, parentCollectionId, showCardsInHome },
+      { new: true }
     );
-    res.status(200).send(updateCollection);
+
+    // If showCardsInHome was changed, update all cards in this collection
+    if (showCardsInHome !== undefined) {
+      await CardModel.updateMany(
+        { collectionId: req.params.id },
+        { shownInHome: showCardsInHome }
+      );
+    }
+
+    res.status(200).send(updatedCollection);
   } catch (err) {
+    console.error("Update collection error:", err);
     res.status(400).send(err);
   }
 };
@@ -238,5 +261,17 @@ module.exports.batchDelete = async (req, res) => {
     res.status(200).send({ message: "collections deleted successfully" });
   } catch (error) {
     res.status(500).send({ error: "Error deleting collections" });
+  }
+};
+
+module.exports.getAllCollectionCards = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const cards = await CardModel.find({ collectionId: id }).lean();
+    res.status(200).send(cards);
+  } catch (err) {
+    console.error("Error getting all collection cards:", err);
+    res.status(500).send({ error: "Error fetching collection cards" });
   }
 };

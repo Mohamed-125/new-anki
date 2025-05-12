@@ -295,10 +295,6 @@ router.get("/get-videos", async (req, res) => {
       .skip(skipNumber)
       .limit(limit);
 
-    const allVideos = await VideoModel.find(query, {
-      defaultCaptionData: 0,
-    }).sort({ createdAt: -1 });
-
     res.send({ videos, videosCount, nextPage });
   } catch (err) {
     res.status(500).json({ error: err.message });

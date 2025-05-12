@@ -33,7 +33,6 @@ import Library from "./pages/Library.tsx";
 import PageNotFound from "./pages/PageNotFound.tsx";
 import StudyCards from "./pages/StudyCards.tsx";
 import Congrats from "./pages/Congrats.tsx";
-import ProtectedRoute from "./components/ProtectedRoute";
 import BreadCramps from "./components/BreadCramps.tsx";
 import Profile from "./pages/Profile.tsx";
 import AddNewNote from "./pages/AddNewNote.tsx";
@@ -54,6 +53,10 @@ import AdminTopic from "./pages/Admin/AdminTopic.tsx";
 import LandingPage from "./pages/LandingPage.tsx";
 import AdminChannel from "./pages/AdminChannel.tsx";
 import Channel from "./pages/Channel.tsx";
+import AdminListPage from "./pages/AdminList.tsx";
+import AdminList from "./pages/AdminList.tsx";
+import ListPage from "./pages/ListPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
@@ -119,6 +122,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Channel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/lists/:listId"
+                element={
+                  <ProtectedRoute>
+                    <ListPage />
                   </ProtectedRoute>
                 }
               />
@@ -244,15 +255,6 @@ function App() {
               />
 
               <Route
-                path="/study-cards/:collectionId?"
-                element={
-                  <ProtectedRoute>
-                    <StudyCards />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
                 path="/congrats"
                 element={
                   <ProtectedRoute>
@@ -327,12 +329,26 @@ function App() {
                   path="topics/:topicId/:channelId"
                   element={<AdminChannel />}
                 />
+
+                <Route
+                  path="topics/:topicId/lists/:listId"
+                  element={<AdminList />}
+                />
               </Route>
 
               <Route path="/landing" element={<LandingPage />} />
               <Route
                 path="*"
                 element={selectedLearningLanguage ? <PageNotFound /> : ""}
+              />
+
+              <Route
+                path="/study-cards/:collectionId?"
+                element={
+                  <ProtectedRoute>
+                    <StudyCards />
+                  </ProtectedRoute>
+                }
               />
             </Routes>
             <ChatComponent />

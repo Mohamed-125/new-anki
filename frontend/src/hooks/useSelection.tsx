@@ -3,8 +3,10 @@ import { useEffect, useState, useCallback, useRef } from "react";
 const useSelection = () => {
   const [selectionData, setSelectionData] = useState<{
     text: string;
+    selection?: Selection | null;
   }>({
     text: "",
+    selection: null,
   });
 
   const handleSelection = useCallback((e: Event) => {
@@ -43,6 +45,7 @@ const useSelection = () => {
     setSelectionData((prev) => {
       return {
         text: selected.toString(),
+        selection: selected,
       };
     });
   }, []);
@@ -61,7 +64,7 @@ const useSelection = () => {
     };
   }, [handleSelection]);
 
-  return { selectionData };
+  return { selectionData, setSelectionData };
 };
 
 export default useSelection;

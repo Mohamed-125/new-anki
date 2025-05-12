@@ -12,6 +12,7 @@ export type CollectionType = {
   name: string;
   slug: string;
   userId: string;
+  showCardsInHome: boolean;
   public: boolean;
   childCollectionId: string;
   _id: string;

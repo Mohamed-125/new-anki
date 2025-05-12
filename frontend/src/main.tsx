@@ -9,6 +9,7 @@ import ToastContext from "./context/ToastContext.js";
 import StatesContext from "./context/StatesContext.js";
 import { LanguageProvider } from "./context/SelectedLearningLanguageContext.js";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { PostHogProvider } from "posthog-js/react";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
@@ -56,19 +57,27 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <LanguageProvider>
-        <QueryClientProvider client={queryClient}>
-          <>
-            <ToastContext>
-              <StatesContext>
-                <Toasts />
-                <App />
-              </StatesContext>
-            </ToastContext>
-          </>
-        </QueryClientProvider>
-      </LanguageProvider>
-    </GoogleOAuthProvider>
+    <PostHogProvider
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+      options={{
+        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+        debug: import.meta.env.MODE === "development",
+      }}
+    >
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        <LanguageProvider>
+          <QueryClientProvider client={queryClient}>
+            <>
+              <ToastContext>
+                <StatesContext>
+                  <Toasts />
+                  <App />
+                </StatesContext>
+              </ToastContext>
+            </>
+          </QueryClientProvider>
+        </LanguageProvider>
+      </GoogleOAuthProvider>
+    </PostHogProvider>
   </StrictMode>
 );

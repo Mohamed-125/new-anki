@@ -85,4 +85,4 @@ const ShareModal = ({ sharing }: { sharing: string }) => {
   );
 };
 
-export default ShareModal;
+export default React.memo(ShareModal);

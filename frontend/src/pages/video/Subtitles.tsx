@@ -57,16 +57,14 @@ const Subtitles = memo(function ({
     <div className="relative">
       <Button
         variant="primary"
-        className="absolute text-2xl rounded-full top-[-10px] right-5 z-50"
+        className="absolute text-2xl rounded-full top-[-10px] right-5 z-40"
         onClick={scrollToSubtitle}
       >
         <MdVerticalAlignCenter />
       </Button>
-      <div
-        id="captions-div"
-        className="flex     gap-1   bg-white rounded-r-md  h-[85vh] overflow-hidden"
-      >
+      <div className="flex gap-1   bg-white rounded-r-md  h-[85vh] overflow-hidden">
         <div
+          id="captions-div"
           ref={subtitleContainerRef}
           className="flex overflow-auto flex-col px-3 w-full select-text grow"
         >

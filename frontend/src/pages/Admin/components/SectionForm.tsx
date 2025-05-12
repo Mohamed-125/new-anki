@@ -62,18 +62,18 @@ const SectionForm: React.FC<SectionFormProps> = ({
   useEffect(() => {
     if (section) {
       setContent(section.content?.text);
+      setSectionType(section.type);
+      setResources(section.content?.resources || []);
     }
   }, [section]);
-
-  console.log(section);
 
   return (
     <Form onSubmit={onSubmit} className="pt-3">
       <div className="flex gap-2 items-center mb-7">
-        <h4 className="font-bold">Type: </h4>
+        <h4 className="font-bold">Type: {section.type} </h4>
         <Form.Select
           className="mb-0"
-          defaultValue={section?.type || "text"}
+          defaultValue={section.type}
           onChange={(e) => setSectionType(e.target.value)}
         >
           <option value={"text"}>Text</option>

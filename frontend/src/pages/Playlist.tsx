@@ -1,10 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import Loading from "../components/Loading";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import Button from "../components/Button";
-import AddVideoModal from "../components/AddVideoModal";
 import Search from "../components/Search";
 import VideoCard from "../components/VideoCard";
 import SelectedItemsController from "../components/SelectedItemsController";
@@ -12,12 +10,10 @@ import ChangeItemsParent from "../components/ChangeItemsParent.tsx";
 import { CaptionType } from "./video/Video.tsx";
 import useDebounce from "@/hooks/useDebounce.tsx";
 import useGetVideos from "@/hooks/useGetVideos.tsx";
-import useInfiniteScroll from "@/components/InfiniteScroll.tsx";
 import MoveVideoModal from "@/components/MoveVideoModal.tsx";
-import ItemCard from "@/components/ui/ItemCard.tsx";
-import { MdOutlinePlaylistPlay } from "react-icons/md";
 import useToasts from "@/hooks/useToasts.tsx";
 import VideoSkeleton from "@/components/VideoSkeleton.tsx";
+import InfiniteScroll from "@/components/InfiniteScroll.tsx";
 
 const Playlist = () => {
   const { id: playlistId } = useParams();
@@ -52,7 +48,6 @@ const Playlist = () => {
     isFetchingNextPage,
   } = useGetVideos({ query: debouncedQuery, playlistId });
 
-  useInfiniteScroll(fetchNextPage, hasNextPage);
   const [isOpen, setIsOpen] = useState(false);
 
   const { addToast } = useToasts();
@@ -64,6 +59,7 @@ const Playlist = () => {
         queryClient.invalidateQueries({ queryKey: ["playlists"] });
         toast.setToastData({
           title: "Playlist deleted successfully!",
+          type: "success",
           isCompleted: true,
         });
       })
@@ -105,7 +101,13 @@ const Playlist = () => {
             Add new Video
           </Button> */}
 
-          <div className="grid gap-3 grid-container videos-container">
+          <InfiniteScroll
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            loadingElement={<VideoSkeleton />}
+            className="grid gap-3 grid-container videos-container"
+          >
             {videos?.map((video) => (
               <VideoCard
                 moveVideoHandler={() => moveVideosHandler(video._id)}
@@ -113,8 +115,7 @@ const Playlist = () => {
                 video={video}
               />
             ))}
-            {(isInitialLoading || isFetchingNextPage) && <VideoSkeleton />}
-          </div>
+          </InfiniteScroll>
         </>
       </div>
     </div>

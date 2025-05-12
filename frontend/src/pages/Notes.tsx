@@ -7,7 +7,6 @@ import { StickyNote } from "lucide-react";
 import ItemCard from "@/components/ui/ItemCard";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useGetNotes from "@/hooks/useGetNotes";
-import useInfiniteScroll from "@/components/InfiniteScroll";
 import Search from "@/components/Search";
 import useDebounce from "@/hooks/useDebounce";
 import useToasts from "@/hooks/useToasts";
@@ -15,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import ShareModal from "@/components/ShareModal";
 import useModalsStates from "@/hooks/useModalsStates";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 const Notes = () => {
   const [query, setQuery] = useState("");
@@ -40,6 +40,7 @@ const Notes = () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       toast.setToastData({
         title: "Note deleted successfully!",
+        type: "success",
         isCompleted: true,
       });
     } catch (err) {
@@ -47,7 +48,6 @@ const Notes = () => {
     }
   };
 
-  useInfiniteScroll(fetchNextPage, hasNextPage);
   const { setIsShareModalOpen, setShareItemId, setShareItemName } =
     useModalsStates();
 
@@ -73,7 +73,13 @@ const Notes = () => {
 
         <SelectedItemsController isItemsNotes={true} />
 
-        <div className="grid gap-4 grid-container">
+        <InfiniteScroll
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          loadingElement={<CollectionSkeleton />}
+          hasNextPage={hasNextPage}
+          className="grid gap-4 grid-container"
+        >
           {notes?.map((note) => {
             const shareHandler = () => {
               setIsShareModalOpen(true);
@@ -99,9 +105,7 @@ const Notes = () => {
               </div>
             );
           })}
-
-          {(isInitialLoading || isFetchingNextPage) && <CollectionSkeleton />}
-        </div>
+        </InfiniteScroll>
       </>
     </div>
   );

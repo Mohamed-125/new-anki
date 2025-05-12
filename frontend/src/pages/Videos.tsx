@@ -1,15 +1,14 @@
-import React, { useState } from "react";
-import AddVideoModal from "../components/AddVideoModal";
-import Button from "../components/Button";
+import { useState } from "react";
+
 import VideoCard from "../components/VideoCard";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
 import VideoSkeleton from "@/components/VideoSkeleton";
 import useGetVideos from "@/hooks/useGetVideos";
 import useDebounce from "@/hooks/useDebounce";
-import useInfiniteScroll from "@/components/InfiniteScroll";
 import MoveVideoModal from "@/components/MoveVideoModal";
 import ShareModal from "@/components/ShareModal";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 const Videos = () => {
   const [query, setQuery] = useState("");
@@ -24,7 +23,6 @@ const Videos = () => {
     isFetchingNextPage,
   } = useGetVideos({ query: debouncedQuery });
 
-  useInfiniteScroll(fetchNextPage, hasNextPage);
   const [isOpen, setIsOpen] = useState(false);
   const [editId, setEditId] = useState("");
 
@@ -61,7 +59,13 @@ const Videos = () => {
             Add new Video
           </Button> */}
 
-          <div className="grid gap-3 grid-container videos-container">
+          <InfiniteScroll
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            loadingElement={<VideoSkeleton />}
+            className="grid gap-3 grid-container videos-container"
+          >
             {videos?.map((video) => {
               return (
                 <VideoCard
@@ -71,8 +75,7 @@ const Videos = () => {
                 />
               );
             })}
-            {(isInitialLoading || isFetchingNextPage) && <VideoSkeleton />}
-          </div>
+          </InfiniteScroll>
         </>
       </div>
     </div>

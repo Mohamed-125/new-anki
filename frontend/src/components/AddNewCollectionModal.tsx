@@ -79,6 +79,7 @@ const AddNewCollectionModal = ({
         name,
         parentCollectionId: parentCollectionId ? parentCollectionId : undefined,
         public: publicCollection !== null,
+        showCardsInHome: formData.get("show_cards_home") !== null,
         language: selectedLearningLanguage,
         sectionId: defaultValues?.sectionId || null,
       };
@@ -110,6 +111,7 @@ const AddNewCollectionModal = ({
       name,
       parentCollectionId: isSubCollection ? undefined : null,
       public: publicCollection !== null,
+      showCardsInHome: formData.get("show_cards_home") !== null,
     };
     const toast = addToast("Adding Collection...", "promise");
 
@@ -140,13 +142,20 @@ const AddNewCollectionModal = ({
     });
   };
 
+  console.log(
+    defaultValues?.collectionShowCardsInHome === undefined ||
+      defaultValues?.collectionShowCardsInHome === null
+      ? true
+      : defaultValues.collectionShowCardsInHome
+  );
+
   return (
     <Modal
       loading={isPending || isLoading}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsCollectionModalOpen}
       isOpen={isCollectionModalOpen}
-      className="w-full max-w-lg"
+      className="w-full max-w-lg md:max-w-none"
     >
       <Modal.Header
         setIsOpen={setIsCollectionModalOpen}
@@ -177,23 +186,42 @@ const AddNewCollectionModal = ({
               required
             />
           </Form.Field>
-          <Form.Field className="flex gap-3 items-center">
-            <div className="flex relative items-center">
-              <input
-                id="collection_public"
-                name="collection_public"
-                defaultChecked={defaultValues?.isCollectionPublic}
-                type="checkbox"
-                className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-primary"
-              />
-              <label
-                htmlFor="collection_public"
-                className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
-              >
-                Make Collection Public
-              </label>
-            </div>
-          </Form.Field>
+          <div className="space-y-3">
+            <Form.Field className="flex gap-3 items-center">
+              <div className="flex relative items-center">
+                <input
+                  id="collection_public"
+                  name="collection_public"
+                  defaultChecked={defaultValues?.isCollectionPublic}
+                  type="checkbox"
+                  className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-primary"
+                />
+                <label
+                  htmlFor="collection_public"
+                  className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  Make Collection Public
+                </label>
+              </div>
+            </Form.Field>
+            <Form.Field className="flex gap-3 items-center">
+              <div className="flex relative items-center">
+                <input
+                  id="show_cards_home"
+                  name="show_cards_home"
+                  defaultChecked={defaultValues?.collectionShowCardsInHome}
+                  type="checkbox"
+                  className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-primary"
+                />
+                <label
+                  htmlFor="show_cards_home"
+                  className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  Show Cards in Home Page
+                </label>
+              </div>
+            </Form.Field>
+          </div>
         </Form.FieldsContainer>
         <Modal.Footer className="flex gap-3 justify-end pt-4 border-t border-gray-100">
           <Button

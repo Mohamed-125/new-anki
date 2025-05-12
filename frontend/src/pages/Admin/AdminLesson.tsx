@@ -1,4 +1,5 @@
 import React, { ReactNode, useEffect, useState } from "react";
+import GrammarToggleButton from "@/components/GrammarToggleButton";
 import { useParams } from "react-router-dom";
 import { ChevronDown, ChevronUp, PlusIcon, Trash } from "lucide-react";
 import Button from "@/components/Button";
@@ -14,6 +15,7 @@ import useGetLesson from "@/hooks/Queries/useGetLesson";
 import useGetSections from "@/hooks/Queries/useGetSections";
 import useToasts from "@/hooks/useToasts";
 import AdminSectionComponent from "./components/AdminSectionComponent";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 const AdminLesson = () => {
   const { lessonId, courseId } = useParams();
@@ -36,7 +38,8 @@ const AdminLesson = () => {
 
   const { data: lesson, isLoading } = useGetLesson(lessonId as string);
 
-  const { sections } = useGetSections(lessonId as string);
+  const { sections, fetchNextPage, isFetchingNextPage, hasNextPage } =
+    useGetSections(lessonId as string);
 
   const [arrangedSections, setArrangedSections] = useState(sections || []);
 
@@ -78,7 +81,6 @@ const AdminLesson = () => {
     <div>
       {lesson ? (
         <div>
-          trst
           <AddNewSectionModal
             isOpen={isSectionModalOpen}
             setDefaultValues={setDefaultValues}
@@ -101,17 +103,25 @@ const AdminLesson = () => {
                   {lesson.name}
                 </h1>
                 <p className="text-gray-600">{lesson.description}</p>
-                <span
-                  className={`inline-block mt-2 text-sm font-medium px-2 py-0.5 rounded-full ${
-                    lesson.type === "exam"
-                      ? "text-orange-700 bg-orange-100"
-                      : lesson.type === "revision"
-                      ? "text-blue-700 bg-blue-100"
-                      : "text-green-700 bg-green-100"
-                  }`}
-                >
-                  {lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)}
-                </span>
+                <div className="flex gap-3 items-center">
+                  <span
+                    className={`inline-block mt-2 text-sm font-medium px-2 py-0.5 rounded-full ${
+                      lesson.type === "exam"
+                        ? "text-orange-700 bg-orange-100"
+                        : lesson.type === "revision"
+                        ? "text-blue-700 bg-blue-100"
+                        : lesson.type === "grammar"
+                        ? "text-purple-700 bg-purple-100"
+                        : "text-green-700 bg-green-100"
+                    }`}
+                  >
+                    {lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)}
+                  </span>
+                  <GrammarToggleButton
+                    lessonId={lessonId ?? ""}
+                    currentType={lesson.type}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -127,7 +137,13 @@ const AdminLesson = () => {
               Add new section
             </Button>
           </div>
-          <div className="">
+          <InfiniteScroll
+            fetchNextPage={fetchNextPage}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            loadingElement={"loading..."}
+            className=""
+          >
             {arrangedSections?.map((section, index) => {
               return (
                 <AdminSectionComponent
@@ -149,7 +165,7 @@ const AdminLesson = () => {
                 />
               );
             })}
-          </div>
+          </InfiniteScroll>
         </div>
       ) : (
         <p>lesson not found</p>

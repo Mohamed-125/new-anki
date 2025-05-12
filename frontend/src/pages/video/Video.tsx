@@ -20,6 +20,7 @@ import MoveCollectionModal from "@/components/MoveCollectionModal";
 import SelectedItemsController from "@/components/SelectedItemsController";
 import ReactYoutubeComponent from "./ReactYoutubeComponent";
 import Subtitles from "./Subtitles";
+import { FaCheckCircle } from "react-icons/fa";
 
 export type CaptionType = {
   duration: number;
@@ -29,6 +30,7 @@ export type CaptionType = {
 
 const Video = () => {
   const id = useParams().id;
+  const [isCompleted, setIsCompleted] = useState(false);
   const {
     data: video,
     isLoading,
@@ -61,7 +63,9 @@ const Video = () => {
   const subtitleContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setCaption(video?.defaultCaptionData.transcript);
+    if (video) {
+      setCaption(video?.defaultCaptionData?.transcript);
+    }
   }, [video]);
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === video?.userId;
@@ -79,6 +83,29 @@ const Video = () => {
     }
   }, [video, user, isSameUser]);
 
+  const { data: userList } = useQuery({
+    queryKey: ["userList", video?.listId],
+    queryFn: () =>
+      axios.get(`/list/user/${video?.listId}`).then((res) => res.data),
+    enabled: Boolean(video?.listId),
+  });
+
+  useEffect(() => {
+    if (userList?.completedVideos) {
+      setIsCompleted(userList.completedVideos.includes(id));
+    }
+  }, [userList, id]);
+
+  const toggleComplete = async () => {
+    try {
+      await axios.post(`/list/user/${video?.listId}/complete-video/${id}`);
+      setIsCompleted(!isCompleted);
+      queryClient.invalidateQueries({ queryKey: ["userList"] });
+    } catch (error) {
+      console.error("Error toggling video completion:", error);
+    }
+  };
+
   if (isLoading) {
     return <Loading />;
   }
@@ -86,6 +113,22 @@ const Video = () => {
   return (
     <div className="container flex gap-2 videoContainer">
       <div className="w-full grow">
+        <div className="flex gap-2 justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">{video?.title}</h2>
+        </div>
+        <button
+          onClick={toggleComplete}
+          className={`flex mb-5 items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            isCompleted
+              ? "text-green-600 bg-green-100"
+              : "text-gray-600 bg-gray-100 hover:bg-gray-200"
+          }`}
+        >
+          <FaCheckCircle
+            className={`${isCompleted ? "text-green-600" : "text-gray-400"}`}
+          />
+          {isCompleted ? "Completed" : "Mark as Complete"}
+        </button>
         {/* add Modal */}
         {videoCards && (
           <>

@@ -31,7 +31,11 @@ const VideoSchema = new mongoose.Schema(
       ref: "User",
       index: true,
     },
-    listId: { type: String, index: true },
+    listId: {
+      type: mongoose.Types.ObjectId,
+      ref: "List",
+      index: true,
+    },
     lessonId: { type: String, index: true },
     topicOrder: {
       type: Number,
@@ -55,6 +59,10 @@ const VideoSchema = new mongoose.Schema(
     language: {
       type: String,
       index: true,
+    },
+    listOrder: {
+      type: Number,
+      default: 0,
     },
   },
   {

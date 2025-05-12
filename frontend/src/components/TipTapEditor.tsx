@@ -1,6 +1,49 @@
 import { Editor, EditorContent, isActive, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import React, { useEffect, useState } from "react";
+import { Extension } from "@tiptap/core";
+
+// Custom extension to preserve HTML content
+const PreserveHtmlExtension = Extension.create({
+  name: "preserveHtml",
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ["paragraph", "heading"],
+        attributes: {
+          class: {
+            default: null,
+            parseHTML: (element) => element.getAttribute("class"),
+            renderHTML: (attributes) => {
+              if (!attributes.class) return {};
+              return { class: attributes.class };
+            },
+          },
+          "data-id": {
+            default: null,
+            parseHTML: (element) => element.getAttribute("data-id"),
+            renderHTML: (attributes) => {
+              if (!attributes["data-id"]) return {};
+              return { "data-id": attributes["data-id"] };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addPasteRules() {
+    return [
+      {
+        find: /(<span class="highlight"[^>]*>.*?<\/span>)/g,
+        handler: ({ match, chain }) => {
+          chain().insertContent(match[0]);
+        },
+      },
+    ];
+  },
+});
 
 import {
   Bold,
@@ -27,6 +70,7 @@ import {
   ArrowRight,
   ArrowLeft,
   X,
+  Link as LinkIcon,
 } from "lucide-react";
 
 import Document from "@tiptap/extension-document";
@@ -41,6 +85,20 @@ import Text from "@tiptap/extension-text";
 const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
   if (!editor) return null;
   const [color, setColor] = useState("#000000");
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+
+  const addLink = () => {
+    if (linkUrl) {
+      editor.chain().focus().setLink({ href: linkUrl }).run();
+      setLinkUrl("");
+      setShowLinkDialog(false);
+    }
+  };
+
+  const removeLink = () => {
+    editor.chain().focus().unsetLink().run();
+  };
 
   // Function to add an image from a URL
   const addImageFromUrl = () => {
@@ -192,6 +250,52 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
       >
         <Code size={18} />
       </button>
+      <button
+        style={{ perspective: "1px" }}
+        type="button"
+        onClick={() => {
+          const previousUrl = editor.getAttributes("link").href;
+          setLinkUrl(previousUrl || "");
+          setShowLinkDialog(true);
+        }}
+        className={buttonClass(editor.isActive("link"))}
+        title="Add Link"
+      >
+        <LinkIcon size={18} />
+      </button>
+      {showLinkDialog && (
+        <div className="absolute z-50 p-4 bg-white rounded-lg border border-gray-200 shadow-lg">
+          <input
+            type="url"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="Enter URL"
+            className="p-2 mb-2 w-full rounded border"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={addLink}
+              className="px-3 py-1 text-white bg-blue-500 rounded hover:bg-blue-600"
+            >
+              Add
+            </button>
+            {editor.isActive("link") && (
+              <button
+                onClick={removeLink}
+                className="px-3 py-1 text-white bg-red-500 rounded hover:bg-red-600"
+              >
+                Remove
+              </button>
+            )}
+            <button
+              onClick={() => setShowLinkDialog(false)}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <button
         style={{ perspective: "1px" }}
         type="button"
@@ -442,7 +546,13 @@ const MenuBar = function MenuBar({ editor }: { editor: Editor | null }) {
   );
 };
 
-export default ({ editor = null }: { editor: Editor | null }) => {
+export default ({
+  editor = null,
+  onClick,
+}: {
+  editor: Editor | null;
+  onClick: any;
+}) => {
   return (
     <div
       style={
@@ -457,10 +567,47 @@ export default ({ editor = null }: { editor: Editor | null }) => {
       className="overflow-hidden rounded-md border shadow-md tiptap-editor"
     >
       {editor?.isEditable && <MenuBar editor={editor} />}
-      <EditorContent
-        editor={editor}
-        className=" max-h-[600px]  min-h-[200px] border-t overflow-auto  focus:ring-2 focus:ring-blue-400"
-      />
+      <div className="overflow-x-auto">
+        <EditorContent
+          editor={editor}
+          onClick={onClick}
+          className="max-h-[600px] min-h-[200px] border-t overflow-y-auto focus:ring-2 focus:ring-blue-400"
+          style={
+            {
+              "--table-width": "100%",
+              "--cell-min-width": "100px",
+            } as React.CSSProperties
+          }
+        />
+      </div>
+      <style jsx global>{`
+        .ProseMirror table {
+          width: var(--table-width);
+          border-collapse: collapse;
+          margin: 0;
+          overflow: hidden;
+          table-layout: fixed;
+        }
+        .ProseMirror td,
+        .ProseMirror th {
+          min-width: var(--cell-min-width);
+          border: 1px solid #ced4da;
+          padding: 0.5rem;
+          position: relative;
+          vertical-align: top;
+          box-sizing: border-box;
+          word-wrap: break-word;
+        }
+        @media (max-width: 640px) {
+          .ProseMirror table {
+            font-size: 0.875rem;
+          }
+          .ProseMirror td,
+          .ProseMirror th {
+            padding: 0.375rem;
+          }
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,26 +1,13 @@
-import axios from "axios";
-import React, {
-  FormEvent,
-  useContext,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useMemo, useState } from "react";
 import Card from "../components/Card";
 import AddCardModal from "../components/AddCardModal";
 import Button from "../components/Button";
-import Loading from "../components/Loading";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
-import ChangeItemsParent from "../components/ChangeItemsParent";
-import useGetCards, { CardType } from "../hooks/useGetCards";
+import useGetCards from "../hooks/useGetCards";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import MoveCollectionModal from "../components/MoveCollectionModal";
-import { toastContext } from "../context/ToastContext";
-import useToasts from "../hooks/useToasts";
-import useInfiniteScroll from "@/components/InfiniteScroll";
 import CardsSkeleton from "@/components/CardsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import Form from "@/components/Form";
@@ -86,31 +73,29 @@ const Home = () => {
           Create a new card
         </Button>
       </div>
-      {isIntialLoading || !userCards ? (
-        <CardsSkeleton />
-      ) : (
-        <>
-          {userCards.length ? (
-            <InfiniteScroll
-              fetchNextPage={fetchNextPage}
-              hasNextPage={hasNextPage}
-              loadingElement={<CardsSkeleton />}
+
+      <>
+        {userCards?.length ? (
+          <InfiniteScroll
+            fetchNextPage={fetchNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            loadingElement={<CardsSkeleton />}
+          >
+            {CardsJSX}
+          </InfiniteScroll>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh]">
+            <Button
+              center={true}
+              className="mt-11"
+              onClick={() => states.setIsAddCardModalOpen(true)}
             >
-              {CardsJSX}
-            </InfiniteScroll>
-          ) : (
-            <div className="flex flex-col items-center justify-center min-h-[40vh]">
-              <Button
-                center={true}
-                className="mt-11"
-                onClick={() => states.setIsAddCardModalOpen(true)}
-              >
-                There is not any card yet. Click to Add a new card
-              </Button>
-            </div>
-          )}
-        </>
-      )}
+              There is not any card yet. Click to Add a new card
+            </Button>
+          </div>
+        )}
+      </>
     </div>
   );
 };

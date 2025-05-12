@@ -29,12 +29,14 @@ const useGetCards = ({
   collectionId,
   videoId,
   study,
+  difficultyFilter,
 }: {
   enabled?: boolean;
   query?: string;
   collectionId?: string;
   videoId?: string;
   study?: boolean;
+  difficultyFilter?: string;
 } = {}) => {
   const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey: any[] = ["cards"];
@@ -49,6 +51,8 @@ const useGetCards = ({
     queryKey.push(collectionId);
   } else if (videoId) {
     queryKey.push(videoId);
+  } else if (difficultyFilter) {
+    queryKey.push(difficultyFilter);
   }
 
   if (selectedLearningLanguage) {
@@ -77,6 +81,11 @@ const useGetCards = ({
       if (study) url += `&study=true`;
       if (selectedLearningLanguage)
         url += `&language=${selectedLearningLanguage}`;
+
+      // Add difficulty filter parameter if provided
+      if (difficultyFilter && difficultyFilter !== "all") {
+        url += `&difficulty=${difficultyFilter}`;
+      }
 
       const cards = await axios.get(url, { signal });
 

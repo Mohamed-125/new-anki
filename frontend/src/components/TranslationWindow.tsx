@@ -19,12 +19,14 @@ import { twMerge } from "tailwind-merge";
 import { createPortal } from "react-dom";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
-import { languageCodeMap } from "../languages";
+import { languageCodeMap } from "../../../languages";
 import { useWindowSize } from "react-use";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/Drawer";
 import useToasts from "@/hooks/useToasts";
 import { error } from "console";
 import { fetchConjugations } from "../utils/conjugations";
+import useModalsStates from "@/hooks/useModalsStates";
+import { text } from "stream/consumers";
 
 const TranslationWindow = ({
   selectionData,
@@ -43,17 +45,19 @@ const TranslationWindow = ({
   setContent?: React.Dispatch<React.SetStateAction<string>>;
   isSameUser: boolean;
 }) => {
+  console.log("translation window rerendered");
   // const parent =
   //   selectionData?.ele?.parentElement?.parentElement?.parentElement;
   // const rect = parent.getBoundingClientRect();
   const [translatedText, setTranslatedText] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("en"); // Default to English
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
-  const [isTranslationBoxOpen, setIsTraslationBoxOpen] = useState(false);
   const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
   // useEffect(() => {
   //   setEleHeight(rect?.bottom - rect?.top);
   // }, []);
+
+  const { isTranslationBoxOpen, setIsTranslationBoxOpen } = useModalsStates();
 
   // Function to open Reverso Context in a popup window
   const [showReversoIframe, setShowReversoIframe] = useState(false);
@@ -85,30 +89,112 @@ const TranslationWindow = ({
     }
   };
 
-  console.log(conjugations);
+  console.log(selectionData);
+  const getContextString = useMemo(() => {
+    if (
+      !selectionData?.selection ||
+      !selectionData.text ||
+      !isTranslationBoxOpen
+    )
+      return "";
+
+    try {
+      let range = (selectionData.selection as Selection).getRangeAt(0);
+      let startNode = range.startContainer;
+      let endNode = range.endContainer;
+      // Normalize start and end to span parents
+      if (startNode?.nodeType === 3) {
+        startNode =
+          startNode.parentElement?.tagName === "H4"
+            ? startNode.nextSibling
+            : startNode.parentElement;
+      }
+      if (endNode?.nodeType === 3) {
+        endNode =
+          endNode.parentElement?.tagName === "H4"
+            ? endNode.nextSibling
+            : endNode.parentElement;
+      }
+
+      // Validate that endNode is a span with data-number
+      if (
+        !endNode ||
+        !(endNode instanceof HTMLSpanElement) ||
+        !endNode.dataset.number
+      ) {
+        console.warn("End node is not a valid span with data-number");
+        return;
+      }
+
+      // Get all spans
+      const allSpans = Array.from(
+        endNode.parentElement?.querySelectorAll("span[data-number]") || []
+      );
+
+      // Find index of the end span
+      const endIndex = allSpans.findIndex((el) => el === endNode);
+      const startIndex = allSpans.findIndex((el) => el === startNode);
+
+      // Get 20 before from start index and 20 after from **end index**
+      const before = allSpans.slice(Math.max(startIndex - 10, 0), startIndex);
+      const after = allSpans.slice(endIndex + 1, endIndex + 11);
+
+      const clean = (str: string) => str.replace(/[()]/g, "");
+
+      const beforeText = clean(before.map((el) => el.textContent).join(" "));
+      const afterText = clean(after.map((el) => el.textContent).join(" "));
+      const selectedText = clean(selectionData.text.replaceAll("\n", " "));
+
+      return `${beforeText} ((${selectedText})) ${afterText}`;
+    } catch (err) {
+      console.warn("Error getting context string:", err);
+      return selectionData.text;
+    }
+  }, [selectionData.selection, isTranslationBoxOpen]);
 
   useEffect(() => {
-    if (selectionData.text && targetLanguage && isTranslationBoxOpen) {
-      setIsTranslationLoading(true);
-      const text = selectionData.text.replaceAll("\n", " ");
-      axios
-        .post(`/translate?targetLanguage=${targetLanguage}`, { text })
-        .then((res) => {
-          setTranslatedText(res.data);
-        })
-        .catch((err) => {
-          console.log("translation error", err);
-        })
-        .finally(() => {
-          setIsTranslationLoading(false);
-        });
-    }
     if (!selectionData.text) {
-      setIsTraslationBoxOpen(false);
+      setIsTranslationBoxOpen(false);
+      return;
     }
-  }, [selectionData.text, isTranslationBoxOpen, targetLanguage]);
+
+    if (!targetLanguage || !isTranslationBoxOpen) return;
+
+    const contextString = getContextString;
+    if (!contextString) return;
+
+    setIsTranslationLoading(true);
+    const controller = new AbortController();
+
+    axios
+      .post(
+        `/translate?language=${selectedLearningLanguage}&targetLanguage=${targetLanguage}`,
+        { text: contextString },
+        { signal: controller.signal }
+      )
+      .then((res) => {
+        setTranslatedText(res.data.translation);
+      })
+      .catch((err) => {
+        if (!axios.isCancel(err)) {
+          console.error("Translation error:", err);
+        }
+      })
+      .finally(() => {
+        setIsTranslationLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [
+    selectionData.text,
+    targetLanguage,
+    isTranslationBoxOpen,
+    getContextString,
+    selectedLearningLanguage,
+  ]);
 
   const calculatePositionInText = useMemo(() => {
+    if (!selectionData?.text) return { top: "", left: "" };
     const textDiv = document.querySelector(".text-div")!;
     const subtitlesDiv = document.querySelector(".subtitles-div");
     const select = window.getSelection();
@@ -186,6 +272,7 @@ const TranslationWindow = ({
   }, [selectionData, isTranslationBoxOpen]);
 
   const calculatePositionInVideo = useMemo(() => {
+    if (!selectionData?.text) return { top: "", left: "" };
     const captionsDiv = document.getElementById("captions-div")!;
 
     if (!captionsDiv) return;
@@ -203,73 +290,62 @@ const TranslationWindow = ({
     )!;
 
     const range = select?.getRangeAt(0);
-
     const rect = range?.getClientRects()[range?.getClientRects().length - 1];
 
-    if (!translationContainer) return;
-    if (isTranslationBoxOpen) {
-      translationContainer.style.width = `80%`;
+    if (!translationContainer || !rect) return;
+
+    const captionsDivClientRect = captionsDiv?.getBoundingClientRect();
+    const containerRect = translationContainer.getBoundingClientRect();
+
+    // Set width based on state
+    translationContainer.style.width = isTranslationBoxOpen
+      ? "80%"
+      : "fit-content";
+
+    // Calculate base position
+    const relativeTop = rect.bottom - captionsDivClientRect.top;
+    const scrollOffset = captionsDiv.scrollTop;
+
+    console.log("captionsDiv", captionsDiv);
+    // Calculate left position
+    let left = rect.left - captionsDivClientRect.left;
+    let transform = "translate(-50%)";
+
+    // Adjust horizontal position based on screen width and container size
+    if (window.innerWidth < 650) {
+      left = 0;
+      transform = "translate(0)";
     } else {
-      translationContainer.style.width = `fit-content`;
+      const isRightHalf =
+        (rect.left - captionsDivClientRect.left) / captionsDivClientRect.width >
+        0.5;
+
+      if (isRightHalf) {
+        transform = isTranslationBoxOpen
+          ? `translate(-${translationContainer.scrollWidth}px)`
+          : "translate(-105%)";
+      } else {
+        left += rect.width;
+        transform = isTranslationBoxOpen ? "translate(0)" : "translate(-50%)";
+      }
     }
 
-    let top;
-    let left;
+    // Apply transform
+    translationContainer.style.transform = transform;
 
-    if (rect) {
-      const captionsDivClientRect = captionsDiv?.getBoundingClientRect();
-      left = `${rect.left - captionsDivClientRect.left}px`;
-
-      const calculateLeft = () => {
-        if (window.innerWidth < 650) {
-          left = `${0}px`;
-          translationContainer.style.transform = `translate(0px)`;
-        } else {
-          if (
-            (rect.left - captionsDivClientRect.left) /
-              captionsDivClientRect.width >
-            0.5
-          ) {
-            if (isTranslationBoxOpen) {
-              translationContainer.style.transform = `translate(-${translationContainer.scrollWidth}px)`;
-            } else {
-              translationContainer.style.transform = `translate(-105%)`;
-            }
-          } else {
-            left = `${rect.left - captionsDivClientRect.left + rect.width}px`;
-
-            if (isTranslationBoxOpen) {
-              translationContainer.style.transform = `translate(0px)`;
-            } else {
-              translationContainer.style.transform = `translate(-50%)`;
-            }
-          }
-        }
-      };
-
-      top = `${
-        captionsDiv?.scrollTop +
-        (rect.top - captionsDivClientRect.top) +
-        rect.height +
-        10
-      }px`;
-      calculateLeft();
-
-      return { top, left };
-    } else {
-      return {
-        top: "",
-        left: "",
-      };
-    }
+    return {
+      top: `${relativeTop + scrollOffset}px`,
+      left: `${left}px`,
+    };
   }, [selectionData, isTranslationBoxOpen]);
 
-  return [
+  return (
     <div
       id="translationContainer"
       className={twMerge(
-        "absolute z-30 opacity-0 max-w-[300px] shadow-md",
-        selectionData.text && "opacity-100"
+        "absolute z-30 opacity-0  max-w-[300px] shadow-md",
+        selectionData.text && selectionData.text.length < 350 && "opacity-100",
+        !isTranslationBoxOpen && "!w-0"
       )}
       style={{
         top: document.getElementById("captions-div")
@@ -284,7 +360,7 @@ const TranslationWindow = ({
         <Button
           id="translateBtn"
           className="p-2 bg-blue-400 border-none"
-          onClick={() => setTimeout(() => setIsTraslationBoxOpen(true), 0)}
+          onClick={() => setTimeout(() => setIsTranslationBoxOpen(true), 0)}
         >
           <BookType className="pointer-events-none" />
         </Button>
@@ -385,9 +461,15 @@ const TranslationWindow = ({
             </div>
             <hr className="my-2"></hr>
             <div className="relative min-h-20">
-              <div className="flex gap-2 items-center">
-                <p>{isTranslationLoading ? <Loading /> : translatedText}</p>
-              </div>
+              {isTranslationLoading ? (
+                <Loading />
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-base">
+                    <p>{translatedText}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-3">
@@ -482,8 +564,8 @@ const TranslationWindow = ({
           </>
         )}
       </div>
-    </div>,
-  ];
+    </div>
+  );
 };
 
-export default TranslationWindow;
+export default React.memo(TranslationWindow);
