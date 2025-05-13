@@ -165,13 +165,13 @@ const TextPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 !pb-0 mx-auto max-w-7xl">
-        <div className="overflow-hidden bg-white rounded-xl shadow-sm">
+    <div className="min-h-screen bg-white">
+      <div className="container !px-0 !pt-10 !pb-0 mx-auto max-w-7xl">
+        <div className="overflow-hidden rounded-xl shadow-sm">
           {/* Main Content */}
           <div className="flex w-full divide-x divide-gray-200">
             {/* Text Content */}
-            <div className="flex-1 px-4 w-full sm:px-0">
+            <div className="flex-1 w-full sm:px-0">
               <Text
                 highlightText={highlightText}
                 text={text}
@@ -353,15 +353,15 @@ const Text = React.memo(function ({
         <div className="text-div">
           {/* <TipTapEditor editor={editor} /> */}
           <Virtuoso
-            style={{ height: "80vh", width: "100%" }}
+            style={{ height: "100vh", width: "100%" }}
+            useWindowScroll
             totalCount={paragraphs.length}
             className="ProseMirror !p-0"
             itemContent={(index) => (
               <div
-                className="paragraph"
+                className="px-6 sm:px-3 paragraph last:mb-10"
                 dangerouslySetInnerHTML={{
                   __html: paragraphs[index],
-                  // .split(" ").splice(0, 20).join(),
                 }}
                 onClick={onWordClick}
               />

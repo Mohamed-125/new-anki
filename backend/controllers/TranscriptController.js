@@ -43,6 +43,7 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
   // Get video ID either from direct input or by extracting from URL
   const videoId = providedVideoId || extractYoutubeVideoId(url);
 
+  console.log("getting transcript for ", lang);
   if (!videoId) {
     return res.status(400).json({
       success: false,
@@ -55,7 +56,7 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
 
     // Fetch transcript using youtube-transcript library
     const transcript = await YoutubeTranscript.fetchTranscript(videoId, {
-      lang,
+      lang: lang,
     });
 
     if (!transcript || transcript.length === 0) {
@@ -64,8 +65,6 @@ module.exports.getTranscript = asyncHandler(async (req, res) => {
         message: "No transcript available for this video",
       });
     }
-
-    console.log("transcript", transcript);
 
     // Get video title
     const { title } = await axios

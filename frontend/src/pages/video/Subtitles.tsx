@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import Loading from "../../components/Loading";
-
+import { Virtuoso } from "react-virtuoso";
 import { FaPlay } from "react-icons/fa";
 import Button from "../../components/Button";
 import { MdVerticalAlignCenter } from "react-icons/md";
@@ -13,6 +13,7 @@ import useSelection from "@/hooks/useSelection";
 import useModalsStates from "@/hooks/useModalsStates";
 import TranslationWindow from "@/components/TranslationWindow";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import { VideoType } from "@/hooks/useGetVideos";
 
 type subtitleProps = {
   video: any;
@@ -77,23 +78,25 @@ const Subtitles = memo(function ({
               isSameUser={isSameUser}
               selectionData={selectionData}
             />
-            {caption?.map((subtitle: CaptionType, _) => {
-              return (
+            <Virtuoso
+              style={{ height: "100%" }}
+              totalCount={caption?.length || 0}
+              itemContent={(index) => (
                 <Subtitle
                   selectionData={selectionData}
-                  key={_}
-                  n={_}
+                  key={index}
+                  n={index}
                   setDefaultValues={setDefaultValues}
                   selectedCaption={selectedCaption}
                   caption={caption}
                   setIsAddCardModalOpen={setIsAddCardModalOpen}
                   video={video}
-                  subtitle={subtitle}
+                  subtitle={caption[index]}
                   setEditId={setEditId}
                   playerRef={playerRef}
                 />
-              );
-            })}
+              )}
+            />
           </div>
         </div>
       </div>
@@ -108,7 +111,7 @@ type SubtitleProps = {
   selectionData: any;
   playerRef: any;
   caption: any;
-  video: any;
+  video: VideoType;
   setDefaultValues: any;
   setIsAddCardModalOpen: any;
   selectedCaption: any;
@@ -125,6 +128,8 @@ const Subtitle = memo(function ({
   setDefaultValues,
 }: SubtitleProps) {
   const [translatedText, setTranslatedText] = useState("");
+  const { setSelectionData } = useSelection();
+  const { setIsTranslationBoxOpen } = useModalsStates();
 
   useEffect(() => {
     const translateText = async (text: string) => {
@@ -135,16 +140,27 @@ const Subtitle = memo(function ({
     translateText(subtitle);
   }, []);
 
-  const { userCards } = useGetCards();
-  let modifiedText = subtitle.text;
+  const { userCards } = useGetCards({ videoId: video._id });
+  const words = subtitle.text.split(/\s+/);
+  let modifiedText = words
+    .map((word: string, index: number) => {
+      const matchingCard = userCards?.find(
+        (card) => {
+          return card.front.trim() === word.trim();
+        }
+        // || card.back === word
+      );
 
-  userCards?.forEach((card) => {
-    const regex = new RegExp(`\\b(${card.front})\\b`, "gi"); // Use \b for word boundaries
-    modifiedText = modifiedText.replace(
-      regex,
-      `<span class="highlight"  data-id=${card._id}>$1</span>` // Use "class" for raw HTML
-    );
-  });
+      if (matchingCard) {
+        return `<span class="highlight" data-number="${index + 1}" data-id="${
+          matchingCard._id
+        }" data-text="${word}">${word}</span>`;
+      }
+      return `<span class="word" data-number="${
+        index + 1
+      }" data-text="${word}">${word}</span>`;
+    })
+    .join(" ");
 
   const onCardClick = (card: any) => {
     setDefaultValues({
@@ -155,6 +171,40 @@ const Subtitle = memo(function ({
     setEditId(card._id);
     setIsAddCardModalOpen(true);
   };
+
+  const onWordClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName !== "SPAN") return;
+
+      if (target.classList.contains("highlight")) {
+        const cardId = target.getAttribute("data-id");
+        const card = userCards?.find((c) => c._id === cardId);
+        if (card) onCardClick(card);
+        return;
+      }
+
+      if (target.classList.contains("word")) {
+        const word = target.getAttribute("data-text");
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNode(target.childNodes[0] as Node);
+          selection.removeAllRanges();
+          selection.addRange(range);
+
+          if (word) {
+            setSelectionData({
+              text: word,
+              selection: selection,
+            });
+            setIsTranslationBoxOpen(true);
+          }
+        }
+      }
+    },
+    [words, userCards, setSelectionData, setIsTranslationBoxOpen]
+  );
 
   return (
     <div
@@ -179,14 +229,7 @@ const Subtitle = memo(function ({
               <p
                 className="pl-[30px]"
                 dangerouslySetInnerHTML={{ __html: modifiedText }}
-                onClick={(e) => {
-                  const target = e.target as HTMLElement;
-                  if (target.classList.contains("highlight")) {
-                    const cardId = target.getAttribute("data-id");
-                    const card = userCards?.find((c) => c._id === cardId);
-                    if (card) onCardClick(card);
-                  }
-                }}
+                onClick={onWordClick}
               ></p>
             </div>
           </div>

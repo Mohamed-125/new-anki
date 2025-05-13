@@ -57,7 +57,7 @@ const puppeteer = require("puppeteer");
 router.post("/", async (req, res, next) => {
   try {
     const { text } = req.body;
-    const { targetLanguage } = req.query;
+    const { targetLanguage = "en" } = req.query;
 
     // Input validation
     if (!text || typeof text !== "string") {

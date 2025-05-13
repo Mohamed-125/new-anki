@@ -148,14 +148,6 @@ const Video = () => {
           video={video}
           subtitleContainerRef={subtitleContainerRef}
         />
-        <div className="mt-5">
-          {isIntialLoading && <CardsSkeleton />}
-          {videoCards?.map((card: CardType) => (
-            <Card key={card._id} card={card} id={card._id} />
-          ))}
-
-          {isFetchingNextPage && <CardsSkeleton />}
-        </div>
       </div>
 
       <div className="w-full grow">

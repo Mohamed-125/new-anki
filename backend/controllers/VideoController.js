@@ -37,7 +37,9 @@ module.exports.createVideo = async (req, res, next) => {
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const { data: translatedText } = await axios.post(
+          const {
+            data: { translatedText },
+          } = await axios.post(
             "http://localhost:5000/api/v1/translate",
             { text },
             {
@@ -99,6 +101,8 @@ module.exports.createVideo = async (req, res, next) => {
     // Create the video with enhanced data
     const createdVideo = await VideoModel.create({
       ...req.body,
+      title: transcriptResponse.data.title,
+      thumbnail: transcriptResponse.data.thumbnail,
       userId: topicId || channelId || listId ? null : req?.user?._id,
       defaultCaptionData,
     });
@@ -160,7 +164,10 @@ module.exports.getUserVideos = async (req, res, next) => {
 
     // Sort videos in the same order as userVideos
     const sortedVideos = videoIds
-      .map((id) => videos.find((v) => v._id.toString() === id.toString()))
+      .map((id) => {
+        const video = videos.find((v) => v._id.toString() === id.toString());
+        return video ? { ...video, userId: req.user.id } : null;
+      })
       .filter(Boolean);
 
     res.status(200).send({ videos: sortedVideos, nextPage, videosCount });
@@ -195,13 +202,14 @@ module.exports.updateVideo = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
+
 module.exports.deleteVideo = async (req, res) => {
   try {
     const video = await VideoModel.findById(req.params.id);
     if (!video) return res.status(404).send("Video not found");
 
     const isOwner = video.userId.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === "admin";
+    const isAdmin = req.user.isAdmin;
 
     const hasLinks = video.topicId || video.channelId || video.listId;
 
@@ -236,13 +244,13 @@ module.exports.batchDelete = async (req, res) => {
   try {
     const videos = await VideoModel.find({ _id: { $in: ids } });
 
-    const isAdmin = req.user.role === "admin";
+    const isAdmin = req.user.isAdmin;
 
     const deletableVideoIds = [];
 
     // Determine which videos the user can delete
     for (const video of videos) {
-      const isOwner = video.userId.toString() === req.user._id.toString();
+      const isOwner = video.userId === req.user._id;
       const hasLinks = video.topicId || video.channelId || video.listId;
 
       if (isAdmin || (isOwner && !hasLinks)) {

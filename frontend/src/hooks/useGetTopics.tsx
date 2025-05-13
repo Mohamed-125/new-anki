@@ -12,7 +12,6 @@ import { TextType } from "./useGetTexts";
 export type TopicType = {
   _id: string;
   title: string;
-  language?: string;
   lessons?: any[];
   lists?: any[];
   courseId: string;

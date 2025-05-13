@@ -30,6 +30,7 @@ const VideoCard = ({
   const { user } = useGetCurrentUser();
   const isSameUser = video?.userId === user?._id || user?.isAdmin;
 
+  console.log(video);
   const isSelected = selectedItems?.includes(id);
 
   const queryClient = useQueryClient();
@@ -82,21 +83,14 @@ const VideoCard = ({
           {video.title}
         </Link>
         <div>
-          {isSameUser &&
-            (!selectedItems?.length ? (
-              <ActionsDropdown
-                itemId={id as string}
-                deleteHandler={deleteHandler}
-                moveHandler={moveVideoHandler}
-                setSelectedItems={setSelectedItems}
-              />
-            ) : (
-              <SelectCheckBox
-                id={id}
-                selectedItems={selectedItems}
-                setSelectedItems={setSelectedItems}
-              />
-            ))}
+          {isSameUser && (
+            <ActionsDropdown
+              itemId={id as string}
+              deleteHandler={deleteHandler}
+              moveHandler={moveVideoHandler}
+              setSelectedItems={setSelectedItems}
+            />
+          )}
         </div>
       </div>
     </div>

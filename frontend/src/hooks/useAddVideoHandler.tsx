@@ -8,6 +8,7 @@ type UseAddVideoHandlerProps = {
   videoLang?: string;
   channelId?: string;
   listId?: string;
+  setIsVideoModalOpen: any;
 };
 
 type TranscriptData = {
@@ -22,65 +23,46 @@ const useAddVideoHandler = ({
   videoLang,
   channelId,
   listId,
+  setIsVideoModalOpen,
 }: UseAddVideoHandlerProps) => {
   const [youtubeUrls, setYoutubeUrls] = useState("");
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const queryClient = useQueryClient();
-  // Extract the transcript fetching logic into a custom hook
-  const getTranscript = useMutation({
-    mutationFn: async ({ url, lang }: { url: string; lang?: string }) => {
-      const response = await axios.post("transcript/get-transcript", {
-        url,
-        lang: videoLang,
-      });
-      return response.data as TranscriptData;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["videos", listId] });
-    },
-  });
+  const [isLoading, setIsLoading] = useState(false);
 
   // The main handler function for adding multiple videos
   const addVideoHandler = async () => {
     try {
       const urls = youtubeUrls.split("\n").filter((url) => url.trim());
-
+      setIsLoading(true);
       for (const url of urls) {
-        const data = await getTranscript.mutateAsync({
-          url: url.trim(),
-          lang: videoLang,
-        });
-
-        const { translatedTranscript, transcript, title, thumbnail } = data;
         await axios.post("/video", {
           url: url.trim(),
-          defaultCaptionData: {
-            translatedTranscript,
-            transcript,
-          },
           channelId,
           topicId,
-          title,
           listId,
-          thumbnail,
+          videoLang: videoLang,
         });
       }
-
+      setIsLoading(false);
       setYoutubeUrls("");
       setIsVideoModalOpen(false);
+      if (topicId)
+        queryClient.invalidateQueries({ queryKey: ["topics", topicId] });
+      if (listId)
+        queryClient.invalidateQueries({ queryKey: ["lists", listId] });
+      if (channelId)
+        queryClient.invalidateQueries({ queryKey: ["channels", channelId] });
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
     } catch (error) {
+      setIsLoading(false);
       console.error("Error processing videos:", error);
     }
   };
-
   return {
     youtubeUrls,
     setYoutubeUrls,
-    isVideoModalOpen,
-    setIsVideoModalOpen,
-    getTranscript,
     addVideoHandler,
+    isLoading,
   };
 };
-
 export default useAddVideoHandler;

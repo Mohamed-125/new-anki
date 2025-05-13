@@ -20,13 +20,19 @@ const AddVideoModal = ({
   listId?: string;
 }) => {
   // Using the custom hook for video handling
-  const { youtubeUrls, setYoutubeUrls, getTranscript, addVideoHandler } =
-    useAddVideoHandler({ topicId, videoLang, channelId, listId });
+  const { youtubeUrls, setYoutubeUrls, addVideoHandler, isLoading } =
+    useAddVideoHandler({
+      topicId,
+      videoLang,
+      channelId,
+      listId,
+      setIsVideoModalOpen,
+    });
 
   return (
     <Modal
       isOpen={isVideoModalOpen}
-      loading={getTranscript.isPending}
+      loading={isLoading}
       setIsOpen={setIsVideoModalOpen}
       className="w-full max-w-lg md:max-w-none"
     >

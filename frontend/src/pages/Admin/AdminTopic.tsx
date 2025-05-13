@@ -20,6 +20,7 @@ import ChannelCard from "@/components/ChannelCard";
 import AddVideoModal from "@/components/AddVideoModal";
 import AddChannelModal from "./AddChannelModal";
 import SelectedItemsController from "@/components/SelectedItemsController";
+import useModalsStates from "@/hooks/useModalsStates";
 
 const useGetTopic = (topicId: string) => {
   return useQuery({
@@ -78,10 +79,7 @@ const AdminTopic = () => {
     fetchNextPage: fetchNextTopicChannelsPage,
   } = useGetTopicChannels(topicId as string, activeTab === "channels");
 
-  const { isVideoModalOpen, setIsVideoModalOpen } = useAddVideoHandler({
-    topicId: topic?._id,
-    videoLang: "de",
-  });
+  const { setIsVideoModalOpen, isVideoModalOpen } = useModalsStates();
 
   if (!topic) return <div>Topic not found</div>;
 
@@ -89,9 +87,9 @@ const AdminTopic = () => {
     <div className="mx-auto max-w-7xl">
       <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">{topic.title}</h1>
-        {topic.language && (
+        {topic.topicLanguage && (
           <p className="mt-1 text-sm text-gray-500">
-            Language: {topic.language.toUpperCase()}
+            Language: {topic.topicLanguage.toUpperCase()}
           </p>
         )}
 
@@ -117,10 +115,16 @@ const AdminTopic = () => {
             </TabsList>
 
             <TabsContent value="videos">
+              <SelectedItemsController
+                isItemsVideos={true}
+                allItems={videos?.map((video) => video._id) || []}
+              />
+
               <AddVideoModal
-                topicId={topic._id}
-                isVideoModalOpen={isVideoModalOpen}
                 setIsVideoModalOpen={setIsVideoModalOpen}
+                topicId={topic._id}
+                videoLang={topic.topicLanguage}
+                isVideoModalOpen={isVideoModalOpen}
               />
               <Button
                 onClick={() => setIsVideoModalOpen(true)}

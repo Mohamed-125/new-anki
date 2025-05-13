@@ -105,12 +105,8 @@ const TranslationWindow = ({
       return "";
     }
 
-    console.log(isTranslationBoxOpen, selectionData);
-
     try {
       let range = (selectionData.selection as Selection).getRangeAt(0);
-
-      console.log(range);
       let startNode = range.startContainer;
       let endNode = range.endContainer;
 
@@ -162,17 +158,17 @@ const TranslationWindow = ({
       console.warn("Error getting context string:", err);
       return selectionData.text;
     }
-  }, [selectionData.selection, isTranslationBoxOpen]);
+  }, [selectionData, isTranslationBoxOpen]);
 
   useEffect(() => {
     if (!selectionData.text) {
-      setIsTranslationBoxOpen(false);
       return;
     }
 
     if (!targetLanguage || !isTranslationBoxOpen) return;
 
     const contextString = getContextString;
+
     if (!contextString) return;
 
     setIsTranslationLoading(true);
@@ -198,7 +194,7 @@ const TranslationWindow = ({
 
     return () => controller.abort();
   }, [
-    selectionData.text,
+    selectionData,
     targetLanguage,
     isTranslationBoxOpen,
     getContextString,
@@ -317,7 +313,6 @@ const TranslationWindow = ({
     const relativeTop = rect.bottom - captionsDivClientRect.top;
     const scrollOffset = captionsDiv.scrollTop;
 
-    console.log("captionsDiv", captionsDiv);
     // Calculate left position
     let left = rect.left - captionsDivClientRect.left;
     let transform = "translate(-50%)";
@@ -354,8 +349,8 @@ const TranslationWindow = ({
     <div
       id="translationContainer"
       className={twMerge(
-        "absolute z-30 opacity-0  max-w-[300px] shadow-md",
-        selectionData.text && selectionData.text.length < 250 && "opacity-100",
+        "absolute z-30 hidden max-w-[300px] shadow-md",
+        selectionData.text && selectionData.text.length < 250 && "block",
         !isTranslationBoxOpen && "!w-0"
       )}
       style={{
@@ -373,6 +368,7 @@ const TranslationWindow = ({
           className="p-2 bg-blue-400 border-none"
           onClick={() => setTimeout(() => setIsTranslationBoxOpen(true), 0)}
         >
+          {isTranslationBoxOpen}
           <BookType className="pointer-events-none" />
         </Button>
       ) : (
