@@ -5,6 +5,8 @@ import React, {
   ComponentType,
   ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
+
 import { twMerge } from "tailwind-merge";
 import Button from "./Button";
 import { IoClose } from "react-icons/io5";
@@ -45,16 +47,16 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
 
     useEffect(() => {
       if (isOpen) {
-        document.body.style.overflow = "hidden";
+        // document.body.style.overflow = "hidden";
       } else {
-        document.body.style.overflow = "auto";
+        // document.body.style.overflow = "auto";
       }
     }, [isOpen]);
 
     const isMobile = useWindowSize().width < 700;
 
-    if (isMobile) {
-      return (
+    return createPortal(
+      isMobile ? (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
           <DrawerContent
             className={cn(
@@ -96,77 +98,77 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
             )}
           </DrawerContent>
         </Drawer>
-      );
-    }
-
-    return (
-      <div
-        onTransitionEnd={isOpen ? undefined : onAnimationEnd}
-        className={twMerge(
-          "modal",
-          isOpen ? "pointer-events-auto" : "pointer-events-none"
-        )}
-      >
+      ) : (
         <div
+          onTransitionEnd={isOpen ? undefined : onAnimationEnd}
           className={twMerge(
-            "transition-all duration-500 modal-backdrop",
-            isOpen ? "opacity-100" : "opacity-0"
-          )}
-          onClick={() => {
-            setIsOpen(false);
-          }}
-        ></div>
-
-        <div
-          style={{
-            ...style,
-            transition: "transform 450ms ease, opacity 400ms ease",
-          }}
-          className={twMerge(
-            "bg-white !w-[90%] max-w-[550px] modal-content overflow-hidden translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
-            isOpen
-              ? "opacity-1 translate-y-[-50%]"
-              : "opacity-0 translate-y-[-30%]",
-            big && "max-w-[1000px]",
-            className
+            "modal",
+            isOpen ? "pointer-events-auto" : "pointer-events-none"
           )}
         >
-          {loading ? (
-            <div className="relative">
-              <div className="grid absolute inset-0 z-50 place-items-center w-full h-full bg-white">
-                <div className="w-12 h-12 rounded-full border-4 border-blue-200 animate-spin border-t-primary"></div>
+          <div
+            className={twMerge(
+              "transition-all duration-500 modal-backdrop",
+              isOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsOpen(false);
+            }}
+          ></div>
+
+          <div
+            style={{
+              ...style,
+              transition: "transform 450ms ease, opacity 400ms ease",
+              willChange: "",
+            }}
+            className={twMerge(
+              "bg-white !w-[90%] max-w-[550px] modal-content overflow-hidden translate-x-[-50%] z-[1500] fixed overflow-y-auto inset-2/4 h-fit rounded-2xl shadow-lg opacity-0",
+              isOpen
+                ? "opacity-1 translate-y-[-50%]"
+                : "opacity-0 translate-y-[-30%]",
+              big && "max-w-[1000px]",
+              className
+            )}
+          >
+            {loading ? (
+              <div className="relative">
+                <div className="grid absolute inset-0 z-50 place-items-center w-full h-full bg-white">
+                  <div className="w-12 h-12 rounded-full border-4 border-blue-200 animate-spin border-t-primary"></div>
+                </div>
+                <div
+                  id={id}
+                  ref={modalRef}
+                  className={twMerge(
+                    "overflow-auto pb-32 modalScroll z-10 relative max-h-[650px]  px-10 ",
+                    big && "max-h-[90vh]"
+                  )}
+                >
+                  {isOpen ? (
+                    children
+                  ) : (
+                    <div className="opacity-0 transition-opacity duration-75">
+                      {children}
+                    </div>
+                  )}
+                </div>
               </div>
+            ) : (
               <div
                 id={id}
                 ref={modalRef}
                 className={twMerge(
-                  "overflow-auto pb-32 modalScroll z-10 relative max-h-[650px]  px-10 ",
+                  "overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ",
                   big && "max-h-[90vh]"
                 )}
               >
-                {isOpen ? (
-                  children
-                ) : (
-                  <div className="opacity-0 transition-opacity duration-75">
-                    {children}
-                  </div>
-                )}
+                {children}
               </div>
-            </div>
-          ) : (
-            <div
-              id={id}
-              ref={modalRef}
-              className={twMerge(
-                "overflow-auto pb-32 modalScroll relative max-h-[650px]  px-10 ",
-                big && "max-h-[90vh]"
-              )}
-            >
-              {children}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      ),
+      document.getElementById("modal-root")!
     );
   }
 );

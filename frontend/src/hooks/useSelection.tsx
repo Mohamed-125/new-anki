@@ -40,8 +40,6 @@ const useSelection = () => {
       }
     }
 
-    // Update ref (won't trigger re-renders)
-
     setSelectionData((prev) => {
       return {
         text: selected.toString(),

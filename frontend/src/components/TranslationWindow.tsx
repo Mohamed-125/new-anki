@@ -5,47 +5,36 @@ import React, {
   useRef,
   useState,
 } from "react";
+import "./TranslationWindow.css";
 import Button from "./Button";
 import axios from "axios";
 import Loading from "./Loading";
 import Form from "./Form";
-import { px } from "framer-motion";
 import { BookType, ExternalLink, Save, Plus } from "lucide-react";
 
 import { TextToSpeech } from "./TextToSpeech";
-import { root } from "postcss";
-import container from "quill/blots/container";
 import { twMerge } from "tailwind-merge";
-import { createPortal } from "react-dom";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
 import { languageCodeMap } from "../../../languages";
 import { useWindowSize } from "react-use";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/Drawer";
 import useToasts from "@/hooks/useToasts";
-import { error } from "console";
 import { fetchConjugations } from "../utils/conjugations";
 import useModalsStates from "@/hooks/useModalsStates";
-import { text } from "stream/consumers";
+import { range } from "lodash";
 
 const TranslationWindow = ({
   selectionData,
   setIsAddCardModalOpen,
   setDefaultValues,
-  setContent,
-  text = false,
-  isSameUser,
 }: {
   selectionData: {
     text: string;
   };
-  text?: boolean;
   setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setDefaultValues: any;
-  setContent?: React.Dispatch<React.SetStateAction<string>>;
-  isSameUser: boolean;
 }) => {
-  console.log("translation window rerendered");
   // const parent =
   //   selectionData?.ele?.parentElement?.parentElement?.parentElement;
   // const rect = parent.getBoundingClientRect();
@@ -58,6 +47,24 @@ const TranslationWindow = ({
   // }, []);
 
   const { isTranslationBoxOpen, setIsTranslationBoxOpen } = useModalsStates();
+
+  // useEffect(() => {
+  //   console.log(isTranslationBoxOpen);
+  //   const handleScroll = () => {
+  //     console.log("tsrtrst");
+  //     if (isTranslationBoxOpen) {
+  //       setIsTranslationBoxOpen(false);
+  //     }
+  //   };
+
+  //   if (isTranslationBoxOpen) {
+  //     window.addEventListener("scroll", handleScroll);
+  //   }
+
+  //   return () => {
+  //     window.removeEventListener("scroll", handleScroll);
+  //   };
+  // }, [isTranslationBoxOpen, setIsTranslationBoxOpen]);
 
   // Function to open Reverso Context in a popup window
   const [showReversoIframe, setShowReversoIframe] = useState(false);
@@ -89,19 +96,24 @@ const TranslationWindow = ({
     }
   };
 
-  console.log(selectionData);
   const getContextString = useMemo(() => {
     if (
       !selectionData?.selection ||
       !selectionData.text ||
       !isTranslationBoxOpen
-    )
+    ) {
       return "";
+    }
+
+    console.log(isTranslationBoxOpen, selectionData);
 
     try {
       let range = (selectionData.selection as Selection).getRangeAt(0);
+
+      console.log(range);
       let startNode = range.startContainer;
       let endNode = range.endContainer;
+
       // Normalize start and end to span parents
       if (startNode?.nodeType === 3) {
         startNode =
@@ -136,8 +148,8 @@ const TranslationWindow = ({
       const startIndex = allSpans.findIndex((el) => el === startNode);
 
       // Get 20 before from start index and 20 after from **end index**
-      const before = allSpans.slice(Math.max(startIndex - 10, 0), startIndex);
-      const after = allSpans.slice(endIndex + 1, endIndex + 11);
+      const before = allSpans.slice(Math.max(startIndex - 15, 0), startIndex);
+      const after = allSpans.slice(endIndex + 1, endIndex + 16);
 
       const clean = (str: string) => str.replace(/[()]/g, "");
 
@@ -173,7 +185,7 @@ const TranslationWindow = ({
         { signal: controller.signal }
       )
       .then((res) => {
-        setTranslatedText(res.data.translation);
+        setTranslatedText(res.data.translatedWord);
       })
       .catch((err) => {
         if (!axios.isCancel(err)) {
@@ -218,7 +230,6 @@ const TranslationWindow = ({
     if (!translationContainer) return;
 
     if (isTranslationBoxOpen) {
-      console.log(textDiv?.clientWidth || subtitlesDiv?.clientWidth);
       translationContainer.style.width = `80%`;
       if (textDiv) {
         // translationContainer.style.maxWidth = `${textDiv?.clientWidth}px`;
@@ -344,7 +355,7 @@ const TranslationWindow = ({
       id="translationContainer"
       className={twMerge(
         "absolute z-30 opacity-0  max-w-[300px] shadow-md",
-        selectionData.text && selectionData.text.length < 350 && "opacity-100",
+        selectionData.text && selectionData.text.length < 250 && "opacity-100",
         !isTranslationBoxOpen && "!w-0"
       )}
       style={{
@@ -367,7 +378,9 @@ const TranslationWindow = ({
       ) : (
         <div
           id="translationWindow"
-          className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap`}
+          className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
+            isTranslationBoxOpen ? "open" : ""
+          }`}
         >
           <div id="translationWindow">
             {" "}

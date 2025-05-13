@@ -25,7 +25,6 @@ const TextPage = () => {
   const id = useParams()?.id;
   const queryClient = useQueryClient();
 
-  console.log("text page rerendered");
   const { data: text, isLoading } = useQuery({
     queryKey: ["text", id],
     queryFn: async () => {
@@ -71,9 +70,6 @@ const TextPage = () => {
     }
   };
 
-  const { setDefaultValues, setIsAddCardModalOpen, setContent } =
-    useModalsStates();
-
   const highlightText = useMemo(() => {
     if (!text?.content) return text?.content;
 
@@ -100,7 +96,9 @@ const TextPage = () => {
           }
 
           // Wrap non-matching words in clickable spans
-          return word;
+          return `<span class="relative word" data-number=${
+            i + 1
+          } data-text="${word}">${word}</span>`;
         });
 
         const wrapper = document.createElement("span");
@@ -115,20 +113,9 @@ const TextPage = () => {
     return doc.body.innerHTML;
   }, [text?.content, userCards]);
 
-  const onCardClick = useCallback(
-    (card: any) => {
-      setDefaultValues({
-        front: card.front,
-        back: card.back,
-        content: card?.content,
-      });
-      setIsAddCardModalOpen(true);
-    },
-    [setDefaultValues, setIsAddCardModalOpen]
-  );
+  // const { isTranslationBoxOpen, setIsTranslationBoxOpen } = useModalsStates();
 
-  const { isTranslationBoxOpen, setIsTranslationBoxOpen } = useModalsStates();
-
+  let setIsTranslationBoxOpen = () => {};
   const handleWordClick = useCallback((e: MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.classList.contains("word")) {
@@ -153,7 +140,6 @@ const TextPage = () => {
     setShareItemId(text._id);
     setShareItemName(text?.title);
   };
-  const { setSelectedItems } = useModalsStates();
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === text?.userId;
   const { addToast } = useToasts();
@@ -180,63 +166,16 @@ const TextPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 mx-auto max-w-7xl">
-        <AddCardModal collectionId={text?.defaultCollectionId} />
-        <ShareModal sharing="texts" />
-
+      <div className="container px-4 py-8 !pb-0 mx-auto max-w-7xl">
         <div className="overflow-hidden bg-white rounded-xl shadow-sm">
-          {/* Header courseLevel */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold text-gray-900 sm:text-2xl">
-                {text?.title}
-              </h1>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={toggleComplete}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    isCompleted
-                      ? "text-green-600 bg-green-100"
-                      : "text-gray-600 bg-gray-100 hover:bg-gray-200"
-                  }`}
-                >
-                  <FaCheckCircle
-                    className={`${
-                      isCompleted ? "text-green-600" : "text-gray-400"
-                    }`}
-                  />
-                  {isCompleted ? "Completed" : "Mark as Complete"}
-                </button>
-                <ActionsDropdown
-                  setSelectedItems={setSelectedItems}
-                  itemId={text?._id as string}
-                  shareHandler={shareHandler}
-                  forkData={
-                    isSameUser || text?.topicId
-                      ? undefined
-                      : {
-                          forking: "Add to your texts",
-                          handler: forkHandler,
-                        }
-                  }
-                  isSameUser={isSameUser}
-                  editHandler={() => {
-                    navigate(`/texts/edit/${id}`);
-                  }}
-                  deleteHandler={deleteTextHandler}
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Main Content */}
           <div className="flex w-full divide-x divide-gray-200">
             {/* Text Content */}
             <div className="flex-1 px-4 w-full sm:px-0">
               <Text
                 highlightText={highlightText}
-                userCards={userCards}
                 text={text}
+                userCards={userCards}
                 // setSelectionData={setSelectionData}
               />
             </div>
@@ -259,6 +198,8 @@ const openReversoPopup = (
   window.open(url, "_blank", "width=800,height=600");
 };
 
+import { Virtuoso } from "react-virtuoso";
+
 const Text = React.memo(function ({
   highlightText,
   userCards,
@@ -269,7 +210,8 @@ const Text = React.memo(function ({
   text: TextType | undefined;
 }) {
   const { editor, setContent } = useUseEditor(true);
-  const { setDefaultValues, setIsAddCardModalOpen } = useModalsStates();
+  const { setDefaultValues, setIsAddCardModalOpen, setIsTranslationBoxOpen } =
+    useModalsStates();
   const { selectionData, setSelectionData } = useSelection();
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === text?.userId;
@@ -278,20 +220,161 @@ const Text = React.memo(function ({
     if (highlightText) setContent(highlightText);
   }, [highlightText]);
 
-  console.log("text renedered");
+  const paragraphs = useMemo(() => {
+    if (!highlightText) return [];
+
+    const doc = new DOMParser().parseFromString(highlightText, "text/html");
+
+    // Get all block-level elements and text nodes directly under body
+    const nodes = Array.from(doc.body.childNodes);
+
+    return nodes
+      .map((node) => {
+        // For element nodes, get their outer HTML
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          return (node as Element).outerHTML;
+        }
+        // For text nodes, wrap them in a paragraph
+        else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+          return `<p>${node.textContent}</p>`;
+        }
+        return "";
+      })
+      .filter((html) => html.trim() !== ""); // Filter empty content
+  }, [highlightText]);
+
+  // getWordBefore
+  const getWordBefore = useCallback(
+    (
+      currentNumber: number,
+      collectedWords: string[] = [],
+      count: number = 0
+    ): string[] => {
+      if (count >= 10) return collectedWords;
+
+      const prevWord = document.querySelector(
+        `[data-number="${currentNumber - 1}"]`
+      ) as HTMLElement;
+
+      if (prevWord) {
+        collectedWords.unshift(prevWord.dataset.text || "");
+        return getWordBefore(currentNumber - 1, collectedWords, count + 1);
+      }
+
+      return collectedWords;
+    },
+    [] // dependencies (empty if the function doesn't use any external reactive state)
+  );
+
+  // getWordAfter
+  const getWordAfter = useCallback(
+    (
+      currentNumber: number,
+      collectedWords: string[] = [],
+      count: number = 0
+    ): string[] => {
+      if (count >= 10) return collectedWords;
+
+      const nextWord = document.querySelector(
+        `[data-number="${currentNumber + 1}"]`
+      ) as HTMLElement;
+
+      if (nextWord) {
+        collectedWords.push(nextWord.dataset.text || "");
+        return getWordAfter(currentNumber + 1, collectedWords, count + 1);
+      }
+
+      return collectedWords;
+    },
+    []
+  );
+
+  // onWordClick
+  const onWordClick = useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      if (target.tagName !== "SPAN" || !target.dataset.number) return;
+
+      const wordIndex = parseInt(target.dataset.number || "0", 10);
+      const clickedWord = target.dataset.text;
+      const beforeWords = getWordBefore(wordIndex);
+      const afterWords = getWordAfter(wordIndex);
+
+      const text = [...beforeWords, `((${clickedWord}))`, ...afterWords].join(
+        " "
+      );
+
+      if (target.classList.contains("highlight")) {
+        const card = userCards?.find(
+          (userCard) => userCard._id === target.dataset.id
+        );
+        setDefaultValues({
+          front: card?.front,
+          back: card?.back,
+          content: card?.content,
+        });
+        setIsAddCardModalOpen(true);
+        return;
+      }
+
+      if (target.classList.contains("word")) {
+        const word = target.dataset.text;
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNode(target.childNodes[0] as Node);
+          selection.removeAllRanges();
+          selection.addRange(range);
+
+          if (word) {
+            setSelectionData({
+              text: word,
+              selection: selection,
+            });
+            setIsTranslationBoxOpen(true);
+          }
+        }
+      }
+    },
+    [getWordBefore, getWordAfter, userCards] // include dependencies if used from state or props
+  );
+
   return (
     <>
       <TranslationWindow
         setIsAddCardModalOpen={setIsAddCardModalOpen}
         setDefaultValues={setDefaultValues}
-        setContent={setContent}
-        isSameUser={isSameUser}
         selectionData={selectionData}
       />
+      <AddCardModal collectionId={text?.defaultCollectionId} />
 
-      <div className="text-div">
-        {/* <TipTapEditor editor={editor} /> */}
-        <div className="tiptap tiptap-editor">
+      <div className="tiptap tiptap-editor">
+        <div className="text-div">
+          {/* <TipTapEditor editor={editor} /> */}
+          <Virtuoso
+            style={{ height: "80vh", width: "100%" }}
+            totalCount={paragraphs.length}
+            className="ProseMirror !p-0"
+            itemContent={(index) => (
+              <div
+                className="paragraph"
+                dangerouslySetInnerHTML={{
+                  __html: paragraphs[index],
+                  // .split(" ").splice(0, 20).join(),
+                }}
+                onClick={onWordClick}
+              />
+            )}
+          />
+        </div>
+        {/* <p>
+          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolores
+          temporibus exercitationem quo inventore. Repellendus repellat atque
+          quas. Quae illo quidem tempora similique tenetur impedit non ex
+          dolore, ipsam laudantium voluptas.
+        </p> */}
+        {/* <div className="tiptap tiptap-editor">
           <div
             className="relative ProseMirror"
             dangerouslySetInnerHTML={{
@@ -324,7 +407,7 @@ const Text = React.memo(function ({
               }
             }}
           ></div>
-        </div>
+        </div> */}
         {/* Word Info Sidebar
       <WordInfoSidebar
         word={selectedWord}

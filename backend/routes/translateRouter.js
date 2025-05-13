@@ -55,66 +55,92 @@ const languageCodeMap = {
 
 const puppeteer = require("puppeteer");
 router.post("/", async (req, res, next) => {
-  let { text } = req.body;
-  const { targetLanguage } = req.query;
-
   try {
-    // Extract the word within double parentheses
+    const { text } = req.body;
+    const { targetLanguage } = req.query;
+
+    // Input validation
+    if (!text || typeof text !== "string") {
+      return res
+        .status(400)
+        .json({ error: "Text is required and must be a string" });
+    }
+    if (!targetLanguage || !languageCodeMap[targetLanguage]) {
+      return res
+        .status(400)
+        .json({ error: "Valid target language is required" });
+    }
+
+    // Extract the word within double parentheses and preserve the structure
     const regex = /\(\((.*?)\)\)/;
     const originalWordMatch = text.match(regex);
-    let originalWord = null;
+    const originalWord = originalWordMatch ? originalWordMatch[1] : null;
 
-    if (originalWordMatch && originalWordMatch[1]) {
-      originalWord = originalWordMatch[1];
-    }
+    // Split text into parts to translate separately and maintain structure
+    let textParts = [];
+    let currentIndex = 0;
 
-    const encodedText = encodeURIComponent(text);
-    const translationUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodedText}`;
-    const translationResponse = await axios.get(translationUrl);
-    function extractParenthesesText(data) {
-      const results = [];
-
-      function search(item) {
-        if (typeof item === "string") {
-          // Match anything between two parentheses (including double)
-          const matches = item.match(/\(?\(([^()]+)\)\)?/g);
-          if (matches) {
-            for (const match of matches) {
-              // Remove outer parentheses
-              const clean = match.replace(/^\(?\(/, "").replace(/\)?\)$/, "");
-              results.push(clean);
-            }
-          }
-        } else if (Array.isArray(item)) {
-          for (const element of item) {
-            search(element);
-          }
-        } else if (typeof item === "object" && item !== null) {
-          for (const key in item) {
-            search(item[key]);
-          }
-        }
+    if (originalWordMatch) {
+      const matchIndex = text.indexOf(originalWordMatch[0]);
+      if (matchIndex > 0) {
+        textParts.push(text.substring(0, matchIndex));
       }
-
-      search(data);
-      return results;
+      textParts.push(originalWordMatch[1]); // Add the content within parentheses
+      if (matchIndex + originalWordMatch[0].length < text.length) {
+        textParts.push(
+          text.substring(matchIndex + originalWordMatch[0].length)
+        );
+      }
+    } else {
+      textParts.push(text);
     }
 
-    // Extract translated word from the response
-    const translatedWordMatch = "hey".match(regex);
+    // Translate each part separately
+    const translatedParts = await Promise.all(
+      textParts.map(async (part) => {
+        const encodedPart = encodeURIComponent(part);
+        const translationUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodedPart}`;
+
+        const response = await axios.get(translationUrl);
+        if (!response.data || !Array.isArray(response.data[0])) {
+          throw new Error("Invalid translation response format");
+        }
+
+        return response.data[0]
+          .map((item) => item && item[0])
+          .filter(Boolean)
+          .join("");
+      })
+    );
+
+    // Reconstruct the translated text with preserved structure
+    let translatedText = "";
     let translatedWord = null;
 
-    if (translatedWordMatch && translatedWordMatch[1]) {
-      translatedWord = translatedWordMatch[1];
+    if (originalWordMatch) {
+      translatedWord = translatedParts[1]; // The translated content within parentheses
+      translatedText = translatedParts[0] || ""; // Before parentheses
+      translatedText += `((${translatedWord}))`; // Add parentheses back
+      translatedText += translatedParts[2] || ""; // After parentheses
+    } else {
+      translatedText = translatedParts[0];
     }
 
-    res.json({
-      data: translationResponse.data,
-      translation: extractParenthesesText(translationResponse.data)[0],
-    });
+    // Format response
+    const response = {
+      originalText: text,
+      translatedText,
+      originalWord,
+      translatedWord,
+    };
+
+    res.json(response);
   } catch (err) {
-    console.log("translate router error", err.message);
-    res.status(500).send(err.message);
+    console.error("Translation error:", err);
+    res.status(err.response?.status || 500).json({
+      error: "Translation failed",
+      message: err.message,
+    });
   }
 });
 
@@ -122,9 +148,10 @@ router.post("/", async (req, res, next) => {
 router.post("/translate-examples", async (req, res) => {
   try {
     const { text } = req.body;
-    const { language = "de", targetLanguage = "en" } = req.query;
+    const { language = "de", targetLanguage = "ar" } = req.query;
 
     if (!text) return res.status(400).json({ error: "Text is required." });
+    let translations = [];
 
     // Create translation URL
     let encodedText = encodeURIComponent(text);
@@ -132,15 +159,24 @@ router.post("/translate-examples", async (req, res) => {
     let targetCode = languageCodeMapShort[targetLanguage] || "eng";
     let url = `https://www.reverso.net/text-translation#sl=${sourceCode}&tl=${targetCode}&text=${encodedText}`;
 
+    console.log(sourceCode, targetCode, targetLanguage);
     // Launch Puppeteer and scrape the results
-    let browser = await puppeteer.launch({ headless: false });
+    let browser = await puppeteer.launch({
+      headless: false,
+    });
 
     let page = await browser.newPage();
-    await page.goto(url);
-    let translations = [];
+
     let examples = [];
+
     try {
-      await page.waitForTimeout(1000);
+      await page.goto(url);
+      // Wait for the translation result to appear
+
+      console.log("waiting");
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      console.log("waiting finished");
+
       let translationDiv = await page.$(".translation-input__result");
 
       if (translationDiv) {
@@ -153,10 +189,13 @@ router.post("/translate-examples", async (req, res) => {
         // You can return or use this value as needed
       }
     } catch (err) {
-      let translations = await page.$$eval(".text__translation", (spans) =>
-        spans.map((span) => span.textContent.trim())
+      let scrapedTranslations = await page.$$eval(
+        ".text__translation",
+        (spans) => spans.map((span) => span.textContent.trim())
       );
-      translations = translations;
+
+      translations = scrapedTranslations;
+      console.log("more than one translation found", scrapedTranslations);
     }
 
     // Scrape examples
@@ -172,14 +211,14 @@ router.post("/translate-examples", async (req, res) => {
       });
 
       examples.push(...scrapedExamples);
+      console.log("exapmles found", examples);
     } catch (err) {
       console.error("Example scraping error:", err.message);
     }
 
-    console.log(translations);
     await browser.close();
 
-    return res.send([examples, translation]);
+    return res.send({ examples, translations: translations.join(",") });
   } catch (error) {
     console.error("Scraping error:", error);
     return res.status(500).json({ error: "Failed to fetch translations." });

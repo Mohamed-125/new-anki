@@ -47,5 +47,6 @@ export const languageCodeMapShort: Record<string, string> = {
   fi: "fin", // Finnish
   hu: "hun", // Hungarian
   uk: "ukr", // Ukrainian
+
   // Add more as needed based on Reverso's internal code usage
 };

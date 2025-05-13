@@ -89,6 +89,8 @@ export function AddCardModal({
   const [isLoadingConjugations, setIsLoadingConjugations] = useState(false);
   const { user, selectedLearningLanguage } = useGetCurrentUser();
   const [cards, setCards] = useState<CardData[]>([]);
+  const [examples, setExamples] = useState<any[]>([]);
+  const [isExamplesVisible, setIsExmaplesVisible] = useState(false);
 
   const sampleCardJson = {
     cards: [
@@ -213,31 +215,52 @@ export function AddCardModal({
   const [frontValue, setFrontValue] = useState("");
   const [backValue, setBackValue] = useState("");
 
-  const translateHandler = async (examples?: boolean) => {
+  useEffect(() => {
+    if (isExamplesVisible) {
+      const sources = examples.map(
+        (example: any) =>
+          ` <strong>
+      ${example.source.replace(
+        frontValue || defaultValues?.front,
+        `<span style="color: rgb(230, 0, 0);">${
+          frontValue || defaultValues?.front
+        }</span>`
+      )}
+    </strong>
+    <br />
+    ${example.target} `
+      );
+
+      setContent((pre) => pre + sources.join("<br /> "));
+    }
+  }, [isExamplesVisible]);
+
+  const translateHandler = async (showExamples?: boolean) => {
     if (frontRef.current?.value) {
       setIsTranslationLoading(true);
       try {
         const { data } = await axios.post(
-          `/translate?examples=true&language=${[
+          `/translate/translate-examples?examples=${true}&language=${[
             selectedLearningLanguage,
-          ]}&targetLanguage=${user?.nativeLanguage || "english"}`,
+          ]}&targetLanguage=${user?.nativeLanguage || "en"}`,
           {
             text: frontRef.current?.value,
           }
         );
 
-        const translations = data.translations as string[];
+        const translations = data.translations as string;
 
-        // Step 2: Remove duplicates using Set
-        const uniqueTranslations = [...new Set(translations)];
-
-        // Step 3: Display or use unique translations
         setIsTranslationLoading(false);
 
-        if (backRef.current && examples)
-          setBackValue(uniqueTranslations.splice(0, 4).join(","));
-
-        return data.context.examples;
+        if (showExamples) {
+          setExamples(data.examples);
+          setIsExmaplesVisible(true);
+        } else {
+          console.log(translations);
+          setBackValue(translations);
+          setExamples(data.examples);
+        }
+        // Only set back value for translation
       } catch (err) {
         console.log(err);
         setIsTranslationLoading(false);
@@ -254,6 +277,8 @@ export function AddCardModal({
       setFrontValue("");
       setBackValue("");
       setIsTranslationLoading(false);
+      setExamples([]);
+      setIsExmaplesVisible(false);
     }
   }, [isAddCardModalOpen]);
 
@@ -489,7 +514,7 @@ export function AddCardModal({
                   disabled={isTranslationLoading}
                   type="text"
                   ref={backRef}
-                  value={defaultValues?.back || backValue}
+                  value={backValue || defaultValues?.back}
                   onChange={(e) => {
                     setBackValue(e.target.value);
                     setDefaultValues((pre: {}) => {
@@ -509,7 +534,9 @@ export function AddCardModal({
                     frontValue ? false : defaultValues?.front ? false : true
                   }
                   //@ts-ignore
-                  onClick={translateHandler}
+                  onClick={() => {
+                    translateHandler(false);
+                  }}
                 >
                   Auto Translate
                 </Button>
@@ -535,21 +562,7 @@ export function AddCardModal({
                     frontValue ? false : defaultValues?.front ? false : true
                   }
                   onClick={async () => {
-                    const examples = await translateHandler(true);
-
-                    const sources = examples.map(
-                      (example: any) =>
-                        ` <strong>
-                      ${example.source.replace(
-                        example.source_phrases[0].phrase,
-                        `<strong style="color: rgb(230, 0, 0);">${example.source_phrases[0].phrase}</strong>`
-                      )}
-                    </strong>
-                    <br />
-                    ${example.target} `
-                    );
-
-                    setContent((pre) => pre + sources.join("<br /> "));
+                    await translateHandler(true);
                   }}
                 >
                   Generate Examples

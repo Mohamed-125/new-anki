@@ -68,7 +68,7 @@
     "react-text-to-speech": "^1.2.3",
     "react-use": "^17.5.1",
     "react-virtualized-auto-sizer": "^1.0.24",
-    "react-virtuoso": "^4.10.2",
+    "react-virtuoso": "^4.12.7",
     "react-window": "^1.8.11",
     "react-youtube": "^10.1.0",
     "slugify": "^1.6.6",
