@@ -280,13 +280,13 @@ const UserProfile = () => {
   const [selectedNativeLanguage, setSelectedNativeLanguage] = useState("");
 
   return (
-    <div className="flex flex-grow justify-center items-center p-4">
+    <div className="flex flex-grow justify-center items-center py-4 sm:px-2">
       <Form
         onSubmit={handleSubmit(onSubmit)}
-        className="!mx-auto w-full max-w-none h-full"
+        className="!mx-auto w-full max-w-none h-full sm:!px-1"
       >
         <motion.div
-          className="overflow-hidden !mx-auto relative p-10 w-full max-w-2xl  rounded-xl shadow-lg"
+          className="overflow-hidden !mx-auto relative p-10 sm:!px-7 sm:!py-7 w-full max-w-2xl  rounded-xl shadow-lg"
           animate={`step${step}`}
           variants={formHeightVariants}
           initial={false}
@@ -294,7 +294,7 @@ const UserProfile = () => {
           layoutId="form-container"
           transition={containerTransition}
         >
-          <Form.Title className="mb-6 text-2xl font-bold text-center">
+          <Form.Title className="mb-6 text-2xl font-bold text-center sm:text-xl">
             Complete Your Profile
           </Form.Title>
 
