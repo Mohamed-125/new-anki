@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import useModalsStates from "./useModalsStates";
 
-const useSelection = () => {
+const useSelection = (delay: number = 150) => {
   const [selectionData, setSelectionData] = useState<{
     text: string;
     selection?: Selection | null;
@@ -9,9 +10,11 @@ const useSelection = () => {
     selection: null,
   });
 
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { setIsTranslationBoxOpen } = useModalsStates();
+
   const handleSelection = useCallback((e: Event) => {
     const selected = window.getSelection();
-
     const textDiv = document.querySelector(".text-div");
     const captionsDiv = document.getElementById("captions-div");
 
@@ -40,12 +43,16 @@ const useSelection = () => {
       }
     }
 
-    setSelectionData((prev) => {
-      return {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setSelectionData({
         text: selected.toString(),
         selection: selected,
-      };
-    });
+      });
+    }, delay);
   }, []);
 
   const handleSelectionChange = (e: Event) => {
@@ -54,11 +61,12 @@ const useSelection = () => {
 
   useEffect(() => {
     document.addEventListener("selectionchange", handleSelectionChange);
-    // document.addEventListener("click", removeSelection);
 
     return () => {
       document?.removeEventListener("selectionchange", handleSelectionChange);
-      // document.removeEventListener("click", removeSelection);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, [handleSelection]);
 

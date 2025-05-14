@@ -244,7 +244,7 @@ export function AddCardModal({
             selectedLearningLanguage,
           ]}&targetLanguage=${user?.nativeLanguage || "en"}`,
           {
-            text: frontRef.current?.value,
+            text: frontRef.current?.value.trim(),
           }
         );
 
@@ -297,8 +297,7 @@ export function AddCardModal({
     <Modal
       loading={isLoading || isCollectionLoading}
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
-        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
-      }`}
+        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}`}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >

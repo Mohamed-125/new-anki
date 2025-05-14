@@ -304,19 +304,19 @@ const SetProfile = () => {
         <TabsList className="flex mb-6 border-b">
           <TabsTrigger
             value="overview"
-            className="px-4 py-2 text-gray-600 hover:text-blue-600 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
+            className="px-4 sm:px-2 sm:text-base    py-2 text-gray-600 hover:text-blue-600 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
           >
             Overview
           </TabsTrigger>
           <TabsTrigger
             value="achievements"
-            className="px-4 py-2 text-gray-600 hover:text-blue-600 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
+            className="px-4  sm:px-2 sm:text-base  py-2 text-gray-600 hover:text-blue-600 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
           >
             Achievements
           </TabsTrigger>
           <TabsTrigger
             value="statistics"
-            className="px-4 py-2 text-gray-600 hover:text-blue-600 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
+            className="px-4  sm:px-2 sm:text-base  py-2 text-gray-600 hover:text-blue-600 border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600"
           >
             Statistics
           </TabsTrigger>
@@ -325,7 +325,7 @@ const SetProfile = () => {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Language Progress */}
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-3 gap-4 sm:grid-cols-1">
             {profile.languages.map((language) => (
               <div
                 key={language.code}
@@ -450,7 +450,7 @@ const SetProfile = () => {
 
           {/* Streak Calendar */}
           <div className="p-6 mb-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-wrap justify-between items-center mb-4">
               <div className="flex gap-3 items-center">
                 <div className="p-3 text-orange-500 bg-orange-100 rounded-lg">
                   <Activity size={24} />
@@ -462,14 +462,14 @@ const SetProfile = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <button
                   onClick={() => setSelectedMonth(new Date())}
                   className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                 >
                   Today
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2 items-center">
                   <button
                     onClick={() => {
                       const newDate = new Date(selectedMonth);
@@ -526,8 +526,7 @@ const SetProfile = () => {
                   <div
                     key={day.toISOString()}
                     className={`aspect-square p-1 ${
-                      isToday ? "rounded-full border-2 border-blue-200" : ""
-                    }`}
+                      isToday ? "rounded-full border-2 border-blue-200" : ""}`}
                   >
                     <div
                       className={`flex justify-center items-center w-full h-full rounded-full text-sm

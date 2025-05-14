@@ -326,6 +326,10 @@ const Text = React.memo(function ({
           range.selectNode(target.childNodes[0] as Node);
           selection.removeAllRanges();
           selection.addRange(range);
+          // setSelectionData({
+          //   text: "",
+          //   selection: null,
+          // });
 
           if (word) {
             setSelectionData({
@@ -359,7 +363,7 @@ const Text = React.memo(function ({
             className="ProseMirror !p-0"
             itemContent={(index) => (
               <div
-                className="px-6 sm:px-3 paragraph last:mb-10"
+                className="px-6 sm:px-3 paragraph"
                 dangerouslySetInnerHTML={{
                   __html: paragraphs[index],
                 }}

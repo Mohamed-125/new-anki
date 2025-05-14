@@ -234,7 +234,7 @@ const LibrarySection = ({ topic }: { topic: TopicType }) => {
 
   return (
     <div className="mb-12">
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex flex-wrap gap-2 justify-between items-center mb-5">
         <h2 className="text-2xl font-bold text-gray-800">{topic.title}</h2>
         <div className="flex gap-2">
           <button

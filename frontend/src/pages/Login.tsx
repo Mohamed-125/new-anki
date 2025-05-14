@@ -12,7 +12,6 @@ import useToasts from "@/hooks/useToasts";
 import { title } from "process";
 import { useEffect } from "react";
 // @ts-ignore
-import googleOneTap from "google-one-tap";
 
 const Login = () => {
   const {
@@ -30,58 +29,6 @@ const Login = () => {
   const queryClient = useQueryClient();
   const { setSelectedLearningLanguage } = useGetCurrentUser();
   const { addToast } = useToasts();
-
-  // const options = {
-  //   client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-  //   auto_select: false,
-  //   cancel_on_tap_outside: false,
-  //   context: "signin",
-  // };
-
-  // useEffect(() => {
-  //   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-  //     console.error("Google Client ID is not configured");
-  //     return;
-  //   }
-
-  //   googleOneTap(options, async (response) => {
-  //     console.log(response);
-  //     // try {
-  //     //   if (!import.meta.env.VITE_API_URL) {
-  //     //     throw new Error("API URL is not configured");
-  //     //   }
-
-  //     //   const res = await fetch(
-  //     //     `${import.meta.env.VITE_API_URL}/auth/google-login`,
-  //     //     {
-  //     //       method: "POST",
-  //     //       body: JSON.stringify({
-  //     //         token: response.credential,
-  //     //       }),
-  //     //       headers: {
-  //     //         "Content-Type": "application/json",
-  //     //       },
-  //     //     }
-  //     //   );
-
-  //     //   if (!res.ok) {
-  //     //     throw new Error("Failed to authenticate with Google");
-  //     //   }
-
-  //     //   const data = await res.json();
-  //     //   queryClient.setQueryData(["me"], () => data);
-  //     //   setSelectedLearningLanguage(data?.languages?.[0]);
-  //     //   addToast("Logged in successfully", "success");
-  //     //   navigate("/");
-  //     // } catch (error) {
-  //     //   console.error("Google login error:", error);
-  //     //   addToast(
-  //     //     "Failed to authenticate with Google. Please try again later.",
-  //     //     "error"
-  //     //   );
-  //     // }
-  //   });
-  // }, []);
 
   const onSubmit = (values: AuthFormSchemaType) => {
     console.log(values);

@@ -59,15 +59,18 @@ const Home = () => {
       <h6 className="mt-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>
-      <div className="flex justify-between items-center mt-2">
+      <div className="flex gap-2 justify-between items-center mt-2">
         <Link to="/study-cards">
-          <Button variant="primary-outline" className="px-3 py-3 sm:text-sm">
+          <Button
+            variant="primary-outline"
+            className="px-3 py-3 sm:px-2 sm:text-sm"
+          >
             Study Your Cards
           </Button>
         </Link>
 
         <Button
-          className={"px-2 py-3 my-7 sm:text-sm"}
+          className={"px-2 py-3 my-7 sm:px-2 sm:text-sm"}
           onClick={() => states.setIsAddCardModalOpen(true)}
         >
           Create a new card
@@ -91,7 +94,8 @@ const Home = () => {
               className="mt-11"
               onClick={() => states.setIsAddCardModalOpen(true)}
             >
-              There is not any card yet. Click to Add a new card
+              There is not any card yet.
+              <br></br> Click to Add a new card
             </Button>
           </div>
         )}

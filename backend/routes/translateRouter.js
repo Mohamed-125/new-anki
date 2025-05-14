@@ -54,10 +54,11 @@ const languageCodeMap = {
 };
 
 const puppeteer = require("puppeteer");
+
 router.post("/", async (req, res, next) => {
   try {
     const { text } = req.body;
-    const { targetLanguage = "en" } = req.query;
+    const { targetLanguage = "en", language = "de" } = req.query;
 
     // Input validation
     if (!text || typeof text !== "string") {
@@ -200,18 +201,21 @@ router.post("/translate-examples", async (req, res) => {
 
     // Scrape examples
     try {
-      let scrapedExamples = await page.$$eval(".example", (exampleDivs) => {
-        return exampleDivs.map((div) => {
-          let source =
-            div.querySelector(".src, .source")?.textContent.trim() || "";
-          let target =
-            div.querySelector(".trg, .target")?.textContent.trim() || "";
-          return { source, target };
-        });
-      });
+      let scrapedExamples = await page.$$eval(
+        "#examples-content .example",
+        (exampleDivs) => {
+          return exampleDivs.map((div) => {
+            let source =
+              div.querySelector(".src.ltr .text")?.textContent.trim() || "";
+            let target =
+              div.querySelector(".trg.ltr .text")?.textContent.trim() || "";
+            return { source, target };
+          });
+        }
+      );
 
       examples.push(...scrapedExamples);
-      console.log("exapmles found", examples);
+      console.log("examples found", examples);
     } catch (err) {
       console.error("Example scraping error:", err.message);
     }

@@ -23,6 +23,7 @@ import useToasts from "@/hooks/useToasts";
 import { fetchConjugations } from "../utils/conjugations";
 import useModalsStates from "@/hooks/useModalsStates";
 import { range } from "lodash";
+import { title } from "process";
 
 const TranslationWindow = ({
   selectionData,
@@ -66,6 +67,11 @@ const TranslationWindow = ({
   //   };
   // }, [isTranslationBoxOpen, setIsTranslationBoxOpen]);
 
+  // useEffect(() => {
+  //   if (!isTranslationBoxOpen) {
+  //     setTranslatedText("");
+  //   }
+  // }, [isTranslationBoxOpen]);
   // Function to open Reverso Context in a popup window
   const [showReversoIframe, setShowReversoIframe] = useState(false);
   const [reversoUrl, setReversoUrl] = useState("");
@@ -165,32 +171,36 @@ const TranslationWindow = ({
       return;
     }
 
+    setTranslatedText("");
+    setIsTranslationLoading(true);
+
+    console.log(selectionData.text);
     if (!targetLanguage || !isTranslationBoxOpen) return;
 
     const contextString = getContextString;
 
     if (!contextString) return;
 
-    setIsTranslationLoading(true);
     const controller = new AbortController();
-
-    axios
-      .post(
-        `/translate?language=${selectedLearningLanguage}&targetLanguage=${targetLanguage}`,
-        { text: contextString },
-        { signal: controller.signal }
-      )
-      .then((res) => {
+    const getTranslationHanlder = async () => {
+      try {
+        const res = await axios.post(
+          `/translate?language=${selectedLearningLanguage}&targetLanguage=${targetLanguage}`,
+          { text: contextString },
+          { signal: controller.signal }
+        );
         setTranslatedText(res.data.translatedWord);
-      })
-      .catch((err) => {
-        if (!axios.isCancel(err)) {
-          console.error("Translation error:", err);
-        }
-      })
-      .finally(() => {
         setIsTranslationLoading(false);
-      });
+      } catch (err) {
+        if (err.message !== "canceled") {
+          console.error("Translation error:", err);
+          setIsTranslationBoxOpen(false);
+          setIsTranslationLoading(false);
+        }
+      }
+    };
+
+    getTranslationHanlder();
 
     return () => controller.abort();
   }, [
@@ -345,6 +355,10 @@ const TranslationWindow = ({
     };
   }, [selectionData, isTranslationBoxOpen]);
 
+  useEffect(() => {
+    console.log(isTranslationLoading);
+  }, [isTranslationLoading]);
+
   return (
     <div
       id="translationContainer"
@@ -375,8 +389,7 @@ const TranslationWindow = ({
         <div
           id="translationWindow"
           className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
-            isTranslationBoxOpen ? "open" : ""
-          }`}
+            isTranslationBoxOpen ? "open" : ""}`}
         >
           <div id="translationWindow">
             {" "}
