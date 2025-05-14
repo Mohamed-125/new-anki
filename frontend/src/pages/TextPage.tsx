@@ -60,16 +60,6 @@ const TextPage = () => {
 
   const navigate = useNavigate();
 
-  const deleteTextHandler = async () => {
-    const confirm = window.confirm(
-      "Are you sure you want to delete this text?"
-    );
-    if (confirm) {
-      await axios.delete(`text/${id}`);
-      navigate("/texts", { replace: true });
-    }
-  };
-
   const highlightText = useMemo(() => {
     if (!text?.content) return text?.content;
 
@@ -132,33 +122,7 @@ const TextPage = () => {
     return () => document.removeEventListener("click", handleWordClick);
   }, [handleWordClick]);
 
-  const { setIsShareModalOpen, setShareItemId, setShareItemName } =
-    useModalsStates();
-  const shareHandler = () => {
-    if (!text) return;
-    setIsShareModalOpen(true);
-    setShareItemId(text._id);
-    setShareItemName(text?.title);
-  };
   const { user } = useGetCurrentUser();
-  const isSameUser = user?._id === text?.userId;
-  const { addToast } = useToasts();
-
-  const forkHandler = async () => {
-    const toast = addToast("Forking text...", "promise");
-    try {
-      const response = await axios.post(`text/fork/${text?._id}`);
-      navigate(`/texts/${response.data._id}`);
-      queryClient.invalidateQueries({ queryKey: ["texts"] });
-      toast.setToastData({
-        title: "Text forked successfully!",
-        type: "success",
-        isCompleted: true,
-      });
-    } catch (err) {
-      toast.setToastData({ title: "Failed to fork text", type: "error" });
-    }
-  };
 
   if (isLoading) {
     return <Loading />;
@@ -199,6 +163,7 @@ const openReversoPopup = (
 };
 
 import { Virtuoso } from "react-virtuoso";
+import { text } from "stream/consumers";
 
 const Text = React.memo(function ({
   highlightText,
@@ -216,6 +181,14 @@ const Text = React.memo(function ({
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === text?.userId;
 
+  const { setIsShareModalOpen, setShareItemId, setShareItemName } =
+    useModalsStates();
+  const shareHandler = () => {
+    if (!text) return;
+    setIsShareModalOpen(true);
+    setShareItemId(text._id);
+    setShareItemName(text?.title);
+  };
   useEffect(() => {
     if (highlightText) setContent(highlightText);
   }, [highlightText]);
@@ -344,6 +317,35 @@ const Text = React.memo(function ({
     [getWordBefore, getWordAfter, userCards] // include dependencies if used from state or props
   );
 
+  const { addToast } = useToasts();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const forkHandler = async () => {
+    const toast = addToast("Forking text...", "promise");
+    try {
+      const response = await axios.post(`text/fork/${text?._id}`);
+      navigate(`/texts/${response.data._id}`);
+      queryClient.invalidateQueries({ queryKey: ["texts"] });
+      toast.setToastData({
+        title: "Text forked successfully!",
+        type: "success",
+        isCompleted: true,
+      });
+    } catch (err) {
+      toast.setToastData({ title: "Failed to fork text", type: "error" });
+    }
+  };
+
+  const deleteTextHandler = async () => {
+    const confirm = window.confirm(
+      "Are you sure you want to delete this text?"
+    );
+    if (confirm) {
+      await axios.delete(`text/${text?._id}`);
+      navigate("/texts", { replace: true });
+    }
+  };
   return (
     <>
       <TranslationWindow
@@ -354,6 +356,32 @@ const Text = React.memo(function ({
       <AddCardModal collectionId={text?.defaultCollectionId} />
 
       <div className="tiptap tiptap-editor">
+        <div>
+          <div className="flex justify-between items-center px-6 py-3 space-x-2">
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl font-semibold text-gray-800">
+                {text?.title}
+              </h1>
+              <span className="text-sm text-gray-500">
+                <ActionsDropdown
+                  shareHandler={shareHandler}
+                  forkData={
+                    !isSameUser
+                      ? {
+                          forking: "Add to my texts",
+                          handler: forkHandler,
+                        }
+                      : undefined
+                  }
+                  itemId={text?._id || ""}
+                  isSameUser={isSameUser}
+                  editHandler={() => navigate(`/texts/edit/${text?._id}`)}
+                  deleteHandler={deleteTextHandler}
+                />
+              </span>
+            </div>
+          </div>
+        </div>
         <div className="text-div">
           {/* <TipTapEditor editor={editor} /> */}
           <Virtuoso

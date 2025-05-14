@@ -106,6 +106,23 @@ export const columns: ColumnDef<UserType>[] = [
         queryClient.invalidateQueries({ queryKey: ["users"] });
       };
 
+      const deleteUser = () => {
+        const answer = window.confirm(
+          "Are you sure you want to delete this user? This action cannot be undone."
+        );
+
+        if (!answer) return;
+        axios
+          .delete(`/auth/users/${user._id}`)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+          })
+          .catch((error) => {
+            console.error("Error deleting user:", error);
+            alert("Failed to delete user. Please try again.");
+          });
+      };
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -123,7 +140,14 @@ export const columns: ColumnDef<UserType>[] = [
               <DropdownMenuItem onClick={makePremium}>
                 Make Premium
               </DropdownMenuItem>
-            )}{" "}
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={deleteUser}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              Delete User
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
