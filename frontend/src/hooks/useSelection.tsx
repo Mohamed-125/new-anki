@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import useModalsStates from "./useModalsStates";
 
-const useSelection = (delay: number = 150) => {
+const useSelection = (delay: number = 400) => {
   const [selectionData, setSelectionData] = useState<{
     text: string;
     selection?: Selection | null;
@@ -17,7 +17,9 @@ const useSelection = (delay: number = 150) => {
     const selected = window.getSelection();
     const textDiv = document.querySelector(".text-div");
     const captionsDiv = document.getElementById("captions-div");
-
+    setSelectionData((prev) => {
+      return { text: "" };
+    });
     const translationWindow = document.getElementById("translationWindow");
 
     if (!selected) return;

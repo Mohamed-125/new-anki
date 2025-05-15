@@ -22,8 +22,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/Drawer";
 import useToasts from "@/hooks/useToasts";
 import { fetchConjugations } from "../utils/conjugations";
 import useModalsStates from "@/hooks/useModalsStates";
-import { range } from "lodash";
-import { title } from "process";
+import { Skeleton } from "./ui/skeleton";
 
 const TranslationWindow = ({
   selectionData,
@@ -42,12 +41,37 @@ const TranslationWindow = ({
   const [translatedText, setTranslatedText] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("en"); // Default to English
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
+  const [selectedTranslations, setSelectedTranslations] = useState<string[]>(
+    []
+  );
+  const [translationData, setTranslationData] = useState<any>(null);
+  const { isTranslationBoxOpen, setIsTranslationBoxOpen, defaultValues } =
+    useModalsStates();
+
+  const handleTranslationClick = (translation: string) => {
+    setSelectedTranslations((prev) => {
+      const newTranslations = prev.includes(translation)
+        ? prev.filter((t) => t !== translation)
+        : [...prev, translation];
+
+      console.log(newTranslations);
+      setDefaultValues({
+        ...defaultValues,
+        back:
+          newTranslations.length > 0
+            ? newTranslations.join(", ")
+            : translationData.word.translations[targetLanguage].join(", "),
+      });
+
+      return newTranslations;
+    });
+  };
+
+  console.log(defaultValues);
   const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
   // useEffect(() => {
   //   setEleHeight(rect?.bottom - rect?.top);
   // }, []);
-
-  const { isTranslationBoxOpen, setIsTranslationBoxOpen } = useModalsStates();
 
   // useEffect(() => {
   //   console.log(isTranslationBoxOpen);
@@ -174,7 +198,6 @@ const TranslationWindow = ({
     setTranslatedText("");
     setIsTranslationLoading(true);
 
-    console.log(selectionData.text);
     if (!targetLanguage || !isTranslationBoxOpen) return;
 
     const contextString = getContextString;
@@ -182,14 +205,27 @@ const TranslationWindow = ({
     if (!contextString) return;
 
     const controller = new AbortController();
-    const getTranslationHanlder = async () => {
+    const getTranslationHandler = async () => {
+      setTranslationData(null); // Clear previous translation data
       try {
         const res = await axios.post(
           `/translate?language=${selectedLearningLanguage}&targetLanguage=${targetLanguage}`,
           { text: contextString },
           { signal: controller.signal }
         );
-        setTranslatedText(res.data.translatedWord);
+        setTranslationData(res.data);
+        if (res.data.fromDatabase) {
+          // Only show languages that have translations
+          const availableLanguages = Object.keys(
+            res.data.word.translations
+          ).filter((lang) => res.data.word.translations[lang]?.length > 0);
+          if (
+            availableLanguages.length > 0 &&
+            !availableLanguages.includes(targetLanguage)
+          ) {
+            setTargetLanguage(availableLanguages[0]);
+          }
+        }
         setIsTranslationLoading(false);
       } catch (err) {
         if (err.message !== "canceled") {
@@ -200,7 +236,7 @@ const TranslationWindow = ({
       }
     };
 
-    getTranslationHanlder();
+    getTranslationHandler();
 
     return () => controller.abort();
   }, [
@@ -356,8 +392,8 @@ const TranslationWindow = ({
   }, [selectionData, isTranslationBoxOpen]);
 
   useEffect(() => {
-    console.log(isTranslationLoading);
-  }, [isTranslationLoading]);
+    console.log(translationData);
+  }, [translationData]);
 
   return (
     <div
@@ -389,111 +425,133 @@ const TranslationWindow = ({
         <div
           id="translationWindow"
           className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
-            isTranslationBoxOpen ? "open" : ""}`}
+            isTranslationBoxOpen ? "open" : ""
+          }`}
         >
-          <div id="translationWindow">
-            {" "}
-            <Form.Label>Choose the target language :</Form.Label>
-            <Form.Select
-              defaultValue={"EN"}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                setTargetLanguage(e.target.value.toLowerCase());
-              }}
-              data-placeholder="Target Language..."
-            >
-              <option value="AF">Afrikaans</option>
-              <option value="SQ">Albanian</option>
-              <option value="AR">Arabic</option>
-              <option value="HY">Armenian</option>
-              <option value="EU">Basque</option>
-              <option value="BN">Bengali</option>
-              <option value="BG">Bulgarian</option>
-              <option value="CA">Catalan</option>
-              <option value="KM">Cambodian</option>
-              <option value="ZH">Chinese (Mandarin)</option>
-              <option value="HR">Croatian</option>
-              <option value="CS">Czech</option>
-              <option value="DA">Danish</option>
-              <option value="NL">Dutch</option>
-              <option value="EN">English</option>
-              <option value="ET">Estonian</option>
-              <option value="FJ">Fiji</option>
-              <option value="FI">Finnish</option>
-              <option value="FR">French</option>
-              <option value="KA">Georgian</option>
-              <option value="DE">German</option>
-              <option value="EL">Greek</option>
-              <option value="GU">Gujarati</option>
-              <option value="HE">Hebrew</option>
-              <option value="HI">Hindi</option>
-              <option value="HU">Hungarian</option>
-              <option value="IS">Icelandic</option>
-              <option value="ID">Indonesian</option>
-              <option value="GA">Irish</option>
-              <option value="IT">Italian</option>
-              <option value="JA">Japanese</option>
-              <option value="JW">Javanese</option>
-              <option value="KO">Korean</option>
-              <option value="LA">Latin</option>
-              <option value="LV">Latvian</option>
-              <option value="LT">Lithuanian</option>
-              <option value="MK">Macedonian</option>
-              <option value="MS">Malay</option>
-              <option value="ML">Malayalam</option>
-              <option value="MT">Maltese</option>
-              <option value="MI">Maori</option>
-              <option value="MR">Marathi</option>
-              <option value="MN">Mongolian</option>
-              <option value="NE">Nepali</option>
-              <option value="NO">Norwegian</option>
-              <option value="FA">Persian</option>
-              <option value="PL">Polish</option>
-              <option value="PT">Portuguese</option>
-              <option value="PA">Punjabi</option>
-              <option value="QU">Quechua</option>
-              <option value="RO">Romanian</option>
-              <option value="RU">Russian</option>
-              <option value="SM">Samoan</option>
-              <option value="SR">Serbian</option>
-              <option value="SK">Slovak</option>
-              <option value="SL">Slovenian</option>
-              <option value="ES">Spanish</option>
-              <option value="SW">Swahili</option>
-              <option value="SV">Swedish </option>
-              <option value="TA">Tamil</option>
-              <option value="TT">Tatar</option>
-              <option value="TE">Telugu</option>
-              <option value="TH">Thai</option>
-              <option value="BO">Tibetan</option>
-              <option value="TO">Tonga</option>
-              <option value="TR">Turkish</option>
-              <option value="UK">Ukrainian</option>
-              <option value="UR">Urdu</option>
-              <option value="UZ">Uzbek</option>
-              <option value="VI">Vietnamese</option>
-              <option value="CY">Welsh</option>
-              <option value="XH">Xhosa</option>
-            </Form.Select>
-            <div className="flex gap-1 items-center">
-              <TextToSpeech
-                text={selectionData.text}
-                language={selectedLearningLanguage.toLowerCase()}
-              />
-              <p>{selectionData.text}</p>
-            </div>
-            <hr className="my-2"></hr>
-            <div className="relative min-h-20">
-              {isTranslationLoading ? (
-                <Loading />
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-base">
-                    <p>{translatedText}</p>
-                  </div>
+          {translationData?.fromDatabase ? (
+            <>
+              <Form.Label>Available translations:</Form.Label>
+              <Form.Select
+                defaultValue={targetLanguage}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  setTargetLanguage(e.target.value.toLowerCase());
+                }}
+                data-placeholder="Target Language..."
+              >
+                {Object.keys(translationData.word.translations).map((lang) => (
+                  <option key={lang} value={lang}>
+                    {languageCodeMap[lang].charAt(0).toUpperCase() +
+                      languageCodeMap[lang].slice(1) ||
+                      lang.charAt(0).toUpperCase() + lang.slice(1)}
+                  </option>
+                ))}
+              </Form.Select>
+              <div className="flex gap-1 items-center mt-2">
+                <TextToSpeech
+                  text={selectionData.text}
+                  language={selectedLearningLanguage.toLowerCase()}
+                />
+                <p className="font-semibold text-md">{selectionData.text}</p>
+              </div>
+              {translationData?.word.base.plural && (
+                <div className="p-2 text-gray-700 bg-gray-50 rounded-lg">
+                  {translationData.word.base.singular &&
+                    translationData.word.base.plural && (
+                      <div className="">
+                        {selectedLearningLanguage.toLowerCase() === "de"
+                          ? `${translationData.word.lemma.split(" ")[0]} `
+                          : ""}
+                        {translationData.word.base.singular}
+                        <>
+                          {" "}
+                          /{" "}
+                          {selectedLearningLanguage.toLowerCase() === "de"
+                            ? "die "
+                            : ""}
+                          {translationData.word.base.plural}
+                        </>
+                      </div>
+                    )}
                 </div>
               )}
-            </div>
-          </div>
+              <hr className="my-2 !mb-5" />
+              <div className="relative min-h-20">
+                {isTranslationLoading ? (
+                  <Loading />
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {translationData.word.translations[targetLanguage]?.map(
+                        (translation, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleTranslationClick(translation)}
+                            className={`px-3 py-1 rounded-full text-base transition-colors ${
+                              selectedTranslations.includes(translation)
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {translation}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <Form.Label>Choose the target language:</Form.Label>
+              <Form.Select
+                defaultValue={targetLanguage}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  setTargetLanguage(e.target.value.toLowerCase());
+                }}
+                data-placeholder="Target Language..."
+              >
+                {Object.entries(languageCodeMap).map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name.charAt(0).toUpperCase() + name.slice(1)}
+                  </option>
+                ))}
+              </Form.Select>
+              <div className="flex gap-1 items-center mt-2">
+                <TextToSpeech
+                  text={selectionData.text}
+                  language={selectedLearningLanguage.toLowerCase()}
+                />
+                <p className="font-semibold text-md">{selectionData.text}</p>
+              </div>
+
+              {isTranslationLoading ? (
+                <Skeleton className="h-7"></Skeleton>
+              ) : (
+                translationData?.base && (
+                  <div className="p-2 text-gray-700 bg-gray-50 rounded-lg">
+                    <div className="">
+                      {translationData.base.singular} /{" "}
+                      {translationData.base.plural}
+                    </div>
+                  </div>
+                )
+              )}
+              <hr className="my-2" />
+              <div className="relative min-h-20">
+                {isTranslationLoading ? (
+                  <Loading />
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-base">
+                      <p>{translationData?.translatedWord}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <div className="mt-3">
             <p className="mb-2 text-xs font-medium text-gray-500">Actions</p>
             <div className="flex overflow-x-auto gap-2 pb-1">
@@ -502,10 +560,12 @@ const TranslationWindow = ({
                 disabled={isTranslationLoading}
                 onClick={() => {
                   setIsAddCardModalOpen(true);
-                  setDefaultValues({
-                    front: selectionData.text,
-                    back: translatedText,
-                    content: "",
+                  setDefaultValues((prev) => {
+                    return {
+                      ...prev,
+                      front: selectionData.text,
+                      content: "",
+                    };
                   });
                 }}
                 title="Save to your cards"
@@ -542,52 +602,46 @@ const TranslationWindow = ({
 
       <div>
         {isSmallScreen && conjugations.length > 0 && (
-          <>
-            <Drawer
-              open={isDrawerOpen}
-              disablePreventScroll={true}
-              shouldScaleBackground={true}
-              onOpenChange={setIsDrawerOpen}
-            >
-              <DrawerContent
-                onClick={(e) => e.stopPropagation()} // prevents background click
-                className=""
-              >
-                <DrawerHeader>
-                  <DrawerTitle>Conjugations</DrawerTitle>
-                  <div className="overflow-y-auto px-4 pb-8 h-[500px] space-y-4">
-                    {conjugations.map((conj, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-gray-50 rounded-lg shadow-sm"
-                      >
-                        <h4 className="mb-3 text-lg font-medium text-primary">
-                          {conj.tense}
-                        </h4>
-                        <div className="grid grid-cols-1 gap-3">
-                          {conj.conjugations.map((c, i) => (
-                            <div
-                              key={i}
-                              className="flex justify-between items-center text-sm"
-                            >
-                              <span className="text-muted-foreground">
-                                {c.person}
-                              </span>
-                              <span className="font-medium">{c.form}</span>
-                            </div>
-                          ))}
-                        </div>
+          <Drawer
+            open={isDrawerOpen}
+            disablePreventScroll={true}
+            shouldScaleBackground={true}
+            onOpenChange={setIsDrawerOpen}
+          >
+            <DrawerContent onClick={(e) => e.stopPropagation()} className="">
+              <DrawerHeader>
+                <DrawerTitle>Conjugations</DrawerTitle>
+                <div className="overflow-y-auto px-4 pb-8 h-[500px] space-y-4">
+                  {conjugations.map((conj, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-gray-50 rounded-lg shadow-sm"
+                    >
+                      <h4 className="mb-3 text-lg font-medium text-primary">
+                        {conj.tense}
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        {conj.conjugations.map((c, i) => (
+                          <div
+                            key={i}
+                            className="flex justify-between items-center text-sm"
+                          >
+                            <span className="text-muted-foreground">
+                              {c.person}
+                            </span>
+                            <span className="font-medium">{c.form}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </DrawerHeader>
-              </DrawerContent>
-            </Drawer>
-          </>
+                    </div>
+                  ))}
+                </div>
+              </DrawerHeader>
+            </DrawerContent>
+          </Drawer>
         )}
       </div>
     </div>
   );
 };
-
 export default React.memo(TranslationWindow);

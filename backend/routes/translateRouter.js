@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const cheerio = require("cheerio");
 const axios = require("axios");
+const Word = require("../models/WordModel");
+const WordsMissing = require("../models/WordsMissingModel");
 
 const languageCodeMapShort = {
   en: "eng", // English
@@ -59,6 +61,60 @@ router.post("/", async (req, res, next) => {
   try {
     const { text } = req.body;
     const { targetLanguage = "en", language = "de" } = req.query;
+    // Extract the word within double parentheses and preserve the structure
+    const regex = /\(\((.*?)\)\)/;
+    const originalWordMatch = text.match(regex);
+    const cleanText = (text) => text.replace(/[^\p{L}\s]/gu, "").trim();
+    const originalWord = originalWordMatch
+      ? cleanText(originalWordMatch[1])
+      : null;
+
+    // Extract and check dictionary for text between double parentheses
+    const doubleParenRegex = /\(\((.*?)\)\)/;
+    const match = text.match(doubleParenRegex);
+    // Clean the text by removing punctuation and special characters
+    const searchText = cleanText(match ? match[1] : text);
+
+    console.log(searchText);
+    const searchRegex = new RegExp(
+      `^${searchText.replace(/ß/g, "(ß|ss)")}$`,
+      "i"
+    );
+    const dictionaryMatch = await Word.findOne({
+      $or: [
+        { lemma: searchRegex },
+        { "base.singular": searchRegex },
+        { "base.plural": searchRegex },
+        { variants: searchRegex },
+      ],
+    }).lean();
+
+    if (dictionaryMatch) {
+      const translations = dictionaryMatch.translations[targetLanguage] || [];
+      if (translations.length > 0) {
+        return res.json({
+          originalText: text,
+          word: dictionaryMatch,
+          fromDatabase: true,
+        });
+      }
+    } else {
+      // If word not found in dictionary, save to WordsMissing collection
+      if (originalWord) {
+        try {
+          await WordsMissing.findOneAndUpdate(
+            { word: searchText, language },
+            { $setOnInsert: { word: searchText, language } },
+            { upsert: true, new: true }
+          );
+        } catch (error) {
+          // If error is not due to duplicate entry, log it
+          if (error.code !== 11000) {
+            console.error("Error saving missing word:", error);
+          }
+        }
+      }
+    }
 
     // Input validation
     if (!text || typeof text !== "string") {
@@ -71,11 +127,6 @@ router.post("/", async (req, res, next) => {
         .status(400)
         .json({ error: "Valid target language is required" });
     }
-
-    // Extract the word within double parentheses and preserve the structure
-    const regex = /\(\((.*?)\)\)/;
-    const originalWordMatch = text.match(regex);
-    const originalWord = originalWordMatch ? originalWordMatch[1] : null;
 
     // Split text into parts to translate separately and maintain structure
     let textParts = [];
@@ -127,12 +178,58 @@ router.post("/", async (req, res, next) => {
       translatedText = translatedParts[0];
     }
 
+    // For German words, try to get article and plural form
+    let base = null;
+
+    if (language === "de" && originalWord.split(" ").length === 1) {
+      try {
+        // Try with different articles
+        const articles = ["das", "die", "der"];
+        let foundArticlePage = null;
+
+        for (const article of articles) {
+          try {
+            console.log(
+              `https://der-artikel.de/${article}/${originalWord.trim()}.html`
+            );
+            const response = await axios.get(
+              `https://der-artikel.de/${article}/${originalWord.trim()}.html`
+            );
+
+            foundArticlePage = response.data;
+            break;
+          } catch (error) {
+            continue;
+          }
+        }
+
+        if (foundArticlePage) {
+          console.log("foundArticlePage");
+          const $ = cheerio.load(foundArticlePage);
+          const table = $("table");
+          if (table.length > 0) {
+            const firstRow = table.find("tbody tr").first();
+            const cells = firstRow.find("td");
+            if (cells.length >= 3) {
+              base = {
+                singular: cells.eq(1).text().trim(),
+                plural: cells.eq(2).text().trim(),
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching German word details:", error);
+      }
+    }
+
     // Format response
     const response = {
       originalText: text,
       translatedText,
       originalWord,
       translatedWord,
+      base,
     };
 
     res.json(response);

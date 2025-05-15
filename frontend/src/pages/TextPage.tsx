@@ -400,6 +400,7 @@ const Text = React.memo(function ({
             )}
           />
         </div>
+        <div className="min-h-56"></div>
         {/* <p>
           Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolores
           temporibus exercitationem quo inventore. Repellendus repellat atque
