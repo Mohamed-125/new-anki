@@ -11,15 +11,13 @@ const useSelection = (delay: number = 400) => {
   });
 
   const timeoutRef = useRef<NodeJS.Timeout>();
-  const { setIsTranslationBoxOpen } = useModalsStates();
+  const { setIsTranslationBoxOpen, isTranslationBoxOpen } = useModalsStates();
 
   const handleSelection = useCallback((e: Event) => {
     const selected = window.getSelection();
     const textDiv = document.querySelector(".text-div");
     const captionsDiv = document.getElementById("captions-div");
-    setSelectionData((prev) => {
-      return { text: "" };
-    });
+
     const translationWindow = document.getElementById("translationWindow");
 
     if (!selected) return;
@@ -43,6 +41,10 @@ const useSelection = (delay: number = 400) => {
         });
         return;
       }
+    }
+
+    if (selectionData.text && isTranslationBoxOpen) {
+      setIsTranslationBoxOpen(false);
     }
 
     if (timeoutRef.current) {

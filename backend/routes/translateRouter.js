@@ -100,7 +100,7 @@ router.post("/", async (req, res, next) => {
       }
     } else {
       // If word not found in dictionary, save to WordsMissing collection
-      if (originalWord) {
+      if (originalWord && originalWord.split(" ").length === 1) {
         try {
           await WordsMissing.findOneAndUpdate(
             { word: searchText, language },
