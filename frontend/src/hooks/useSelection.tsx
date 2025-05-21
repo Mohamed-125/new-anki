@@ -26,6 +26,20 @@ const useSelection = (delay: number = 400) => {
       return;
     }
 
+    // Check if this is a click (anchorOffset is 0 and focusOffset is 1) or a drag selection
+    const isClickSelection =
+      selected.anchorNode === selected.focusNode &&
+      selected.anchorOffset === 0 &&
+      selected.focusOffset === 1;
+
+    // Only close translation box if it's a drag selection and not inside translation window
+    if (
+      !isClickSelection &&
+      !translationWindow?.contains(selected.anchorNode)
+    ) {
+      setIsTranslationBoxOpen(false);
+    }
+
     if (textDiv) {
       if (!textDiv?.contains(selected.anchorNode)) {
         setSelectionData((prev) => {
@@ -51,12 +65,10 @@ const useSelection = (delay: number = 400) => {
       clearTimeout(timeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
-      setSelectionData({
-        text: selected.toString(),
-        selection: selected,
-      });
-    }, delay);
+    setSelectionData({
+      text: selected.toString(),
+      selection: selected,
+    });
   }, []);
 
   const handleSelectionChange = (e: Event) => {

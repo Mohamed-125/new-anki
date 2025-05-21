@@ -80,6 +80,7 @@ export function AddCardModal({
     targetCollectionId,
   } = useModalStates();
 
+  console.log("editId", editId);
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");

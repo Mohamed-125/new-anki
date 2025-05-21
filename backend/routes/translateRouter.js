@@ -75,57 +75,77 @@ router.post("/", async (req, res, next) => {
     // Clean the text by removing punctuation and special characters
     const searchText = cleanText(match ? match[1] : text);
 
-    console.log(searchText);
+    console.log("Search Text:", searchText);
     const searchRegex = new RegExp(
       `^${searchText.replace(/ß/g, "(ß|ss)")}$`,
       "i"
     );
-    const dictionaryMatch = await Word.findOne({
-      $or: [
-        { lemma: searchRegex },
-        { "base.singular": searchRegex },
-        { "base.plural": searchRegex },
-        { variants: searchRegex },
-      ],
-    }).lean();
 
-    if (dictionaryMatch) {
-      const translations = dictionaryMatch.translations[targetLanguage] || [];
-      if (translations.length > 0) {
-        return res.json({
-          originalText: text,
-          word: dictionaryMatch,
-          fromDatabase: true,
-        });
-      }
-    } else {
-      // If word not found in dictionary, save to WordsMissing collection
-      if (originalWord && originalWord.split(" ").length === 1) {
-        try {
-          await WordsMissing.findOneAndUpdate(
-            { word: searchText, language },
-            { $setOnInsert: { word: searchText, language } },
-            { upsert: true, new: true }
+    try {
+      const dictionaryMatch = await Word.findOne({
+        $or: [
+          { lemma: searchRegex },
+          { "base.singular": searchRegex },
+          { "base.plural": searchRegex },
+          { variants: searchRegex },
+        ],
+      }).lean();
+
+      if (dictionaryMatch) {
+        const translations = dictionaryMatch.translations[targetLanguage] || [];
+
+        console.log("translations", translations);
+        if (translations.length > 0) {
+          return res.json({
+            originalText: text,
+            word: dictionaryMatch,
+            fromDatabase: true,
+          });
+        } else {
+          console.log(
+            "No translations found in the database for target language:",
+            targetLanguage
           );
-        } catch (error) {
-          // If error is not due to duplicate entry, log it
-          if (error.code !== 11000) {
-            console.error("Error saving missing word:", error);
+        }
+      } else {
+        console.log("Word not found in the database:", searchText);
+        // If word not found in dictionary, save to WordsMissing collection
+        if (originalWord && originalWord.split(" ").length === 1) {
+          try {
+            const result = await WordsMissing.findOneAndUpdate(
+              { word: searchText, language },
+              { $setOnInsert: { word: searchText, language } },
+              { upsert: true, new: true }
+            );
+            console.log("Saved missing word:", result);
+          } catch (error) {
+            // If error is not due to duplicate entry, log it
+            if (error.code !== 11000) {
+              console.error("Error saving missing word:", error);
+            } else {
+              console.log(
+                "Duplicate missing word entry:",
+                searchText,
+                language
+              );
+            }
           }
         }
       }
+    } catch (err) {
+      console.log("error when getting the dictionary match", err);
     }
 
     // Input validation
     if (!text || typeof text !== "string") {
-      return res
-        .status(400)
-        .json({ error: "Text is required and must be a string" });
+      const errorMessage = "Text is required and must be a string";
+      console.error("Validation Error:", errorMessage);
+      return res.status(400).json({ error: errorMessage });
     }
     if (!targetLanguage || !languageCodeMap[targetLanguage]) {
-      return res
-        .status(400)
-        .json({ error: "Valid target language is required" });
+      const errorMessage = "Valid target language is required";
+      console.error("Validation Error:", errorMessage, targetLanguage);
+      return res.status(400).json({ error: errorMessage });
     }
 
     // Split text into parts to translate separately and maintain structure
@@ -153,15 +173,26 @@ router.post("/", async (req, res, next) => {
         const encodedPart = encodeURIComponent(part);
         const translationUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLanguage}&dt=t&q=${encodedPart}`;
 
-        const response = await axios.get(translationUrl);
-        if (!response.data || !Array.isArray(response.data[0])) {
-          throw new Error("Invalid translation response format");
-        }
+        try {
+          const response = await axios.get(translationUrl);
+          if (!response.data || !Array.isArray(response.data[0])) {
+            const errorMessage = "Invalid translation response format";
+            console.error(
+              "Translation API Error:",
+              errorMessage,
+              response.data
+            );
+            throw new Error(errorMessage);
+          }
 
-        return response.data[0]
-          .map((item) => item && item[0])
-          .filter(Boolean)
-          .join("");
+          return response.data[0]
+            .map((item) => item && item[0])
+            .filter(Boolean)
+            .join("");
+        } catch (error) {
+          console.error("Error fetching translation:", error);
+          throw error; // Re-throw the error to be caught by the main try-catch
+        }
       })
     );
 
@@ -181,7 +212,11 @@ router.post("/", async (req, res, next) => {
     // For German words, try to get article and plural form
     let base = null;
 
-    if (language === "de" && originalWord.split(" ").length === 1) {
+    if (
+      language === "de" &&
+      originalWord &&
+      originalWord.split(" ").length === 1
+    ) {
       try {
         // Try with different articles
         const articles = ["das", "die", "der"];
@@ -189,22 +224,23 @@ router.post("/", async (req, res, next) => {
 
         for (const article of articles) {
           try {
-            console.log(
-              `https://der-artikel.de/${article}/${originalWord.trim()}.html`
-            );
-            const response = await axios.get(
-              `https://der-artikel.de/${article}/${originalWord.trim()}.html`
-            );
-
+            const articleUrl = `https://der-artikel.de/${article}/${originalWord.trim()}.html`;
+            console.log("Fetching article page:", articleUrl);
+            const response = await axios.get(articleUrl);
             foundArticlePage = response.data;
             break;
           } catch (error) {
+            console.log(
+              "Error fetching article page:",
+              `https://der-artikel.de/${article}/${originalWord.trim()}.html`,
+              error.message
+            );
             continue;
           }
         }
 
         if (foundArticlePage) {
-          console.log("foundArticlePage");
+          console.log("Article page found for:", originalWord);
           const $ = cheerio.load(foundArticlePage);
           const table = $("table");
           if (table.length > 0) {
@@ -212,11 +248,18 @@ router.post("/", async (req, res, next) => {
             const cells = firstRow.find("td");
             if (cells.length >= 3) {
               base = {
-                singular: cells.eq(1).text().trim(),
-                plural: cells.eq(2).text().trim(),
+                singular: cells.eq(1).text().trim().replace("  ", " "),
+                plural: cells.eq(2).text().trim().replace("  ", " "),
               };
+              console.log("Base forms found:", base);
+            } else {
+              console.log("Less than 3 cells in the first table row.");
             }
+          } else {
+            console.log("No table found on the article page.");
           }
+        } else {
+          console.log("Article page not found for:", originalWord);
         }
       } catch (error) {
         console.error("Error fetching German word details:", error);

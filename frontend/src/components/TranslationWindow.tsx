@@ -1,10 +1,61 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+
+const getBackValue = (
+  translationData: any,
+  targetLanguage: string,
+  selectedTranslations: string[]
+) => {
+  if (translationData?.word?.translations) {
+    console.log("translations exists", translationData, selectedTranslations);
+    return selectedTranslations.length > 0
+      ? selectedTranslations
+      : translationData.word.translations[targetLanguage] || [];
+  }
+  return translationData?.translatedWord
+    ? [translationData.translatedWord]
+    : [];
+};
+
+const getFrontValue = (
+  translationData: any,
+  selectedLearningLanguage: string,
+  defaultText: string
+) => {
+  if (translationData?.base?.singular) {
+    return translationData.base.singular + " / " + translationData.base.plural;
+  }
+
+  if (translationData?.word?.base?.singular) {
+    let frontValue = "";
+    const isGerman = selectedLearningLanguage.toLowerCase() === "de";
+    const lemmaWords = translationData.word.lemma.split(" ");
+
+    if (lemmaWords.length === 1) {
+      frontValue = translationData.word.lemma;
+    } else {
+      frontValue =
+        (isGerman ? lemmaWords[0] + " " : "") +
+        translationData.word.base.singular;
+    }
+
+    if (isGerman && translationData.word.base.plural) {
+      frontValue += " / die " + translationData.word.base.plural;
+    } else if (translationData.word.base.plural) {
+      frontValue += " / " + translationData.word.base.plural;
+    }
+
+    return frontValue;
+  }
+
+  return defaultText;
+};
 import "./TranslationWindow.css";
 import Button from "./Button";
 import axios from "axios";
@@ -45,7 +96,7 @@ const TranslationWindow = ({
     []
   );
   const [translationData, setTranslationData] = useState<any>(null);
-  const { isTranslationBoxOpen, setIsTranslationBoxOpen, defaultValues } =
+  const { isTranslationBoxOpen, setIsTranslationBoxOpen, isAddCardModalOpen } =
     useModalsStates();
 
   const handleTranslationClick = (translation: string) => {
@@ -54,20 +105,10 @@ const TranslationWindow = ({
         ? prev.filter((t) => t !== translation)
         : [...prev, translation];
 
-      console.log(newTranslations);
-      setDefaultValues({
-        ...defaultValues,
-        back:
-          newTranslations.length > 0
-            ? newTranslations.join(", ")
-            : translationData.word.translations[targetLanguage].join(", "),
-      });
-
       return newTranslations;
     });
   };
 
-  console.log(defaultValues);
   const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
   // useEffect(() => {
   //   setEleHeight(rect?.bottom - rect?.top);
@@ -247,123 +288,113 @@ const TranslationWindow = ({
     selectedLearningLanguage,
   ]);
 
-  const calculatePositionInText = useMemo(() => {
-    if (!selectionData?.text) return { top: "", left: "" };
+  const [position, setPosition] = useState({ top: "", left: "" });
+
+  useLayoutEffect(() => {
+    if (!selectionData?.text) {
+      setPosition({ top: "", left: "" });
+      return;
+    }
+
     const textDiv = document.querySelector(".text-div")!;
-    const subtitlesDiv = document.querySelector(".subtitles-div");
     const select = window.getSelection();
 
-    const selection = window.getSelection();
-    if (!selection || !(selection.rangeCount > 0))
-      return {
-        top: "",
-        left: "",
-      };
+    if (!select || !(select.rangeCount > 0)) {
+      setPosition({ top: "", left: "" });
+      return;
+    }
 
     const translationContainer = document.getElementById(
       "translationContainer"
     )!;
-
-    const range = select?.getRangeAt(0);
-
-    const rect = range?.getClientRects()[range?.getClientRects().length - 1];
-    const windowWidth = window.innerWidth;
-
     if (!translationContainer) return;
+
+    const range = select.getRangeAt(0);
+    const rect = range.getClientRects()[range.getClientRects().length - 1];
+    const windowWidth = window.innerWidth;
 
     if (isTranslationBoxOpen) {
       translationContainer.style.width = `80%`;
-      if (textDiv) {
-        // translationContainer.style.maxWidth = `${textDiv?.clientWidth}px`;
-      }
     } else {
       translationContainer.style.width = `fit-content`;
     }
 
-    let top;
-    let left;
-
-    if (rect) {
-      const calculateLeft = () => {
-        left = `${rect?.left + rect.width}px`;
-        if (window.innerWidth < 400) {
-          if (isTranslationBoxOpen) {
-            left = `${20}px`;
-            translationContainer.style.transform = `translate(0px)`;
-          } else {
-            translationContainer.style.transform = `translate(-50%)`;
-          }
-        } else {
-          if (rect.right / windowWidth > 0.5) {
-            if (isTranslationBoxOpen) {
-              translationContainer.style.transform = `translate(-${translationContainer.scrollWidth}px)`;
-            } else {
-              translationContainer.style.transform = `translate(-50%)`;
-            }
-          } else {
-            if (isTranslationBoxOpen) {
-              translationContainer.style.transform = `translate(0px)`;
-            } else {
-              translationContainer.style.transform = `translate(-50%)`;
-            }
-          }
-        }
-      };
-
-      top = `${
-        document.documentElement.scrollTop + rect.top + rect.height + 10
-      }px`;
-      calculateLeft();
-
-      return { top, left };
-    } else {
-      return {
-        top: "",
-        left: "",
-      };
+    if (!rect) {
+      setPosition({ top: "", left: "" });
+      return;
     }
+
+    let top = `${
+      document.documentElement.scrollTop + rect.top + rect.height + 10
+    }px`;
+    let left = `${rect.left + rect.width}px`;
+
+    if (window.innerWidth < 400) {
+      if (isTranslationBoxOpen) {
+        left = `20px`;
+        translationContainer.style.transform = `translate(0px)`;
+      } else {
+        translationContainer.style.transform = `translate(-50%)`;
+      }
+    } else {
+      if (rect.right / windowWidth > 0.5) {
+        if (isTranslationBoxOpen) {
+          translationContainer.style.transform = `translate(-${translationContainer.scrollWidth}px)`;
+        } else {
+          translationContainer.style.transform = `translate(-50%)`;
+        }
+      } else {
+        if (isTranslationBoxOpen) {
+          translationContainer.style.transform = `translate(0px)`;
+        } else {
+          translationContainer.style.transform = `translate(-50%)`;
+        }
+      }
+    }
+
+    setPosition({ top, left });
   }, [selectionData, isTranslationBoxOpen]);
 
-  const calculatePositionInVideo = useMemo(() => {
-    if (!selectionData?.text) return { top: "", left: "" };
+  const [videoPosition, setVideoPosition] = useState({ top: "", left: "" });
+
+  useLayoutEffect(() => {
+    if (!selectionData?.text) {
+      setVideoPosition({ top: "", left: "" });
+      return;
+    }
+
     const captionsDiv = document.getElementById("captions-div")!;
-
     if (!captionsDiv) return;
-    const select = window.getSelection();
 
-    const selection = window.getSelection();
-    if (!selection || !(selection.rangeCount > 0))
-      return {
-        top: "",
-        left: "",
-      };
+    const select = window.getSelection();
+    if (!select || !(select.rangeCount > 0)) {
+      setVideoPosition({ top: "", left: "" });
+      return;
+    }
 
     const translationContainer = document.getElementById(
       "translationContainer"
     )!;
+    if (!translationContainer) return;
 
-    const range = select?.getRangeAt(0);
-    const rect = range?.getClientRects()[range?.getClientRects().length - 1];
+    const range = select.getRangeAt(0);
+    const rect = range.getClientRects()[range.getClientRects().length - 1];
+    if (!rect) {
+      setVideoPosition({ top: "", left: "" });
+      return;
+    }
 
-    if (!translationContainer || !rect) return;
+    const captionsDivClientRect = captionsDiv.getBoundingClientRect();
 
-    const captionsDivClientRect = captionsDiv?.getBoundingClientRect();
-    const containerRect = translationContainer.getBoundingClientRect();
-
-    // Set width based on state
     translationContainer.style.width = isTranslationBoxOpen
       ? "80%"
       : "fit-content";
 
-    // Calculate base position
     const relativeTop = rect.bottom - captionsDivClientRect.top;
     const scrollOffset = captionsDiv.scrollTop;
-
-    // Calculate left position
     let left = rect.left - captionsDivClientRect.left;
     let transform = "translate(-50%)";
 
-    // Adjust horizontal position based on screen width and container size
     if (window.innerWidth < 650) {
       left = 0;
       transform = "translate(0)";
@@ -382,18 +413,26 @@ const TranslationWindow = ({
       }
     }
 
-    // Apply transform
     translationContainer.style.transform = transform;
-
-    return {
+    setVideoPosition({
       top: `${relativeTop + scrollOffset}px`,
       left: `${left}px`,
-    };
+    });
   }, [selectionData, isTranslationBoxOpen]);
 
   useEffect(() => {
-    console.log(translationData);
-  }, [translationData]);
+    if (!isTranslationBoxOpen) {
+      setTranslationData(null);
+    }
+  }, [isTranslationBoxOpen]);
+
+  useEffect(() => {
+    if (!isAddCardModalOpen) {
+      setSelectedTranslations([]);
+    }
+  }, [isAddCardModalOpen]);
+
+  console.log("selectedTranslations", selectedTranslations);
 
   return (
     <div
@@ -405,11 +444,11 @@ const TranslationWindow = ({
       )}
       style={{
         top: document.getElementById("captions-div")
-          ? calculatePositionInVideo?.top
-          : calculatePositionInText?.top,
+          ? videoPosition.top
+          : position.top,
         left: document.getElementById("captions-div")
-          ? calculatePositionInVideo?.left
-          : calculatePositionInText?.left,
+          ? videoPosition.left
+          : position.left,
       }}
     >
       {!isTranslationBoxOpen ? (
@@ -425,8 +464,7 @@ const TranslationWindow = ({
         <div
           id="translationWindow"
           className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
-            isTranslationBoxOpen ? "open" : ""
-          }`}
+            isTranslationBoxOpen ? "open" : ""}`}
         >
           {translationData?.fromDatabase ? (
             <>
@@ -485,6 +523,7 @@ const TranslationWindow = ({
                         (translation, index) => (
                           <button
                             key={index}
+                            type="button"
                             onClick={() => handleTranslationClick(translation)}
                             className={`px-3 py-1 rounded-full text-base transition-colors ${
                               selectedTranslations.includes(translation)
@@ -503,7 +542,7 @@ const TranslationWindow = ({
             </>
           ) : (
             <>
-              <Form.Label>Choose the target language:</Form.Label>
+              <Form.Label>Available translations:</Form.Label>
               <Form.Select
                 defaultValue={targetLanguage}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -561,9 +600,22 @@ const TranslationWindow = ({
                 onClick={() => {
                   setIsAddCardModalOpen(true);
                   setDefaultValues((prev) => {
+                    const backValue = getBackValue(
+                      translationData,
+                      targetLanguage,
+                      selectedTranslations
+                    );
+
+                    console.log("prev", prev);
+
                     return {
                       ...prev,
-                      front: selectionData.text,
+                      back: backValue,
+                      front: getFrontValue(
+                        translationData,
+                        selectedLearningLanguage,
+                        selectionData.text
+                      ),
                       content: "",
                     };
                   });

@@ -122,7 +122,7 @@ const useUseEditor = (readonly: boolean = false) => {
       ],
       content: deferredContent,
       editable: !readonly,
-      shouldRerenderOnTransaction: false,
+      // shouldRerenderOnTransaction: false,
       // Ensure images are properly parsed and rendered
       parseOptions: {
         preserveWhitespace: "full",
@@ -131,10 +131,11 @@ const useUseEditor = (readonly: boolean = false) => {
     [deferredContent, readonly]
   );
 
+  console.log("content", content);
+
   // Force editor to update when content changes
   useEffect(() => {
-    if (editor && content) {
-      console.log("content", content);
+    if (editor) {
       // Small delay to ensure editor is ready
       const timer = setTimeout(() => {
         editor.commands.setContent(content);

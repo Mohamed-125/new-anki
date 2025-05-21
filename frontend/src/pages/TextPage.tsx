@@ -175,8 +175,12 @@ const Text = React.memo(function ({
   text: TextType | undefined;
 }) {
   const { editor, setContent } = useUseEditor(true);
-  const { setDefaultValues, setIsAddCardModalOpen, setIsTranslationBoxOpen } =
-    useModalsStates();
+  const {
+    setDefaultValues,
+    setIsAddCardModalOpen,
+    setEditId,
+    setIsTranslationBoxOpen,
+  } = useModalsStates();
   const { selectionData, setSelectionData } = useSelection();
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === text?.userId;
@@ -287,6 +291,7 @@ const Text = React.memo(function ({
           back: card?.back,
           content: card?.content,
         });
+        setEditId(card?._id);
         setIsAddCardModalOpen(true);
         return;
       }
@@ -401,12 +406,7 @@ const Text = React.memo(function ({
           />
         </div>
         <div className="min-h-56"></div>
-        {/* <p>
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolores
-          temporibus exercitationem quo inventore. Repellendus repellat atque
-          quas. Quae illo quidem tempora similique tenetur impedit non ex
-          dolore, ipsam laudantium voluptas.
-        </p> */}
+
         {/* <div className="tiptap tiptap-editor">
           <div
             className="relative ProseMirror"
