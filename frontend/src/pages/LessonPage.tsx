@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import CongratsModal from "@/components/CongratsModal";
 import { useParams, useNavigate } from "react-router-dom";
 import useGetLesson from "../hooks/Queries/useGetLesson";
 import useGetSections from "../hooks/Queries/useGetSections";
@@ -53,9 +54,10 @@ const LessonPage = () => {
   const [textAnswer, setTextAnswer] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>("");
   // Fetch lesson data
-  const { data: lesson, isLoading: isLessonLoading } = useGetLesson(
-    lessonId as string
-  );
+  const { data, isLoading: isLessonLoading } = useGetLesson(lessonId as string);
+  const lesson = data?.lesson;
+  const nextLesson = data?.nextLesson;
+  const [showCongratsModal, setShowCongratsModal] = useState(false);
   const { user } = useGetCurrentUser();
 
   // Fetch sections data
@@ -63,7 +65,7 @@ const LessonPage = () => {
     sections,
     isLoading: isSectionsLoading,
     sectionsCount,
-  } = useGetSections(lessonId as string);
+  } = useGetSections(lessonId as string, currentSectionIndex);
 
   // Get current section and its questions
   const currentSection = sections[currentSectionIndex];
@@ -77,7 +79,7 @@ const LessonPage = () => {
   const questionSections = sections.filter(
     (section) => section.type === "excercises"
   );
-  const length = sections.length + questions.length - questionSections.length;
+  const length = +sectionsCount + questions.length - questionSections.length;
 
   const { editor, setContent } = useUseEditor(true);
 
@@ -187,6 +189,12 @@ const LessonPage = () => {
 
   return (
     <div className="container px-4 py-8 mx-auto sm:px-2">
+      <CongratsModal
+        isOpen={showCongratsModal}
+        onClose={() => setShowCongratsModal(false)}
+        nextLesson={nextLesson}
+        courseLevelId={courseLevelId}
+      />
       {/* Lesson Header */}
       <Button
         onClick={() => navigate(`/learn`)}
@@ -359,6 +367,7 @@ const LessonPage = () => {
         )}
       </div>
       <LessonNavigation
+        setShowCongratsModal={setShowCongratsModal}
         lesson={lesson}
         setCurrentSectionIndex={setCurrentSectionIndex}
         setCurrentQuestionIndex={setCurrentQuestionIndex}

@@ -103,12 +103,12 @@ const AddNewCourseModal = ({
 
   const onAnimationEnd = () => {
     formRef.current?.reset();
-    setDefaultValues?.((pre: any) => ({
-      ...pre,
-      courseName: null,
-      language: null,
-      flag: null,
-    }));
+    // setDefaultValues?.((pre: any) => ({
+    //   ...pre,
+    //   courseName: null,
+    //   language: null,
+    //   flag: null,
+    // }));
   };
 
   return (

@@ -17,6 +17,7 @@ type AddNewSectionModalProps = {
     type?: string;
   };
   setDefaultValues?: (values: any) => void;
+  onSectionAdded?: (sectionId: string) => void;
 };
 
 type SectionType = {
@@ -34,16 +35,20 @@ const AddNewSectionModal = ({
   lessonId,
   defaultValues,
   setDefaultValues,
+  onSectionAdded,
 }: AddNewSectionModalProps) => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
   const [isLoading, setIsLoading] = useState(false);
-  const [sectionType, setSectionType] = useState("text");
+  const [sectionType, setSectionType] = useState<
+    "text" | "excercises" | "resources" | undefined
+  >("text");
 
   const { mutateAsync, isPending } = useMutation({
     onSuccess() {
-      queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
       setIsOpen(false);
+      // Delay the query invalidation to prevent unnecessary re-renders
+      queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
     },
     mutationFn: async (data: Partial<SectionType>) => {
       return await axios
@@ -62,16 +67,20 @@ const AddNewSectionModal = ({
     setIsLoading(true);
 
     if (name) {
-      const data = { name, description, type: sectionType };
+      const data = { name, description, type: sectionType, lessonId };
 
       console.log("create section function");
       mutateAsync(data)
-        .then(() => {
+        .then((response) => {
           toast.setToastData({
             title: "Section Added!",
             isCompleted: true,
             type: "success",
           });
+          // Call the callback with the new section ID if provided
+          if (onSectionAdded && response._id) {
+            onSectionAdded(response._id);
+          }
         })
         .catch(() => {
           toast.setToastData({
@@ -97,9 +106,12 @@ const AddNewSectionModal = ({
     try {
       await axios.patch(`section/${editId}`, data);
       setIsOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
       toast.setToastData({ title: "Section Updated!", type: "success" });
       (e.target as HTMLFormElement).reset();
+      // Delay the query invalidation to prevent unnecessary re-renders
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
+      }, 0);
     } catch (err) {
       console.error(err);
       toast.setToastData({
@@ -117,7 +129,7 @@ const AddNewSectionModal = ({
     formRef.current?.reset();
     setDefaultValues?.((pre: any) => ({
       ...pre,
-      SectionName: null,
+      sectionName: null,
       description: null,
       type: null,
     }));

@@ -8,10 +8,12 @@ const {
   getLesson,
   updateLesson,
   deleteLesson,
+  reorderLessons,
 } = require("../controllers/LessonController");
 
 router.route("/").post(Authorization, createLesson).get(getAllLessons);
 router.route("/grammar").get(getAllLessons);
+router.route("/reorder").post(Authorization, reorderLessons);
 router
   .route("/:id")
   .get(getLesson)

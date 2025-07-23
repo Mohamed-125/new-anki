@@ -60,7 +60,7 @@ module.exports.createCard = async (req, res, next) => {
         videoId,
         language,
         sectionId,
-        userId: sectionId ? undefined : req.user?._id,
+        userId: sectionId ? undefined : req.user._id,
         shownInHome,
       };
 

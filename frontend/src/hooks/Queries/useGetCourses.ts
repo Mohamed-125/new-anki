@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { useMemo } from "react";
 
 export type CourseType = {
   name: string;
@@ -46,7 +47,9 @@ const useGetCourses = ({
     enabled,
   });
 
-  const courses = data?.pages.flatMap((page) => page.courses || []);
+  const courses = useMemo(() => {
+    return data?.pages.flatMap((page) => page.courses || []);
+  }, [data?.pages]);
 
   return {
     courses,

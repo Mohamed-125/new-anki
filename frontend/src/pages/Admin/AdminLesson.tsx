@@ -1,177 +1,126 @@
-import React, { ReactNode, useEffect, useState } from "react";
-import GrammarToggleButton from "@/components/GrammarToggleButton";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { ChevronDown, ChevronUp, PlusIcon, Trash } from "lucide-react";
-import Button from "@/components/Button";
-import axios from "axios";
-import { useQueryClient } from "@tanstack/react-query";
-import { sampleLessons } from "@/data/sampleCourseData";
-import Form from "@/components/Form";
-import useUseEditor from "@/hooks/useUseEditor";
-import TipTapEditor from "@/components/TipTapEditor";
-import AddNewSectionModal from "@/components/AddNewSectionModal";
-import ActionsDropdown from "@/components/ActionsDropdown";
-import useGetLesson from "@/hooks/Queries/useGetLesson";
-import useGetSections from "@/hooks/Queries/useGetSections";
-import useToasts from "@/hooks/useToasts";
 import AdminSectionComponent from "./components/AdminSectionComponent";
 import InfiniteScroll from "@/components/InfiniteScroll";
+import useGetLesson from "@/hooks/Queries/useGetLesson";
+import useGetSections from "@/hooks/Queries/useGetSections";
+import Button from "@/components/Button";
+import { Plus } from "lucide-react";
+import useToasts from "@/hooks/useToasts";
+import { useQueryClient } from "@tanstack/react-query";
+import AddNewSectionModal from "@/components/AddNewSectionModal";
 
 const AdminLesson = () => {
-  const { lessonId, courseId } = useParams();
+  // State management
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [showQuestionDropdown, setShowQuestionDropdown] = useState(false);
   const [questionsBySectionId, setQuestionsBySectionId] = useState<
-    Record<
-      string,
-      Array<{
-        type: "choose" | "text";
-        id: number;
-        choices: [];
-        question: "";
-        answer: "";
-      }>
-    >
+    Record<string, any[]>
   >({});
-
   const [questionCounter, setQuestionCounter] = useState(0);
+  const [editId, setEditId] = useState("");
+  const [arrangedSections, setArrangedSections] = useState<any[]>([]);
+  const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
 
-  const { data: lesson, isLoading } = useGetLesson(lessonId as string);
-
-  const { sections, fetchNextPage, isFetchingNextPage, hasNextPage } =
+  // Hooks
+  const { lessonId, courseId } = useParams();
+  const { data } = useGetLesson(lessonId as string);
+  const { sections, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetSections(lessonId as string);
+  const { addToast } = useToasts();
+  const queryClient = useQueryClient();
 
-  const [arrangedSections, setArrangedSections] = useState(sections || []);
-
-  console.log(arrangedSections);
+  const lesson = data?.lesson;
+  // Initialize arranged sections when sections data changes
   useEffect(() => {
-    if (sections) {
+    if (sections.length > 0) {
       setArrangedSections(sections);
-      const questionsBySection: Record<string, any[]> = {};
-      let totalQuestions = 0;
-
-      sections.forEach((section) => {
-        const sectionQuestions =
-          section.content?.questions?.map((q: any) => {
-            return {
-              id: q.id,
-              type: q.type,
-              question: q.question,
-              choices: q.choices,
-              answer: q.answer,
-            };
-          }) || [];
-
-        questionsBySection[section._id] = sectionQuestions;
-        totalQuestions += sectionQuestions.length;
-      });
-
-      setQuestionsBySectionId(questionsBySection);
-      setQuestionCounter(totalQuestions);
     }
   }, [sections]);
 
-  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
-  const [defaultValues, setDefaultValues] = useState({});
-  const [editId, setEditId] = useState("");
+  // Initialize questions state when sections data changes
+  useEffect(() => {
+    if (sections.length > 0) {
+      const questionsBySection: Record<string, any[]> = {};
+      let counter = 0;
 
-  if (isLoading) return <p>isLoading</p>;
+      sections.forEach((section) => {
+        if (section.content?.questions?.length > 0) {
+          questionsBySection[section._id] = section.content.questions.map(
+            (question: any) => {
+              counter++;
+              return { ...question, id: counter };
+            }
+          );
+        }
+      });
+
+      setQuestionsBySectionId(questionsBySection);
+      setQuestionCounter(counter);
+    }
+  }, [sections]);
+
+  // Handler for opening the add section modal
+  const handleAddSection = useCallback(() => {
+    setIsAddSectionModalOpen(true);
+  }, []);
+
+  // Handler for when a section is successfully added
+  const handleSectionAdded = useCallback((sectionId: string) => {
+    // Expand the newly added section
+    setExpandedSections((prev) => [...prev, sectionId]);
+  }, []);
 
   return (
-    <div>
-      {lesson ? (
-        <div>
-          <AddNewSectionModal
-            isOpen={isSectionModalOpen}
-            setDefaultValues={setDefaultValues}
-            setIsOpen={setIsSectionModalOpen}
-            defaultValues={defaultValues}
-            lessonId={lessonId ?? ""}
+    <div className="container px-4 py-8 mx-auto">
+      <div className="mb-8">
+        <h1 className="mb-2 text-3xl font-bold">{lesson?.name}</h1>
+        <p className="text-gray-600">{lesson?.description}</p>
+      </div>
+
+      <div className="mb-8">
+        <Button onClick={handleAddSection} className="flex gap-2 items-center">
+          <Plus size={20} />
+          Add new section
+        </Button>
+      </div>
+
+      <AddNewSectionModal
+        isOpen={isAddSectionModalOpen}
+        setIsOpen={setIsAddSectionModalOpen}
+        lessonId={lessonId as string}
+        onSectionAdded={handleSectionAdded}
+      />
+
+      <InfiniteScroll
+        fetchNextPage={fetchNextPage}
+        hasNextPage={!!hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        loadingElement={<h4>Loading...</h4>}
+        className="space-y-6"
+      >
+        {arrangedSections.map((section, index) => (
+          <AdminSectionComponent
+            key={section._id}
+            section={section}
+            expandedSections={expandedSections}
+            setExpandedSections={setExpandedSections}
+            showQuestionDropdown={showQuestionDropdown}
+            setShowQuestionDropdown={setShowQuestionDropdown}
+            questionsBySectionId={questionsBySectionId}
+            setQuestionsBySectionId={setQuestionsBySectionId}
+            setEditId={setEditId}
             editId={editId}
+            questionCounter={questionCounter}
+            setQuestionCounter={setQuestionCounter}
+            index={index}
+            arrangedSections={arrangedSections}
+            setArrangedSections={setArrangedSections}
           />
-          <div className="mb-8">
-            <div className="flex gap-4 items-center mb-4">
-              <div className="overflow-hidden w-60 rounded-md aspect-[1.7/1]">
-                <img
-                  src={lesson.img}
-                  alt={lesson.name}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {lesson.name}
-                </h1>
-                <p className="text-gray-600">{lesson.description}</p>
-                <div className="flex gap-3 items-center">
-                  <span
-                    className={`inline-block mt-2 text-sm font-medium px-2 py-0.5 rounded-full ${
-                      lesson.type === "exam"
-                        ? "text-orange-700 bg-orange-100"
-                        : lesson.type === "revision"
-                        ? "text-blue-700 bg-blue-100"
-                        : lesson.type === "grammar"
-                        ? "text-purple-700 bg-purple-100"
-                        : "text-green-700 bg-green-100"
-                    }`}
-                  >
-                    {lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)}
-                  </span>
-                  <GrammarToggleButton
-                    lessonId={lessonId ?? ""}
-                    currentType={lesson.type}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">sections</h2>
-            <Button
-              onClick={() => {
-                setIsSectionModalOpen(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-            >
-              <span className="text-xl">+</span>
-              Add new section
-            </Button>
-          </div>
-          <InfiniteScroll
-            fetchNextPage={fetchNextPage}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            loadingElement={"loading..."}
-            className=""
-          >
-            {arrangedSections?.map((section, index) => {
-              return (
-                <AdminSectionComponent
-                  index={index}
-                  // key={section._id}
-                  setQuestionsBySectionId={setQuestionsBySectionId}
-                  section={section}
-                  expandedSections={expandedSections}
-                  setExpandedSections={setExpandedSections}
-                  showQuestionDropdown={showQuestionDropdown}
-                  setShowQuestionDropdown={setShowQuestionDropdown}
-                  questionsBySectionId={questionsBySectionId}
-                  setEditId={setEditId}
-                  editId={editId}
-                  questionCounter={questionCounter}
-                  setQuestionCounter={setQuestionCounter}
-                  setArrangedSections={setArrangedSections}
-                  arrangedSections={arrangedSections}
-                />
-              );
-            })}
-          </InfiniteScroll>
-        </div>
-      ) : (
-        <p>lesson not found</p>
-      )}
+        ))}
+      </InfiniteScroll>
     </div>
   );
 };
 
-export default AdminLesson;
+export default React.memo(AdminLesson);

@@ -9,6 +9,7 @@ import { Editor } from "@tiptap/react";
 import { sectionType } from "@/hooks/Queries/useSectionMutations";
 
 interface SectionFormProps {
+  hasUnsavedChanges?: boolean;
   section: sectionType;
   sectionType: string;
   setSectionType: (type: string) => void;
@@ -68,7 +69,7 @@ const SectionForm: React.FC<SectionFormProps> = ({
   }, [section]);
 
   return (
-    <Form onSubmit={onSubmit} className="pt-3">
+    <Form onSubmit={onSubmit} className="relative px-0 pt-3">
       <div className="flex gap-2 items-center mb-7">
         <h4 className="font-bold">Type: {section.type} </h4>
         <Form.Select
@@ -88,6 +89,7 @@ const SectionForm: React.FC<SectionFormProps> = ({
             defaultValue={section.name}
             required
             name="section_name"
+            onChange={() => setContent(editor?.getHTML() || "")}
           />
         </Form.Field>
         <Form.Field>
@@ -95,15 +97,22 @@ const SectionForm: React.FC<SectionFormProps> = ({
           <Form.Input
             defaultValue={section.description}
             name="section_description"
+            onChange={() => setContent(editor?.getHTML() || "")}
           />
         </Form.Field>
         <Form.Field>
           <Form.Label>Section Audio</Form.Label>
-          <Form.Input name="audio" />
+          <Form.Input
+            name="audio"
+            onChange={() => setContent(editor?.getHTML() || "")}
+          />
         </Form.Field>
         <Form.Field className="mb-6">
           <Form.Label>Section Video</Form.Label>
-          <Form.Input name="video" />
+          <Form.Input
+            name="video"
+            onChange={() => setContent(editor?.getHTML() || "")}
+          />
         </Form.Field>
       </Form.FieldsContainer>
       {sectionType === "text" && (
@@ -145,4 +154,4 @@ const SectionForm: React.FC<SectionFormProps> = ({
   );
 };
 
-export default SectionForm;
+export default React.memo(SectionForm);

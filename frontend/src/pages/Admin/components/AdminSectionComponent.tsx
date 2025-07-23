@@ -1,27 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import useToasts from "@/hooks/useToasts";
 import { sectionType } from "@/hooks/Queries/useSectionMutations";
 import DragableComponent from "@/components/DraggableComponent";
 import SectionHeader from "./SectionHeader";
-import SectionForm from "./SectionForm";
-import QuestionList from "./QuestionList";
-import QuestionForm from "./QuestionForm";
 import { useQueryClient } from "@tanstack/react-query";
 import useUseEditor from "@/hooks/useUseEditor";
-import useGetSectionCards from "@/hooks/useGetSectionCards";
-import useGetSectionCollections from "@/hooks/useGetSectionCollections";
-import useGetSectionNotes from "@/hooks/useGetSectionNotes";
 import Button from "@/components/Button";
-import { Plus, Edit, Trash, Eye, StickyNote } from "lucide-react";
+import { Plus, StickyNote } from "lucide-react";
 import useModalsStates from "@/hooks/useModalsStates";
-import AddNewCollectionModal from "@/components/AddNewCollectionModal";
-import { AddCardModal } from "@/components/AddCardModal";
-import AdminSectionCards from "./AdminSectionCards";
 import ItemCard from "@/components/ui/ItemCard";
-import { title } from "process";
 import { ResourceType } from "@/pages/LessonPage";
+import useGetSectionNotes from "@/hooks/useGetSectionNotes";
+import Modal from "@/components/Modal";
+
+// Lazy load components that are only needed when a section is expanded
+// Lazy load components that are only needed when modal is opened
+const AdminSectionCards = lazy(() => import("./AdminSectionCards"));
+const SectionFormLazy = lazy(() => import("./SectionForm"));
 
 interface AdminSectionComponentProps {
   isCollectionModalOpen?: boolean;
@@ -65,124 +62,141 @@ const AdminSectionComponent = ({
   const [currentSectionId, setCurrentSectionId] = useState<string>("");
   const { lessonId } = useParams();
   const [sectionType, setSectionType] = useState(section.type);
-
-  const addQuestionHandler = (type: "choose" | "text") => {
-    if (!currentSectionId) return;
-
-    setQuestionsBySectionId((prev: any) => ({
-      ...prev,
-      [currentSectionId]: [
-        ...(prev[currentSectionId] || []),
-        { type, id: questionCounter },
-      ],
-    }));
-    setQuestionCounter((prev) => prev + 1);
-  };
-
-  const queryClient = useQueryClient();
-
   const [resources, setResources] = useState<ResourceType[]>([]);
-
   const [copy, setCopy] = useState(false);
-  const [addContentTab, setAddContentTab] = useState(false);
   const [pasteContent, setPasteContent] = useState("");
+  const queryClient = useQueryClient();
+  const { editor, setContent } = useUseEditor();
+  const isExpanded = expandedSections.includes(section._id);
+  const navigate = useNavigate();
 
-  const handlePasteContent = async (pasteContent: string) => {
-    const toast = addToast("Processing questions...", "promise");
-    try {
-      // Try to parse the input as JSON, if it fails, try to evaluate it as a JavaScript object
-      let questions;
-      try {
-        questions = JSON.parse(pasteContent);
-      } catch (parseError) {
-        try {
-          // Remove any 'const', 'let', or 'var' declarations
-          const cleanedContent = pasteContent.replace(
-            /^(const|let|var)\s+\w+\s*=\s*/,
-            ""
-          );
-          // Safely evaluate the JavaScript object
-          questions = eval("(" + cleanedContent + ")");
-        } catch (evalError) {
-          throw new Error(
-            "Invalid input: Please provide a valid JSON array or JavaScript object"
-          );
-        }
-      }
+  // Memoize this function to prevent unnecessary re-renders
+  const addQuestionHandler = React.useCallback(
+    (type: "choose" | "text") => {
+      if (!currentSectionId) return;
 
-      if (!Array.isArray(questions)) {
-        throw new Error("Invalid format: Expected an array of questions");
-      }
-
-      if (!currentSectionId) {
-        throw new Error("No section selected");
-      }
-
-      // Validate and process each question
-      const validatedQuestions = questions.map((question) => {
-        if (!question || typeof question !== "object") {
-          throw new Error(
-            "Invalid question format: Each question must be an object"
-          );
-        }
-
-        if (
-          !question.type ||
-          !question.question ||
-          !question.choices ||
-          !question.answer
-        ) {
-          throw new Error(
-            "Invalid question format: Missing required fields (type, question, choices, answer)"
-          );
-        }
-
-        if (question.type !== "choose" && question.type !== "text") {
-          throw new Error(
-            `Invalid question type: ${question.type}. Must be either 'choose' or 'text'`
-          );
-        }
-
-        if (!Array.isArray(question.choices)) {
-          throw new Error("Invalid format: Choices must be an array");
-        }
-
-        return {
-          type: question.type,
-          question: question.question,
-          choices: question.choices,
-          answer: question.answer,
-          id: questionCounter + Math.random(),
-        };
-      });
-
-      // Add validated questions to the section
       setQuestionsBySectionId((prev: any) => ({
         ...prev,
         [currentSectionId]: [
           ...(prev[currentSectionId] || []),
-          ...validatedQuestions,
+          { type, id: questionCounter },
         ],
       }));
+      setQuestionCounter((prev) => prev + 1);
+    },
+    [
+      currentSectionId,
+      questionCounter,
+      setQuestionCounter,
+      setQuestionsBySectionId,
+    ]
+  );
 
-      // Update question counter
-      setQuestionCounter((prev) => prev + validatedQuestions.length);
+  const handlePasteContent = React.useCallback(
+    async (pasteContent: string) => {
+      const toast = addToast("Processing questions...", "promise");
+      try {
+        // Try to parse the input as JSON, if it fails, try to evaluate it as a JavaScript object
+        let questions;
+        try {
+          questions = JSON.parse(pasteContent);
+        } catch (parseError) {
+          try {
+            // Remove any 'const', 'let', or 'var' declarations
+            const cleanedContent = pasteContent.replace(
+              /^(const|let|var)\s+\w+\s*=\s*/,
+              ""
+            );
+            // Safely evaluate the JavaScript object
+            questions = eval("(" + cleanedContent + ")");
+          } catch (evalError) {
+            throw new Error(
+              "Invalid input: Please provide a valid JSON array or JavaScript object"
+            );
+          }
+        }
 
-      toast.setToastData({
-        title: `${validatedQuestions.length} questions added successfully!`,
-        type: "success",
-      });
-    } catch (error) {
-      console.error("Error processing questions:", error);
-      toast.setToastData({
-        title:
-          error instanceof Error
-            ? error.message
-            : "Failed to process questions",
-        type: "error",
-      });
-    }
-  };
+        if (!Array.isArray(questions)) {
+          throw new Error("Invalid format: Expected an array of questions");
+        }
+
+        if (!currentSectionId) {
+          throw new Error("No section selected");
+        }
+
+        // Validate and process each question
+        const validatedQuestions = questions.map((question) => {
+          if (!question || typeof question !== "object") {
+            throw new Error(
+              "Invalid question format: Each question must be an object"
+            );
+          }
+
+          if (
+            !question.type ||
+            !question.question ||
+            !question.choices ||
+            !question.answer
+          ) {
+            throw new Error(
+              "Invalid question format: Missing required fields (type, question, choices, answer)"
+            );
+          }
+
+          if (question.type !== "choose" && question.type !== "text") {
+            throw new Error(
+              `Invalid question type: ${question.type}. Must be either 'choose' or 'text'`
+            );
+          }
+
+          if (!Array.isArray(question.choices)) {
+            throw new Error("Invalid format: Choices must be an array");
+          }
+
+          return {
+            type: question.type,
+            question: question.question,
+            choices: question.choices,
+            answer: question.answer,
+            id: questionCounter + Math.random(),
+          };
+        });
+
+        // Add validated questions to the section
+        setQuestionsBySectionId((prev: any) => ({
+          ...prev,
+          [currentSectionId]: [
+            ...(prev[currentSectionId] || []),
+            ...validatedQuestions,
+          ],
+        }));
+
+        // Update question counter
+        setQuestionCounter((prev) => prev + validatedQuestions.length);
+
+        toast.setToastData({
+          title: `${validatedQuestions.length} questions added successfully!`,
+          type: "success",
+        });
+      } catch (error) {
+        console.error("Error processing questions:", error);
+        toast.setToastData({
+          title:
+            error instanceof Error
+              ? error.message
+              : "Failed to process questions",
+          type: "error",
+        });
+      }
+    },
+    [
+      addToast,
+      currentSectionId,
+      questionCounter,
+      setQuestionCounter,
+      setQuestionsBySectionId,
+    ]
+  );
 
   const {
     defaultValues,
@@ -191,196 +205,233 @@ const AdminSectionComponent = ({
     setIsAddCardModalOpen,
   } = useModalsStates();
 
-  const submitHandler = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const values = Object.fromEntries(formData) as object;
-    const name = formData.get("section_name") as string;
-    const description = formData.get("section_description") as string;
-    console.log(editor?.getHTML());
+  const submitHandler = React.useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget as HTMLFormElement);
+      const values = Object.fromEntries(formData) as object;
+      const name = formData.get("section_name") as string;
+      const description = formData.get("section_description") as string;
 
-    const entries = Object.entries(values);
+      const entries = Object.entries(values);
 
-    let data: any = {
-      name: name,
-      description: description,
-      type: sectionType,
-      content: {
-        text: editor?.getHTML(),
-        questions: [],
-        resources: resources, // Add the resources array to the data object
-      },
-    };
-    let questionObj = {
-      type: "",
-      question: "",
-      choices: [],
-      answer: "",
-      id: Math.random(),
-    };
-
-    // Use the questions from the current section
-    if (questionsBySectionId && questionsBySectionId[currentSectionId]) {
-      // Process form data for the current section's questions
-      entries.map((entry: [string, string]) => {
-        const number = entry[0].split("-")[0];
-
-        if (entry[0].split("-")[1] === "question") {
-          questionObj = {
-            type: "",
-            question: "",
-            choices: [],
-            answer: "",
-            id: Math.random(),
-          };
-        }
-
-        if (Number.isInteger(+number)) {
-          const type = entry[0].split("-");
-          if (type.length === 4) {
-            questionObj.type = type[2];
-          }
-
-          if (entry[0].split("-")[1] === "question") {
-            questionObj.question = entry[1];
-          } else if (entry[0].split("-")[1].includes("choice")) {
-            const choice = entry[1];
-            questionObj.choices.push(choice as never);
-          } else if (entry[0].split("-")[1] === "answer") {
-            questionObj.answer = entry[1];
-          }
-          if (entry[0].split("-")[1] === "question") {
-            data.content.questions.push(questionObj);
-          }
-        }
-      });
-    }
-
-    if (data.type !== "text") {
-      delete data.content.text;
-    }
-
-    if (copy) {
-      try {
-        navigator.clipboard.write(data.content.questions);
-      } catch (err) {
-        console.log(err);
-      }
-      console.log(data.content.questions);
-      return;
-    }
-
-    const toast = addToast("Updating Section..", "promise");
-
-    try {
-      await axios.patch(`section/${editId}`, data);
-      queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
-      toast.setToastData({ title: "Section Updated!", type: "success" });
-      (e.target as HTMLFormElement).reset();
-    } catch (err) {
-      console.error(err);
-      toast.setToastData({
-        title: "Failed To Update Section",
-        type: "error",
-      });
-    } finally {
-      // setIsLoading(false);
-    }
-  };
-
-  const deleteQuestionHandler = (id: number) => {
-    console.log(id);
-    if (!currentSectionId) return;
-
-    setQuestionsBySectionId((prev: any) => {
-      const updatedQuestions = {
-        ...prev,
-        [currentSectionId]:
-          prev[currentSectionId]?.filter(
-            (question: any) => question.id !== id
-          ) || [],
+      let data: any = {
+        name: name,
+        description: description,
+        type: sectionType,
+        content: {
+          text: editor?.getHTML(),
+          questions: [],
+          resources: resources, // Add the resources array to the data object
+        },
       };
-      return updatedQuestions;
-    });
-  };
+      let questionObj = {
+        type: "",
+        question: "",
+        choices: [],
+        answer: "",
+        id: Math.random(),
+      };
 
-  const { editor, setContent } = useUseEditor();
+      // Use the questions from the current section
+      if (questionsBySectionId && questionsBySectionId[currentSectionId]) {
+        // Process form data for the current section's questions
+        entries.forEach((entry: [string, string]) => {
+          const number = entry[0].split("-")[0];
 
-  const reorderSectionsHandler = (arrangedSections: sectionType[]) => {
-    const sectionsData = arrangedSections.map((section) => {
-      return { _id: section._id, order: section.order };
-    });
+          if (entry[0].split("-")[1] === "question") {
+            questionObj = {
+              type: "",
+              question: "",
+              choices: [],
+              answer: "",
+              id: Math.random(),
+            };
+          }
 
-    axios
-      .put("/section/update-order", { sections: sectionsData })
-      .then((res) => console.log("res", res));
-  };
+          if (Number.isInteger(+number)) {
+            const type = entry[0].split("-");
+            if (type.length === 4) {
+              questionObj.type = type[2];
+            }
 
+            if (entry[0].split("-")[1] === "question") {
+              questionObj.question = entry[1];
+            } else if (entry[0].split("-")[1].includes("choice")) {
+              const choice = entry[1];
+              questionObj.choices.push(choice as never);
+            } else if (entry[0].split("-")[1] === "answer") {
+              questionObj.answer = entry[1];
+            }
+            if (entry[0].split("-")[1] === "question") {
+              data.content.questions.push(questionObj);
+            }
+          }
+        });
+      }
+
+      if (data.type !== "text") {
+        delete data.content.text;
+      }
+
+      if (copy) {
+        try {
+          navigator.clipboard.write(data.content.questions);
+        } catch (err) {
+          console.log(err);
+        }
+        console.log(data.content.questions);
+        return;
+      }
+
+      const toast = addToast("Updating Section..", "promise");
+
+      try {
+        await axios.patch(`section/${editId}`, data);
+        queryClient.invalidateQueries({ queryKey: ["section", lessonId] });
+        toast.setToastData({ title: "Section Updated!", type: "success" });
+        (e.target as HTMLFormElement).reset();
+      } catch (err) {
+        console.error(err);
+        toast.setToastData({
+          title: "Failed To Update Section",
+          type: "error",
+        });
+      }
+    },
+    [
+      addToast,
+      copy,
+      currentSectionId,
+      editId,
+      editor,
+      lessonId,
+      questionsBySectionId,
+      queryClient,
+      resources,
+      sectionType,
+    ]
+  );
+
+  const deleteQuestionHandler = React.useCallback(
+    (id: number) => {
+      if (!currentSectionId) return;
+
+      setQuestionsBySectionId((prev: any) => {
+        const updatedQuestions = {
+          ...prev,
+          [currentSectionId]:
+            prev[currentSectionId]?.filter(
+              (question: any) => question.id !== id
+            ) || [],
+        };
+        return updatedQuestions;
+      });
+    },
+    [currentSectionId, setQuestionsBySectionId]
+  );
+
+  const reorderSectionsHandler = React.useCallback(
+    (arrangedSections: sectionType[]) => {
+      const sectionsData = arrangedSections.map((section) => {
+        return { _id: section._id, order: section.order };
+      });
+
+      axios
+        .put("/section/update-order", { sections: sectionsData })
+        .then((res) => console.log("res", res));
+    },
+    []
+  );
+
+  // Only update resources when section changes
   useEffect(() => {
     setResources(section.content?.resources || []);
   }, [section]);
 
-  const handleAddCard = () => {
+  const handleAddCard = React.useCallback(() => {
     setEditId("");
     setDefaultValues({ sectionId: section._id });
     setIsAddCardModalOpen(true);
-  };
+  }, [section._id, setDefaultValues, setEditId, setIsAddCardModalOpen]);
 
-  const handleEditCard = (card: any) => {
-    setEditId(card._id);
-    setDefaultValues(card);
-    setIsAddCardModalOpen(true);
-  };
+  const handleEditCard = React.useCallback(
+    (card: any) => {
+      setEditId(card._id);
+      setDefaultValues(card);
+      setIsAddCardModalOpen(true);
+    },
+    [setDefaultValues, setEditId, setIsAddCardModalOpen]
+  );
 
-  const handleDeleteCard = async (cardId: string) => {
-    const toast = addToast("Deleting Card..", "promise");
-    try {
-      await axios.delete(`card/${cardId}`);
-      queryClient.invalidateQueries({
-        queryKey: ["cards", "section", section._id],
-      });
-      toast.setToastData({ title: "Card Deleted!", type: "success" });
-    } catch (err) {
-      console.error(err);
-      toast.setToastData({ title: "Failed To Delete Card", type: "error" });
-    }
-  };
+  const handleDeleteCard = React.useCallback(
+    async (cardId: string) => {
+      const toast = addToast("Deleting Card..", "promise");
+      try {
+        await axios.delete(`card/${cardId}`);
+        queryClient.invalidateQueries({
+          queryKey: ["cards", "section", section._id],
+        });
+        toast.setToastData({ title: "Card Deleted!", type: "success" });
+      } catch (err) {
+        console.error(err);
+        toast.setToastData({ title: "Failed To Delete Card", type: "error" });
+      }
+    },
+    [addToast, queryClient, section._id]
+  );
 
-  const handleAddCollection = () => {
+  const handleAddCollection = React.useCallback(() => {
     setEditId("");
     setDefaultValues({ sectionId: section._id });
     setIsCollectionModalOpen(true);
-  };
+  }, [section._id, setDefaultValues, setEditId, setIsCollectionModalOpen]);
 
-  const handleEditCollection = (collection: any) => {
-    setEditId(collection._id);
-    setDefaultValues(collection);
-    setIsCollectionModalOpen(true);
-  };
+  const handleEditCollection = React.useCallback(
+    (collection: any) => {
+      setEditId(collection._id);
+      setDefaultValues(collection);
+      setIsCollectionModalOpen(true);
+    },
+    [setDefaultValues, setEditId, setIsCollectionModalOpen]
+  );
 
-  const handleDeleteCollection = async (collectionId: string) => {
-    const toast = addToast("Deleting Collection..", "promise");
-    try {
-      await axios.delete(`collection/${collectionId}`);
-      queryClient.invalidateQueries({
-        queryKey: ["collections", "section", section._id],
-      });
-      toast.setToastData({ title: "Collection Deleted!", type: "success" });
-    } catch (err) {
-      console.error(err);
-      toast.setToastData({
-        title: "Failed To Delete Collection",
-        type: "error",
-      });
-    }
-  };
+  const handleDeleteCollection = React.useCallback(
+    async (collectionId: string) => {
+      const toast = addToast("Deleting Collection..", "promise");
+      try {
+        await axios.delete(`collection/${collectionId}`);
+        queryClient.invalidateQueries({
+          queryKey: ["collections", "section", section._id],
+        });
+        toast.setToastData({ title: "Collection Deleted!", type: "success" });
+      } catch (err) {
+        console.error(err);
+        toast.setToastData({
+          title: "Failed To Delete Collection",
+          type: "error",
+        });
+      }
+    },
+    [addToast, queryClient, section._id]
+  );
 
-  const isExpanded = expandedSections.includes(section._id);
-  const navigate = useNavigate();
+  // Memoize the toggle expand handler
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: notes } = useGetSectionNotes(section._id);
+  // Modified toggle handler to open modal instead of expanding section
+  const handleToggleExpand = React.useCallback(() => {
+    setIsModalOpen(true);
+    setCurrentSectionId(section._id);
+  }, [section._id]);
+
+  // Only fetch section notes data when modal is open
+  const { data: sectionNotes } = useGetSectionNotes(
+    isModalOpen ? section._id : null
+  );
+
   return (
-    <>
+    <div key={section._id}>
       <DragableComponent
         reorderHandler={reorderSectionsHandler}
         setState={setArrangedSections}
@@ -390,51 +441,59 @@ const AdminSectionComponent = ({
         <SectionHeader
           sectionId={section._id}
           sectionName={section.name}
-          isExpanded={expandedSections.includes(section._id)}
-          onToggleExpand={() => {
-            setExpandedSections((prev) =>
-              prev.includes(section._id)
-                ? prev.filter((_id) => _id !== section._id)
-                : [...prev, section._id]
-            );
-            setCurrentSectionId(section._id);
-          }}
+          isExpanded={isExpanded}
+          onToggleExpand={handleToggleExpand}
         />
       </DragableComponent>
 
-      <div
-        className={`transition-all pb-0 duration-300 ease-in-out ${
-          isExpanded
-            ? "pb-24 opacity-100"
-            : "overflow-hidden pb-0 max-h-0 opacity-0"
-        }`}
-      >
-        <SectionForm
-          key={section._id}
-          editor={editor}
-          section={section}
-          sectionType={sectionType}
-          setSectionType={setSectionType}
-          onSubmit={submitHandler}
-          setEditId={setEditId}
-          questionsBySectionId={questionsBySectionId}
-          deleteQuestionHandler={deleteQuestionHandler}
-          showQuestionDropdown={showQuestionDropdown}
-          setShowQuestionDropdown={setShowQuestionDropdown}
-          addQuestionHandler={addQuestionHandler}
-          handlePasteContent={handlePasteContent}
-          resources={resources}
-          setResources={setResources}
-          setContent={setContent}
-          onCopy={() => {
-            setEditId(section._id);
-            setCopy(true);
-          }}
-        ></SectionForm>
+      <Modal isOpen={isModalOpen} setIsOpen={setIsModalOpen} big>
+        <Modal.Header title={section.name} setIsOpen={setIsModalOpen} />
+        <div className="px-6">
+          {isModalOpen && (
+            <Suspense
+              fallback={
+                <div className="py-4 text-center">Loading section form...</div>
+              }
+            >
+              <SectionFormLazy
+                key={section._id}
+                editor={editor}
+                section={section}
+                sectionType={sectionType}
+                setSectionType={setSectionType}
+                onSubmit={(e) => {
+                  submitHandler(e);
+                  setIsModalOpen(false);
+                }}
+                setEditId={setEditId}
+                questionsBySectionId={questionsBySectionId}
+                deleteQuestionHandler={deleteQuestionHandler}
+                showQuestionDropdown={showQuestionDropdown}
+                setShowQuestionDropdown={setShowQuestionDropdown}
+                addQuestionHandler={addQuestionHandler}
+                handlePasteContent={handlePasteContent}
+                resources={resources}
+                setResources={setResources}
+                setContent={setContent}
+                onCopy={() => {
+                  setEditId(section._id);
+                  setCopy(true);
+                }}
+              />
+            </Suspense>
+          )}
 
-        {isExpanded && (
-          <>
-            <AdminSectionCards sectionId={section._id} />
+          {isModalOpen && (
+            <Suspense
+              fallback={
+                <div className="py-4 text-center">Loading cards...</div>
+              }
+            >
+              <AdminSectionCards sectionId={section._id} />
+            </Suspense>
+          )}
+
+          {isModalOpen && sectionNotes && (
             <div className="mt-8">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold">Section Notes</h3>
@@ -449,7 +508,7 @@ const AdminSectionComponent = ({
                 </Button>
               </div>
               <div className="grid gap-4 grid-container">
-                {notes?.map((note) => (
+                {sectionNotes?.map((note: any) => (
                   <div
                     key={note._id}
                     onClick={() => navigate(`/notes/edit/${note._id}`)}
@@ -461,17 +520,16 @@ const AdminSectionComponent = ({
                       id={note._id}
                       Icon={<StickyNote />}
                       name={note.title}
-                      // deleteHandler={deleteNoteHandler}
                     />
                   </div>
                 ))}
               </div>
             </div>
-          </>
-        )}
-      </div>
-    </>
+          )}
+        </div>
+      </Modal>
+    </div>
   );
 };
 
-export default AdminSectionComponent;
+export default React.memo(AdminSectionComponent);

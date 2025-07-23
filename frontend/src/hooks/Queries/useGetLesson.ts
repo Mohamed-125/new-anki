@@ -9,7 +9,7 @@ const useGetLesson = (lessonId: string, enabled = true) => {
       const response = await axios.get(`lesson/${lessonId}`, { signal });
 
       console.log(response.data);
-      return response.data as LessonType;
+      return response.data as { lesson: LessonType; nextLesson: LessonType };
     },
     enabled,
   });

@@ -46,6 +46,11 @@ const lessonSchema = new mongoose.Schema(
       // required: [true, "courseLevel ID is required"],
       index: true,
     },
+    order: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
   },
   { timestamps: true }
 );

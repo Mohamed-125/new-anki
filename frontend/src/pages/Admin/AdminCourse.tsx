@@ -132,18 +132,19 @@ const AdminCourse = () => {
             </Button>
           </div>
 
-          <AddNewCourseLevelModal
+          {/* <AddNewCourseLevelModal
             isOpen={isCourseLevelModalOpen}
             setIsOpen={setIsCourseLevelModalOpen}
             editId={editId}
             courseId={course._id}
             defaultValues={defaultValues}
             setDefaultValues={setDefaultValues}
-          />
+          /> */}
 
           <div className="grid gap-8">
             {arrangedCourseLevels?.map((courseLevel, index) => (
               <DragableComponent
+                reorderHandler={handleReorder}
                 order={index + 1}
                 setState={setArrangedCourseLevels}
                 state={arrangedCourseLevels}

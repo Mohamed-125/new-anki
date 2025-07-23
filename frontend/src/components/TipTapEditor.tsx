@@ -551,7 +551,7 @@ export default ({
   onClick,
 }: {
   editor: Editor | null;
-  onClick: any;
+  onClick?: any;
 }) => {
   return (
     <div
@@ -570,7 +570,7 @@ export default ({
       <div className="overflow-x-auto">
         <EditorContent
           editor={editor}
-          onClick={onClick}
+          onClick={onClick ? onClick : undefined}
           className="max-h-[600px] min-h-[200px] border-t overflow-y-auto focus:ring-2 focus:ring-blue-400"
           style={
             {
@@ -580,7 +580,7 @@ export default ({
           }
         />
       </div>
-      <style jsx global>{`
+      <style>{`
         .ProseMirror table {
           width: var(--table-width);
           border-collapse: collapse;

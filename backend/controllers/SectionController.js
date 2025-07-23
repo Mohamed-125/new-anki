@@ -2,11 +2,11 @@ const SectionModel = require("../models/SectionModel");
 const Section = require("../models/SectionModel");
 const asyncHandler = require("express-async-handler");
 const NoteModel = require("../models/NoteModel");
+const mongoose = require("mongoose");
 
 // Create a new section
 const createSection = asyncHandler(async (req, res) => {
-  const lessonId = req.query.lessonId;
-  const section = await SectionModel.create({ ...req.body, lessonId });
+  const section = await SectionModel.create({ ...req.body });
   res.status(201).json({
     status: "success",
     data: section,
@@ -136,6 +136,83 @@ const deleteSection = asyncHandler(async (req, res) => {
   });
 });
 
+// Duplicate a section
+const duplicateSection = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { lessonId } = req.query;
+
+  try {
+    // Find the original section
+    const originalSection = await SectionModel.findById(id).lean();
+    if (!originalSection) {
+      res.status(404);
+      throw new Error("Section not found");
+    }
+
+    const newOrder = originalSection.order + 1;
+
+    // Create new section data without _id
+    const newSectionData = {
+      ...originalSection,
+      _id: undefined,
+      order: newOrder,
+      name: `${originalSection.name} (Copy)`,
+      lessonId,
+    };
+
+    // Create the new section
+    const duplicatedSection = await SectionModel.create(newSectionData);
+
+    // Duplicate associated collections, cards, and notes
+    const collections = await mongoose
+      .model("Collection")
+      .find({ sectionId: id })
+      .lean();
+    const cards = await mongoose.model("Card").find({ sectionId: id }).lean();
+    const notes = await mongoose.model("Note").find({ sectionId: id }).lean();
+
+    // Create duplicates with new sectionId
+    if (collections.length) {
+      const newCollections = collections.map((collection) => ({
+        ...collection,
+        _id: undefined,
+        sectionId: duplicatedSection._id,
+      }));
+      await mongoose.model("Collection").insertMany(newCollections);
+    }
+
+    if (cards.length) {
+      const newCards = cards.map((card) => ({
+        ...card,
+        _id: undefined,
+        sectionId: duplicatedSection._id,
+      }));
+      await mongoose.model("Card").insertMany(newCards);
+    }
+
+    if (notes.length) {
+      const newNotes = notes.map((note) => ({
+        ...note,
+        _id: undefined,
+        sectionId: duplicatedSection._id,
+      }));
+      await mongoose.model("Note").insertMany(newNotes);
+    }
+
+    res.status(201).json({
+      status: "success",
+      data: duplicatedSection,
+    });
+  } catch (error) {
+    console.error("Failed to duplicate section:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to duplicate section",
+      error: error.message,
+    });
+  }
+});
+
 module.exports = {
   createSection,
   getAllSections,
@@ -143,4 +220,5 @@ module.exports = {
   updateSection,
   updateOrder,
   deleteSection,
+  duplicateSection,
 };

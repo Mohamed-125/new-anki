@@ -21,9 +21,15 @@ type ActionsDropdownProps = {
   shareHandler?: () => void;
   itemId: string;
   isCard?: boolean;
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
   forkData?: { forking: string; handler: any } | undefined;
   isSameUser?: boolean;
+  customButtons?: Array<{
+    label: string;
+    icon: React.ReactNode;
+    handler: () => void;
+    className?: string;
+  }>;
 };
 
 const ActionsDropdown = ({
@@ -36,6 +42,7 @@ const ActionsDropdown = ({
   setSelectedItems,
   forkData,
   isSameUser = true,
+  customButtons,
 }: ActionsDropdownProps) => {
   const { selectedItems } = useModalsStates();
 
@@ -138,6 +145,21 @@ const ActionsDropdown = ({
                 <FaTrashCan className="text-xl" />
                 Delete
               </Button>
+              {customButtons?.map((button, index) => (
+                <React.Fragment key={index}>
+                  <DropdownMenuSeparator />
+                  <Button
+                    onClick={button.handler}
+                    className={
+                      button.className ||
+                      "flex gap-3 items-center hover:bg-transparent hover:scale-100 !shadow-none leading-normal text-gray-700 bg-transparent border-none outline-none"
+                    }
+                  >
+                    {button.icon}
+                    {button.label}
+                  </Button>
+                </React.Fragment>
+              ))}
             </>
           )}
         </DropdownMenuContent>

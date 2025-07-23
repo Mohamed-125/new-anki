@@ -24,7 +24,7 @@ const sectionSchema = new mongoose.Schema(
     lessonId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Lesson",
-      required: [true, "Course ID is required"],
+      required: [true, "lessonId ID is required"],
       index: true,
     },
   },

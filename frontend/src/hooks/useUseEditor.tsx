@@ -131,8 +131,6 @@ const useUseEditor = (readonly: boolean = false) => {
     [deferredContent, readonly]
   );
 
-  console.log("content", content);
-
   // Force editor to update when content changes
   useEffect(() => {
     if (editor) {

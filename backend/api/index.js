@@ -115,6 +115,9 @@ app.use("/api/v1/list", listRouter);
 
 const PORT = process.env.PORT || 5000;
 
+const { ClientType, Innertube } = require("youtubei.js");
+const { YtTranscript } = require("yt-transcript");
+
 app.get("/", (req, res) => res.send("server is running "));
 app.listen(PORT, () => {
   console.log("App running in port: " + PORT);

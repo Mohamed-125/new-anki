@@ -5,134 +5,135 @@ const he = require("he");
 
 module.exports.createVideo = async (req, res, next) => {
   try {
-    const { url, playlistId, topicId, listId, channelId } = req.body;
+    const { defaultCaptionData, url, playlistId, topicId, listId, channelId } =
+      req.body;
 
-    // Fetch transcript
-    const transcriptResponse = await axios.post(
-      "http://localhost:5000/api/v1/transcript/get-transcript",
-      {
-        url,
-        lang: "de",
-        timeout: 900000,
-      }
-    );
+    // // Fetch transcript
+    // const transcriptResponse = await axios.post(
+    //   "http://localhost:5000/api/v1/transcript/get-transcript",
+    //   {
+    //     url,
+    //     lang: "de",
+    //     timeout: 900000,
+    //   }
+    // );
 
-    console.log(transcriptResponse);
-    if (!transcriptResponse.data.transcript) {
-      throw new Error("Failed to fetch transcript");
-    }
+    // console.log(transcriptResponse);
+    // if (!transcriptResponse.data.transcript) {
+    //   throw new Error("Failed to fetch transcript");
+    // }
 
-    // Sanitize transcript
-    const sanitizedTranscript = transcriptResponse.data.transcript.map(
-      (item) => ({
-        ...item,
-        text: he.decode(item.text).trim(),
-      })
-    );
+    // // Sanitize transcript
+    // const sanitizedTranscript = transcriptResponse.data.transcript.map(
+    //   (item) => ({
+    //     ...item,
+    //     text: he.decode(item.text).trim(),
+    //   })
+    // );
 
-    // Batch translate transcript with context
-    const translateText = async (text, index, transcriptArray) => {
-      const maxRetries = 3;
-      const retryDelay = 1000;
+    // // Batch translate transcript with context
+    // const translateText = async (text, index, transcriptArray) => {
+    //   const maxRetries = 3;
+    //   const retryDelay = 1000;
 
-      // Get context lines (2 before and 2 after)
-      const contextLines = [];
-      for (
-        let i = Math.max(0, index - 2);
-        i <= Math.min(transcriptArray.length - 1, index + 2);
-        i++
-      ) {
-        if (i === index) {
-          // Remove any existing parentheses from the current line
-          const cleanText = transcriptArray[i].text.replace(/[()]/g, "");
-          contextLines.push(`((${cleanText}))`);
-        } else {
-          // Remove any existing parentheses from context lines
-          contextLines.push(transcriptArray[i].text.replace(/[()]/g, ""));
-        }
-      }
+    //   // Get context lines (2 before and 2 after)
+    //   const contextLines = [];
+    //   for (
+    //     let i = Math.max(0, index - 2);
+    //     i <= Math.min(transcriptArray.length - 1, index + 2);
+    //     i++
+    //   ) {
+    //     if (i === index) {
+    //       // Remove any existing parentheses from the current line
+    //       const cleanText = transcriptArray[i].text.replace(/[()]/g, "");
+    //       contextLines.push(`((${cleanText}))`);
+    //     } else {
+    //       // Remove any existing parentheses from context lines
+    //       contextLines.push(transcriptArray[i].text.replace(/[()]/g, ""));
+    //     }
+    //   }
 
-      const textWithContext = contextLines.join(" ");
+    //   const textWithContext = contextLines.join(" ");
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          const { data: translatedText } = await axios.post(
-            "http://localhost:5000/api/v1/translate",
-            { text: textWithContext },
-            {
-              timeout: 300000,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-          return translatedText;
-        } catch (error) {
-          if (attempt === maxRetries) throw error;
-          await new Promise((resolve) =>
-            setTimeout(resolve, retryDelay * attempt)
-          );
-        }
-      }
-    };
+    //   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    //     try {
+    //       const { data: translatedText } = await axios.post(
+    //         "http://localhost:5000/api/v1/translate",
+    //         { text: textWithContext },
+    //         {
+    //           timeout: 300000,
+    //           headers: { "Content-Type": "application/json" },
+    //         }
+    //       );
+    //       return translatedText;
+    //     } catch (error) {
+    //       if (attempt === maxRetries) throw error;
+    //       await new Promise((resolve) =>
+    //         setTimeout(resolve, retryDelay * attempt)
+    //       );
+    //     }
+    //   }
+    // };
 
-    const batchTranslate = async (texts, batchSize) => {
-      const batchedResults = [];
-      const delayBetweenBatches = 500;
+    // const batchTranslate = async (texts, batchSize) => {
+    //   const batchedResults = [];
+    //   const delayBetweenBatches = 500;
 
-      for (let i = 0; i < texts.length; i += batchSize) {
-        const batch = texts.slice(i, i + batchSize);
-        try {
-          const batchResults = await Promise.allSettled(
-            batch.map((textItem, batchIndex) =>
-              translateText(textItem.text, i + batchIndex, texts)
-            )
-          );
+    //   for (let i = 0; i < texts.length; i += batchSize) {
+    //     const batch = texts.slice(i, i + batchSize);
+    //     try {
+    //       const batchResults = await Promise.allSettled(
+    //         batch.map((textItem, batchIndex) =>
+    //           translateText(textItem.text, i + batchIndex, texts)
+    //         )
+    //       );
 
-          const translatedBatch = batchResults.map((result) =>
-            result.status === "fulfilled" ? result.value : null
-          );
+    //       const translatedBatch = batchResults.map((result) =>
+    //         result.status === "fulfilled" ? result.value : null
+    //       );
 
-          batchedResults.push(...translatedBatch);
+    //       batchedResults.push(...translatedBatch);
 
-          if (i + batchSize < texts.length) {
-            await new Promise((resolve) =>
-              setTimeout(resolve, delayBetweenBatches)
-            );
-          }
-        } catch (error) {
-          console.error(`Error in batch ${i / batchSize + 1}:`, error);
-          batchedResults.push(...new Array(batch.length).fill(null));
-        }
-      }
-      return batchedResults;
-    };
+    //       if (i + batchSize < texts.length) {
+    //         await new Promise((resolve) =>
+    //           setTimeout(resolve, delayBetweenBatches)
+    //         );
+    //       }
+    //     } catch (error) {
+    //       console.error(`Error in batch ${i / batchSize + 1}:`, error);
+    //       batchedResults.push(...new Array(batch.length).fill(null));
+    //     }
+    //   }
+    //   return batchedResults;
+    // };
 
-    const translatedTexts = await batchTranslate(sanitizedTranscript, 3);
+    // const translatedTexts = await batchTranslate(sanitizedTranscript, 3);
 
-    // Combine transcript with translations
-    const defaultCaptionData = {
-      transcript: sanitizedTranscript.map((item, index) => ({
-        ...item,
-        translatedText: translatedTexts[index],
-      })),
-      translatedTranscript: translatedTexts,
-    };
+    // // Combine transcript with translations
+    // const defaultCaptionData = {
+    //   transcript: sanitizedTranscript.map((item, index) => ({
+    //     ...item,
+    //     translatedText: translatedTexts[index],
+    //   })),
+    //   translatedTranscript: translatedTexts,
+    // };
 
     // Create the video with enhanced data
+
     const createdVideo = await VideoModel.create({
       ...req.body,
       userId: topicId || channelId || listId ? null : req?.user?._id,
       defaultCaptionData,
     });
 
-    if (topicId || channelId || listId)
-      [
-        // Create user-video association
-        await UserVideoModel.create({
-          userId: req?.user?._id,
-          videoId: createdVideo._id,
-          playlistId: playlistId || null,
-        }),
-      ];
+    if (!topicId && !channelId && !listId) {
+      // Create user-video association
+      await UserVideoModel.create({
+        userId: req?.user?._id,
+        videoId: createdVideo._id,
+        playlistId: playlistId || null,
+      });
+    }
 
     res.status(201).send(createdVideo);
   } catch (err) {

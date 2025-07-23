@@ -1,4 +1,6 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useState } from "react";
+import { GripVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const DragableComponent = ({
   order,
@@ -13,26 +15,70 @@ const DragableComponent = ({
   children: ReactNode;
   reorderHandler: (newArrangedArr: any[]) => void;
 }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dropPosition, setDropPosition] = useState<"top" | "bottom" | null>(
+    null
+  );
+
   return (
-    <div data-order={order}>
+    <div data-order={order} className="relative mb-2">
+      {/* Drop indicator line */}
+      {isDragOver && dropPosition === "top" && (
+        <div className="absolute top-0 right-0 left-0 z-10 h-1 rounded-full animate-pulse transform -translate-y-1/2 bg-primary" />
+      )}
+
       <div
         draggable
-        className="overflow-hidden relative bg-white rounded-t-lg border-b-2 border-gray-400 shadow-md will-change-transform"
+        className={cn(
+          "overflow-hidden relative bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 will-change-transform group",
+          isDragging && "opacity-50 shadow-none border-dashed border-gray-300",
+          isDragOver && "ring-2 ring-primary ring-opacity-50"
+        )}
         onDragStart={(e) => {
-          // console.log(e.target);
+          setIsDragging(true);
           const parentElement = e.currentTarget?.parentElement;
           if (parentElement) {
             const order = parentElement.getAttribute("data-order");
             if (order) {
-              e.dataTransfer.setData("text/plain", order); // Set data
+              e.dataTransfer.setData("text/plain", order);
+              // Add a ghost image effect
+              const ghostElement = e.currentTarget.cloneNode(
+                true
+              ) as HTMLElement;
+              ghostElement.style.opacity = "0.5";
+              ghostElement.style.position = "absolute";
+              ghostElement.style.top = "-1000px";
+              document.body.appendChild(ghostElement);
+              e.dataTransfer.setDragImage(ghostElement, 20, 20);
+              setTimeout(() => {
+                document.body.removeChild(ghostElement);
+              }, 0);
             }
           }
         }}
+        onDragEnd={() => {
+          setIsDragging(false);
+          setIsDragOver(false);
+          setDropPosition(null);
+        }}
         onDragOver={(e) => {
           e.preventDefault();
+          if (!isDragOver) setIsDragOver(true);
+
+          // Determine if we're in the top or bottom half
+          const { top, height } = e.currentTarget.getBoundingClientRect();
+          const isUpperHalf = e.clientY - top < height / 2;
+          setDropPosition(isUpperHalf ? "top" : "bottom");
+        }}
+        onDragLeave={() => {
+          setIsDragOver(false);
+          setDropPosition(null);
         }}
         onDrop={(e) => {
-          // console.log(e.currentTarget.parentElement.getAttribute("data-order"));
+          setIsDragOver(false);
+          setDropPosition(null);
+
           const targetElementOrder = +(
             e.currentTarget?.parentElement?.getAttribute("data-order") ?? "0"
           );
@@ -49,9 +95,14 @@ const DragableComponent = ({
 
           // Calculate insert position based on drop location
           let insertIndex = targetElementOrder - 1;
-          if (!isUpperHalf && insertIndex < stateArr.length) {
+
+          // If dropping in bottom half, increment the insert index
+          if (!isUpperHalf) {
             insertIndex++;
           }
+
+          // Ensure insertIndex doesn't exceed array bounds
+          insertIndex = Math.min(insertIndex, stateArr.length);
 
           // Adjust for removing the dragged item
           if (draggedOrder - 1 < insertIndex) {
@@ -74,10 +125,20 @@ const DragableComponent = ({
           reorderHandler(newArrangedArr);
         }}
       >
-        {children}
+        <div className="flex items-center">
+          <div className="flex justify-center items-center p-2 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 cursor-grab active:cursor-grabbing">
+            <GripVertical size={18} />
+          </div>
+          <div className="flex-grow">{children}</div>
+        </div>
       </div>
+
+      {/* Bottom drop indicator line */}
+      {isDragOver && dropPosition === "bottom" && (
+        <div className="absolute right-0 bottom-0 left-0 z-10 h-1 rounded-full animate-pulse transform translate-y-1/2 bg-primary" />
+      )}
     </div>
   );
 };
 
-export default DragableComponent;
+export default React.memo(DragableComponent);

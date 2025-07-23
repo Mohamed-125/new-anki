@@ -280,8 +280,11 @@ export function AddCardModal({
       setIsTranslationLoading(false);
       setExamples([]);
       setIsExmaplesVisible(false);
+      if (editor) {
+        editor.commands.clearContent();
+      }
     }
-  }, [isAddCardModalOpen]);
+  }, [isAddCardModalOpen, editor]);
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -294,6 +297,7 @@ export function AddCardModal({
   //   sectionId: defaultValues?.sectionId || null,
   // });
 
+  console.log(backValue, defaultValues);
   return (
     <Modal
       loading={isLoading || isCollectionLoading}
@@ -326,7 +330,7 @@ export function AddCardModal({
                 <Form.Label>Card Front Side</Form.Label>
                 <div className="space-y-2">
                   <Form.Textarea
-                    value={defaultValues?.front || frontValue}
+                    value={defaultValues?.front || frontValue || ""}
                     onChange={(e) => {
                       setFrontValue(e.target.value);
                       setDefaultValues((pre: {}) => {
@@ -507,6 +511,7 @@ export function AddCardModal({
                 </Button>
               </Form.Field>
 
+              {}
               <Form.Field>
                 <Form.Label>Card Back Side</Form.Label>
                 <Form.Textarea
@@ -514,7 +519,7 @@ export function AddCardModal({
                   disabled={isTranslationLoading}
                   type="text"
                   ref={backRef}
-                  value={backValue || defaultValues?.back}
+                  value={backValue || defaultValues?.back || ""}
                   onChange={(e) => {
                     setBackValue(e.target.value);
                     setDefaultValues((pre: {}) => {

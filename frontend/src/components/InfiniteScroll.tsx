@@ -4,6 +4,8 @@ import {
   InfiniteData,
 } from "@tanstack/react-query";
 import React, { useEffect, useRef, ReactNode } from "react";
+import { components } from "react-select";
+import { Virtuoso } from "react-virtuoso";
 
 interface InfiniteScrollProps {
   fetchNextPage: (
@@ -38,7 +40,7 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
       {
         root: null,
         rootMargin: "0px",
-        threshold: 0.2,
+        threshold: 0.02,
       }
     );
 
@@ -52,19 +54,45 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
       }
     };
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  const items = React.Children.toArray(children); // ✅ Convert to array
 
   return (
-    <div className={`${className}`}>
-      {children}
-      <div ref={observerTarget} style={{}} className="infinite-scroll">
-        {(hasNextPage && isFetchingNextPage) ||
-        isFetchingNextPage ||
-        hasNextPage
-          ? loadingElement
-          : null}
-      </div>
-    </div>
+    <>
+      {false ? (
+        <Virtuoso
+          useWindowScroll
+          style={{ display: "inherit" }}
+          className={className}
+          data={items} // ✅ Must be an array
+          itemContent={(index) => items[index]} // ✅ Render each child by index
+          endReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          components={{
+            Footer: () =>
+              hasNextPage || isFetchingNextPage ? (
+                <div style={{ padding: "1rem", textAlign: "center" }}>
+                  {loadingElement}
+                </div>
+              ) : null,
+          }}
+        />
+      ) : (
+        <div className={`${className}`}>
+          {children}
+          <div ref={observerTarget} style={{}} className="infinite-scroll">
+            {(hasNextPage && isFetchingNextPage) ||
+            isFetchingNextPage ||
+            hasNextPage
+              ? loadingElement
+              : null}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
-export default InfiniteScroll;
+export default React.memo(InfiniteScroll);

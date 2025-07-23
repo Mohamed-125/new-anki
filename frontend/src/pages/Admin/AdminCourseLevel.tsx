@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { sampleLessons } from "@/data/sampleCourseData";
 import { Trash } from "lucide-react";
@@ -8,6 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import AddNewLessonModal from "@/components/AddNewLessonModal";
 import ActionsDropdown from "@/components/ActionsDropdown";
 import useGetLessons from "@/hooks/Queries/useGetLessons";
+import InfiniteScroll from "@/components/InfiniteScroll";
+import DraggableComponent from "@/components/DraggableComponent";
 
 const AdminCourseLevel = () => {
   const { courseId, courseLevelId } = useParams();
@@ -21,9 +23,26 @@ const AdminCourseLevel = () => {
   }>();
   const queryClient = useQueryClient();
 
-  const { lessons, isLoading } = useGetLessons({
+  const { lessons, isLoading, fetchNextPage, hasNextPage } = useGetLessons({
     courseLevelId: courseLevelId as string,
   });
+  const [arrangedLessons, setArrangedLessons] = useState<typeof lessons>([]);
+
+  useEffect(() => {
+    if (lessons) {
+      setArrangedLessons(lessons);
+    }
+  }, [lessons]);
+
+  const handleReorder = async (newArrangedArr: any[]) => {
+    console.log(arrangedLessons, newArrangedArr);
+    try {
+      await axios.post(`/lesson/reorder`, { lessons: newArrangedArr });
+      queryClient.invalidateQueries({ queryKey: ["lessons", courseLevelId] });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="p-6 mx-auto max-w-7xl">
@@ -48,80 +67,94 @@ const AdminCourseLevel = () => {
       />
 
       <div className="grid gap-2">
-        {lessons?.map((lesson) => (
-          <div
-            key={lesson._id}
-            className={`relative flex gap-3 p-3 border transition-all hover:shadow-md ${
-              lesson.type === "exam"
-                ? "border-orange-200 bg-orange-50"
-                : lesson.type === "revision"
-                ? "border-blue-200 bg-blue-50"
-                : "border-green-200 bg-green-50"
-            }`}
-          >
-            <Link
-              to={`/admin/courses/${courseId}/${courseLevelId}/${lesson._id}`}
+        <InfiniteScroll
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          loadingElement={<p>Loading more lessons...</p>}
+          className="grid gap-4"
+        >
+          {arrangedLessons?.map((lesson, index) => (
+            <DraggableComponent
+              key={lesson._id}
+              order={index + 1}
+              setState={setArrangedLessons}
+              state={arrangedLessons}
+              reorderHandler={handleReorder}
             >
-              <div className="overflow-hidden w-60 rounded-md aspect-[1.7/1]">
-                <img
-                  src={lesson.img}
-                  alt={lesson.name}
-                  className="object-cover w-full h-full"
+              <div
+                className={`relative flex gap-3 p-3 border transition-all hover:shadow-md ${
+                  lesson.type === "exam"
+                    ? "border-orange-200 bg-orange-50"
+                    : lesson.type === "revision"
+                    ? "border-blue-200 bg-blue-50"
+                    : "border-green-200 bg-green-50"
+                }`}
+              >
+                <Link
+                  to={`/admin/courses/${courseId}/${courseLevelId}/${lesson._id}`}
+                >
+                  <div className="overflow-hidden w-60 rounded-md aspect-[1.7/1]">
+                    <img
+                      src={lesson.img}
+                      alt={lesson.name}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                </Link>
+                <Link
+                  to={`/admin/courses/${courseId}/${courseLevelId}/${lesson._id}`}
+                  className="flex-1"
+                >
+                  <h3 className="mb-1 text-sm font-medium text-gray-900 line-clamp-1">
+                    {lesson.name}
+                  </h3>
+                  <p className="mb-2 text-xs text-gray-600 line-clamp-2">
+                    {lesson.description}
+                  </p>
+                  <div className="flex gap-3 items-center mt-3">
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        lesson.type === "exam"
+                          ? "text-orange-700 bg-orange-100"
+                          : lesson.type === "revision"
+                          ? "text-blue-700 bg-blue-100"
+                          : "text-green-700 bg-green-100"
+                      }`}
+                    >
+                      {lesson.type.charAt(0).toUpperCase() +
+                        lesson.type.slice(1)}
+                    </span>
+                  </div>
+                </Link>
+                <ActionsDropdown
+                  itemId={lesson._id}
+                  editHandler={() => {
+                    setEditId(lesson._id);
+                    setDefaultValues({
+                      lessonName: lesson.name,
+                      description: lesson.description,
+                      type: lesson.type,
+                    });
+                    setIsModalOpen(true);
+                  }}
+                  deleteHandler={async () => {
+                    try {
+                      await axios.delete(`lesson/${lesson._id}`);
+                      queryClient.invalidateQueries({
+                        queryKey: ["lessons", courseLevelId],
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ["courseLevelLessons", courseLevelId],
+                      });
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
                 />
               </div>
-            </Link>
-            <Link
-              to={`/admin/courses/${courseId}/${courseLevelId}/${lesson._id}`}
-              className="flex-1"
-            >
-              <h3 className="mb-1 text-sm font-medium text-gray-900 line-clamp-1">
-                {lesson.name}
-              </h3>
-              <p className="mb-2 text-xs text-gray-600 line-clamp-2">
-                {lesson.description}
-              </p>
-              <div className="flex gap-3 items-center mt-3">
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    lesson.type === "exam"
-                      ? "text-orange-700 bg-orange-100"
-                      : lesson.type === "revision"
-                      ? "text-blue-700 bg-blue-100"
-                      : "text-green-700 bg-green-100"
-                  }`}
-                >
-                  {lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)}
-                </span>
-              </div>
-            </Link>
-
-            <ActionsDropdown
-              itemId={lesson._id}
-              editHandler={() => {
-                setEditId(lesson._id);
-                setDefaultValues({
-                  lessonName: lesson.name,
-                  description: lesson.description,
-                  type: lesson.type,
-                });
-                setIsModalOpen(true);
-              }}
-              deleteHandler={async () => {
-                try {
-                  await axios.delete(`lesson/${lesson._id}`);
-                  queryClient.invalidateQueries({
-                    queryKey: ["lessons", courseLevelId],
-                  });
-                  queryClient.invalidateQueries({
-                    queryKey: ["courseLevelLessons", courseLevelId],
-                  });
-                } catch (err) {
-                  console.error(err);
-                }
-              }}
-            />
-          </div>
-        ))}
+            </DraggableComponent>
+          ))}
+        </InfiniteScroll>
       </div>
     </div>
   );

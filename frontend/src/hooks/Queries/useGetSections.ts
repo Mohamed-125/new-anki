@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { sectionType } from "./useSectionMutations.ts";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 type GetSectionsResponse = {
   sections: sectionType[];
@@ -9,7 +9,7 @@ type GetSectionsResponse = {
   sectionsCount: number;
 };
 
-const useGetSections = (lessonId: string) => {
+const useGetSections = (lessonId: string, currentSectionIndex: number = 0) => {
   const queryKey = ["section", lessonId];
 
   const {
@@ -36,6 +36,24 @@ const useGetSections = (lessonId: string) => {
     return data?.pages.flatMap((page) => page.sections) || [];
   }, [data]);
 
+  useEffect(() => {
+    const threshold = 3; // Start loading when 3 sections away from the end
+    if (
+      hasNextPage &&
+      !isFetchingNextPage &&
+      sections.length > 0 &&
+      currentSectionIndex >= sections.length - threshold
+    ) {
+      fetchNextPage();
+    }
+  }, [
+    currentSectionIndex,
+    sections.length,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  ]);
+
   return {
     sections,
     isLoading,
@@ -44,7 +62,7 @@ const useGetSections = (lessonId: string) => {
     hasNextPage,
     isFetchingNextPage,
     refetch,
-    sectionsCount: data?.pages[0].sectionsCount,
+    sectionsCount: data?.pages[0].sectionsCount as number,
   };
 };
 

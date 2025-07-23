@@ -1,6 +1,7 @@
 import { LessonType } from "./useLessonMutations";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { useMemo } from "react";
 
 type GetLessonsResponse = {
   lessons: LessonType[];
@@ -28,8 +29,7 @@ const useGetLessons = ({
     queryKey.push(lessonType);
   }
 
-  const queryClient = useQueryClient();
-
+  console.log("lessons");
   if (query) queryKey.push(query);
   if (lessonType) queryKey.push(lessonType);
 
@@ -56,7 +56,10 @@ const useGetLessons = ({
     enabled,
   });
 
-  const lessons = data?.pages.flatMap((page) => page?.lessons);
+  const lessons = useMemo(
+    () => data?.pages.flatMap((page) => page?.lessons),
+    [data]
+  );
 
   return {
     lessons,

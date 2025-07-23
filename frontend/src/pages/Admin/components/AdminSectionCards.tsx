@@ -102,4 +102,4 @@ const AdminSectionCards = ({ sectionId }: AdminSectionCardsProps) => {
   );
 };
 
-export default AdminSectionCards;
+export default React.memo(AdminSectionCards);

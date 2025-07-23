@@ -9,6 +9,7 @@ const {
   updateSection,
   updateOrder,
   deleteSection,
+  duplicateSection,
 } = require("../controllers/SectionController");
 
 router.route("/").post(Authorization, createSection).get(getAllSections);
@@ -18,5 +19,7 @@ router
   .patch(Authorization, updateSection)
   .put(Authorization, updateOrder)
   .delete(Authorization, deleteSection);
+
+router.route("/:id/duplicate").post(Authorization, duplicateSection);
 
 module.exports = router;

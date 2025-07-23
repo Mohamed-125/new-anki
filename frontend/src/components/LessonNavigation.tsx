@@ -27,6 +27,7 @@ interface LessonNavigationProps {
   textAnswer: string;
   courseLevelId?: string;
   lesson: LessonType | undefined;
+  setShowCongratsModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LessonNavigation = ({
@@ -47,6 +48,7 @@ const LessonNavigation = ({
   textAnswer,
   lesson,
   courseLevelId,
+  setShowCongratsModal,
 }: LessonNavigationProps) => {
   const lessonId = lesson?._id;
 
@@ -209,7 +211,7 @@ const LessonNavigation = ({
                     queryClient.invalidateQueries({
                       queryKey: ["courseLevel", courseLevelId],
                     });
-                    navigate("/learn");
+                    setShowCongratsModal(true);
                   })
 
                   .catch((error) => {

@@ -6,7 +6,7 @@ export type LessonType = {
   name: string;
   description?: string;
   img: string;
-  type: "lesson" | "revision" | "exam";
+  type: "lesson" | "revision" | "exam" | "grammar";
   _id: string;
   isCompleted: boolean;
   courseLevel: string; // Reference to CourseLevel document

@@ -3,6 +3,28 @@ const asyncHandler = require("express-async-handler");
 const { verify } = require("jsonwebtoken");
 const ProgressModel = require("../models/ProgressModel");
 
+// Reorder lessons
+const reorderLessons = asyncHandler(async (req, res) => {
+  const { lessons } = req.body;
+
+  const bulkOps = lessons.map((lesson) => ({
+    updateOne: {
+      filter: { _id: lesson._id },
+      update: { $set: { order: lesson.order } },
+    },
+  }));
+
+  try {
+    const results = await Lesson.bulkWrite(bulkOps);
+
+    res
+      .status(200)
+      .json({ message: "Lessons reordered successfully", results: results });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to reorder lessons", error });
+  }
+});
+
 // Create a new lesson
 const createLesson = asyncHandler(async (req, res) => {
   const { courseLevelId } = req.query;
@@ -28,6 +50,7 @@ const getAllLessons = asyncHandler(async (req, res) => {
     const nextPage = remaining > 0 ? page + 1 : null;
 
     const lessons = await Lesson.find(query)
+      .sort({ order: 1 })
       .skip(skipNumber)
       .limit(limit)
       .lean();
@@ -66,7 +89,14 @@ const getLesson = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Lesson not found");
   }
-  res.status(200).json(lesson);
+
+  // Find the next lesson with higher order in the same courseLevel
+  const nextLesson = await Lesson.findOne({
+    courseLevelId: lesson.courseLevelId,
+    order: { $gt: lesson.order },
+  }).sort({ order: 1 });
+
+  res.status(200).json({ lesson, nextLesson });
 });
 
 // Update a lesson
@@ -104,4 +134,5 @@ module.exports = {
   getLesson,
   updateLesson,
   deleteLesson,
+  reorderLessons,
 };
