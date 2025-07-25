@@ -152,12 +152,17 @@ module.exports.getUserVideos = async (req, res, next) => {
     if (playlistId) {
       userVideoQuery.playlistId = playlistId;
     }
+    if (searchQuery) {
+      userVideoQuery.title = { $regex: searchQuery, $options: "i" };
+    }
 
     const userVideos = await UserVideoModel.find(userVideoQuery)
       .sort({ addedAt: -1 })
       .skip(page * limit)
       .limit(limit)
       .lean();
+
+    const videosCount = await UserVideoModel.countDocuments(userVideoQuery);
 
     const videoIds = userVideos.map((uv) => uv.videoId);
 
@@ -166,13 +171,6 @@ module.exports.getUserVideos = async (req, res, next) => {
       _id: { $in: videoIds },
     };
 
-    if (searchQuery) {
-      videoQuery.title = { $regex: searchQuery, $options: "i" };
-    }
-
-    console.log("videoQuery", videoQuery);
-
-    const videosCount = await VideoModel.countDocuments(videoQuery);
     const remaining = Math.max(0, videosCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
 
@@ -180,12 +178,10 @@ module.exports.getUserVideos = async (req, res, next) => {
       defaultCaptionData: 0,
     }).lean();
 
-    // Sort videos in the same order as userVideos
-    const sortedVideos = videoIds
-      .map((id) => videos.find((v) => v._id.toString() === id.toString()))
-      .filter(Boolean);
+    const videoMap = new Map(videos.map((v) => [String(v._id), v])); // O(n)
+    const orderedVideos = videoIds.map((id) => videoMap.get(String(id))); // O(n)
 
-    res.status(200).send({ videos: sortedVideos, nextPage, videosCount });
+    res.status(200).send({ videos: orderedVideos, nextPage, videosCount });
   } catch (err) {
     console.log(err);
     res.status(400).send(err);
