@@ -30,9 +30,18 @@ import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import useUseEditor from "@/hooks/useUseEditor";
 import { useRef } from "react";
 import { TextToSpeech } from "@/components/TextToSpeech";
-import { XCircleIcon, XIcon } from "lucide-react";
+import {
+  Edit,
+  Edit2,
+  Edit3,
+  Edit3Icon,
+  XCircleIcon,
+  XIcon,
+} from "lucide-react";
 import { BsXCircleFill } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
+import useModalsStates from "@/hooks/useModalsStates";
+import { AddCardModal } from "@/components/AddCardModal";
 
 const StudyCards = () => {
   const collectionId = useParams()?.collectionId;
@@ -47,7 +56,8 @@ const StudyCards = () => {
   const [repeatHardCards, setRepeatHardCards] = useState(false);
   const [hardCardsToRepeat, setHardCardsToRepeat] = useState<any[]>([]);
   const [cardsToStudy, setCardsToStudy] = useState<CardType[]>([]);
-
+  const { setIsAddCardModalOpen, setEditId, setDefaultValues } =
+    useModalsStates();
   const { editor, setContent } = useUseEditor(true);
   // Define the query for when `collectionId` exists
   const { data: collection, isLoading: collectionLoading } = useQuery({
@@ -89,25 +99,6 @@ const StudyCards = () => {
     }
   }, [cards, hardCardsToRepeat]);
 
-  const promiseRef = useRef<Map<string, () => Promise<any>>>(new Map());
-
-  const addPromise = (newPromiseFn: () => Promise<any>, cardId: string) => {
-    // Always overwrite the existing entry
-    promiseRef.current.set(cardId, newPromiseFn);
-  };
-
-  useEffect(() => {
-    return () => {
-      const fns = Array.from(promiseRef.current.values());
-
-      Promise.all(fns.map((fn) => fn()))
-        .then((res) => console.log("patch response", res))
-        .catch((err) => console.error("Patch errors:", err))
-        .finally(() => {
-          promiseRef.current.clear(); // clear after use
-        });
-    };
-  }, []);
   const { user } = useGetCurrentUser();
   const isSameUser = cards?.[0]?.userId === user?._id;
   // Determine loading state
@@ -130,11 +121,13 @@ const StudyCards = () => {
 
     easeFactor = easeFactor > 1 ? 1 : easeFactor < 0 ? 0 : easeFactor;
 
-    addPromise(
-      () =>
-        axios.patch(`card/${cardsToStudy[currentCard]._id}`, { easeFactor }),
-      cardsToStudy[currentCard]._id
-    );
+    axios
+      .patch(`card/${cardsToStudy[currentCard]._id}`, {
+        easeFactor: easeFactor < 0 ? 0 : easeFactor,
+      })
+      .then(() => {
+        console.log("card ease updated");
+      });
 
     if (
       (answer === "hard" && repeatHardCards) ||
@@ -198,13 +191,14 @@ const StudyCards = () => {
     if (cards) setContent(cardsToStudy[currentCard]?.content || "");
   }, [currentCard]);
 
-  console.log(cardsToStudy[currentCard], currentCard, cardsToStudy);
+  const card = cardsToStudy[currentCard];
   if (isLoading) {
     return <Loading />;
   }
 
   return (
     <div className="min-h-screen bg-[#f0f7ff]">
+      <AddCardModal />
       <div className="w-full bg-white shadow-sm">
         <div className="container px-4 py-4 mx-auto">
           <div className="flex justify-between items-center">
@@ -286,7 +280,7 @@ const StudyCards = () => {
                     <div className="">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="p-2 bg-white rounded-full shadow-sm transition-colors hover:bg-gray-50">
+                          <button className="py-2 bg-white rounded-full shadow-sm transition-colors hover:bg-gray-50">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="20"
@@ -409,6 +403,20 @@ const StudyCards = () => {
                         </PopoverContent>
                       </Popover>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        console.log("trstrst");
+                        setDefaultValues({
+                          ...card,
+                        });
+
+                        setIsAddCardModalOpen(true);
+                        setEditId(card._id);
+                      }}
+                    >
+                      <Edit3Icon fontSize={14} />
+                    </button>
                   </div>
                 </div>
                 <motion.div

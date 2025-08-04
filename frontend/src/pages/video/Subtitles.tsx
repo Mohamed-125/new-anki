@@ -74,29 +74,26 @@ const Subtitles = memo(function ({
             <TranslationWindow
               setIsAddCardModalOpen={setIsAddCardModalOpen}
               setDefaultValues={setDefaultValues}
-              setContent={setContent}
-              isSameUser={isSameUser}
               selectionData={selectionData}
             />
-            <Virtuoso
-              style={{ height: "100%" }}
-              totalCount={caption?.length || 0}
-              itemContent={(index) => (
+
+            {caption.map((c, index) => {
+              return (
                 <Subtitle
                   selectionData={selectionData}
                   key={index}
                   n={index}
                   setDefaultValues={setDefaultValues}
                   selectedCaption={selectedCaption}
-                  caption={caption}
+                  caption={c}
                   setIsAddCardModalOpen={setIsAddCardModalOpen}
                   video={video}
                   subtitle={caption[index]}
                   setEditId={setEditId}
                   playerRef={playerRef}
                 />
-              )}
-            />
+              );
+            })}
           </div>
         </div>
       </div>
@@ -218,7 +215,7 @@ const Subtitle = memo(function ({
       <div
         id={"subtitle-" + n}
         key={subtitle._id}
-        className="cursor-pointer select-text group"
+        className="cursor-pointer select-text group subtitle-item"
       >
         <div className="relative py-4 border-b-2 border-gray-200">
           <div

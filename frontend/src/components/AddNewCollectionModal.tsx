@@ -9,8 +9,8 @@ import Modal from "./Modal";
 import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import useToasts from "@/hooks/useToasts";
-import { isError } from "util";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import useCollectionActions from "@/hooks/useCollectionActions";
 
 const AddNewCollectionModal = ({
   onCollectionCreated,
@@ -33,46 +33,18 @@ const AddNewCollectionModal = ({
   const { addToast } = useToasts();
   const [isLoading, setIsLoading] = useState(false);
 
-  const { mutateAsync, isPending } = useMutation({
-    onMutate: async (newCollection: Partial<CollectionType>) => {
-      // await queryClient.cancelQueries({ queryKey: ["collections"] });
-      // const previousCollections = queryClient.getQueryData(["collections"]);
-      // // Optimistically update to the new value
-      // queryClient.setQueryData(["collections"], (old: CollectionType[]) => {
-      //   console.log(old);
-      //   return [newCollection, ...old];
-      // });
-      // // Return a context object with the snapshotted value
-      // return { previousCollections } as {
-      //   previousCollections: CollectionType[];
-      // };
-    },
-    onError: (
-      context: undefined | { previousCollections: CollectionType[] }
-    ) => {},
-
-    onSuccess() {
-      invalidateCollectionsQueries();
-      setIsCollectionModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["collections"] });
-    },
-    mutationFn: async (data) => {
-      return await axios.post("collection", data).then((res) => {
-        return res.data;
-      });
-    },
-  });
+  const [isMutationLoading, setIsMutationLoading] = useState(false);
 
   const { selectedLearningLanguage } = useGetCurrentUser();
 
-  const createCollectionHandler = (e: FormEvent<HTMLFormElement>) => {
+  const handleCreateCollection = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const name = formData.get("collection_name") as string;
 
     const publicCollection = formData.get("collection_public") as string;
-    const toast = addToast("Adding Collection...", "promise");
     setIsLoading(true);
+    setIsMutationLoading(true);
 
     if (name) {
       const data = {
@@ -84,20 +56,22 @@ const AddNewCollectionModal = ({
         sectionId: defaultValues?.sectionId || null,
       };
 
-      mutateAsync(data)
+      createCollectionHandler(data)
         .then((res) => {
-          toast.setToastData({ title: "Collection Added!", type: "success" });
           onCollectionCreated && onCollectionCreated(res._id);
+          setIsCollectionModalOpen(false);
         })
-        .catch(() => {
-          toast.setToastData({
-            title: "Faild To Add Collection",
-            type: "error",
-          });
+        .catch((error) => {
+          console.error("Error creating collection:", error);
         })
-        .finally(() => setIsLoading(false));
+        .finally(() => {
+          setIsLoading(false);
+          setIsMutationLoading(false);
+        });
     }
   };
+
+  const { updateCollectionHandler: updateCollection, createCollectionHandler } = useCollectionActions();
 
   const updateCollectionHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -107,23 +81,18 @@ const AddNewCollectionModal = ({
     const publicCollection = formData.get("collection_public") as string;
     const isSubCollection = formData.get("is_sub_collection") as string;
 
-    const data = {
-      name,
-      parentCollectionId: isSubCollection ? undefined : null,
-      public: publicCollection !== null,
-      showCardsInHome: formData.get("show_cards_home") !== null,
-    };
-    const toast = addToast("Adding Collection...", "promise");
-
     try {
-      await axios.patch(`collection/${editId}`, data);
+      await updateCollection({
+        id: editId!,
+        name,
+        isPublic: publicCollection !== null,
+        showCardsInHome: formData.get("show_cards_home") !== null,
+        sectionId: defaultValues?.sectionId,
+      });
       setIsCollectionModalOpen(false);
-      invalidateCollectionsQueries();
-      toast.setToastData({ title: "Collection Added!", type: "success" });
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
-      toast.setToastData({ title: "Faild To Add Collection", type: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +120,7 @@ const AddNewCollectionModal = ({
 
   return (
     <Modal
-      loading={isPending || isLoading}
+      loading={isMutationLoading || isLoading}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsCollectionModalOpen}
       isOpen={isCollectionModalOpen}
@@ -171,7 +140,7 @@ const AddNewCollectionModal = ({
         onSubmit={(e) =>
           defaultValues?.collectionName
             ? updateCollectionHandler(e)
-            : createCollectionHandler(e)
+            : handleCreateCollection(e)
         }
       >
         <Form.FieldsContainer className="space-y-4">

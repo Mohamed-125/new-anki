@@ -3,18 +3,50 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { CardType } from "./useGetCards";
 import useToasts from "./useToasts";
+import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
 
 const useCardActions = () => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
+  const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
 
   const { mutateAsync: updateCardMutation } = useMutation({
-    onMutate: async () => {
+    onMutate: async (updatedCard) => {
       const toast = addToast("Updating card...", "promise");
-      return { toast };
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["cards"] });
+      
+      // Get the current query cache
+      const previousCards = queryClient.getQueryData(["cards", selectedLearningLanguage]);
+      const previousCollectionCards = updatedCard.collectionId ? 
+        queryClient.getQueryData(["cards", updatedCard.collectionId, selectedLearningLanguage]) : null;
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData(
+        { queryKey: ["cards"] },
+        (old: any) => {
+          if (!old) return old;
+          
+          // Update the card in the pages
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              cards: page.cards.map((card: CardType) => 
+                card._id === updatedCard._id ? { ...card, ...updatedCard } : card
+              )
+            }))
+          };
+        }
+      );
+      
+      return { toast, previousCards, previousCollectionCards };
     },
     onSuccess: async (d, data, context: any) => {
+      // Invalidate all card queries to ensure updates are reflected everywhere
       queryClient.invalidateQueries({ queryKey: ["cards"] });
+      // Invalidate specific collection queries
       if (data.collectionId) {
         queryClient.invalidateQueries({
           queryKey: ["cards", data.collectionId],
@@ -26,6 +58,17 @@ const useCardActions = () => {
       });
     },
     onError: (error, variables, context: any) => {
+      // Revert optimistic updates
+      if (context.previousCards) {
+        queryClient.setQueryData(["cards", selectedLearningLanguage], context.previousCards);
+      }
+      if (context.previousCollectionCards && variables.collectionId) {
+        queryClient.setQueryData(
+          ["cards", variables.collectionId, selectedLearningLanguage], 
+          context.previousCollectionCards
+        );
+      }
+      
       context.toast.setToastData({
         title: "Failed to update card",
         type: "error",
@@ -51,7 +94,7 @@ const useCardActions = () => {
     const formData = new FormData(e?.target as HTMLFormElement);
 
     try {
-      await updateCardMutation({
+      const updatedCard = {
         content: content,
         //@ts-ignore
         front: (formData.get("card_word") as string) || front,
@@ -59,25 +102,244 @@ const useCardActions = () => {
         back: (formData.get("card_translation") as string) || back,
         _id: editId || "",
         collectionId: collectionId,
-      }).then((res) => {
+        language: selectedLearningLanguage,
+      };
+      
+      await updateCardMutation(updatedCard).then((res) => {
         setIsAddCardModalOpen?.(false);
-        queryClient.invalidateQueries({ queryKey: ["cards"] });
       });
-    } catch (err) {}
-  };
-
-  const deleteHandler = async (id: string, collectionId?: string) => {
-    try {
-      const res = await axios.delete(`/card/${id}`);
-      addToast("Card Deleted Successfly", "success");
-    } catch {
-      addToast("Failed to delete the card ", "error");
-    } finally {
-      queryClient.invalidateQueries({ queryKey: ["cards"] });
+    } catch (err) {
+      console.error("Error updating card:", err);
     }
   };
 
-  return { updateCardHandler, deleteHandler };
+  const { mutateAsync: deleteCardMutation } = useMutation({
+    onMutate: async ({ id, collectionId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["cards"] });
+      
+      // Get the current query cache
+      const previousCards = queryClient.getQueryData(["cards", selectedLearningLanguage]);
+      const previousCollectionCards = collectionId ? 
+        queryClient.getQueryData(["cards", collectionId, selectedLearningLanguage]) : null;
+      
+      // Optimistically update the cache by removing the card
+      queryClient.setQueriesData(
+        { queryKey: ["cards"] },
+        (old: any) => {
+          if (!old) return old;
+          
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              cards: page.cards.filter((card: CardType) => card._id !== id)
+            }))
+          };
+        }
+      );
+      
+      return { previousCards, previousCollectionCards };
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      if (variables.collectionId) {
+        queryClient.invalidateQueries({ queryKey: ["cards", variables.collectionId] });
+      }
+      addToast("Card Deleted Successfully", "success");
+    },
+    onError: (error, variables, context: any) => {
+      // Revert optimistic updates
+      if (context.previousCards) {
+        queryClient.setQueryData(["cards", selectedLearningLanguage], context.previousCards);
+      }
+      if (context.previousCollectionCards && variables.collectionId) {
+        queryClient.setQueryData(
+          ["cards", variables.collectionId, selectedLearningLanguage], 
+          context.previousCollectionCards
+        );
+      }
+      
+      addToast("Failed to delete the card", "error");
+    },
+    mutationFn: ({ id }: { id: string; collectionId?: string }) => {
+      return axios.delete(`/card/${id}`).then(res => res.data);
+    }
+  });
+  
+  const deleteHandler = async (id: string, collectionId?: string) => {
+    try {
+      await deleteCardMutation({ id, collectionId });
+    } catch (error) {
+      console.error("Error deleting card:", error);
+    }
+  };
+
+  const { mutateAsync: moveCardsMutation } = useMutation({
+    onMutate: async ({ ids, collectionId }) => {
+      const toast = addToast("Moving cards...", "promise");
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["cards"] });
+      
+      // Get the current query cache
+      const previousCards = queryClient.getQueryData(["cards", selectedLearningLanguage]);
+      const previousSourceCollectionCards = ids.length === 1 ? 
+        queryClient.getQueryData(["cards", ids[0].collectionId, selectedLearningLanguage]) : null;
+      const previousTargetCollectionCards = collectionId ? 
+        queryClient.getQueryData(["cards", collectionId, selectedLearningLanguage]) : null;
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData(
+        { queryKey: ["cards"] },
+        (old: any) => {
+          if (!old) return old;
+          
+          // Update the cards in the pages
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              cards: page.cards.map((card: CardType) => 
+                ids.includes(card._id) ? { ...card, collectionId } : card
+              )
+            }))
+          };
+        }
+      );
+      
+      return { toast, previousCards, previousSourceCollectionCards, previousTargetCollectionCards };
+    },
+    onSuccess: async (d, { ids, collectionId }, context: any) => {
+      // Invalidate all card queries to ensure updates are reflected everywhere
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      
+      context.toast.setToastData({
+        title: "Cards moved successfully!",
+        type: "success",
+      });
+    },
+    onError: (error, variables, context: any) => {
+      // Revert optimistic updates
+      if (context.previousCards) {
+        queryClient.setQueryData(["cards", selectedLearningLanguage], context.previousCards);
+      }
+      if (context.previousSourceCollectionCards) {
+        queryClient.setQueryData(
+          ["cards", variables.ids[0].collectionId, selectedLearningLanguage], 
+          context.previousSourceCollectionCards
+        );
+      }
+      if (context.previousTargetCollectionCards && variables.collectionId) {
+        queryClient.setQueryData(
+          ["cards", variables.collectionId, selectedLearningLanguage], 
+          context.previousTargetCollectionCards
+        );
+      }
+      
+      context.toast.setToastData({
+        title: "Failed to move cards",
+        type: "error",
+      });
+    },
+    mutationFn: ({ ids, collectionId }: { ids: string[]; collectionId: string | null }) => {
+      return axios.post("card/batch-move", {
+        ids,
+        collectionId,
+      }).then(res => res.data);
+    }
+  });
+  
+  const moveCardsHandler = async (ids: string[], collectionId: string | null) => {
+    try {
+      await moveCardsMutation({ ids, collectionId });
+    } catch (error) {
+      console.error("Error moving cards:", error);
+    }
+  };
+
+  const { mutateAsync: moveCardMutation } = useMutation({
+    onMutate: async ({ id, collectionId }) => {
+      const toast = addToast("Moving card...", "promise");
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["cards"] });
+      
+      // Get the current query cache
+      const previousCards = queryClient.getQueryData(["cards", selectedLearningLanguage]);
+      const previousSourceCollectionCards = queryClient.getQueryData(["cards", id.collectionId, selectedLearningLanguage]);
+      const previousTargetCollectionCards = collectionId ? 
+        queryClient.getQueryData(["cards", collectionId, selectedLearningLanguage]) : null;
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData(
+        { queryKey: ["cards"] },
+        (old: any) => {
+          if (!old) return old;
+          
+          // Update the card in the pages
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              cards: page.cards.map((card: CardType) => 
+                card._id === id ? { ...card, collectionId } : card
+              )
+            }))
+          };
+        }
+      );
+      
+      return { toast, previousCards, previousSourceCollectionCards, previousTargetCollectionCards };
+    },
+    onSuccess: async (d, { id, collectionId }, context: any) => {
+      // Invalidate all card queries to ensure updates are reflected everywhere
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      
+      context.toast.setToastData({
+        title: "Card moved successfully!",
+        type: "success",
+      });
+    },
+    onError: (error, variables, context: any) => {
+      // Revert optimistic updates
+      if (context.previousCards) {
+        queryClient.setQueryData(["cards", selectedLearningLanguage], context.previousCards);
+      }
+      if (context.previousSourceCollectionCards) {
+        queryClient.setQueryData(
+          ["cards", variables.id.collectionId, selectedLearningLanguage], 
+          context.previousSourceCollectionCards
+        );
+      }
+      if (context.previousTargetCollectionCards && variables.collectionId) {
+        queryClient.setQueryData(
+          ["cards", variables.collectionId, selectedLearningLanguage], 
+          context.previousTargetCollectionCards
+        );
+      }
+      
+      context.toast.setToastData({
+        title: "Failed to move card",
+        type: "error",
+      });
+    },
+    mutationFn: ({ id, collectionId }: { id: string; collectionId: string | null }) => {
+      return axios.patch("card/" + id, {
+        collectionId,
+      }).then(res => res.data);
+    }
+  });
+  
+  const moveCardHandler = async (id: string, collectionId: string | null) => {
+    try {
+      await moveCardMutation({ id, collectionId });
+    } catch (error) {
+      console.error("Error moving card:", error);
+    }
+  };
+
+  return { updateCardHandler, deleteHandler, moveCardsHandler, moveCardHandler };
 };
 
 export default useCardActions;

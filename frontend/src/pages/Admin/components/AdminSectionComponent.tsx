@@ -14,6 +14,8 @@ import ItemCard from "@/components/ui/ItemCard";
 import { ResourceType } from "@/pages/LessonPage";
 import useGetSectionNotes from "@/hooks/useGetSectionNotes";
 import Modal from "@/components/Modal";
+import useCollectionActions from "@/hooks/useCollectionActions";
+import useCardActions from "@/hooks/useCardActions";
 
 // Lazy load components that are only needed when a section is expanded
 // Lazy load components that are only needed when modal is opened
@@ -364,21 +366,23 @@ const AdminSectionComponent = ({
     [setDefaultValues, setEditId, setIsAddCardModalOpen]
   );
 
+  const { deleteHandler } = useCardActions();
+  
   const handleDeleteCard = React.useCallback(
     async (cardId: string) => {
       const toast = addToast("Deleting Card..", "promise");
       try {
-        await axios.delete(`card/${cardId}`);
+        await deleteHandler(cardId);
         queryClient.invalidateQueries({
           queryKey: ["cards", "section", section._id],
         });
         toast.setToastData({ title: "Card Deleted!", type: "success" });
       } catch (err) {
         console.error(err);
-        toast.setToastData({ title: "Failed To Delete Card", type: "error" });
+        toast.setToastData({ title: "Failed to delete card", type: "error" });
       }
     },
-    [addToast, queryClient, section._id]
+    [addToast, queryClient, section._id, deleteHandler]
   );
 
   const handleAddCollection = React.useCallback(() => {
@@ -396,24 +400,21 @@ const AdminSectionComponent = ({
     [setDefaultValues, setEditId, setIsCollectionModalOpen]
   );
 
+  const { deleteCollectionHandler } = useCollectionActions();
+  
   const handleDeleteCollection = React.useCallback(
     async (collectionId: string) => {
-      const toast = addToast("Deleting Collection..", "promise");
       try {
-        await axios.delete(`collection/${collectionId}`);
+        await deleteCollectionHandler(collectionId);
+        // Additional section-specific query invalidation if needed
         queryClient.invalidateQueries({
           queryKey: ["collections", "section", section._id],
         });
-        toast.setToastData({ title: "Collection Deleted!", type: "success" });
       } catch (err) {
         console.error(err);
-        toast.setToastData({
-          title: "Failed To Delete Collection",
-          type: "error",
-        });
       }
     },
-    [addToast, queryClient, section._id]
+    [deleteCollectionHandler, queryClient, section._id]
   );
 
   // Memoize the toggle expand handler

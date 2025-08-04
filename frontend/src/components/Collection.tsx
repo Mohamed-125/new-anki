@@ -1,16 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React from "react";
 import { CollectionType } from "@/hooks/useGetCollections";
-
-import { useQueryClient } from "@tanstack/react-query";
 import { Folder } from "lucide-react";
-import axios from "axios";
-import ActionsDropdown from "./ActionsDropdown";
-import SelectCheckBox from "./SelectCheckBox";
 import useModalsStates from "@/hooks/useModalsStates";
-import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import ItemCard from "./ui/ItemCard";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
+import useCollectionActions from "@/hooks/useCollectionActions";
 
 type CollectionProps = {
   collection: CollectionType;
@@ -32,14 +26,10 @@ const Collection = ({ collection, sectionId, to }: CollectionProps) => {
     setShareItemName,
   } = useModalsStates();
 
-  const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
+  const { deleteCollectionHandler } = useCollectionActions();
+  
   const deleteHandler = () => {
-    axios
-      .delete(`collection/${id}`)
-      .then((res) => {
-        invalidateCollectionsQueries();
-      })
-      .catch((err) => err);
+    deleteCollectionHandler(id);
   };
 
   const editHandler = () => {

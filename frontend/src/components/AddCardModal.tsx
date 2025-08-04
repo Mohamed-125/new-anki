@@ -14,6 +14,7 @@ import "react-quill/dist/quill.snow.css";
 import TipTapEditor from "./TipTapEditor";
 import useGetCollections from "../hooks/useGetCollections";
 import useCreateNewCard from "../hooks/useCreateNewCardMutation";
+import useCreateMultipleCards from "../hooks/useCreateMultipleCards";
 import axios from "axios";
 import useAddOpenModal from "../hooks/useAddModalShortcuts";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
@@ -80,7 +81,6 @@ export function AddCardModal({
     targetCollectionId,
   } = useModalStates();
 
-  console.log("editId", editId);
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [jsonInput, setJsonInput] = useState("");
   const [jsonError, setJsonError] = useState("");
@@ -96,13 +96,13 @@ export function AddCardModal({
   const sampleCardJson = {
     cards: [
       {
-        front: "Example front text",
-        back: "Example back text",
-        content: "<p>Optional content with examples or context</p>",
+        front: "the word",
+        back: "Translation,meaning,definition in the word language - the translation of the word in the user language in this case arabic",
+        content:
+          "<p>Optional content with examples or context and should have more than one example if possible with it's tranlation and the word should be bolded in the original and translated language</p>",
       },
     ],
   };
-
   const handleJsonPaste = (value: string) => {
     try {
       const parsed = JSON.parse(value);
@@ -117,30 +117,28 @@ export function AddCardModal({
     }
   };
 
+  const { createMultipleCardsHandler } = useCreateMultipleCards({
+    collectionId: defaultValues?.collectionId || collectionId || null,
+  });
+
   const handleMultiCardSubmit = async () => {
     if (cards.length === 0) return;
 
     setIsLoading(true);
-    const toast = addToast("Creating cards...", "promise");
 
     try {
-      const response = await createCardHandler(null, {
-        cards,
+      // Prepare cards with additional data
+      const cardsWithMetadata = cards.map((card) => ({
+        ...card,
         collectionId: defaultValues?.collectionId || collectionId || null,
         videoId,
         sectionId: defaultValues?.sectionId || null,
-      });
+      }));
 
-      toast.setToastData({
-        title: `Successfully created ${cards.length} cards!`,
-        type: "success",
-      });
+      await createMultipleCardsHandler(cardsWithMetadata);
       setIsAddCardModalOpen(false);
     } catch (err) {
-      toast.setToastData({
-        title: "Failed to create cards",
-        type: "error",
-      });
+      console.error("Error creating multiple cards:", err);
     }
 
     setIsLoading(false);
@@ -243,7 +241,7 @@ export function AddCardModal({
         const { data } = await axios.post(
           `/translate/translate-examples?examples=${true}&language=${[
             selectedLearningLanguage,
-          ]}&targetLanguage=${user?.nativeLanguage || "en"}`,
+          ]}&targetLanguage=${user?.translationLanguage || "en"}`,
           {
             text: frontRef.current?.value.trim(),
           }
@@ -269,20 +267,29 @@ export function AddCardModal({
     }
   };
 
+  // Clear form when modal is opened
   useEffect(() => {
+    // Reset all form fields and state when the modal opens
     if (!isAddCardModalOpen) {
-      setContent("");
-      setConjugations([]);
-      setDefaultValues(null);
-      setEditId?.("");
-      setFrontValue("");
-      setBackValue("");
-      setIsTranslationLoading(false);
-      setExamples([]);
-      setIsExmaplesVisible(false);
-      if (editor) {
-        editor.commands.clearContent();
-      }
+      setTimeout(() => {
+        setContent("");
+        setConjugations([]);
+        setDefaultValues(null);
+        setEditId?.("");
+        setFrontValue("");
+        setBackValue("");
+        setIsTranslationLoading(false);
+        setExamples([]);
+        setIsExmaplesVisible(false);
+        setJsonInput("");
+        if (editor) {
+          editor.commands.clearContent();
+        }
+
+        // Reset form fields directly
+        if (frontRef.current) frontRef.current.value = "";
+        if (backRef.current) backRef.current.value = "";
+      }, 200);
     }
   }, [isAddCardModalOpen, editor]);
 
@@ -297,12 +304,12 @@ export function AddCardModal({
   //   sectionId: defaultValues?.sectionId || null,
   // });
 
-  console.log(backValue, defaultValues);
   return (
     <Modal
       loading={isLoading || isCollectionLoading}
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
-        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}`}
+        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
+      }`}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
@@ -314,6 +321,7 @@ export function AddCardModal({
       <Tabs
         defaultValue="single"
         className="w-full"
+        value={mode}
         onValueChange={(value) => setMode(value as "single" | "multi")}
       >
         {!defaultValues?.front && !frontValue && (
@@ -322,7 +330,6 @@ export function AddCardModal({
             <TabsTrigger value="multi">Multiple Cards</TabsTrigger>
           </TabsList>
         )}
-
         <TabsContent value="single">
           <Form formRef={formRef} className="px-0 py-0" onSubmit={handleSubmit}>
             <Form.FieldsContainer className="space-y-4">
@@ -471,15 +478,6 @@ export function AddCardModal({
                   )}
                 </div>
               </Form.Field>
-              <Form.Field>
-                <Button
-                  type="button"
-                  onClick={() => setIsMoveToCollectionOpen?.(true)}
-                  className="px-4 py-2 w-full text-sm font-medium text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100"
-                >
-                  Choose Collection
-                </Button>
-              </Form.Field>
 
               <Form.Field>
                 <Form.Label>
@@ -503,15 +501,13 @@ export function AddCardModal({
                 </Form.Label>
                 <Button
                   type="button"
-                  onClick={() => {
-                    setIsMoveToCollectionOpen(true);
-                  }}
+                  onClick={() => setIsMoveToCollectionOpen?.(true)}
+                  className="px-4 py-2 w-full text-sm font-medium text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100"
                 >
                   Choose Collection
                 </Button>
               </Form.Field>
 
-              {}
               <Form.Field>
                 <Form.Label>Card Back Side</Form.Label>
                 <Form.Textarea
@@ -591,7 +587,6 @@ export function AddCardModal({
             </Modal.Footer>
           </Form>
         </TabsContent>
-
         <TabsContent value="multi">
           <div className="p-4 space-y-4">
             <div className="space-y-2">
@@ -608,12 +603,41 @@ export function AddCardModal({
               {jsonError && <p className="text-sm text-red-500">{jsonError}</p>}
             </div>
 
+            <Form.Field>
+              <Form.Label>
+                {collection?.name && (
+                  <span className="flex gap-2 items-center">
+                    Card Collection
+                    {"" + " : " + collection?.name}
+                    <Button
+                      onClick={() => {
+                        setDefaultValues((pre) => {
+                          return { ...pre, collectionId: null };
+                        });
+                      }}
+                      variant="danger"
+                      className="grid w-6 h-6 transition-colors !p-0 duration-200 rounded-full place-items-center hover:bg-red-400"
+                    >
+                      <IoClose className="text-[18px] font-medium" />
+                    </Button>{" "}
+                  </span>
+                )}
+              </Form.Label>
+              <Button
+                type="button"
+                onClick={() => setIsMoveToCollectionOpen?.(true)}
+                className="px-4 py-2 w-full text-sm font-medium text-blue-600 bg-blue-50 rounded-lg transition-colors hover:bg-blue-100"
+              >
+                Choose Collection
+              </Button>
+            </Form.Field>
+
             <Card>
               <CardContent className="p-4">
                 <h4 className="mb-2 text-sm font-medium">
                   JSON Format Preview
                 </h4>
-                <pre className="overflow-x-auto p-4 text-sm bg-gray-50 rounded-lg">
+                <pre className="overflow-x-auto p-4 text-sm bg-gray-50 rounded-lg select-auto">
                   {JSON.stringify(sampleCardJson, null, 2)}
                 </pre>
               </CardContent>

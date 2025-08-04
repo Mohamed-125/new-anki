@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Card from "../components/Card";
-import axios from "axios";
 import Loading from "../components/Loading";
 import Button from "../components/Button";
 import AddCardModal from "../components/AddCardModal";
@@ -16,11 +15,11 @@ import { CollectionType } from "@/hooks/useGetCollections.tsx";
 import CardsSkeleton from "@/components/CardsSkeleton.tsx";
 import Search from "@/components/Search.tsx";
 import useModalsStates from "@/hooks/useModalsStates.tsx";
-import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery.ts";
 import useGetCollectionById from "@/hooks/useGetCollectionById.tsx";
 import InfiniteScroll from "@/components/InfiniteScroll.tsx";
 import useToasts from "@/hooks/useToasts.tsx";
 import ExportJsonModal from "@/components/ExportJsonModal";
+import useCollectionActions from "@/hooks/useCollectionActions";
 
 const CollectionPage = React.memo(function CollectionPage({}) {
   const location = useLocation();
@@ -54,19 +53,8 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     enabled: Boolean(collection?._id),
     collectionId: collection?._id,
   });
-  const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
+  const { deleteCollectionHandler, forkCollectionHandler } = useCollectionActions();
 
-  const deleteCollectionHandler = useMemo(
-    () => (collectionId: string) => {
-      axios
-        .delete(`collection/${collectionId}`)
-        .then((res) => {
-          invalidateCollectionsQueries();
-        })
-        .catch((err) => err);
-    },
-    [invalidateCollectionsQueries]
-  );
 
   const handleAddCard = useMemo(
     () => () => {
@@ -261,8 +249,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                                 "promise"
                               );
                               try {
-                                await axios.post(`/collection/fork/${id}`);
-                                invalidateCollectionsQueries();
+                                await forkCollectionHandler(id);
                                 toast.setToastData({
                                   title: "Collection forked successfully!",
                                   type: "success",

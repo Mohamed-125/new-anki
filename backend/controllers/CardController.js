@@ -4,71 +4,60 @@ const CollectionModel = require("../models/CollectionModel");
 module.exports.createCard = async (req, res, next) => {
   const { cards, collectionId, videoId, language, sectionId } = req.body;
 
-  // Get collection's showCardsInHome value if collectionId exists
-  let shownInHome = true;
-  if (collectionId) {
-    const collection = await CollectionModel.findById(collectionId, {
-      showCardsInHome: 1,
-    });
-    if (collection) {
-      shownInHome = collection.showCardsInHome;
+  if (Array.isArray(cards)) {
+    // Bulk creation
+    const cardsData = cards.map((card, index) => ({
+      ...card,
+      videoId,
+      language,
+      sectionId,
+      userId: sectionId ? undefined : req.user?._id,
+    }));
+
+    // Validate all cards have front and back
+    const invalidCards = cardsData.filter((card) => !card.front || !card.back);
+
+    if (invalidCards.length > 0) {
+      return res.status(400).send("All cards must have front and back content");
     }
-  }
 
-  try {
-    if (Array.isArray(cards)) {
-      // Bulk creation
-      const cardsData = cards.map((card, index) => ({
-        ...card,
-        collectionId,
-        videoId,
-        language,
-        sectionId,
-        userId: sectionId ? undefined : req.user?._id,
-        order: index, // Add order field to maintain sequence
-        shownInHome,
-      }));
+    try {
+      const createdCards = await CardModel.insertMany(cardsData);
 
-      // Validate all cards have front and back
-      const invalidCards = cardsData.filter(
-        (card) => !card.front || !card.back
-      );
-      if (invalidCards.length > 0) {
-        return res
-          .status(400)
-          .send("All cards must have front and back content");
-      }
-
-      const createdCards = await CardModel.insertMany(cardsData, {
-        ordered: true,
-      });
+      console.log("createdCards", createdCards);
       return res.status(200).send(createdCards);
-    } else {
-      // Single card creation
-      const { front, back, content } = req.body;
-      if (!front || !back) {
-        return res
-          .status(400)
-          .send("you have to enter the front and the back name");
-      }
+    } catch (err) {
+      console.log("error in createCards", err);
+      return res.status(400).send(err);
+    }
+  } else {
+    // Single card creation
+    const { front, back, content } = req.body;
+    if (!front || !back) {
+      return res
+        .status(400)
+        .send("you have to enter the front and the back name");
+    }
 
-      const cardData = {
-        front,
-        back,
-        content,
-        collectionId,
-        videoId,
-        language,
-        sectionId,
-        userId: sectionId ? undefined : req.user._id,
-        shownInHome,
-      };
+    const cardData = {
+      front,
+      back,
+      content,
+      collectionId,
+      videoId,
+      language,
+      sectionId,
+      userId: sectionId ? undefined : req.user._id,
+      shownInHome,
+    };
 
+    try {
       const createdCard = await CardModel.create(cardData);
       return res.status(200).send(createdCard);
+    } catch (err) {
+      console.log("error in createCard", err);
+      res.status(400).send(err);
     }
-  } catch (err) {
-    res.status(400).send(err);
   }
 };
 
@@ -129,7 +118,7 @@ module.exports.getUserCards = async (req, res, next) => {
   if (study) {
     options.sort = { easeFactor: 1 };
   }
-  const limit = 5;
+  const limit = 10;
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
   try {
     const cardsCount = await CardModel.countDocuments(query);

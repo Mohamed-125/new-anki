@@ -83,7 +83,7 @@ const Home = () => {
             fetchNextPage={fetchNextPage}
             isFetchingNextPage={isFetchingNextPage}
             hasNextPage={hasNextPage}
-            loadingElement={<CardsSkeleton />}
+            loadingElement={<CardsSkeleton cards={userCards} />}
           >
             {CardsJSX}
           </InfiniteScroll>

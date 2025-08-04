@@ -55,7 +55,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
     return createPortal(
       isMobile ? (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerContent>
+          <DrawerContent className="!select-auto">
             {loading ? (
               <div className="">
                 <div className="grid absolute inset-0 z-50 place-items-center w-full h-full bg-white">
@@ -92,7 +92,7 @@ const ModalComponent: NamedExoticComponent<ModalProps> = React.memo(
             <DialogContent
               style={style}
               className={cn(
-                "bg-white !w-[90%] max-w-[550px] overflow-hidden z-[1500] overflow-y-auto h-fit rounded-2xl shadow-lg p-0",
+                "bg-white !select-auto !w-[90%] max-w-[550px] overflow-hidden z-[1500] overflow-y-auto h-fit rounded-2xl shadow-lg p-0",
                 big && "max-w-[1000px]",
                 className
               )}

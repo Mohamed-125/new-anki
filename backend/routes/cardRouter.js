@@ -14,6 +14,7 @@ const Authorization = require("../middleware/Authorization");
 
 router
   .post("/", Authorization, createCard)
+  .post("/batch", Authorization, createCard)
   .get("/", Authorization, getUserCards)
   .get("/:id", Authorization, getCard)
   .patch("/:id", Authorization, updateCard)

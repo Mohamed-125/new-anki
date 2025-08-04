@@ -19,6 +19,7 @@ import useModalStates from "@/hooks/useModalsStates";
 import useInvalidateCollectionsQueries from "@/hooks/Queries/useInvalidateCollectionsQuery";
 import InfiniteScroll from "@/components/InfiniteScroll";
 import { twMerge } from "tailwind-merge";
+import useCollectionActions from "@/hooks/useCollectionActions";
 
 //! make sure to replace every collections.find to work with the new structure
 
@@ -65,6 +66,7 @@ const MoveCollectionModal = ({
   });
 
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();
+  const { updateCollectionHandler } = useCollectionActions();
 
   let lastSelectedCollectionId =
     selectedCollectionsIds[selectedCollectionsIds.length - 1];
@@ -259,17 +261,14 @@ const MoveCollectionModal = ({
           setSelectedItems?.([]);
         });
     } else {
-      axios
-        .patch(`collection/${toMoveCollectionId}`, {
-          parentCollectionId: targetCollectionId,
-        })
-        .then((res) => {
-          invalidateCollectionsQueries();
-        })
-        .catch((err) => err);
+      updateCollectionHandler(toMoveCollectionId, {
+        parentCollectionId: targetCollectionId,
+      });
     }
     states.setIsMoveToCollectionOpen(false);
   };
+
+  const { moveCardsHandler: moveCards, moveCardHandler: moveCard } = useCardActions();
 
   const moveCardsHandler = async ({
     root = false,
@@ -279,14 +278,9 @@ const MoveCollectionModal = ({
     targetCollectionId: string;
   }) => {
     if (selectedItems.length) {
-      await axios.post("card/batch-move", {
-        ids: selectedItems,
-        collectionId: root ? null : targetCollectionId,
-      });
+      await moveCards(selectedItems, root ? null : targetCollectionId);
     } else {
-      await axios.patch("card/" + editId, {
-        collectionId: root ? null : targetCollectionId,
-      });
+      await moveCard(editId, root ? null : targetCollectionId);
     }
     setSelectedItems?.([]);
     setDefaultValues((pre) => {
@@ -354,15 +348,11 @@ const MoveCollectionModal = ({
           <Button
             className="px-4 py-1.5 mb-6 w-full text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
             onClick={() => {
-              axios
-                .patch(`collection/${toMoveCollectionId}`, {
-                  parentCollectionId: null,
-                })
-                .then((res) => {
-                  invalidateCollectionsQueries();
-                  setIsMoveToCollectionOpen(false);
-                })
-                .catch((err) => err);
+              updateCollectionHandler(toMoveCollectionId, {
+                parentCollectionId: null,
+              }).then(() => {
+                setIsMoveToCollectionOpen(false);
+              });
             }}
           >
             Move To Root Collections

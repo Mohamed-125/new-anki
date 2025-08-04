@@ -13,6 +13,7 @@ export type UserType = {
   streak: number;
   activeDays: number;
   lastLoginDate: string;
+  translationLanguage: string;
 };
 
 const useGetCurrentUser = () => {

@@ -8,6 +8,7 @@ import React, {
 import YouTube from "react-youtube"; // Assuming you have a YouTube player library
 import { CaptionType } from "./Video";
 import getYouTubeVideoId from "../../utils/getYoutubeVideoId";
+import useActiveTranscriptLine from "@/hooks/useActiveTranscriptLine";
 
 type Props = {
   playerRef: MutableRefObject<any>;
@@ -34,9 +35,22 @@ function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
       }
     };
   }, []);
+  const [active, setActive] = useState(-1);
+
+  useActiveTranscriptLine(
+    playerRef,
+    caption.map((c, i) => {
+      return {
+        ...c,
+        offset: c.offset,
+        trueEnd: caption[i + 1]?.offset ? caption[i + 1]?.offset : c.duration,
+      };
+    })
+  );
 
   const onPlay = useCallback(
     (event: any) => {
+      console.log("active", active);
       const subtitles = caption?.map((subtitle, index) => {
         const element = document.querySelector("#subtitle-" + index);
         if (element) {
@@ -53,33 +67,11 @@ function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
         clearInterval(intervalId.current);
       }
 
-      const updateSubtitleHighlight = () => {
-        if (playerRef.current) {
-          const currentTime = parseFloat(
-            playerRef.current.getCurrentTime().toFixed(1)
-          );
-          const index = subtitles.findIndex(
-            (subtitle) => subtitle.offset === currentTime
-          );
-
-          subtitleElements?.current[index]?.classList.add("subtitle-active");
-          if (index !== -1) {
-            subtitleElements.current.forEach((subtitleText, i) => {
-              if (i !== index) {
-                subtitleText?.classList?.remove("subtitle-active");
-              }
-            });
-          }
-        }
-
-        // Call this function again on the next animation frame
-        intervalId.current = requestAnimationFrame(updateSubtitleHighlight);
-      };
-
-      // Start the animation loop
-      intervalId.current = requestAnimationFrame(updateSubtitleHighlight);
+      document
+        .querySelector(`#subtitle-${active}`)
+        ?.classList.add("subtitle-active");
     },
-    [video, caption]
+    [video, caption, active]
   ); // Add video as dependency if it can change
 
   useEffect(() => {

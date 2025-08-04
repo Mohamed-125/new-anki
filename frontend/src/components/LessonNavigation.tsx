@@ -8,6 +8,7 @@ import { LessonType } from "@/hooks/Queries/useLessonMutations";
 import { promises } from "dns";
 import ShortcutKey from "./ShortcutKey";
 import { useNavigate } from "react-router-dom";
+import useCollectionActions from "@/hooks/useCollectionActions";
 
 interface LessonNavigationProps {
   setCurrentSectionIndex: React.Dispatch<React.SetStateAction<number>>;
@@ -172,9 +173,10 @@ const LessonNavigation = ({
 
                   // Fork collections if they exist
                   if (section.collections?.length > 0) {
+                    const { forkCollectionHandler } = useCollectionActions();
                     promises.push(
                       ...section.collections.map((collection) =>
-                        axios.post(`/collection/fork/${collection._id}`)
+                        forkCollectionHandler(collection._id)
                       )
                     );
                   }

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import React, { FormEvent, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
@@ -13,6 +13,7 @@ import { IoClose } from "react-icons/io5";
 import useModalsStates from "@/hooks/useModalsStates";
 import useGetCollectionById from "@/hooks/useGetCollectionById";
 import useToasts from "@/hooks/useToasts";
+import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
 
 const AddNewText = () => {
   const [title, setTitle] = useState("");
@@ -58,6 +59,90 @@ const AddNewText = () => {
 
   const navigate = useNavigate();
   const { addToast, setToasts } = useToasts();
+  const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
+  
+  // Create text mutation with optimistic updates
+  const createTextMutation = useMutation({
+    onMutate: async (newText) => {
+      const toast = addToast("Adding Text...", "promise");
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["texts"] });
+      
+      // Get the current query cache
+      const previousTexts = queryClient.getQueryData(["texts", selectedLearningLanguage]);
+      
+      // Generate a temporary ID for the new text
+      const tempId = `temp-${Date.now()}`;
+      const optimisticText = {
+        ...newText,
+        _id: tempId,
+        id: tempId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData(
+        { queryKey: ["texts"] },
+        (old: any) => {
+          if (!old) return old;
+          
+          return {
+            ...old,
+            pages: old.pages.map((page: any, index: number) => {
+              // Add the new text to the first page
+              if (index === 0) {
+                return {
+                  ...page,
+                  texts: [optimisticText, ...page.texts],
+                  textsCount: (page.textsCount || 0) + 1
+                };
+              }
+              return page;
+            })
+          };
+        }
+      );
+      
+      return { previousTexts, toast };
+    },
+    onError: (error, variables, context: any) => {
+      // Revert optimistic updates
+      if (context?.previousTexts) {
+        queryClient.setQueryData(["texts", selectedLearningLanguage], context.previousTexts);
+      }
+      
+      context?.toast?.setToastData({
+        title: "Failed to add text",
+        type: "error",
+      });
+      
+      setLoading(false);
+    },
+    onSuccess: (res, variables, context) => {
+      invalidateTextQueries();
+      
+      if (topicId) {
+        navigate("/admin/topics/" + topicId, { replace: true });
+      } else {
+        navigate("/texts/" + res._id);
+      }
+      
+      context?.toast?.setToastData({
+        title: "Text Added!",
+        isCompleted: true,
+        type: "success",
+      });
+      
+      setLoading(false);
+    },
+    mutationFn: async (data: any) => {
+      const response = await axios.post(`text/`, data);
+      return response.data;
+    },
+  });
+  
   const createTextHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -68,29 +153,97 @@ const AddNewText = () => {
         content: editor.getHTML(),
         topicId,
         defaultCollectionId: defaultValues?.defaultCollectionId,
+        language: selectedLearningLanguage,
       };
 
-      const toast = addToast("Adding Text...", "promise");
-
-      axios
-        .post(`text/`, data)
-        .then((res) => {
-          invalidateTextQueries();
-          if (topicId) {
-            navigate("/admin/topics/" + topicId, { replace: true });
-          } else {
-            navigate("/texts/" + res.data._id);
-          }
-          toast.setToastData({
-            title: "Text Added!",
-            isCompleted: true,
-            type: "success",
-          });
-        })
-        .catch((err) => err);
+      createTextMutation.mutate(data);
     }
   };
 
+  // Update text mutation with optimistic updates
+  const updateTextMutation = useMutation({
+    onMutate: async (variables) => {
+      const { textId, data } = variables;
+      const toast = addToast("Updating Text...", "promise");
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["texts"] });
+      await queryClient.cancelQueries({ queryKey: ["text", textId] });
+      
+      // Get the current query cache
+      const previousTexts = queryClient.getQueryData(["texts", selectedLearningLanguage]);
+      const previousText = queryClient.getQueryData(["text", textId]);
+      
+      // Optimistically update the text detail cache
+      queryClient.setQueryData(["text", textId], (old: any) => {
+        if (!old) return old;
+        return { ...old, ...data, updatedAt: new Date().toISOString() };
+      });
+      
+      // Optimistically update the texts list cache
+      queryClient.setQueriesData(
+        { queryKey: ["texts"] },
+        (old: any) => {
+          if (!old) return old;
+          
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => {
+              return {
+                ...page,
+                texts: page.texts.map((t: any) => {
+                  if (t._id === textId) {
+                    return { ...t, ...data, updatedAt: new Date().toISOString() };
+                  }
+                  return t;
+                })
+              };
+            })
+          };
+        }
+      );
+      
+      return { previousTexts, previousText, toast };
+    },
+    onError: (error, variables, context: any) => {
+      // Revert optimistic updates
+      if (context?.previousTexts) {
+        queryClient.setQueryData(["texts", selectedLearningLanguage], context.previousTexts);
+      }
+      if (context?.previousText) {
+        queryClient.setQueryData(["text", variables.textId], context.previousText);
+      }
+      
+      context?.toast?.setToastData({
+        title: "Failed to update text",
+        type: "error",
+      });
+      
+      setLoading(false);
+    },
+    onSuccess: (res, variables, context) => {
+      invalidateTextQueries();
+      
+      if (topicId) {
+        navigate("/admin/topics/" + topicId, { replace: true });
+      } else {
+        navigate("/texts/" + res._id);
+      }
+      
+      context?.toast?.setToastData({
+        title: "Text Updated!",
+        isCompleted: true,
+        type: "success",
+      });
+      
+      setLoading(false);
+    },
+    mutationFn: async ({ textId, data }: { textId: string, data: any }) => {
+      const response = await axios.patch(`text/${textId}`, data);
+      return response.data;
+    },
+  });
+  
   const updateTextHandler = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -99,25 +252,10 @@ const AddNewText = () => {
       title,
       content: editor?.getHTML(),
       defaultCollectionId: defaultValues?.defaultCollectionId,
+      language: selectedLearningLanguage,
     };
 
-    const toast = addToast("Updating Text...", "promise");
-    axios
-      .patch(`text/${text._id}`, data)
-      .then((res) => {
-        if (topicId) {
-          navigate("/admin/topics/" + topicId, { replace: true });
-        } else {
-          navigate("/texts/" + res.data._id);
-        }
-        invalidateTextQueries();
-        toast.setToastData({
-          title: "Text Updated!",
-          isCompleted: true,
-          type: "success",
-        });
-      })
-      .catch((err) => err);
+    updateTextMutation.mutate({ textId: text._id, data });
   };
   const { setIsMoveToCollectionOpen, defaultValues, setDefaultValues } =
     useModalsStates();

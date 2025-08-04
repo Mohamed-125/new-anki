@@ -2,27 +2,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { CardType } from "./useGetCards";
 import useToasts from "./useToasts";
-import useGetCurrentUser from "./useGetCurrentUser";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
 
-type Optimistic = {
-  isOptimistic?: boolean;
-  setOptimistic: (state: any) => void;
-};
-
 type Params = {
-  optimistic?: Optimistic;
   collectionId?: string;
 };
 
-const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
+const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
   const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
 
   const { mutateAsync, data, isPending } = useMutation({
-    onMutate: async (newCard) => {
-      const toast = addToast("Creating card...", "promise");
+    onMutate: async (newCards) => {
+      const toast = addToast("Creating cards...", "promise");
       
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["cards"] });
@@ -32,15 +25,14 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
       const previousCollectionCards = collectionId ? 
         queryClient.getQueryData(["cards", collectionId, selectedLearningLanguage]) : null;
       
-      // Create an optimistic card with a temporary ID
-      const tempId = `temp-${Date.now()}`;
-      const optimisticCard = {
-        ...newCard,
-        _id: tempId,
-        id: tempId,
+      // Create optimistic cards with temporary IDs
+      const optimisticCards = newCards.map((card: any, index: number) => ({
+        ...card,
+        _id: `temp-${Date.now()}-${index}`,
+        id: `temp-${Date.now()}-${index}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      };
+      }));
       
       // Optimistically update the cache
       queryClient.setQueriesData(
@@ -51,12 +43,12 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
           return {
             ...old,
             pages: old.pages.map((page: any, index: number) => {
-              // Add the new card to the first page
+              // Add the new cards to the beginning of the first page
               if (index === 0) {
                 return {
                   ...page,
-                  cards: [optimisticCard, ...page.cards],
-                  cardsCount: (page.cardsCount || 0) + 1
+                  cards: [...optimisticCards, ...page.cards],
+                  cardsCount: (page.cardsCount || 0) + optimisticCards.length
                 };
               }
               return page;
@@ -65,15 +57,7 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
         }
       );
       
-      // Support the legacy optimistic update approach if provided
-      if (optimistic?.isOptimistic === true) {
-        optimistic?.setOptimistic((pre: CardType[]) => [
-          optimisticCard,
-          ...(pre as CardType[]),
-        ]);
-      }
-      
-      return { previousCards, previousCollectionCards, toast, optimisticCard };
+      return { previousCards, previousCollectionCards, toast, optimisticCards };
     },
     onError: (error, variables, context: any) => {
       // Revert optimistic updates
@@ -87,13 +71,8 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
         );
       }
       
-      // Support the legacy optimistic update approach if provided
-      if (optimistic?.isOptimistic === true) {
-        optimistic?.setOptimistic((pre: CardType[]) => pre.filter(card => card._id !== context?.optimisticCard?._id));
-      }
-      
       context?.toast?.setToastData({
-        title: "Failed to create card",
+        title: "Failed to create cards",
         type: "error",
       });
     },
@@ -105,36 +84,27 @@ const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
       }
       
       context?.toast?.setToastData({
-        title: "Card created successfully!",
+        title: `${res.length} cards created successfully!`,
         isCompleted: true,
       });
     },
-    mutationFn: (data: {}) => {
-      return axios.post("/card/", { ...data }).then((res) => {
+    mutationFn: (cards: any[]) => {
+      return axios.post("/card/batch", { 
+        cards: cards.map(card => ({
+          ...card,
+          language: selectedLearningLanguage
+        }))
+      }).then((res) => {
         return res.data;
       });
     },
   });
 
-  // Use the selectedLearningLanguage from the context instead
-
-  const createCardHandler = async (
-    e: React.FormEvent<HTMLFormElement> | null,
-    additionalData: any = {}
-  ) => {
-    e?.preventDefault();
-    const formData = new FormData(e?.target as HTMLFormElement);
-    const data = {
-      front: formData.get("card_word"),
-      back: formData.get("card_translation"),
-      language: selectedLearningLanguage,
-      ...additionalData,
-    };
-
-    return mutateAsync(data);
+  const createMultipleCardsHandler = async (cards: any[]) => {
+    return mutateAsync(cards);
   };
 
-  return { createCardHandler, data, isLoading: isPending };
+  return { createMultipleCardsHandler, data, isLoading: isPending };
 };
 
-export default useCreateNewCard;
+export default useCreateMultipleCards;

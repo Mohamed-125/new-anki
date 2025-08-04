@@ -46,7 +46,7 @@ export function TextToSpeech({ text, language = "en" }: TextToSpeechProps) {
       variant="ghost"
       size="icon"
       type="button"
-      className="px-1 !py-0 text-black w-fit hover:bg-blue-50 hover:text-blue-600"
+      className="px-0 !py-0 text-black w-fit hover:bg-blue-50 hover:text-blue-600"
       title="Listen to pronunciation"
     >
       <BsVolumeUp className="w-6 h-6" />
