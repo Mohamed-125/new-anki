@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 
 function useActiveTranscriptLine(playerRef: any, lines: CaptionType[] = []) {
   const idxRef = useRef(-1);
-  const [active, setActive] = useState(-1);
+  const activeRef = useRef<number>();
 
   useEffect(() => {
     if (!playerRef || !lines.length) return;
@@ -23,7 +23,7 @@ function useActiveTranscriptLine(playerRef: any, lines: CaptionType[] = []) {
         document
           .querySelector(`#subtitle-${i}`)
           ?.classList.add("subtitle-active");
-        setActive(i);
+        activeRef.current = i;
       }
       rafId = requestAnimationFrame(loop); // :contentReference[oaicite:4]{index=4}
     };
@@ -33,7 +33,7 @@ function useActiveTranscriptLine(playerRef: any, lines: CaptionType[] = []) {
     return () => cancelAnimationFrame(rafId);
   }, [lines, playerRef]);
 
-  return active;
+  return activeRef.current;
 }
 
 export default useActiveTranscriptLine;

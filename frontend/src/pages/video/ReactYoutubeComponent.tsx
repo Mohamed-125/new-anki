@@ -8,7 +8,6 @@ import React, {
 import YouTube from "react-youtube"; // Assuming you have a YouTube player library
 import { CaptionType } from "./Video";
 import getYouTubeVideoId from "../../utils/getYoutubeVideoId";
-import useActiveTranscriptLine from "@/hooks/useActiveTranscriptLine";
 
 type Props = {
   playerRef: MutableRefObject<any>;
@@ -36,17 +35,6 @@ function ReactYoutubeComponent({ onReady, playerRef, video, caption }: Props) {
     };
   }, []);
   const [active, setActive] = useState(-1);
-
-  useActiveTranscriptLine(
-    playerRef,
-    caption.map((c, i) => {
-      return {
-        ...c,
-        offset: c.offset,
-        trueEnd: caption[i + 1]?.offset ? caption[i + 1]?.offset : c.duration,
-      };
-    })
-  );
 
   const onPlay = useCallback(
     (event: any) => {

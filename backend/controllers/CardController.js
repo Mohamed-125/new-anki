@@ -181,6 +181,28 @@ module.exports.updateCard = async (req, res, next) => {
   }
 };
 
+module.exports.batchUpdate = async (req, res, next) => {
+  const { toUpdateCardsData } = req.body;
+  if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
+    return res
+      .status(400)
+      .send('You must send a non-empty "toUpdateCardsData" array');
+  }
+
+  try {
+    const ops = toUpdateCardsData.map((card) => ({
+      updateOne: {
+        filter: { _id: card._id },
+        update: { $set: { easeFactor: card.easeFactor } },
+      },
+    }));
+
+    const result = await CardModel.bulkWrite(ops);
+    res.status(200).json({ modifiedCount: result.modifiedCount });
+  } catch (err) {
+    res.status(400).send("error in updating the study cards :", err);
+  }
+};
 module.exports.deleteCard = async (req, res, next) => {
   try {
     const deletedTodo = await CardModel.findByIdAndDelete({

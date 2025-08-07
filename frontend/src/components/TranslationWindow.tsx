@@ -432,8 +432,6 @@ const TranslationWindow = ({
     }
   }, [isAddCardModalOpen]);
 
-  console.log("selectedTranslations", selectedTranslations);
-
   return (
     <div
       id="translationContainer"
@@ -464,7 +462,8 @@ const TranslationWindow = ({
         <div
           id="translationWindow"
           className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
-            isTranslationBoxOpen ? "open" : ""}`}
+            isTranslationBoxOpen ? "open" : ""
+          }`}
         >
           {translationData?.fromDatabase ? (
             <>

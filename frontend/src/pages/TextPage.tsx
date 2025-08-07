@@ -130,7 +130,7 @@ const TextPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container !px-0 !pt-10 !pb-0 mx-auto max-w-7xl">
+      <div className="container !px-0 !pt-10 !pb-0 mx-auto !max-w-3xl">
         <div className="overflow-hidden rounded-xl shadow-sm">
           {/* Main Content */}
           <div className="flex w-full divide-x divide-gray-200">
@@ -180,13 +180,18 @@ const Text = React.memo(function ({
     setIsAddCardModalOpen,
     setEditId,
     setIsTranslationBoxOpen,
+    setIsShareModalOpen,
+    setShareItemId,
+    setShareItemName,
   } = useModalsStates();
   const { selectionData, setSelectionData } = useSelection();
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === text?.userId;
 
-  const { setIsShareModalOpen, setShareItemId, setShareItemName } =
-    useModalsStates();
+  useEffect(() => {
+    if (!selectionData.text) setIsTranslationBoxOpen(false);
+  }, [selectionData]);
+
   const shareHandler = () => {
     if (!text) return;
     setIsShareModalOpen(true);
@@ -304,10 +309,10 @@ const Text = React.memo(function ({
           range.selectNode(target.childNodes[0] as Node);
           selection.removeAllRanges();
           selection.addRange(range);
-          // setSelectionData({
-          //   text: "",
-          //   selection: null,
-          // });
+          setSelectionData({
+            text: "",
+            selection: null,
+          });
 
           if (word) {
             setSelectionData({
@@ -364,7 +369,7 @@ const Text = React.memo(function ({
         <div>
           <div className="flex justify-between items-center px-6 py-3 space-x-2">
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-semibold text-gray-800">
+              <h1 className="text-[26px] font-bold text-gray-800">
                 {text?.title}
               </h1>
               <span className="text-sm text-gray-500">

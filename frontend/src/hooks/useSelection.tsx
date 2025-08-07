@@ -1,92 +1,129 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import useModalsStates from "./useModalsStates";
+import { useEffect, useRef, useState, useTransition, useCallback } from "react";
+import throttle from "lodash.throttle";
 
-const useSelection = (delay: number = 400) => {
-  const [selectionData, setSelectionData] = useState<{
-    text: string;
-    selection?: Selection | null;
-  }>({
+type SelectionData = {
+  text: string;
+  selection: Selection | null;
+};
+
+export default function useSelection(limit = 50) {
+  const [selectionData, setSelectionData] = useState<SelectionData>({
     text: "",
     selection: null,
   });
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const { setIsTranslationBoxOpen, isTranslationBoxOpen } = useModalsStates();
+  const [isPending, startTransition] = useTransition();
 
-  const handleSelection = useCallback((e: Event) => {
-    const selected = window.getSelection();
-    const textDiv = document.querySelector(".text-div");
-    const captionsDiv = document.getElementById("captions-div");
-
-    const translationWindow = document.getElementById("translationWindow");
-
-    if (!selected) return;
-    if (translationWindow?.contains(selected.anchorNode)) {
-      e.preventDefault();
-      return;
-    }
-
-    // Check if this is a click (anchorOffset is 0 and focusOffset is 1) or a drag selection
-    const isClickSelection =
-      selected.anchorNode === selected.focusNode &&
-      selected.anchorOffset === 0 &&
-      selected.focusOffset === 1;
-
-    // Only close translation box if it's a drag selection and not inside translation window
-    if (
-      !isClickSelection &&
-      !translationWindow?.contains(selected.anchorNode)
-    ) {
-      setIsTranslationBoxOpen(false);
-    }
-
-    if (textDiv) {
-      if (!textDiv?.contains(selected.anchorNode)) {
-        setSelectionData((prev) => {
-          return { text: "" };
-        });
-        return;
-      }
-    } else {
-      if (!captionsDiv?.contains(selected.anchorNode)) {
-        console.log(selected, selected.anchorNode);
-        setSelectionData((prev) => {
-          return { text: "" };
-        });
-        return;
-      }
-    }
-
-    if (selectionData.text && isTranslationBoxOpen) {
-      setIsTranslationBoxOpen(false);
-    }
-
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    setSelectionData({
-      text: selected.toString(),
-      selection: selected,
-    });
-  }, []);
-
-  const handleSelectionChange = (e: Event) => {
-    handleSelection(e);
-  };
+  const captionsDiv = useRef<HTMLElement | null>(null);
+  const translationWindow = useRef<HTMLElement | null>(null);
+  const textDivRef = useRef<HTMLElement | null>(null);
+  const lastText = useRef<string>("");
 
   useEffect(() => {
-    document.addEventListener("selectionchange", handleSelectionChange);
+    captionsDiv.current = document.getElementById("captions-div");
+    translationWindow.current = document.getElementById("translationWindow");
+    textDivRef.current = document.querySelector(".text-div");
+  }, []);
 
-    return () => {
-      document?.removeEventListener("selectionchange", handleSelectionChange);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+  const updateSelection = useCallback(
+    (sel: Selection, text: string) => {
+      if (text === lastText.current) return;
+      lastText.current = text;
+
+      requestIdleCallback(() => {
+        startTransition(() => {
+          setSelectionData({ text, selection: sel });
+        });
+      });
+    },
+    [startTransition]
+  );
+
+  const throttledUpdate = useRef(
+    throttle((sel: Selection, text: string) => {
+      updateSelection(sel, text);
+    }, limit)
+  ).current;
+
+  const resetSelection = () => {
+    setSelectionData({ text: "", selection: null });
+    lastText.current = "";
+  };
+
+  const processSelection = useCallback(
+    (sel: Selection | null) => {
+      if (!sel || !sel.anchorNode) return resetSelection();
+
+      const rawText = sel.toString();
+      const cleanedText = rawText.replace(/\s+/g, "").trim();
+
+      console.log(rawText);
+      // Filter out empty or single character selections
+      if (
+        !cleanedText ||
+        cleanedText.length < 2 ||
+        cleanedText.split("").length <= 1
+      ) {
+        console.log("resseting");
+        return resetSelection();
       }
+
+      // Prevent selecting inside the translation popup
+      if (translationWindow.current?.contains(sel.anchorNode)) {
+        return resetSelection();
+      }
+
+      // // Ensure selection is inside captions
+      // let node: Node | null = sel.anchorNode;
+      // let insideCaptions = false;
+      // while (node && node !== document.body) {
+      //   if (
+      //     (node as HTMLElement).id === "captions-div" ||
+      //     (node as HTMLElement).dataset?.captions !== undefined
+      //   ) {
+      //     insideCaptions = true;
+      //     break;
+      //   }
+      //   node = node.parentNode;
+      // }
+
+      // if (!insideCaptions) return resetSelection();
+
+      throttledUpdate(sel, rawText.trim());
+    },
+    [throttledUpdate]
+  );
+
+  useEffect(() => {
+    const captions = captionsDiv.current;
+    const textDiv = textDivRef.current;
+
+    const handleSelection = () => {
+      const sel = window.getSelection();
+
+      processSelection(sel);
     };
-  }, [handleSelection]);
 
-  return { selectionData, setSelectionData };
-};
+    if (captions) {
+      captions.addEventListener("mouseup", handleSelection);
+      captions.addEventListener("keyup", handleSelection);
+    }
+    if (textDiv) {
+      textDiv.addEventListener("mouseup", handleSelection);
+      textDiv.addEventListener("keyup", handleSelection);
+    }
+    return () => {
+      if (captions) {
+        captions.removeEventListener("mouseup", handleSelection);
+        captions.removeEventListener("keyup", handleSelection);
+      }
+      if (textDiv) {
+        textDiv.removeEventListener("mouseup", handleSelection);
+        textDiv.removeEventListener("keyup", handleSelection);
+      }
+      throttledUpdate.cancel();
+    };
+  }, [processSelection, throttledUpdate]);
 
-export default useSelection;
+  return { selectionData, isPending, setSelectionData };
+}

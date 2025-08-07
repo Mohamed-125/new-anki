@@ -14,6 +14,7 @@ import useModalsStates from "@/hooks/useModalsStates";
 import TranslationWindow from "@/components/TranslationWindow";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import { VideoType } from "@/hooks/useGetVideos";
+import useActiveTranscriptLine from "@/hooks/useActiveTranscriptLine";
 
 type subtitleProps = {
   video: any;
@@ -48,10 +49,29 @@ const Subtitles = memo(function ({
   const { setDefaultValues, setIsAddCardModalOpen, setContent, setEditId } =
     useModalsStates();
 
-  const { selectionData } = useSelection();
+  const { selectionData, setSelectionData } = useSelection();
 
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === video?.userId;
+
+  const active = useActiveTranscriptLine(
+    playerRef,
+    caption.map((c, i) => {
+      return {
+        ...c,
+        offset: c.offset,
+        trueEnd: caption[i + 1]?.offset ? caption[i + 1]?.offset : c.duration,
+      };
+    })
+  );
+
+  const virtuosoRef = useRef<Virtuoso>(null);
+
+  useEffect(() => {
+    if (active >= 0 && virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({ index: active, align: "center" });
+    }
+  }, [active]);
 
   return (
     // Render your list
@@ -76,7 +96,7 @@ const Subtitles = memo(function ({
               setDefaultValues={setDefaultValues}
               selectionData={selectionData}
             />
-
+            {/* 
             {caption.map((c, index) => {
               return (
                 <Subtitle
@@ -91,9 +111,31 @@ const Subtitles = memo(function ({
                   subtitle={caption[index]}
                   setEditId={setEditId}
                   playerRef={playerRef}
+                  setSelectionData={setSelectionData}
                 />
               );
-            })}
+            })} */}
+
+            <Virtuoso
+              data={caption}
+              itemContent={(index, c) => (
+                <Subtitle
+                  selectionData={selectionData}
+                  isActive={index === active}
+                  key={index}
+                  n={index}
+                  setDefaultValues={setDefaultValues}
+                  selectedCaption={selectedCaption}
+                  caption={c}
+                  setIsAddCardModalOpen={setIsAddCardModalOpen}
+                  video={video}
+                  subtitle={c}
+                  setEditId={setEditId}
+                  playerRef={playerRef}
+                  setSelectionData={setSelectionData}
+                />
+              )}
+            />
           </div>
         </div>
       </div>
@@ -111,31 +153,24 @@ type SubtitleProps = {
   video: VideoType;
   setDefaultValues: any;
   setIsAddCardModalOpen: any;
-  selectedCaption: any;
+  isActive: any;
   setEditId: any;
+  setSelectionData: React.Dispatch<React.SetStateAction<any>>;
 };
 const Subtitle = memo(function ({
   n,
   subtitle,
   playerRef,
-  selectedCaption,
+  isActive,
   setEditId,
   video,
   setIsAddCardModalOpen,
   setDefaultValues,
+  selectionData,
+  setSelectionData,
 }: SubtitleProps) {
   const [translatedText, setTranslatedText] = useState("");
-  const { setSelectionData } = useSelection();
   const { setIsTranslationBoxOpen } = useModalsStates();
-
-  useEffect(() => {
-    const translateText = async (text: string) => {
-      if (video.defaultCaptionData.name === selectedCaption) {
-        setTranslatedText(video.defaultCaptionData.translatedTranscript[n]);
-      }
-    };
-    translateText(subtitle);
-  }, []);
 
   const { userCards } = useGetCards({ videoId: video._id });
   const words = subtitle.text.split(/\s+/);
@@ -190,18 +225,27 @@ const Subtitle = memo(function ({
           selection.removeAllRanges();
           selection.addRange(range);
 
-          if (word) {
+          if (word && word.trim().length >= 2) {
             setSelectionData({
               text: word,
               selection: selection,
             });
             setIsTranslationBoxOpen(true);
+          } else {
+            setSelectionData({ text: "", selection: null });
+            setIsTranslationBoxOpen(false);
           }
         }
       }
     },
     [words, userCards, setSelectionData, setIsTranslationBoxOpen]
   );
+
+  useEffect(() => {
+    if (!selectionData.text) {
+      setIsTranslationBoxOpen(false);
+    }
+  }, [selectionData]);
 
   return (
     <div
@@ -215,7 +259,9 @@ const Subtitle = memo(function ({
       <div
         id={"subtitle-" + n}
         key={subtitle._id}
-        className="cursor-pointer select-text group subtitle-item"
+        className={`cursor-pointer select-text group subtitle-item ${
+          isActive ? "subtitle-active" : ""
+        }`}
       >
         <div className="relative py-4 border-b-2 border-gray-200">
           <div

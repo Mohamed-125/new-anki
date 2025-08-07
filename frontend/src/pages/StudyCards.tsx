@@ -105,6 +105,20 @@ const StudyCards = () => {
   const isLoading =
     isIntialLoading || isFetchingNextPage || collectionLoading || cardsLoading;
 
+  const updatedCardsRef = useRef<{ _id: string; easeFactor: number }[]>([]);
+
+  useEffect(() => {
+    return () => {
+      if (updatedCardsRef.current.length <= 0) return;
+      axios
+        .patch(`card/batch`, {
+          toUpdateCardsData: updatedCardsRef.current,
+        })
+        .then(() => {
+          console.log("card ease updated");
+        });
+    };
+  }, []);
   const submitAnswer = async (answer = "") => {
     if (!cards?.length) return;
     if (cardsToStudy[currentCard]?.easeFactor === undefined || !cardsCount)
@@ -119,15 +133,9 @@ const StudyCards = () => {
         ? +cardsToStudy[currentCard].easeFactor - 0.25
         : 0;
 
-    easeFactor = easeFactor > 1 ? 1 : easeFactor < 0 ? 0 : easeFactor;
+    easeFactor = easeFactor > 1 ? 1 : easeFactor <= 0 ? 0 : easeFactor;
 
-    axios
-      .patch(`card/${cardsToStudy[currentCard]._id}`, {
-        easeFactor: easeFactor < 0 ? 0 : easeFactor,
-      })
-      .then(() => {
-        console.log("card ease updated");
-      });
+    updatedCardsRef.current.push({ _id: card._id, easeFactor });
 
     if (
       (answer === "hard" && repeatHardCards) ||

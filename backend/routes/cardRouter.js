@@ -8,6 +8,7 @@ const {
   deleteCard,
   batchDelete,
   batchMove,
+  batchUpdate,
 } = require("../controllers/CardController");
 
 const Authorization = require("../middleware/Authorization");
@@ -17,6 +18,7 @@ router
   .post("/batch", Authorization, createCard)
   .get("/", Authorization, getUserCards)
   .get("/:id", Authorization, getCard)
+  .patch("/batch", Authorization, batchUpdate)
   .patch("/:id", Authorization, updateCard)
   .delete("/:id", Authorization, deleteCard)
   .post("/batch-delete", Authorization, batchDelete)
