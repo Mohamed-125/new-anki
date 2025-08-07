@@ -520,25 +520,22 @@ iframe {
   /* Headings */
 
   h2 {
-    font-size: 1.75rem;
+    font-size: 1.85rem !important;
     font-weight: bold;
     line-height: 37px;
-    margin-top: 14px !important;
-    margin-bottom: 7px !important;
+    margin-block: 22px !important;
   }
 
   h3 {
-    font-size: 1.5rem;
+    font-size: 1.65rem !important;
     font-weight: bold;
-    margin-top: 12px !important;
-    margin-bottom: 6px !important;
+    margin-block: 19px !important;
   }
 
   h4 {
-    font-size: 1.25rem;
+    font-size: 1.45rem !important;
     font-weight: bold;
-    margin-top: 10px !important;
-    margin-bottom: 5px !important;
+    margin-block: 16px !important;
   }
 
   /* Paragraph */

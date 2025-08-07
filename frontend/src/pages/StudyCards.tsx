@@ -37,6 +37,8 @@ import {
   Edit3Icon,
   XCircleIcon,
   XIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { BsXCircleFill } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,6 +58,8 @@ const StudyCards = () => {
   const [repeatHardCards, setRepeatHardCards] = useState(false);
   const [hardCardsToRepeat, setHardCardsToRepeat] = useState<any[]>([]);
   const [cardsToStudy, setCardsToStudy] = useState<CardType[]>([]);
+  // Track the highest card index the user has studied
+  const [highestCardIndex, setHighestCardIndex] = useState(0);
   const { setIsAddCardModalOpen, setEditId, setDefaultValues } =
     useModalsStates();
   const { editor, setContent } = useUseEditor(true);
@@ -145,6 +149,12 @@ const StudyCards = () => {
     }
     setShowAnswer(false);
     setCurrentCard((pre) => {
+      const nextIndex = pre + 1;
+      // Update the highest card index if we're moving to a new card
+      if (nextIndex > highestCardIndex) {
+        setHighestCardIndex(nextIndex);
+      }
+
       if (
         answer === "hard" ||
         (answer === `couldn't remember` &&
@@ -154,7 +164,7 @@ const StudyCards = () => {
         if (pre === cards.length - 4) {
           fetchNextPage();
         }
-        return pre + 1;
+        return nextIndex;
       }
       if (pre >= cardsToStudy.length - 1) {
         navigate("/congrats", { replace: true });
@@ -163,7 +173,7 @@ const StudyCards = () => {
         if (pre === cards.length - 4) {
           fetchNextPage();
         }
-        return pre + 1;
+        return nextIndex;
       }
     });
   };
@@ -268,7 +278,7 @@ const StudyCards = () => {
               className="overflow-hidden relative mt-4 mb-8 w-full max-w-[80%] sm:max-w-none mx-auto bg-white rounded-2xl shadow-md"
             >
               {/* Card content */}
-              <div className="p-8 min-h-[600px] flex flex-col w-full">
+              <div className="p-8 min-h-[600px] flex flex-col w-full relative">
                 {/* Front of card */}
                 <div className="flex justify-between items-start mb-6">
                   <div className="text-sm font-medium text-gray-500">
@@ -442,27 +452,69 @@ const StudyCards = () => {
                           ? cardsToStudy[currentCard]?.front
                           : cardsToStudy[currentCard]?.back}
                       </p>
-                      {cardsToStudy[currentCard]?.easeFactor !== undefined && (
-                        <div
-                          className={`px-3 py-1 w-fit mx-auto rounded-md text-sm font-medium ${
-                            cardsToStudy[currentCard].easeFactor >= 0.75
-                              ? "bg-green-100 text-green-800"
-                              : cardsToStudy[currentCard].easeFactor >= 0.5
-                              ? "bg-yellow-100 text-yellow-800"
-                              : cardsToStudy[currentCard].easeFactor > 0
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
+                      <div className="flex gap-2 justify-center items-center">
+                        <Button
+                          tabIndex={-1}
+                          className="flex gap-1 items-center px-0 w-10 h-10 text-gray-600 rounded-full border-gray-300 transition-colors hover:bg-gray-100"
+                          variant="primary-outline"
+                          onClick={() => {
+                            setShowAnswer(false);
+
+                            if (currentCard > 0) {
+                              setCurrentCard(currentCard - 1);
+                              setShowAnswer(true); // Always show answer when navigating back
+                            }
+                          }}
+                          disabled={currentCard === 0}
                         >
-                          {cardsToStudy[currentCard].easeFactor >= 0.75
-                            ? "Easy"
-                            : cardsToStudy[currentCard].easeFactor >= 0.5
-                            ? "Medium"
-                            : cardsToStudy[currentCard].easeFactor > 0
-                            ? "Hard"
-                            : "New"}
-                        </div>
-                      )}
+                          <ChevronLeft size={18} />
+                        </Button>
+
+                        {cardsToStudy[currentCard]?.easeFactor !==
+                          undefined && (
+                          <div
+                            className={`px-3 py-1 !w-fit  rounded-md text-sm font-medium ${
+                              cardsToStudy[currentCard].easeFactor >= 0.75
+                                ? "bg-green-100 text-green-800"
+                                : cardsToStudy[currentCard].easeFactor >= 0.5
+                                ? "bg-yellow-100 text-yellow-800"
+                                : cardsToStudy[currentCard].easeFactor > 0
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {cardsToStudy[currentCard].easeFactor >= 0.75
+                              ? "Easy"
+                              : cardsToStudy[currentCard].easeFactor >= 0.5
+                              ? "Medium"
+                              : cardsToStudy[currentCard].easeFactor > 0
+                              ? "Hard"
+                              : "New"}
+                          </div>
+                        )}
+
+                        <Button
+                          tabIndex={-1}
+                          className="flex gap-1 items-center px-0 w-10 h-10 text-gray-600 rounded-full transition-colors border-gray-240 hover:bg-gray-100"
+                          variant="primary-outline"
+                          onClick={() => {
+                            setShowAnswer(false);
+                            if (
+                              currentCard < highestCardIndex &&
+                              currentCard < cardsToStudy.length - 1
+                            ) {
+                              setCurrentCard(currentCard + 1);
+                              setShowAnswer(true); // Always show answer when navigating forward
+                            }
+                          }}
+                          disabled={
+                            currentCard >= highestCardIndex ||
+                            currentCard >= cardsToStudy.length - 1
+                          }
+                        >
+                          <ChevronRight size={18} />
+                        </Button>
+                      </div>
                     </div>
                   )}
                   {!showAnswer && (

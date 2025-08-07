@@ -17,6 +17,7 @@ export default function useSelection(limit = 50) {
   const captionsDiv = useRef<HTMLElement | null>(null);
   const translationWindow = useRef<HTMLElement | null>(null);
   const textDivRef = useRef<HTMLElement | null>(null);
+
   const lastText = useRef<string>("");
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function useSelection(limit = 50) {
     (sel: Selection | null) => {
       if (!sel || !sel.anchorNode) return resetSelection();
 
+      console.log(sel);
       const rawText = sel.toString();
       const cleanedText = rawText.replace(/\s+/g, "").trim();
 
@@ -104,6 +106,9 @@ export default function useSelection(limit = 50) {
       processSelection(sel);
     };
 
+    document.body.addEventListener("mouseup", resetSelection);
+    document.body.addEventListener("keyup", resetSelection);
+
     if (captions) {
       captions.addEventListener("mouseup", handleSelection);
       captions.addEventListener("keyup", handleSelection);
@@ -113,6 +118,9 @@ export default function useSelection(limit = 50) {
       textDiv.addEventListener("keyup", handleSelection);
     }
     return () => {
+      document.body.addEventListener("mouseup", resetSelection);
+      document.body.addEventListener("keyup", resetSelection);
+
       if (captions) {
         captions.removeEventListener("mouseup", handleSelection);
         captions.removeEventListener("keyup", handleSelection);

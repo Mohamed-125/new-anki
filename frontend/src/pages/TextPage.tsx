@@ -129,8 +129,8 @@ const TextPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container !px-0 !pt-10 !pb-0 mx-auto !max-w-3xl">
+    <div className="min-h-screen">
+      <div className="container w-[90%] bg-white rounded-xl border-gray-100 border-2 mt-8 !px-0 !pt-10 !pb-0 mx-auto !max-w-3xl">
         <div className="overflow-hidden rounded-xl shadow-sm">
           {/* Main Content */}
           <div className="flex w-full divide-x divide-gray-200">
@@ -163,7 +163,6 @@ const openReversoPopup = (
 };
 
 import { Virtuoso } from "react-virtuoso";
-import { text } from "stream/consumers";
 
 const Text = React.memo(function ({
   highlightText,
@@ -218,7 +217,7 @@ const Text = React.memo(function ({
         }
         // For text nodes, wrap them in a paragraph
         else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
-          return `<p>${node.textContent}</p>`;
+          return `<p className="text-lg">${node.textContent}</p>`;
         }
         return "";
       })
@@ -365,11 +364,11 @@ const Text = React.memo(function ({
       />
       <AddCardModal collectionId={text?.defaultCollectionId} />
 
-      <div className="tiptap tiptap-editor">
+      <div className="px-10 sm:px-5 tiptap tiptap-editor">
         <div>
-          <div className="flex justify-between items-center px-6 py-3 space-x-2">
+          <div className="flex justify-between items-center py-3 space-x-2">
             <div className="flex items-center space-x-2">
-              <h1 className="text-[26px] font-bold text-gray-800">
+              <h1 className="text-[32px] sm:text-[25px] font-bold text-gray-800">
                 {text?.title}
               </h1>
               <span className="text-sm text-gray-500">
@@ -401,7 +400,7 @@ const Text = React.memo(function ({
             className="ProseMirror !p-0"
             itemContent={(index) => (
               <div
-                className="px-6 sm:px-3 paragraph"
+                className="*:!text-lg"
                 dangerouslySetInnerHTML={{
                   __html: paragraphs[index],
                 }}
