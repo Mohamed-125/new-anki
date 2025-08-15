@@ -74,7 +74,7 @@ CardSchema.pre("find", function (next) {
 CardSchema.post("find", async function (docs) {
   const updatePromises = [];
 
-  const duration = 86400000 * 2;
+  const duration = 86400000 * 4;
 
   for (const card of docs) {
     if (card.easeFactorDate) {
@@ -96,13 +96,13 @@ CardSchema.post("find", async function (docs) {
             { _id: card._id },
             {
               $set: {
-                easeFactor: card.easeFactor - easeFactorChange,
+                easeFactor: card.easeFactor - easeFactorChange >= 0 ? card.easeFactor - easeFactorChange : 0,
                 easeFactorDate: Date.now(),
               },
             }
           )
         );
-        card.easeFactor = card.easeFactor - easeFactorChange;
+        card.easeFactor =card.easeFactor - easeFactorChange >= 0 ? card.easeFactor - easeFactorChange : 0,
         card.easeFactorDate = new Date();
       }
     }
