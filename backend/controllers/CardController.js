@@ -4,6 +4,16 @@ const CollectionModel = require("../models/CollectionModel");
 module.exports.createCard = async (req, res, next) => {
   const { cards, collectionId, videoId, language, sectionId } = req.body;
 
+
+      let shownInHome = true;
+    if (collectionId) {
+      const collection = await CollectionModel.findById(collectionId);
+      if (collection) {
+        shownInHome = collection.showCardsInHome;
+      }
+    }
+
+    
   if (Array.isArray(cards)) {
     // Bulk creation
     const cardsData = cards.map((card, index) => ({
