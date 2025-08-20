@@ -1,26 +1,15 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Modal from "./Modal";
 import Form from "./Form";
 import Button from "./Button";
-import Select, { SingleValue } from "react-select";
 import useCardActions from "../hooks/useCardActions";
 import "react-quill/dist/quill.snow.css";
 import TipTapEditor from "./TipTapEditor";
-import useGetCollections from "../hooks/useGetCollections";
 import useCreateNewCard from "../hooks/useCreateNewCardMutation";
 import useCreateMultipleCards from "../hooks/useCreateMultipleCards";
 import axios from "axios";
-import useAddOpenModal from "../hooks/useAddModalShortcuts";
 import useAddModalShortcuts from "../hooks/useAddModalShortcuts";
 import useModalStates from "@/hooks/useModalsStates";
-import useGetCollectionById from "@/hooks/useGetCollectionById";
-import { IoClose } from "react-icons/io5";
 import useUseEditor from "@/hooks/useUseEditor";
 import { twMerge } from "tailwind-merge";
 import useToasts from "@/hooks/useToasts";
@@ -43,6 +32,9 @@ import {
 import Loading from "./Loading";
 import { Skeleton } from "./ui/skeleton";
 import MoveCollectionModal from "./MoveCollectionModal";
+import { IoClose } from "react-icons/io5";
+import useGetCollectionById from "@/hooks/useGetCollectionById";
+import useGetCollections from "@/hooks/useGetCollections";
 
 type CardData = {
   front: string;
@@ -188,17 +180,8 @@ export function AddCardModal({
         backValue
       );
     } else {
-      const toast = addToast("Creating card...", "promise");
-      try {
-        const createdCard = await createCardHandler(e, cardData);
-        toast.setToastData({
-          title: "Card created successfully!",
-          type: "success",
-        });
-        onCardCreated?.(createdCard._id);
-      } catch (err) {
-        toast.setToastData({ title: "Failed to create card", type: "error" });
-      }
+      const createdCard = await createCardHandler(e, cardData);
+      onCardCreated?.(createdCard._id);
     }
 
     setIsAddCardModalOpen(false);
@@ -299,21 +282,20 @@ export function AddCardModal({
     defaultValues?.collectionId || collectionId
   );
 
-  // const { collections } = useGetCollections({
-  //   enabled: isMoveToCollectionOpen,
-  //   sectionId: defaultValues?.sectionId || null,
-  // });
+  const { collections } = useGetCollections({
+    enabled: isMoveToCollectionOpen,
+    sectionId: defaultValues?.sectionId || null,
+  });
 
   return (
     <Modal
       loading={isLoading || isCollectionLoading}
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
-        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""
-      }`}
+        isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}`}
       setIsOpen={setIsAddCardModalOpen}
       isOpen={isAddCardModalOpen}
     >
-      <MoveCollectionModal />
+      {/* <MoveCollectionModal /> */}
       <Modal.Header
         setIsOpen={setIsAddCardModalOpen}
         title={isEdit ? "Edit Card" : "Add New Card"}

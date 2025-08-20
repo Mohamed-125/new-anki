@@ -11,6 +11,7 @@ import useModalStates from "@/hooks/useModalsStates";
 import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import ShareModal from "@/components/ShareModal";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 const Collections = () => {
   const { setIsCollectionModalOpen, selectedItems } = useModalStates();
@@ -18,7 +19,14 @@ const Collections = () => {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query);
 
-  const { collections, isLoading, collectionsCount } = useGetCollections({
+  const {
+    collections,
+    isLoading,
+    collectionsCount,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useGetCollections({
     query: debouncedQuery,
   });
 
@@ -55,12 +63,17 @@ const Collections = () => {
           <span className="text-xl">+</span>
           Create new collection
         </Button>
-        <div className="grid grid-cols-3 gap-2 md:grid-cols-2 sm:grid-cols-1">
+        <InfiniteScroll
+          fetchNextPage={fetchNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={hasNextPage}
+          className="grid grid-cols-3 gap-2 md:grid-cols-2 sm:grid-cols-1"
+        >
           {collections?.map((collection) => (
             <Collection collection={collection} key={collection._id} />
           ))}
           {isLoading && <CollectionSkeleton />}
-        </div>
+        </InfiniteScroll>
       </div>
     </div>
   );

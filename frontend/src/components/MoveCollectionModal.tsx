@@ -63,6 +63,7 @@ const MoveCollectionModal = ({
     isFetchingNextPage,
   } = useGetCollections({
     sectionId: sectionId as string,
+    enabled:isMoveToCollectionOpen
   });
 
   const invalidateCollectionsQueries = useInvalidateCollectionsQueries();

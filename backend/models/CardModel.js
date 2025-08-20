@@ -96,14 +96,20 @@ CardSchema.post("find", async function (docs) {
             { _id: card._id },
             {
               $set: {
-                easeFactor: card.easeFactor - easeFactorChange >= 0 ? card.easeFactor - easeFactorChange : 0,
+                easeFactor:
+                  card.easeFactor - easeFactorChange >= 0
+                    ? card.easeFactor - easeFactorChange
+                    : 0,
                 easeFactorDate: Date.now(),
               },
             }
           )
         );
-        card.easeFactor =card.easeFactor - easeFactorChange >= 0 ? card.easeFactor - easeFactorChange : 0,
-        card.easeFactorDate = new Date();
+        (card.easeFactor =
+          card.easeFactor - easeFactorChange >= 0
+            ? card.easeFactor - easeFactorChange
+            : 0),
+          (card.easeFactorDate = new Date());
       }
     }
   }

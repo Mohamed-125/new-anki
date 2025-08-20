@@ -132,17 +132,17 @@ module.exports.getCollections = async (req, res, next) => {
   const limit = 10; // Number of items per page
   const query = {};
 
-  // Update collections without showCardsInHome field
-  const updatedCollections = await CollectionModel.updateMany(
-    { showCardsInHome: { $exists: false } },
-    { $set: { showCardsInHome: true } }
-  );
+  // // Update collections without showCardsInHome field
+  // const updatedCollections = await CollectionModel.updateMany(
+  //   { showCardsInHome: { $exists: false } },
+  //   { $set: { showCardsInHome: true } }
+  // );
 
-  // Update cards without shownInHome field
-  const updatedCards = await CardModel.updateMany(
-    { shownInHome: { $exists: false } },
-    { $set: { shownInHome: true } }
-  );
+  // // Update cards without shownInHome field
+  // const updatedCards = await CardModel.updateMany(
+  //   { shownInHome: { $exists: false } },
+  //   { $set: { shownInHome: true } }
+  // );
 
   if (language) query.language = language;
   if (sectionId) {
@@ -178,9 +178,9 @@ module.exports.getCollections = async (req, res, next) => {
         .limit(limit)
         .lean();
     }
+    const remaining = (page + 1) * limit - collectionsCount;
     // Calculate if there's a next page
-    const nextPage =
-      (page + 1) * limit < collectionsCount ? Number(page) + 1 : null;
+    const nextPage = remaining > 0 ? page + 1 : null;
 
     res.status(200).send({
       collections,

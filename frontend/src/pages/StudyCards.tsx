@@ -1,23 +1,19 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
 import { CollectionType } from "@/hooks/useGetCollections";
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import Button from "../components/Button";
-import { HiMiniSpeakerWave } from "react-icons/hi2";
 // @ts-ignore
 import { useSpeech, useVoices } from "react-text-to-speech";
-import Form from "../components/Form";
 import TipTapEditor from "../components/TipTapEditor";
 
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
@@ -124,10 +120,12 @@ const StudyCards = () => {
     };
   }, []);
   const submitAnswer = async (answer = "") => {
+    console.log("submitting");
     if (!cards?.length) return;
     if (cardsToStudy[currentCard]?.easeFactor === undefined || !cardsCount)
       return;
 
+    console.log("passing the check");
     let easeFactor =
       answer === "easy"
         ? +cardsToStudy[currentCard].easeFactor + 0.25
@@ -143,7 +141,7 @@ const StudyCards = () => {
 
     if (
       (answer === "hard" && repeatHardCards) ||
-      (answer === `couldn't remember` && repeatHardCards)
+      (answer === `forgot` && repeatHardCards)
     ) {
       setHardCardsToRepeat((prev) => [...prev, cardsToStudy[currentCard]]);
     }
@@ -157,7 +155,7 @@ const StudyCards = () => {
 
       if (
         answer === "hard" ||
-        (answer === `couldn't remember` &&
+        (answer === `forgot` &&
           repeatHardCards &&
           pre <= cardsToStudy.length - 1)
       ) {
@@ -187,32 +185,42 @@ const StudyCards = () => {
     }
   }, [voices]);
 
-  //  add the space event listener to show the answer when pressing space
-
   useEffect(() => {
-    const checkSpace = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (showAnswer) {
+        if (e.key === "1") {
+          submitAnswer("easy");
+        } else if (e.key === "2") {
+          submitAnswer("medium");
+        } else if (e.key === "3") {
+          submitAnswer("hard");
+        } else if (e.key === "4") {
+          submitAnswer("forgot");
+        }
+      }
+
+      if (e.code === "Space" || e.key === "Enter") {
         if (!showAnswer) {
         }
         setShowAnswer(true);
       }
     };
 
-    document.body.addEventListener("keypress", checkSpace);
+    document.addEventListener("keypress", handleKeyPress);
 
     return () => {
-      document.body.removeEventListener("keypress", checkSpace);
+      document.removeEventListener("keypress", handleKeyPress);
     };
-  }, []);
+  }, [submitAnswer, showAnswer]);
 
   useEffect(() => {
     if (cards) setContent(cardsToStudy[currentCard]?.content || "");
   }, [currentCard]);
 
   const card = cardsToStudy[currentCard];
-  if (isLoading) {
-    return <Loading />;
-  }
+  // if (isLoading) {
+  //   return <Loading />;
+  // }
 
   return (
     <div className="min-h-screen bg-[#f0f7ff]">
@@ -610,7 +618,7 @@ const StudyCards = () => {
                     tabIndex={-1}
                     className="flex-1 h-10 text-gray-700 border-gray-700 transition-colors hover:bg-gray-700 hover:text-white"
                     variant="primary-outline"
-                    onClick={() => submitAnswer(`couldn't remember`)}
+                    onClick={() => submitAnswer(`forgot`)}
                   >
                     Forgot
                   </Button>

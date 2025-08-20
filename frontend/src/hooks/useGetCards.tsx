@@ -99,13 +99,13 @@ const useGetCards = ({
   });
 
   let userCards = useMemo(() => {
-    return data?.pages.flatMap((page) => (page as GetCardsResponse).cards);
+    return data?.pages.flatMap(
+      (page) => (page as GetCardsResponse).cards ?? []
+    );
   }, [data]);
 
-  const queryClient = useQueryClient();
-
   return {
-    userCards: userCards,
+    userCards,
     cardsCount: data?.pages[0]?.cardsCount,
     fetchNextPage,
     isIntialLoading,
