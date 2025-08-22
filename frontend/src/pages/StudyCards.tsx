@@ -70,9 +70,10 @@ const StudyCards = () => {
   });
 
   useEffect(() => {
-    document.querySelector("nav").style.display = "none";
+    const nav = document.querySelector("nav");
+    if (nav) nav.style.display = "none";
     return () => {
-      document.querySelector("nav").style.display = "flex";
+      if (nav) nav.style.display = "flex";
     };
   }, []);
   // Define the query for when `collectionId` does not exist
@@ -115,17 +116,15 @@ const StudyCards = () => {
           toUpdateCardsData: updatedCardsRef.current,
         })
         .then(() => {
-          console.log("card ease updated");
         });
     };
   }, []);
+
   const submitAnswer = async (answer = "") => {
-    console.log("submitting");
     if (!cards?.length) return;
     if (cardsToStudy[currentCard]?.easeFactor === undefined || !cardsCount)
       return;
 
-    console.log("passing the check");
     let easeFactor =
       answer === "easy"
         ? +cardsToStudy[currentCard].easeFactor + 0.25
@@ -185,8 +184,27 @@ const StudyCards = () => {
     }
   }, [voices]);
 
+  const navigateForward = () => {
+    setShowAnswer(false);
+    if (
+      currentCard < highestCardIndex &&
+      currentCard < cardsToStudy.length - 1
+    ) {
+      setCurrentCard(currentCard + 1);
+      if (currentCard + 1 !== highestCardIndex) setShowAnswer(true); // Always show answer when navigating forward
+    }
+  };
+
+  const navigateBackwards = () => {
+    setShowAnswer(false);
+
+    if (currentCard > 0) {
+      setCurrentCard(currentCard - 1);
+      setShowAnswer(true); // Always show answer when navigating back
+    }
+  };
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (showAnswer) {
         if (e.key === "1") {
           submitAnswer("easy");
@@ -199,6 +217,13 @@ const StudyCards = () => {
         }
       }
 
+      if (e.code === "ArrowRight") {
+        navigateForward();
+      }
+      if (e.code === "ArrowLeft") {
+        navigateBackwards();
+      }
+
       if (e.code === "Space" || e.key === "Enter") {
         if (!showAnswer) {
         }
@@ -206,12 +231,12 @@ const StudyCards = () => {
       }
     };
 
-    document.addEventListener("keypress", handleKeyPress);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("keypress", handleKeyPress);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [submitAnswer, showAnswer]);
+  }, [submitAnswer, showAnswer, currentCard, highestCardIndex, cardsToStudy]);
 
   useEffect(() => {
     if (cards) setContent(cardsToStudy[currentCard]?.content || "");
@@ -432,7 +457,6 @@ const StudyCards = () => {
 
                     <button
                       onClick={() => {
-                        console.log("trstrst");
                         setDefaultValues({
                           ...card,
                         });
@@ -465,14 +489,7 @@ const StudyCards = () => {
                           tabIndex={-1}
                           className="flex gap-1 items-center px-0 w-10 h-10 text-gray-600 rounded-full border-gray-300 transition-colors hover:bg-gray-100"
                           variant="primary-outline"
-                          onClick={() => {
-                            setShowAnswer(false);
-
-                            if (currentCard > 0) {
-                              setCurrentCard(currentCard - 1);
-                              setShowAnswer(true); // Always show answer when navigating back
-                            }
-                          }}
+                          onClick={navigateBackwards}
                           disabled={currentCard === 0}
                         >
                           <ChevronLeft size={18} />
@@ -505,16 +522,7 @@ const StudyCards = () => {
                           tabIndex={-1}
                           className="flex gap-1 items-center px-0 w-10 h-10 text-gray-600 rounded-full transition-colors border-gray-240 hover:bg-gray-100"
                           variant="primary-outline"
-                          onClick={() => {
-                            setShowAnswer(false);
-                            if (
-                              currentCard < highestCardIndex &&
-                              currentCard < cardsToStudy.length - 1
-                            ) {
-                              setCurrentCard(currentCard + 1);
-                              setShowAnswer(true); // Always show answer when navigating forward
-                            }
-                          }}
+                          onClick={navigateForward}
                           disabled={
                             currentCard >= highestCardIndex ||
                             currentCard >= cardsToStudy.length - 1
