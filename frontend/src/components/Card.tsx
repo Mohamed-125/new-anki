@@ -107,42 +107,51 @@ const Card = ({
             }
           : () => {}
       }
-      className="flex items-center px-8 py-4 mb-4 max-w-full bg-white hover:scale-[101%] duration-[400ms] rounded-xl border shadow-md transition-all cursor-pointer hover:shadow-lg card border-neutral-300"
+      className="p-5 my-3 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-300 cursor-pointer hover:shadow-md"
       id={id}
     >
-      {isSameUser && (
-        <div className="mr-3 text-2xl" onClick={switchHandler}>
-          <HiSwitchHorizontal />
+      <div className="flex justify-between items-start">
+        <div className="overflow-hidden whitespace-normal break-words grow text-ellipsis">
+          <div className="flex gap-2 items-center mb-2">
+            <p className="text-lg font-medium text-gray-900">{front}</p>
+            <TextToSpeech text={front} />
+          </div>
+          <p className="text-sm text-gray-500">{back}</p>
         </div>
-      )}
 
-      <div className="overflow-hidden whitespace-normal break-words grow text-ellipsis">
         <div className="flex gap-2 items-center">
-          <p className="text-lg sm:text-base">{front}</p>
-          <TextToSpeech text={front} />
+          {isSameUser && (
+            <button
+              className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                switchHandler();
+              }}
+            >
+              <HiSwitchHorizontal className="w-5 h-5" />
+            </button>
+          )}
+
+          <div onClick={(e) => e.stopPropagation()}>
+            {isSameUser ? (
+              !selectedItems?.length ? (
+                <ActionsDropdown
+                  isCard={true}
+                  setSelectedItems={setSelectedItems}
+                  itemId={id}
+                  moveHandler={moveHandler}
+                  deleteHandler={deleteHandler}
+                />
+              ) : (
+                <SelectCheckBox
+                  id={id}
+                  selectedItems={selectedItems}
+                  setSelectedItems={setSelectedItems}
+                />
+              )
+            ) : null}
+          </div>
         </div>
-        <small className="text-base text-gray-500 truncate">{back}</small>
-      </div>
-      <div onClick={(e) => e.stopPropagation()}>
-        {isSameUser ? (
-          !selectedItems?.length ? (
-            <>
-              <ActionsDropdown
-                isCard={true}
-                setSelectedItems={setSelectedItems}
-                itemId={id}
-                moveHandler={moveHandler}
-                deleteHandler={deleteHandler}
-              />
-            </>
-          ) : (
-            <SelectCheckBox
-              id={id}
-              selectedItems={selectedItems}
-              setSelectedItems={setSelectedItems}
-            />
-          )
-        ) : null}
       </div>
     </div>
   );

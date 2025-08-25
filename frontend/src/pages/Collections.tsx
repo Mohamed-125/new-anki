@@ -40,34 +40,32 @@ const Collections = () => {
         <SelectedItemsController isItemsCollections={true} />
       )}
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 justify-between items-start sm:flex-row sm:items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
-        </div>
-
-        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:flex-row sm:items-center">
+        <div className="flex gap-4 justify-between items-center my-4 sm:flex-row sm:items-center">
+          <h1 className="text-3xl font-bold text-gray-900">
+            <span className="text-gray-500">({collectionsCount})</span>{" "}
+            Collections
+          </h1>
+          <div className="flex-1 max-w-md">
             <Search
               searchingFor="collections"
               query={query}
               setQuery={setQuery}
             />
-            <h6 className="text-sm font-medium text-gray-500">
-              {collectionsCount} collections
-            </h6>
           </div>
+          <Button
+            className="flex items-center gap-2 px-4 py-2.5 text-white bg-[#5a3aa5] hover:bg-[#4a2a95] rounded-lg transition-colors shadow-sm"
+            onClick={() => setIsCollectionModalOpen(true)}
+          >
+            <span className="text-xl">+</span>
+            Create collection
+          </Button>
         </div>
-        <Button
-          className="flex ml-auto items-center gap-2 px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-          onClick={() => setIsCollectionModalOpen(true)}
-        >
-          <span className="text-xl">+</span>
-          Create new collection
-        </Button>
+
         <InfiniteScroll
           fetchNextPage={fetchNextPage}
           isFetchingNextPage={isFetchingNextPage}
           hasNextPage={hasNextPage}
-          className="grid grid-cols-3 gap-2 md:grid-cols-2 sm:grid-cols-1"
+          className=""
         >
           {collections?.map((collection) => (
             <Collection collection={collection} key={collection._id} />

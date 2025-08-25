@@ -127,14 +127,12 @@ const StudyCards = () => {
 
     let easeFactor =
       answer === "easy"
-        ? +cardsToStudy[currentCard].easeFactor + 0.25
+        ? Math.min(1, +cardsToStudy[currentCard].easeFactor + 0.25)
         : answer === "medium"
-        ? +cardsToStudy[currentCard].easeFactor + 0.16
+        ? Math.min(1, +cardsToStudy[currentCard].easeFactor + 0.16)
         : answer === "hard"
-        ? +cardsToStudy[currentCard].easeFactor - 0.25
-        : 0;
-
-    easeFactor = easeFactor > 1 ? 1 : easeFactor <= 0 ? 0 : easeFactor;
+        ? Math.max(0, +cardsToStudy[currentCard].easeFactor - 0.25)
+        : Math.max(0, +cardsToStudy[currentCard].easeFactor - 0.25);
 
     updatedCardsRef.current.push({ _id: card._id, easeFactor });
 
@@ -163,7 +161,7 @@ const StudyCards = () => {
         }
         return nextIndex;
       }
-      if (pre >= cardsToStudy.length - 1) {
+      if (pre >= cardsToStudy.length - 1 && !hardCardsToRepeat.length) {
         navigate("/congrats", { replace: true });
         return pre;
       } else {

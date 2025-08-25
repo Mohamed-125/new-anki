@@ -41,10 +41,10 @@ const Button = React.forwardRef<
     {
       variants: {
         variant: {
-          primary: "bg-primary hover:bg-blue-600",
+          primary: "bg-primary hover:bg-lightPrimary",
           dark: "bg-dark-primary hover:bg-opacity-90",
           "primary-outline":
-            "border-primary border bg-transparent  hover:bg-blue-50 text-blue-700",
+            "border-primary border bg-transparent text-primary hover:bg-lightPrimary hover:text-white",
           danger: "bg-red-600 hover:bg-red-700",
           "danger-outline":
             "border-red-600 bg-transparent hover:bg-red-500 text-red-600",

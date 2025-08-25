@@ -1,5 +1,5 @@
 import { Folder, Icon } from "lucide-react";
-import React from "react";
+import React, { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import ActionsDropdown from "../ActionsDropdown";
 import SelectCheckBox from "../SelectCheckBox";
@@ -27,7 +27,7 @@ const ItemCard = ({
   deleteHandler?: any;
   id: string;
   name: string;
-  subText?: string;
+  subText?: ReactNode;
   Icon: any;
   isNotes?: boolean;
   shareHandler?: () => void;
@@ -38,19 +38,12 @@ const ItemCard = ({
 }) => {
   const { selectedItems, setSelectedItems } = useModalsStates();
   const linkContent = (
-    <div className="flex flex-1 gap-4 items-center">
-      <div
-        data-lov-name="div"
-        data-component-line="70"
-        className="p-3 bg-blue-100 *:w-6 *:h-6 text-primary rounded-lg dark:bg-indigo-900/30"
-      >
+    <div className="flex flex-1 gap-3 items-center">
+      <div className="p-2.5 bg-[#ebe7f8] *:w-5 *:h-5 text-[#5a3aa5] rounded-lg">
         {Icon}
       </div>
-      <div>
-        <p className="flex-1 font-semibold">{name}</p>
-        {subText && (
-          <span className="text-sm font-medium text-grayColor">{subText}</span>
-        )}
+      <div className="overflow-hidden whitespace-normal break-words grow text-ellipsis">
+        <p className="flex-1 font-semibold text-gray-800">{name}</p>
       </div>
     </div>
   );
@@ -58,40 +51,43 @@ const ItemCard = ({
   return (
     <div
       id={id}
-      className="rounded-lg border  p-6 py-7 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg cursor-pointer bg-white dark:bg-[#242326] hover:translate-y-[-2px] border-[#e5e5e5] dark:border-[#2D2D2D]"
+      className="rounded-xl my-3 border py-6 px-5 text-card-foreground shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer bg-white hover:translate-y-[-2px] border-[#e5e5e5]"
     >
-      <div className="flex items-center">
+      <div className="flex justify-between items-center">
         {isNotes ? (
           linkContent
         ) : (
           <Link
             to={to || `${location.pathname}/${id}`}
             state={{ sectionId }}
-            className="flex flex-1 gap-4 items-center"
+            className="flex flex-1 gap-3 items-center"
           >
             {linkContent}
           </Link>
         )}
-        <div onClick={(e) => e.stopPropagation()}>
-          {id &&
-            isSameUser &&
-            (!selectedItems.length ? (
-              <ActionsDropdown
-                moveHandler={moveHandler}
-                editHandler={editHandler}
-                deleteHandler={deleteHandler}
-                shareHandler={shareHandler}
-                itemId={id}
-                isSameUser={isSameUser}
-                setSelectedItems={select ? setSelectedItems : undefined}
-              />
-            ) : (
-              <SelectCheckBox
-                id={id}
-                setSelectedItems={setSelectedItems}
-                selectedItems={selectedItems}
-              />
-            ))}
+        <div className="flex gap-2 items-center">
+          <div className="text-lg font-semibold">{subText}</div>
+          <div onClick={(e) => e.stopPropagation()}>
+            {id &&
+              isSameUser &&
+              (!selectedItems.length ? (
+                <ActionsDropdown
+                  moveHandler={moveHandler}
+                  editHandler={editHandler}
+                  deleteHandler={deleteHandler}
+                  shareHandler={shareHandler}
+                  itemId={id}
+                  isSameUser={isSameUser}
+                  setSelectedItems={select ? setSelectedItems : undefined}
+                />
+              ) : (
+                <SelectCheckBox
+                  id={id}
+                  setSelectedItems={setSelectedItems}
+                  selectedItems={selectedItems}
+                />
+              ))}
+          </div>
         </div>
       </div>
     </div>

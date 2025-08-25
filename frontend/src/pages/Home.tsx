@@ -52,22 +52,19 @@ const Home = () => {
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
       <SelectedItemsController isItemsCards={true} />
-      <Search searchingFor="cards" query={query} setQuery={setQuery} />
-      <h6 className="mt-4 text-lg font-bold text-gray-400">
+      <h6 className="mb-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>
-      <div className="flex gap-2 justify-between items-center mt-2">
+      <Search searchingFor="cards" query={query} setQuery={setQuery} />
+      <div className="flex gap-2 justify-between items-center my-5">
         <Link to="/study-cards">
-          <Button
-            variant="primary-outline"
-            className="px-3 py-3 sm:px-2 sm:text-sm"
-          >
+          <Button variant="primary-outline" className="py-3 sm:text-sm">
             Study Your Cards
           </Button>
         </Link>
 
         <Button
-          className={"px-2 py-3 my-7 sm:px-2 sm:text-sm"}
+          className={"py-3 sm:text-sm"}
           onClick={() => states.setIsAddCardModalOpen(true)}
         >
           Create a new card

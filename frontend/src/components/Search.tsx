@@ -1,5 +1,5 @@
 import React from "react";
-import Form from "./Form";
+import { Search as SearchIcon } from "lucide-react";
 
 type SearchProps = {
   query: string;
@@ -13,25 +13,20 @@ const Search = React.memo(function Search({
   setQuery,
 }: SearchProps) {
   return (
-    <>
-      <Form
-        className={
-          "flex px-0 py-0 mb-6 w-full max-w-none text-lg bg-transparent rounded-xl"
+    <div className="relative w-full">
+      <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+        <SearchIcon className="w-4 h-4 text-gray-500" />
+      </div>
+      <input
+        type="text"
+        className="w-full py-2 pl-10 pr-4 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5a3aa5] focus:border-transparent"
+        placeholder={`Search in ${searchingFor}`}
+        value={query}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setQuery(e.target.value)
         }
-      >
-        <div className="grow">
-          <Form.Label>Search Your {searchingFor}</Form.Label>
-          <Form.Input
-            className="py-2 text-black bg-gray-200 rounded-xl"
-            value={query}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setQuery(e.target.value)
-            }
-            name="query"
-          />
-        </div>
-      </Form>
-    </>
+      />
+    </div>
   );
 });
 

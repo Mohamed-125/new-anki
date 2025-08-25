@@ -9,11 +9,11 @@
   --dark-primary: rgb(46, 46, 46);
   --light-gray: rgb(235, 235, 235);
   --off-white: rgb(245, 245, 245);
-  --primary: rgb(59 130 246); /* bg-blue-500 */
+  --primary: #5a3aa5; /* bg-blue-500 */
   --lightPrimary: rgb(95, 145, 255); /* bg-blue-500 */
   --danger: rgb(220, 38, 38); /* bg-red-500 */
   --greenColor: rgb(58, 216, 116); /* bg-green-500 */
-  --font: "Inter", sans-serif;
+  --font: "Open Sans", sans-serif;
 }
 
 @layer utilities {

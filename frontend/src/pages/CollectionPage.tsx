@@ -53,8 +53,8 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     enabled: Boolean(collection?._id),
     collectionId: collection?._id,
   });
-  const { deleteCollectionHandler, forkCollectionHandler } = useCollectionActions();
-
+  const { deleteCollectionHandler, forkCollectionHandler } =
+    useCollectionActions();
 
   const handleAddCard = useMemo(
     () => () => {
@@ -143,212 +143,209 @@ const CollectionPage = React.memo(function CollectionPage({}) {
           parentName="collection"
         /> */}
         <div className="py-8 min-h-screen">
-          <div className="mt-6 space-y-6">
-            <div className="space-y-8">
-              <div className="bg-white rounded-xl mx-auto py-9 !w-[90%]">
-                <div className="container">
-                  {/* Header courseLevel */}
-                  <div className="flex flex-col gap-4 pb-6 border-b border-gray-200">
-                    <div className="flex justify-between items-start md:block">
-                      <h1 className="text-3xl font-bold text-gray-800 md:mb-3">
-                        {collection?.name}
-                      </h1>
+          <div className="space-y-8">
+            <div className="container">
+              {/* Header courseLevel */}
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start md:block">
+                  <h1 className="text-3xl font-bold text-gray-800 md:mb-3">
+                    {collection?.name}
+                  </h1>
 
-                      <div className="flex gap-3">
-                        {isSameUser ? (
-                          <>
-                            <Button
-                              variant="primary-outline"
-                              className="flex gap-2 items-center hover:bg-blue-50"
-                            >
-                              <Link to={"/study-cards/" + id}>
-                                <span className="flex gap-2 items-center">
-                                  📚 Study Now
-                                </span>
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="primary-outline"
-                              className="flex gap-2 items-center hover:bg-blue-50"
-                              onClick={async () => {
-                                try {
-                                  const response = await fetch(
-                                    `/api/collections/${collection?._id}/cards`
-                                  );
-                                  if (!response.ok)
-                                    throw new Error("Failed to fetch cards");
-                                  const allCards = await response.json();
+                  <div className="flex gap-3">
+                    {isSameUser ? (
+                      <>
+                        <Button
+                          variant="primary-outline"
+                          className="flex gap-2 items-center hover:bg-blue-50"
+                        >
+                          <Link to={"/study-cards/" + id}>
+                            <span className="flex gap-2 items-center">
+                              📚 Study Now
+                            </span>
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="primary-outline"
+                          className="flex gap-2 items-center hover:bg-blue-50"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(
+                                `/api/collections/${collection?._id}/cards`
+                              );
+                              if (!response.ok)
+                                throw new Error("Failed to fetch cards");
+                              const allCards = await response.json();
 
-                                  const cardsJson = {
-                                    cards: allCards.map((card) => ({
-                                      front: card.front,
-                                      back: card.back,
-                                      content: card.content || "",
-                                    })),
-                                  };
-                                  const jsonStr = JSON.stringify(
-                                    cardsJson,
+                              const cardsJson = {
+                                cards: allCards.map((card) => ({
+                                  front: card.front,
+                                  back: card.back,
+                                  content: card.content || "",
+                                })),
+                              };
+                              const jsonStr = JSON.stringify(
+                                cardsJson,
+                                null,
+                                2
+                              );
+
+                              await navigator.clipboard.writeText(jsonStr);
+                              addToast(
+                                "All cards JSON copied to clipboard!",
+                                "success"
+                              );
+                            } catch (error) {
+                              console.error("Error copying cards:", error);
+                              // Show modal with JSON content for manual copying if available
+                              if (collectionCards) {
+                                const fallbackJson = {
+                                  cards: collectionCards.map((card) => ({
+                                    front: card.front,
+                                    back: card.back,
+                                    content: card.content || "",
+                                  })),
+                                };
+                                setDefaultValues({
+                                  exportJson: JSON.stringify(
+                                    fallbackJson,
                                     null,
                                     2
-                                  );
-
-                                  await navigator.clipboard.writeText(jsonStr);
-                                  addToast(
-                                    "All cards JSON copied to clipboard!",
-                                    "success"
-                                  );
-                                } catch (error) {
-                                  console.error("Error copying cards:", error);
-                                  // Show modal with JSON content for manual copying if available
-                                  if (collectionCards) {
-                                    const fallbackJson = {
-                                      cards: collectionCards.map((card) => ({
-                                        front: card.front,
-                                        back: card.back,
-                                        content: card.content || "",
-                                      })),
-                                    };
-                                    setDefaultValues({
-                                      exportJson: JSON.stringify(
-                                        fallbackJson,
-                                        null,
-                                        2
-                                      ),
-                                      isExportModalOpen: true,
-                                    });
-                                  } else {
-                                    addToast("Failed to copy cards", "error");
-                                  }
-                                }
-                              }}
-                            >
-                              <span className="flex gap-2 items-center">
-                                📋 Copy Cards JSON
-                              </span>
-                            </Button>
-                            <Button
-                              className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
-                              onClick={() => {
-                                setDefaultValues({
-                                  collectionId: id,
-                                  sectionId: collection?.sectionId,
+                                  ),
+                                  isExportModalOpen: true,
                                 });
-                                setIsAddCardModalOpen(true);
-                              }}
-                            >
-                              <span>+</span> Add Card
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="primary"
-                            className="flex gap-2 items-center"
-                            onClick={async () => {
-                              const toast = addToast(
-                                "Forking collection...",
-                                "promise"
-                              );
-                              try {
-                                await forkCollectionHandler(id);
-                                toast.setToastData({
-                                  title: "Collection forked successfully!",
-                                  type: "success",
-                                });
-                              } catch (err) {
-                                console.error("Error forking collection:", err);
-                                toast.setToastData({
-                                  title: "Failed to fork collection",
-                                  type: "error",
-                                });
+                              } else {
+                                addToast("Failed to copy cards", "error");
                               }
-                            }}
-                          >
-                            Add to your collections
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {/* Search courseLevel */}
-                  <div className="mt-6 rounded-lg white">
-                    {/* <Search
-                      label="Search cards"
-                      filter="front"
-                    /> */}
-                    <Search
-                      searchingFor="Cards"
-                      query={query}
-                      setQuery={setQuery}
-                    />
-                  </div>
-                  {/* Sub Collections courseLevel */}
-                  <div className="mt-8">
-                    <div className="flex flex-wrap justify-between items-center mb-5">
-                      <h2 className="text-xl font-medium text-gray-700">
-                        Sub Collections
-                        <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 mt-3 text-gray-600 rounded-full">
-                          {collection?.subCollections?.length || 0}
-                        </span>
-                      </h2>
-                      {isSameUser && (
+                            }
+                          }}
+                        >
+                          <span className="flex gap-2 items-center">
+                            📋 Copy Cards JSON
+                          </span>
+                        </Button>
                         <Button
                           className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
                           onClick={() => {
-                            setDefaultValues({ parentCollectionId: id });
-                            setIsCollectionModalOpen(true);
+                            setDefaultValues({
+                              collectionId: id,
+                              sectionId: collection?.sectionId,
+                            });
+                            setIsAddCardModalOpen(true);
                           }}
                         >
-                          <span>+</span> New Sub Collection
+                          <span>+</span> Add Card
                         </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 lg:grid-cols-2 md:grid-cols-1">
-                      {memoizedSubCollections}
-                    </div>
-                  </div>{" "}
-                </div>
-              </div>
-              {/* Cards courseLevel */}
-              <div className="container space-y-4">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-medium text-gray-700">
-                    Cards
-                    <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
-                      {cardsCount || 0}
-                    </span>
-                  </h2>
-                </div>
-
-                {isIntialLoading && <CardsSkeleton />}
-                {collectionCards?.length ? (
-                  <InfiniteScroll
-                    hasNextPage={hasNextPage}
-                    loadingElement={<CardsSkeleton />}
-                    fetchNextPage={fetchNextPage}
-                    isFetchingNextPage={isFetchingNextPage}
-                  >
-                    {memoizedCards}
-                  </InfiniteScroll>
-                ) : (
-                  <div className="flex flex-col justify-center items-center py-16 bg-white rounded-lg border-gray-200 border-dashed mt-6border-2 ed-xl white">
-                    <p className="mb-4 text-gray-500">
-                      Start by adding your first card
-                    </p>
-                    {user?._id === collection?.userId && (
+                      </>
+                    ) : (
                       <Button
-                        className="flex gap-2 items-center px-6 py-3 text-white rounded-lg transition-all"
-                        onClick={() => {
-                          setDefaultValues({ collectionId: id });
-                          setIsAddCardModalOpen(true);
+                        variant="primary"
+                        className="flex gap-2 items-center"
+                        onClick={async () => {
+                          const toast = addToast(
+                            "Forking collection...",
+                            "promise"
+                          );
+                          try {
+                            await forkCollectionHandler(id);
+                            toast.setToastData({
+                              title: "Collection forked successfully!",
+                              type: "success",
+                            });
+                          } catch (err) {
+                            console.error("Error forking collection:", err);
+                            toast.setToastData({
+                              title: "Failed to fork collection",
+                              type: "error",
+                            });
+                          }
                         }}
                       >
-                        <span>+</span> Create Card
+                        Add to your collections
                       </Button>
                     )}
                   </div>
-                )}
+                </div>
               </div>
+              {/* Search courseLevel */}
+              <div className="mt-6 rounded-lg white">
+                {/* <Search
+                      label="Search cards"
+                      filter="front"
+                    /> */}
+                <Search
+                  searchingFor="Cards"
+                  query={query}
+                  setQuery={setQuery}
+                />
+              </div>
+              {/* Sub Collections courseLevel */}
+              <div className="mt-8">
+                <div className="flex flex-wrap justify-between items-center mb-5">
+                  <h2 className="text-xl font-medium text-gray-700">
+                    Sub Collections
+                    <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 mt-3 text-gray-600 rounded-full">
+                      {collection?.subCollections?.length || 0}
+                    </span>
+                  </h2>
+                  {isSameUser && (
+                    <Button
+                      className="flex gap-2 items-center px-4 py-2 text-white rounded-lg transition-all"
+                      onClick={() => {
+                        setDefaultValues({ parentCollectionId: id });
+                        setIsCollectionModalOpen(true);
+                      }}
+                    >
+                      <span>+</span> New Sub Collection
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 lg:grid-cols-2 md:grid-cols-1">
+                  {memoizedSubCollections}
+                </div>
+              </div>{" "}
+            </div>
+
+            {/* Cards courseLevel */}
+            <div className="container space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-medium text-gray-700">
+                  Cards
+                  <span className="ml-2 px-2 py-0.5 text-sm bg-gray-100 text-gray-600 rounded-full">
+                    {cardsCount || 0}
+                  </span>
+                </h2>
+              </div>
+
+              {isIntialLoading && <CardsSkeleton />}
+              {collectionCards?.length ? (
+                <InfiniteScroll
+                  hasNextPage={hasNextPage}
+                  loadingElement={<CardsSkeleton />}
+                  fetchNextPage={fetchNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                >
+                  {memoizedCards}
+                </InfiniteScroll>
+              ) : (
+                <div className="flex flex-col justify-center items-center py-16 bg-white rounded-lg border-gray-200 border-dashed mt-6border-2 ed-xl white">
+                  <p className="mb-4 text-gray-500">
+                    Start by adding your first card
+                  </p>
+                  {user?._id === collection?.userId && (
+                    <Button
+                      className="flex gap-2 items-center px-6 py-3 text-white rounded-lg transition-all"
+                      onClick={() => {
+                        setDefaultValues({ collectionId: id });
+                        setIsAddCardModalOpen(true);
+                      }}
+                    >
+                      <span>+</span> Create Card
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -27,7 +27,7 @@ const Collection = ({ collection, sectionId, to }: CollectionProps) => {
   } = useModalsStates();
 
   const { deleteCollectionHandler } = useCollectionActions();
-  
+
   const deleteHandler = () => {
     deleteCollectionHandler(id);
   };
@@ -58,6 +58,14 @@ const Collection = ({ collection, sectionId, to }: CollectionProps) => {
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === collection.userId;
 
+  console.log(user?._id, collection);
+  const subText = (
+    <div className="flex flex-col items-center">
+      <h6 className="text-xl font-bold">{collection.cardsCount || 0}</h6>
+      <p className="font-semibold text-gray-400">Cards</p>
+    </div>
+  );
+
   return (
     <ItemCard
       isSameUser={isSameUser || Boolean(sectionId)}
@@ -66,6 +74,7 @@ const Collection = ({ collection, sectionId, to }: CollectionProps) => {
       sectionId={sectionId}
       Icon={<Folder />}
       name={collection.name}
+      subText={subText}
       editHandler={editHandler}
       deleteHandler={deleteHandler}
       moveHandler={moveHandler}
