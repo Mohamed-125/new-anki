@@ -49,7 +49,12 @@ const Subtitles = memo(function ({
   const { setDefaultValues, setIsAddCardModalOpen, setContent, setEditId } =
     useModalsStates();
 
-  const { selectionData, setSelectionData } = useSelection();
+  const translationRef = useRef<HTMLElement>(null);
+  const captionsDiv = useRef<HTMLElement>(null);
+  const { selectionData, setSelectionData } = useSelection({
+    captionsDiv: captionsDiv,
+    translationRef: translationRef,
+  });
 
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === video?.userId;
@@ -92,6 +97,7 @@ const Subtitles = memo(function ({
           <div className="relative select-text subtitles-div grow">
             {isCaptionLoading && <Loading />}
             <TranslationWindow
+              translationRef={translationRef}
               setIsAddCardModalOpen={setIsAddCardModalOpen}
               setDefaultValues={setDefaultValues}
               selectionData={selectionData}
@@ -260,8 +266,7 @@ const Subtitle = memo(function ({
         id={"subtitle-" + n}
         key={subtitle._id}
         className={`cursor-pointer select-text group subtitle-item ${
-          isActive ? "subtitle-active" : ""
-        }`}
+          isActive ? "subtitle-active" : ""}`}
       >
         <div className="relative py-4 border-b-2 border-gray-200">
           <div

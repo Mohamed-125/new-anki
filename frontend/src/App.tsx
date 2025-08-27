@@ -55,6 +55,7 @@ import Header from "./components/Header.tsx";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const links = [
     { name: "Home", path: "/" },
@@ -73,10 +74,14 @@ function App() {
       <Router>
         <LanguageProvider user={user}>
           <div className="flex min-h-screen">
-            <Sidebar links={links} />
+            <Sidebar 
+              links={links} 
+              isMobileOpen={isMobileOpen} 
+              setIsMobileOpen={setIsMobileOpen}
+            />
 
             <div className="overflow-y-auto flex-1 bg-white">
-              <Header />
+              <Header setIsMobileOpen={setIsMobileOpen} />
               <Routes>
                 <Route
                   path={`/`}

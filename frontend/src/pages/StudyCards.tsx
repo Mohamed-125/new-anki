@@ -115,8 +115,7 @@ const StudyCards = () => {
         .patch(`card/batch`, {
           toUpdateCardsData: updatedCardsRef.current,
         })
-        .then(() => {
-        });
+        .then(() => {});
     };
   }, []);
 
@@ -246,7 +245,7 @@ const StudyCards = () => {
   // }
 
   return (
-    <div className="min-h-screen bg-[#f0f7ff]">
+    <div className="min-h-screen bg-[rgba(173,150,255,0.08)]">
       <AddCardModal />
       <div className="w-full bg-white shadow-sm">
         <div className="container px-4 py-4 mx-auto">
@@ -577,15 +576,12 @@ const StudyCards = () => {
                       <p className="mb-4 text-sm text-gray-500">
                         TRY GUESSING FIRST, THEN CLICK ON THE CARD OR
                       </p>
-                      <button
-                        className="inline-flex items-center px-4 py-2 text-white bg-blue-500 rounded-md transition-colors sm:flex-col sm:gap-2 hover:bg-blue-600"
-                        onClick={() => setShowAnswer(true)}
-                      >
-                        <span className="mr-2 bg-white text-blue-500 px-2 py-0.5 rounded text-xs font-bold">
+                      <Button onClick={() => setShowAnswer(true)}>
+                        <span className="mr-2 bg-white text-primary px-2 py-0.5 rounded text-xs font-bold">
                           SPACE
                         </span>
                         To reveal the answer{" "}
-                      </button>
+                      </Button>
                     </motion.div>
                   )}
                 </AnimatePresence>

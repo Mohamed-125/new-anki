@@ -1,4 +1,5 @@
 import React, {
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -7,61 +8,12 @@ import React, {
   useState,
 } from "react";
 
-const getBackValue = (
-  translationData: any,
-  targetLanguage: string,
-  selectedTranslations: string[]
-) => {
-  if (translationData?.word?.translations) {
-    console.log("translations exists", translationData, selectedTranslations);
-    return selectedTranslations.length > 0
-      ? selectedTranslations
-      : translationData.word.translations[targetLanguage] || [];
-  }
-  return translationData?.translatedWord
-    ? [translationData.translatedWord]
-    : [];
-};
-
-const getFrontValue = (
-  translationData: any,
-  selectedLearningLanguage: string,
-  defaultText: string
-) => {
-  if (translationData?.base?.singular) {
-    return translationData.base.singular + " / " + translationData.base.plural;
-  }
-
-  if (translationData?.word?.base?.singular) {
-    let frontValue = "";
-    const isGerman = selectedLearningLanguage.toLowerCase() === "de";
-    const lemmaWords = translationData.word.lemma.split(" ");
-
-    if (lemmaWords.length === 1) {
-      frontValue = translationData.word.lemma;
-    } else {
-      frontValue =
-        (isGerman ? lemmaWords[0] + " " : "") +
-        translationData.word.base.singular;
-    }
-
-    if (isGerman && translationData.word.base.plural) {
-      frontValue += " / die " + translationData.word.base.plural;
-    } else if (translationData.word.base.plural) {
-      frontValue += " / " + translationData.word.base.plural;
-    }
-
-    return frontValue;
-  }
-
-  return defaultText;
-};
 import "./TranslationWindow.css";
 import Button from "./Button";
 import axios from "axios";
 import Loading from "./Loading";
 import Form from "./Form";
-import { BookType, ExternalLink, Save, Plus } from "lucide-react";
+import { BookType, ExternalLink, Save, Plus, Volume2 } from "lucide-react";
 
 import { TextToSpeech } from "./TextToSpeech";
 import { twMerge } from "tailwind-merge";
@@ -74,23 +26,85 @@ import useToasts from "@/hooks/useToasts";
 import { fetchConjugations } from "../utils/conjugations";
 import useModalsStates from "@/hooks/useModalsStates";
 import { Skeleton } from "./ui/skeleton";
+import { motion } from "framer-motion";
 
 const TranslationWindow = ({
   selectionData,
   setIsAddCardModalOpen,
   setDefaultValues,
+  translationRef,
 }: {
   selectionData: {
     text: string;
   };
   setIsAddCardModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setDefaultValues: any;
+  translationRef: RefObject<HTMLElement>;
 }) => {
+  const getBackValue = (
+    translationData: any,
+    targetLanguage: string,
+    selectedTranslations: string[]
+  ) => {
+    if (translationData?.word?.translations) {
+      console.log("translations exists", translationData, selectedTranslations);
+      return selectedTranslations.length > 0
+        ? selectedTranslations
+        : translationData.word.translations[targetLanguage] || [];
+    }
+    return translationData?.translatedWord
+      ? [translationData.translatedWord]
+      : [];
+  };
+
+  const getFrontValue = (
+    translationData: any,
+    selectedLearningLanguage: string,
+    defaultText: string
+  ) => {
+    if (translationData?.base?.singular) {
+      return (
+        translationData.base.singular + " / " + translationData.base.plural
+      );
+    }
+
+    if (translationData?.word?.base?.singular) {
+      let frontValue = "";
+      const isGerman = selectedLearningLanguage.toLowerCase() === "de";
+      const lemmaWords = translationData.word.lemma.split(" ");
+
+      if (lemmaWords.length === 1) {
+        frontValue = translationData.word.lemma;
+      } else {
+        frontValue =
+          (isGerman ? lemmaWords[0] + " " : "") +
+          translationData.word.base.singular;
+      }
+
+      if (isGerman && translationData.word.base.plural) {
+        frontValue += " / die " + translationData.word.base.plural;
+      } else if (translationData.word.base.plural) {
+        frontValue += " / " + translationData.word.base.plural;
+      }
+
+      return frontValue;
+    }
+
+    return defaultText;
+  };
+
   // const parent =
   //   selectionData?.ele?.parentElement?.parentElement?.parentElement;
   // const rect = parent.getBoundingClientRect();
   const [translatedText, setTranslatedText] = useState("");
-  const [targetLanguage, setTargetLanguage] = useState("en"); // Default to English
+  const [targetLanguage, setTargetLanguage] = useState(() => {
+    const savedLanguage = localStorage.getItem("targetLanguage");
+    return savedLanguage || "en"; // Default to English if no saved preference
+  });
+
+  useEffect(() => {
+    localStorage.setItem("targetLanguage", targetLanguage);
+  }, [targetLanguage]);
   const [isTranslationLoading, setIsTranslationLoading] = useState(false);
   const [selectedTranslations, setSelectedTranslations] = useState<string[]>(
     []
@@ -433,13 +447,18 @@ const TranslationWindow = ({
   }, [isAddCardModalOpen]);
 
   return (
-    <div
+    <motion.div
       id="translationContainer"
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={twMerge(
-        "absolute z-30 hidden max-w-[300px] shadow-md",
+        "absolute z-30 hidden max-w-[320px] shadow-xl backdrop-blur-md bg-white/95 dark:bg-gray-900/95 dark:border-gray-800/50",
         selectionData.text && selectionData.text.length < 250 && "block",
         !isTranslationBoxOpen && "!w-0"
       )}
+      ref={translationRef}
       style={{
         top: document.getElementById("captions-div")
           ? videoPosition.top
@@ -450,20 +469,20 @@ const TranslationWindow = ({
       }}
     >
       {!isTranslationBoxOpen ? (
-        <Button
+        <motion.button
           id="translateBtn"
-          className="p-2 bg-blue-400 border-none"
+          className="p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all"
           onClick={() => setTimeout(() => setIsTranslationBoxOpen(true), 0)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          {isTranslationBoxOpen}
-          <BookType className="pointer-events-none" />
-        </Button>
+          <BookType className="w-5 h-5" />
+        </motion.button>
       ) : (
         <div
           id="translationWindow"
           className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
-            isTranslationBoxOpen ? "open" : ""
-          }`}
+            isTranslationBoxOpen ? "open" : ""}`}
         >
           {translationData?.fromDatabase ? (
             <>
@@ -483,12 +502,24 @@ const TranslationWindow = ({
                   </option>
                 ))}
               </Form.Select>
-              <div className="flex gap-1 items-center mt-2">
-                <TextToSpeech
-                  text={selectionData.text}
-                  language={selectedLearningLanguage.toLowerCase()}
-                />
-                <p className="font-semibold text-md">{selectionData.text}</p>
+              <div className="flex gap-3 items-start p-4 mt-2 bg-gradient-to-br from-gray-50 rounded-xl border border-gray-100 to-gray-100/50">
+                <motion.button
+                  className="p-2 text-indigo-600 rounded-lg transition-colors hover:text-indigo-700 hover:bg-indigo-50"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    const utterance = new SpeechSynthesisUtterance(
+                      selectionData.text
+                    );
+                    utterance.lang = selectedLearningLanguage.toLowerCase();
+                    window.speechSynthesis.speak(utterance);
+                  }}
+                >
+                  <Volume2 className="w-4 h-4" />
+                </motion.button>
+                <p className="font-medium leading-relaxed text-gray-800">
+                  {selectionData.text}
+                </p>
               </div>
               {translationData?.word.base.plural && (
                 <div className="p-2 text-gray-700 bg-gray-50 rounded-lg">
@@ -514,7 +545,20 @@ const TranslationWindow = ({
               <hr className="my-2 !mb-5" />
               <div className="relative min-h-20">
                 {isTranslationLoading ? (
-                  <Loading />
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="w-3/4 h-6 bg-gray-200 rounded-md animate-pulse dark:bg-gray-800" />
+                      <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse dark:bg-gray-800" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="w-1/2 h-8 bg-gray-200 rounded-lg animate-pulse dark:bg-gray-800" />
+                      <div className="flex gap-2">
+                        <div className="w-24 h-8 bg-gray-200 rounded-lg animate-pulse dark:bg-gray-800" />
+                        <div className="w-24 h-8 bg-gray-200 rounded-lg animate-pulse dark:bg-gray-800" />
+                        <div className="w-24 h-8 bg-gray-200 rounded-lg animate-pulse dark:bg-gray-800" />
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
@@ -581,8 +625,26 @@ const TranslationWindow = ({
                   <Loading />
                 ) : (
                   <div className="space-y-3">
-                    <div className="text-base">
-                      <p>{translationData?.translatedWord}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {translationData?.translatedWord && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleTranslationClick(
+                              translationData.translatedWord
+                            )
+                          }
+                          className={`px-3 py-1 rounded-full text-base transition-colors ${
+                            selectedTranslations.includes(
+                              translationData.translatedWord
+                            )
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {translationData.translatedWord}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -590,8 +652,11 @@ const TranslationWindow = ({
             </>
           )}
 
-          <div className="mt-3">
-            <p className="mb-2 text-xs font-medium text-gray-500">Actions</p>
+          <div className="pt-3 mt-4 border-t border-gray-100">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-xs font-medium text-gray-400">Actions</p>
+              <p className="text-xs text-indigo-500">Available options</p>
+            </div>
             <div className="flex overflow-x-auto gap-2 pb-1">
               <Button
                 className={"flex items-center p-2 h-9 text-sm"}
@@ -692,7 +757,7 @@ const TranslationWindow = ({
           </Drawer>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 export default React.memo(TranslationWindow);

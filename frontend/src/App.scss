@@ -27,14 +27,14 @@ body {
 }
 
 :root {
-  --grayColor: rgb(153, 153, 155);
-  --dark-primary: rgb(46, 46, 46);
-  --light-gray: rgb(235, 235, 235);
-  --off-white: rgb(245, 245, 245);
-  --primary: #5729ff; /* bg-blue-500 */
-  --lightPrimary: #6338ff; /* bg-blue-500 */
-  --danger: rgb(220, 38, 38); /* bg-red-500 */
-  --greenColor: rgb(58, 216, 116); /* bg-green-500 */
+  --grayColor: rgba(153, 153, 155, 1);
+  --dark-primary: rgba(46, 46, 46, 1);
+  --light-gray: rgba(235, 235, 235, 1);
+  --off-white: rgba(245, 245, 245, 1);
+  --primary: rgb(87, 41, 255); /*, 1 bg-blue-500 */
+  --lightPrimary: rgba(99, 56, 255, 1); /* bg-blue-500 */
+  --danger: rgba(220, 38, 38, 1); /* bg-red-500 */
+  --greenColor: rgba(58, 216, 116, 1); /* bg-green-500 */
   --font: "Inter", sans-serif;
 }
 

@@ -1,6 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { FaEdit, FaCheckCircle } from "react-icons/fa";
 import { FaTrashCan } from "react-icons/fa6";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -183,7 +189,12 @@ const Text = React.memo(function ({
     setShareItemId,
     setShareItemName,
   } = useModalsStates();
-  const { selectionData, setSelectionData } = useSelection();
+  const translationRef = useRef<HTMLDivElement>(null);
+  const textDivRef = useRef<HTMLDivElement>(null);
+  const { selectionData, setSelectionData } = useSelection({
+    translationRef: translationRef,
+    textDivRef: textDivRef,
+  });
   const { user } = useGetCurrentUser();
   const isSameUser = user?._id === text?.userId;
 
@@ -355,9 +366,11 @@ const Text = React.memo(function ({
       navigate("/texts", { replace: true });
     }
   };
+
   return (
     <>
       <TranslationWindow
+        translationRef={translationRef}
         setIsAddCardModalOpen={setIsAddCardModalOpen}
         setDefaultValues={setDefaultValues}
         selectionData={selectionData}
@@ -391,7 +404,7 @@ const Text = React.memo(function ({
             </div>
           </div>
         </div>
-        <div className="text-div">
+        <div className="text-div" ref={textDivRef}>
           {/* <TipTapEditor editor={editor} /> */}
           <Virtuoso
             style={{ height: "100vh", width: "100%" }}

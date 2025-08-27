@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, useTransition, useCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  useCallback,
+  RefObject,
+} from "react";
 import throttle from "lodash.throttle";
 
 type SelectionData = {
@@ -6,7 +13,17 @@ type SelectionData = {
   selection: Selection | null;
 };
 
-export default function useSelection(limit = 50) {
+export default function useSelection({
+  limit = 50,
+  captionsDiv,
+  translationRef,
+  textDivRef,
+}: {
+  limit?: number;
+  captionsDiv?: RefObject<HTMLElement>;
+  translationRef: RefObject<HTMLElement>;
+  textDivRef?: RefObject<HTMLElement>;
+}) {
   const [selectionData, setSelectionData] = useState<SelectionData>({
     text: "",
     selection: null,
@@ -14,17 +31,7 @@ export default function useSelection(limit = 50) {
 
   const [isPending, startTransition] = useTransition();
 
-  const captionsDiv = useRef<HTMLElement | null>(null);
-  const translationWindow = useRef<HTMLElement | null>(null);
-  const textDivRef = useRef<HTMLElement | null>(null);
-
   const lastText = useRef<string>("");
-
-  useEffect(() => {
-    captionsDiv.current = document.getElementById("captions-div");
-    translationWindow.current = document.getElementById("translationWindow");
-    textDivRef.current = document.querySelector(".text-div");
-  }, []);
 
   const updateSelection = useCallback(
     (sel: Selection, text: string) => {
@@ -55,23 +62,16 @@ export default function useSelection(limit = 50) {
     (sel: Selection | null) => {
       if (!sel || !sel.anchorNode) return resetSelection();
 
-      console.log(sel);
       const rawText = sel.toString();
-      const cleanedText = rawText.replace(/\s+/g, "").trim();
+      const cleanedText = rawText.replace(/\s+/g, " ").trim();
 
-      console.log(rawText);
-      // Filter out empty or single character selections
-      if (
-        !cleanedText ||
-        cleanedText.length < 2 ||
-        cleanedText.split("").length <= 1
-      ) {
-        console.log("resseting");
+      // Filter out invalid selections
+      if (!cleanedText || cleanedText.length < 2) {
         return resetSelection();
       }
 
       // Prevent selecting inside the translation popup
-      if (translationWindow.current?.contains(sel.anchorNode)) {
+      if (translationRef.current?.contains(sel.anchorNode)) {
         return resetSelection();
       }
 
@@ -97,38 +97,64 @@ export default function useSelection(limit = 50) {
   );
 
   useEffect(() => {
-    const captions = captionsDiv.current;
-    const textDiv = textDivRef.current;
+    const captions = captionsDiv?.current;
+    const textDiv = textDivRef?.current;
 
-    const handleSelection = () => {
+    const handleSelection = (e: MouseEvent | KeyboardEvent) => {
+      // Prevent handling if the selection is within the translation window
+      if (translationRef.current?.contains(e.target as Node)) {
+        return;
+      }
+
       const sel = window.getSelection();
-
       processSelection(sel);
     };
 
-    document.body.addEventListener("mouseup", resetSelection);
+    const handleGlobalMouseUp = (e: MouseEvent) => {
+      // Only reset if click is outside valid selection areas
+      if (
+        !captions?.contains(e.target as Node) &&
+        !textDiv?.contains(e.target as Node) &&
+        !translationRef.current?.contains(e.target as Node)
+      ) {
+        resetSelection();
+      }
+    };
+
+    // Global events
+    document.body.addEventListener("mouseup", handleGlobalMouseUp);
     document.body.addEventListener("keyup", resetSelection);
 
+    // Caption-specific events
     if (captions) {
       captions.addEventListener("mouseup", handleSelection);
       captions.addEventListener("keyup", handleSelection);
     }
+
+    // Text div specific events
     if (textDiv) {
       textDiv.addEventListener("mouseup", handleSelection);
       textDiv.addEventListener("keyup", handleSelection);
     }
-    return () => {
-      document.body.addEventListener("mouseup", resetSelection);
-      document.body.addEventListener("keyup", resetSelection);
 
+    return () => {
+      // Cleanup global events
+      document.body.removeEventListener("mouseup", handleGlobalMouseUp);
+      document.body.removeEventListener("keyup", resetSelection);
+
+      // Cleanup caption-specific events
       if (captions) {
         captions.removeEventListener("mouseup", handleSelection);
         captions.removeEventListener("keyup", handleSelection);
       }
+
+      // Cleanup text div specific events
       if (textDiv) {
         textDiv.removeEventListener("mouseup", handleSelection);
         textDiv.removeEventListener("keyup", handleSelection);
       }
+
+      // Cancel any pending throttled updates
       throttledUpdate.cancel();
     };
   }, [processSelection, throttledUpdate]);

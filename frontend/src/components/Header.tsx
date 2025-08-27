@@ -13,7 +13,8 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import Button from "./Button";
-
+import { Menu } from "lucide-react";
+import logo from "../assets/white logo.png";
 const ProfileDropdown = ({ user }: { user: UserType | null }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -170,7 +171,11 @@ const LanguagesDropdown = () => {
   );
 };
 
-const Header = () => {
+interface HeaderProps {
+  setIsMobileOpen: (open: boolean) => void;
+}
+
+const Header = ({ setIsMobileOpen }: HeaderProps) => {
   const { user } = useGetCurrentUser();
   const location = useLocation();
   const hideLayout = location.pathname.startsWith("/study-cards");
@@ -178,31 +183,43 @@ const Header = () => {
   return (
     <>
       {!hideLayout ? (
-        <header className="container flex z-0 justify-between h-20 bg-[#F9F9F9] border-b border-gray-200">
-          <div></div>
-          {user?._id ? (
-            <div className="flex gap-4">
-              <ProfileDropdown user={user} />
-              <LanguagesDropdown />
-            </div>
-          ) : (
-            <div className="hidden w-full md:block">
-              <Link to={"/login"}>
-                <Button
-                  variant="primary-outline"
-                  className={"mt-4"}
-                  size={"parent"}
-                >
-                  Login
-                </Button>{" "}
-              </Link>
-              <Link to={"/register"}>
-                <Button size={"parent"} className={"mt-4"}>
-                  Sign Up
-                </Button>
+        <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+          <div className="container flex justify-between items-center px-4 h-16">
+            <div className="flex gap-4 items-center md:gap-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden px-0 py-0 text-xl text-gray-500 md:flex"
+                onClick={() => setIsMobileOpen(true)}
+              >
+                <Menu className="w-8 h-8" />
+              </Button>
+
+              <Link to="/" className="flex gap-2 items-center">
+                <img src={logo} className="block max-w-28" />
               </Link>
             </div>
-          )}
+
+            <div className="flex gap-4 items-center">
+              {user?._id ? (
+                <>
+                  <LanguagesDropdown />
+                  <ProfileDropdown user={user} />
+                </>
+              ) : (
+                <div className="flex gap-4 items-center">
+                  <Link to="/login">
+                    <Button variant="outline" size="sm">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button size="sm">Sign up</Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
         </header>
       ) : null}
     </>

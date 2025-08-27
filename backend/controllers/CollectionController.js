@@ -128,7 +128,7 @@ module.exports.forkCollection = async (req, res) => {
 };
 
 module.exports.getCollections = async (req, res, next) => {
-  const { sectionId, searchQuery, public, page = 0, all, language } = req.query;
+  let { sectionId, searchQuery, public, page = 0, all, language } = req.query;
   const limit = 10; // Number of items per page
   const query = {};
 
@@ -143,6 +143,8 @@ module.exports.getCollections = async (req, res, next) => {
   //   { shownInHome: { $exists: false } },
   //   { $set: { shownInHome: true } }
   // );
+
+  page = +page;
 
   if (language) query.language = language;
   if (sectionId) {
@@ -178,8 +180,8 @@ module.exports.getCollections = async (req, res, next) => {
         .limit(limit)
         .lean();
     }
-    const remaining = (page + 1) * limit - collectionsCount;
-    // Calculate if there's a next page
+    const remaining = collectionsCount - (page + 1) * limit;
+
     const nextPage = remaining > 0 ? page + 1 : null;
 
     res.status(200).send({
