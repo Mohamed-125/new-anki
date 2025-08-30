@@ -15,6 +15,84 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import Button from "./Button";
 import { Menu } from "lucide-react";
 import logo from "../assets/white logo.png";
+import { LinkType } from "./Navbar";
+import { cn } from "../lib/utils";
+
+interface HeaderProps {
+  setIsMobileOpen: (open: boolean) => void;
+  links: LinkType[];
+}
+
+const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
+  const { user } = useGetCurrentUser();
+  const location = useLocation();
+  const hideLayout = location.pathname.startsWith("/study-cards");
+
+  return (
+    <>
+      {!hideLayout ? (
+        <header className="sticky top-0 z-50 w-full bg-[#F9F9F9] border-b border-gray-200">
+          <div className="container flex justify-between items-center px-4 h-20">
+            <div className="flex items-center md:gap-6">
+              <Link to="/" className="flex gap-2 items-center">
+                <img src={logo} className="block max-w-40" />
+              </Link>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              {links?.map((link) => {
+                const isActive = location.pathname === link.path;
+                return (
+                  <Link
+                    key={link.path}
+                    className={cn(
+                      "flex items-center px-1.5 py-1 rounded-lg text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-[#ebe7f8] text-[#5a3aa5]"
+                        : "text-gray-600 hover:bg-gray-100"
+                    )}
+                    to={link.path}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+
+              {user?._id ? (
+                <>
+                  <LanguagesDropdown />
+                  <ProfileDropdown user={user} />
+                </>
+              ) : (
+                <div className="flex gap-4 items-center">
+                  <Link to="/login">
+                    <Button variant="outline" size="sm">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button size="sm">Sign up</Button>
+                  </Link>
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden px-0 py-0 text-xl text-gray-500 md:flex"
+                onClick={() => setIsMobileOpen(true)}
+              >
+                <Menu className="w-8 h-8" />
+              </Button>
+            </div>
+          </div>
+        </header>
+      ) : null}
+    </>
+  );
+};
+
+export default Header;
+
 const ProfileDropdown = ({ user }: { user: UserType | null }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -170,60 +248,3 @@ const LanguagesDropdown = () => {
     </DropdownMenu>
   );
 };
-
-interface HeaderProps {
-  setIsMobileOpen: (open: boolean) => void;
-}
-
-const Header = ({ setIsMobileOpen }: HeaderProps) => {
-  const { user } = useGetCurrentUser();
-  const location = useLocation();
-  const hideLayout = location.pathname.startsWith("/study-cards");
-
-  return (
-    <>
-      {!hideLayout ? (
-        <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
-          <div className="container flex justify-between items-center px-4 h-16">
-            <div className="flex gap-4 items-center md:gap-6">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden px-0 py-0 text-xl text-gray-500 md:flex"
-                onClick={() => setIsMobileOpen(true)}
-              >
-                <Menu className="w-8 h-8" />
-              </Button>
-
-              <Link to="/" className="flex gap-2 items-center">
-                <img src={logo} className="block max-w-28" />
-              </Link>
-            </div>
-
-            <div className="flex gap-4 items-center">
-              {user?._id ? (
-                <>
-                  <LanguagesDropdown />
-                  <ProfileDropdown user={user} />
-                </>
-              ) : (
-                <div className="flex gap-4 items-center">
-                  <Link to="/login">
-                    <Button variant="outline" size="sm">
-                      Login
-                    </Button>
-                  </Link>
-                  <Link to="/signup">
-                    <Button size="sm">Sign up</Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-      ) : null}
-    </>
-  );
-};
-
-export default Header;

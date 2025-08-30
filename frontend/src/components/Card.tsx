@@ -111,27 +111,28 @@ const Card = ({
       id={id}
     >
       <div className="flex justify-between items-start">
-        <div className="overflow-hidden whitespace-normal break-words grow text-ellipsis">
-          <div className="flex gap-2 items-center mb-2">
-            <p className="text-lg font-medium text-gray-900">{front}</p>
-            <TextToSpeech text={front} />
-          </div>
-          <p className="text-sm text-gray-500">{back}</p>
-        </div>
-
-        <div className="flex gap-2 items-center">
+        <div className="flex overflow-hidden gap-4 whitespace-normal break-words grow text-ellipsis">
           {isSameUser && (
             <button
-              className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+              className="p-1.5 text-gray-500 hover:text-indigo-600  rounded-md transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 switchHandler();
               }}
             >
-              <HiSwitchHorizontal className="w-5 h-5" />
+              <HiSwitchHorizontal className="w-6 h-6" />
             </button>
           )}
+          <div>
+            <div className="flex gap-2 items-center mb-2">
+              <p className="text-lg font-medium text-gray-900">{front}</p>
+              <TextToSpeech text={front} />
+            </div>
+            <p className="text-sm text-gray-500">{back}</p>
+          </div>
+        </div>
 
+        <div className="flex gap-2 items-center">
           <div onClick={(e) => e.stopPropagation()}>
             {isSameUser ? (
               !selectedItems?.length ? (

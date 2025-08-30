@@ -74,14 +74,14 @@ function App() {
       <Router>
         <LanguageProvider user={user}>
           <div className="flex min-h-screen">
-            <Sidebar 
-              links={links} 
-              isMobileOpen={isMobileOpen} 
+            <Sidebar
+              links={links}
+              isMobileOpen={isMobileOpen}
               setIsMobileOpen={setIsMobileOpen}
             />
 
             <div className="overflow-y-auto flex-1 bg-white">
-              <Header setIsMobileOpen={setIsMobileOpen} />
+              <Header links={links} setIsMobileOpen={setIsMobileOpen} />
               <Routes>
                 <Route
                   path={`/`}

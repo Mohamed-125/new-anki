@@ -60,7 +60,7 @@ const Sidebar = ({ links, isMobileOpen, setIsMobileOpen }: SidebarProps) => {
   const SidebarContent = (
     <div
       className={cn(
-        "flex flex-col h-screen bg-[#F9F9F9] border-r border-gray-200 transition-all duration-300",
+        "md:flex hidden flex-col h-screen bg-[#F9F9F9] border-r border-gray-200 transition-all duration-300",
         isCollapsed ? "w-[70px]" : "w-[240px]",
         isMobile && "w-full"
       )}
