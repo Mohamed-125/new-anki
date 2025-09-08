@@ -126,7 +126,7 @@ module.exports.getUserCards = async (req, res, next) => {
   if (study) {
     options.sort = { easeFactor: 1 };
   }
-  const limit = 10;
+  const limit = 20;
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
   try {
     const cardsCount = await CardModel.countDocuments(query);

@@ -9,7 +9,7 @@ import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import { Link } from "react-router-dom";
 import MoveCollectionModal from "../components/MoveCollectionModal";
 import CardsSkeleton from "@/components/CardsSkeleton";
-import useDebounce from "@/hooks/useDebounce";
+import useDebounce from "../hooks/useDebounce";
 import Form from "@/components/Form";
 import AddNewCollectionModal from "@/components/AddNewCollectionModal";
 import useModalStates from "@/hooks/useModalsStates";

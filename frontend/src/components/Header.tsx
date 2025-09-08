@@ -13,7 +13,7 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import Button from "./Button";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import logo from "../assets/white logo.png";
 import { LinkType } from "./Navbar";
 import { cn } from "../lib/utils";
@@ -27,31 +27,98 @@ const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
   const { user } = useGetCurrentUser();
   const location = useLocation();
   const hideLayout = location.pathname.startsWith("/study-cards");
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  if (hideLayout) return null;
 
   return (
-    <>
-      {!hideLayout ? (
-        <header className="sticky top-0 z-50 w-full bg-[#F9F9F9] border-b border-gray-200">
-          <div className="container flex justify-between items-center px-4 h-20">
-            <div className="flex items-center md:gap-6">
-              <Link to="/" className="flex gap-2 items-center">
-                <img src={logo} className="block max-w-40" />
+    <header className="sticky top-0 z-50 w-full bg-[#F9F9F9] border-b border-gray-200">
+      <div className="container flex justify-between items-center px-4 h-16">
+        {/* Logo */}
+        <Link to="/" className="flex gap-2 items-center">
+          <img src={logo} className="block max-w-28" />
+        </Link>
+
+        {/* Desktop Nav */}
+        <nav className="flex gap-2 items-center md:hidden">
+          {links?.map((link) => {
+            const isActive = location.pathname === link.path;
+            return (
+              <Link
+                key={link.path}
+                className={cn(
+                  "flex items-center px-1.5 py-1 rounded-lg text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-[#ebe7f8] text-[#5a3aa5]"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+                to={link.path}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
+
+          {user?._id ? (
+            <>
+              <LanguagesDropdown />
+              <ProfileDropdown user={user} />
+            </>
+          ) : (
+            <div className="flex gap-4 items-center">
+              <Link to="/login">
+                <Button variant="outline" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button size="sm">Sign up</Button>
               </Link>
             </div>
+          )}
+        </nav>
 
-            <div className="flex gap-2 items-center">
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden px-0 py-0 text-xl text-gray-500 md:flex"
+          onClick={() => setMobileOpen(true)}
+        >
+          <Menu className="w-8 h-8" />
+        </Button>
+      </div>
+
+      {/* Mobile Drawer */}
+      {mobileOpen && (
+        <div className="hidden fixed inset-0 z-50 bg-black/40 md:block">
+          <div className="flex fixed top-0 right-0 flex-col p-6 w-3/4 max-w-sm h-full bg-white shadow-lg">
+            <div className="flex justify-end items-center mb-6">
+              <Button
+                variant="outline"
+                size="icon"
+                className="p-0 border-none"
+                onClick={() => setMobileOpen(false)}
+              >
+                <X className="w-8 h-8 text-gray-700" />
+              </Button>
+            </div>
+
+            {/* Links */}
+            <nav className="flex flex-col gap-3">
               {links?.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
                   <Link
                     key={link.path}
+                    to={link.path}
+                    onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "flex items-center px-1.5 py-1 rounded-lg text-sm font-medium transition-colors",
+                      "px-3 py-2 rounded-lg text-sm font-medium",
                       isActive
                         ? "bg-[#ebe7f8] text-[#5a3aa5]"
-                        : "text-gray-600 hover:bg-gray-100"
+                        : "text-gray-700 hover:bg-gray-100"
                     )}
-                    to={link.path}
                   >
                     {link.name}
                   </Link>
@@ -59,35 +126,29 @@ const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
               })}
 
               {user?._id ? (
-                <>
+                <div className="flex flex-col gap-3 mt-4">
                   <LanguagesDropdown />
                   <ProfileDropdown user={user} />
-                </>
+                </div>
               ) : (
-                <div className="flex gap-4 items-center">
-                  <Link to="/login">
-                    <Button variant="outline" size="sm">
+                <div className="flex flex-col gap-3 mt-4">
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full">
                       Login
                     </Button>
                   </Link>
-                  <Link to="/signup">
-                    <Button size="sm">Sign up</Button>
+                  <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                    <Button size="sm" className="w-full">
+                      Sign up
+                    </Button>
                   </Link>
                 </div>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden px-0 py-0 text-xl text-gray-500 md:flex"
-                onClick={() => setIsMobileOpen(true)}
-              >
-                <Menu className="w-8 h-8" />
-              </Button>
-            </div>
+            </nav>
           </div>
-        </header>
-      ) : null}
-    </>
+        </div>
+      )}
+    </header>
   );
 };
 
