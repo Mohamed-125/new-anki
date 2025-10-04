@@ -104,6 +104,8 @@ const useGetCards = ({
     );
   }, [data]);
 
+  console.log("data", data);
+
   return {
     userCards,
     cardsCount: data?.pages[0]?.cardsCount,
@@ -113,6 +115,7 @@ const useGetCards = ({
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    allCards: data?.pages[0]?.allCards,
   };
 };
 

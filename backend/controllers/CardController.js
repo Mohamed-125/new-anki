@@ -86,8 +86,8 @@ module.exports.getUserCards = async (req, res, next) => {
 
   if (searchQuery) {
     query.$or = [
-      { front: { $regex: searchQuery, $options: "i" } },
-      { back: { $regex: searchQuery, $options: "i" } },
+      { front: { $regex: searchQuery.trim(), $options: "i" } },
+      { back: { $regex: searchQuery.trim(), $options: "i" } },
     ];
   }
 
@@ -124,7 +124,8 @@ module.exports.getUserCards = async (req, res, next) => {
     query.sectionId = sectionId;
   }
   if (study) {
-    options.sort = { easeFactor: 1 };
+    // إضافة _id للترتيب لضمان ثبات الترتيب وعدم التكرار
+    options.sort = { easeFactor: 1, _id: 1 };
   }
   const limit = 20;
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
@@ -134,12 +135,12 @@ module.exports.getUserCards = async (req, res, next) => {
     const skipNumber = page * limit;
     const remaining = Math.max(0, cardsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
+const [allCards, cards] = await Promise.all([
+  CardModel.find(query), 
+  CardModel.find(query, {}, options).skip(skipNumber).limit(limit) // الثانية بالـ pagination
+]);
 
-    const cards = await CardModel.find(query, {}, options)
-      .skip(skipNumber)
-      .limit(limit);
-
-    res.status(200).send({ cards, nextPage, cardsCount });
+    res.status(200).send({ allCards, cards, nextPage, cardsCount });
   } catch (err) {
     console.log("get cards error :", err);
     res.status(400).send(err);

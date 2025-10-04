@@ -90,7 +90,11 @@ const StudyCards = () => {
     queryClient.removeQueries({ queryKey: ["cards", "study"] });
   }, []);
 
- 
+ useEffect(() => {
+   console.log( 'cardsToStudy :' , ); 
+   console.log( cardsToStudy ,); 
+
+ } , [cardsToStudy])
 
   const { user } = useGetCurrentUser();
  
@@ -216,6 +220,7 @@ const StudyCards = () => {
   // if (isLoading) {
   //   return <Loading />;
   // }
+
 
     return (
       <div className="min-h-screen bg-[rgba(173,150,255,0.08)]">

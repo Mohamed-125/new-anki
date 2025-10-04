@@ -176,8 +176,8 @@ export function AddCardModal({
         editor?.getHTML(),
         editId,
         defaultValues?.collectionId || collectionId || null,
-        frontValue,
-        backValue
+        frontValue.trim(),
+        backValue.trim()
       );
     } else {
       const createdCard = await createCardHandler(e, cardData);
@@ -321,7 +321,7 @@ export function AddCardModal({
                   <Form.Textarea
                     value={defaultValues?.front || frontValue || ""}
                     onChange={(e) => {
-                      setFrontValue(e.target.value);
+                      setFrontValue(e.target.value.trim());
                       setDefaultValues((pre: {}) => {
                         return { ...pre, front: null };
                       });
@@ -499,7 +499,7 @@ export function AddCardModal({
                   ref={backRef}
                   value={backValue || defaultValues?.back || ""}
                   onChange={(e) => {
-                    setBackValue(e.target.value);
+                    setBackValue(e.target.value.trim());
                     setDefaultValues((pre: {}) => {
                       return { ...pre, back: null };
                     });
