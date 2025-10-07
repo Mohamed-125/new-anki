@@ -61,17 +61,21 @@ const Collections = () => {
           </Button>
         </div>
 
-        <InfiniteScroll
-          fetchNextPage={fetchNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          hasNextPage={hasNextPage}
-          className=""
-        >
-          {collections?.map((collection) => (
-            <Collection collection={collection} key={collection._id} />
-          ))}
-          {isLoading && <CollectionSkeleton />}
-        </InfiniteScroll>
+        {isLoading ? (
+          <CollectionSkeleton />
+        ) : (
+          <InfiniteScroll
+            fetchNextPage={fetchNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            className=""
+            loadingElement={<CollectionSkeleton />}
+          >
+            {collections?.map((collection) => (
+              <Collection collection={collection} key={collection._id} />
+            ))}
+          </InfiniteScroll>
+        )}
       </div>
     </div>
   );

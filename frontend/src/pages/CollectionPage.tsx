@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import Card from "../components/Card";
 import Loading from "../components/Loading";
 import Button from "../components/Button";
+import { Skeleton } from "@/components/ui/skeleton";
 import AddCardModal from "../components/AddCardModal";
 import { useQueryClient } from "@tanstack/react-query";
 import SelectedItemsController from "../components/SelectedItemsController";
@@ -106,7 +107,14 @@ const CollectionPage = React.memo(function CollectionPage({}) {
   }, [selectedItems]);
 
   if (isCollectionLoading) {
-    return <Loading />;
+    return <div className="space-y-6">
+      <div className="flex flex-col gap-4 mb-8">
+        <Skeleton className="w-1/3 h-8" />
+        <Skeleton className="w-full h-12" />
+      </div>
+      <Skeleton className="w-full h-16 mb-4" />
+      <CardsSkeleton />
+    </div>;
   }
 
   const isSameUser =
@@ -318,11 +326,12 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                 </h2>
               </div>
 
-              {isIntialLoading && <CardsSkeleton />}
-              {collectionCards?.length ? (
+              {isIntialLoading ? (
+                <CardsSkeleton cards={[]} />
+              ) : collectionCards?.length > 0 ? (
                 <InfiniteScroll
                   hasNextPage={hasNextPage}
-                  loadingElement={<CardsSkeleton />}
+                  loadingElement={<CardsSkeleton cards={collectionCards} />}
                   fetchNextPage={fetchNextPage}
                   isFetchingNextPage={isFetchingNextPage}
                 >

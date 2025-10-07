@@ -72,7 +72,9 @@ const Home = () => {
       </div>
 
       <>
-        {userCards?.length ? (
+        {isIntialLoading ? (
+          <CardsSkeleton cards={[]} />
+        ) : userCards?.length ? (
           <InfiniteScroll
             fetchNextPage={fetchNextPage}
             isFetchingNextPage={isFetchingNextPage}

@@ -129,7 +129,7 @@ module.exports.forkCollection = async (req, res) => {
 
 module.exports.getCollections = async (req, res, next) => {
   let { sectionId, searchQuery, public, page = 0, all, language } = req.query;
-  const limit = 10; // Number of items per page
+  const limit = 30; // Increased number of items per page for better performance
   const query = {};
 
   // // Update collections without showCardsInHome field
@@ -163,32 +163,32 @@ module.exports.getCollections = async (req, res, next) => {
   if (language) query.language = language;
 
   try {
-    // Get total count for pagination
-    const collectionsCount = await CollectionModel.countDocuments(query);
+      // Get total count for pagination
+      const collectionsCount = await CollectionModel.countDocuments(query);
 
-    // Get paginated collections
-    let collections;
-    if (all === "true") {
-      collections = await CollectionModel.find(query)
-        .skip(page * limit)
-        .limit(limit)
-        .populate("subCollections")
-        .lean();
-    } else {
-      collections = await CollectionModel.find(query)
-        .skip(page * limit)
-        .limit(limit)
-        .lean();
-    }
-    const remaining = collectionsCount - (page + 1) * limit;
+      // Get paginated collections
+      let collections;
+      if (all === "true") {
+        collections = await CollectionModel.find(query)
+          .skip(page * limit)
+          .limit(limit)
+          .populate("subCollections")
+          .lean();
+      } else {
+        collections = await CollectionModel.find(query)
+          .skip(page * limit)
+          .limit(limit)
+          .lean();
+      }
+      const remaining = Math.max(0, collectionsCount - limit * (page + 1));
 
-    const nextPage = remaining > 0 ? page + 1 : null;
+      const nextPage = remaining > 0 ? page + 1 : null;
 
-    res.status(200).send({
-      collections,
-      nextPage,
-      collectionsCount,
-    });
+      res.status(200).send({
+        collections,
+        nextPage,
+        collectionsCount,
+      });
   } catch (err) {
     console.log("get collections err:", err);
     res.status(400).send(err);
@@ -205,12 +205,22 @@ module.exports.getPublicCollections = async (req, res, next) => {
 };
 
 module.exports.getCollection = async (req, res, next) => {
+  const { id } = req.params;
+
   try {
-    let collection = await CollectionModel.findOne({
-      _id: req.params.id,
-    })
-      .populate("subCollections")
+    // Use lean query for better performance
+    const collection = await CollectionModel.findById(id)
+      .populate({
+        path: "subCollections",
+        populate: {
+          path: "subCollections",
+        },
+      })
       .lean();
+
+    if (!collection) {
+      return res.status(404).send("Collection not found");
+    }
 
     res.status(200).send(collection);
   } catch (err) {
