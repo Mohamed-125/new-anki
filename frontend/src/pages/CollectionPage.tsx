@@ -107,14 +107,16 @@ const CollectionPage = React.memo(function CollectionPage({}) {
   }, [selectedItems]);
 
   if (isCollectionLoading) {
-    return <div className="space-y-6">
-      <div className="flex flex-col gap-4 mb-8">
-        <Skeleton className="w-1/3 h-8" />
-        <Skeleton className="w-full h-12" />
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 mb-8">
+          <Skeleton className="w-1/3 h-8" />
+          <Skeleton className="w-full h-12" />
+        </div>
+        <Skeleton className="w-full h-16 mb-4" />
+        <CardsSkeleton />
       </div>
-      <Skeleton className="w-full h-16 mb-4" />
-      <CardsSkeleton />
-    </div>;
+    );
   }
 
   const isSameUser =

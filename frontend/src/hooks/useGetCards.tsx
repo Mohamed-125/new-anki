@@ -30,6 +30,7 @@ const useGetCards = ({
   videoId,
   study,
   difficultyFilter,
+  srsMode,
 }: {
   enabled?: boolean;
   query?: string;
@@ -37,6 +38,7 @@ const useGetCards = ({
   videoId?: string;
   study?: boolean;
   difficultyFilter?: string;
+  srsMode?: boolean;
 } = {}) => {
   const { selectedLearningLanguage } = useGetCurrentUser();
   let queryKey: any[] = ["cards"];
@@ -79,6 +81,7 @@ const useGetCards = ({
       if (collectionId) url += `&collectionId=${collectionId}`;
       if (videoId) url += `&videoId=${videoId}`;
       if (study) url += `&study=true`;
+      if (srsMode) url += `&srsMode=true`;
       if (selectedLearningLanguage)
         url += `&language=${selectedLearningLanguage}`;
 
@@ -104,7 +107,6 @@ const useGetCards = ({
     );
   }, [data]);
 
-  console.log("data", data);
 
   return {
     userCards,
