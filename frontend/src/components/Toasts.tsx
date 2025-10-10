@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { MdError } from "react-icons/md";
-import { FaCheck, FaCheckCircle } from "react-icons/fa";
+import React, { useEffect } from "react";
 import { FaCircleInfo } from "react-icons/fa6";
 import { twMerge } from "tailwind-merge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,10 +12,10 @@ const Toasts = () => {
   return (
     <motion.div className="fixed top-[95px] z-50 right-4 w-full max-w-[300px] space-y-3">
       <AnimatePresence mode="popLayout">
-        {toasts.map((toast, i) => {
-          return <Toast key={toast.id} toast={toast} />;
-        })}
-      </AnimatePresence>{" "}
+        {toasts.map((toast) => (
+          <Toast key={toast.id} toast={toast} />
+        ))}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -26,30 +24,18 @@ export default Toasts;
 
 const Toast = ({ toast }: { toast: ToastType }) => {
   const { deleteToast, setToasts } = useToasts();
-  useEffect(() => {
-    if (toast.type === "promise") {
-      if (!toast.isCompleted) {
-        // console.log("toast not completed should not be removed");
-        return;
-      }
-      if (!toast.isError) {
-        // console.log("toast not completed should not be removed");
-        return;
-      }
-    }
 
-    console.log(toast);
-    // console.log("toast should be removed");
+  useEffect(() => {
+    if (toast.type === "promise" && !toast.isCompleted) return;
+
     const timeout = setTimeout(() => {
       setToasts((pre) =>
         pre.filter((currentToast) => currentToast.id !== toast.id)
       );
     }, toast.duration + 350);
 
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [toast]);
+    return () => clearTimeout(timeout);
+  }, [toast, setToasts]);
 
   return (
     <motion.div
@@ -58,11 +44,9 @@ const Toast = ({ toast }: { toast: ToastType }) => {
       animate={{ opacity: 1, scale: 1, x: "0%" }}
       exit={{ opacity: 0, scale: 0.9, x: "100%" }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      onClick={() => {
-        deleteToast(toast.id);
-      }}
+      onClick={() => deleteToast(toast.id)}
       className={twMerge(
-        "flex items-center relative h-[55px]  w-full gap-3 px-4 py-3 bg-white rounded-lg shadow-lg border  cursor-pointer ",
+        "flex items-center relative h-[55px] w-full gap-3 px-4 py-3 bg-white rounded-lg shadow-lg border cursor-pointer",
         toast.type === "error"
           ? "border-red-500"
           : toast.type === "success"
@@ -79,9 +63,11 @@ const Toast = ({ toast }: { toast: ToastType }) => {
       ) : toast.type === "promise" ? (
         <PromiseToSuccess toast={toast} />
       ) : (
-        <FaCircleInfo className="text-priborder-primary size-7" />
+        <FaCircleInfo className="text-primary size-7" />
       )}
+
       <p className="text-sm font-medium text-gray-700 grow">{toast.title}</p>
+
       <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
         <XIcon className="text-gray-400 size-4 hover:text-gray-600" />
       </motion.div>
@@ -90,12 +76,7 @@ const Toast = ({ toast }: { toast: ToastType }) => {
 };
 
 const AnimatedCheck = () => (
-  <motion.svg
-    viewBox="0 0 24 24"
-    className="size-7"
-    strokeWidth={2.5}
-    fill="none"
-  >
+  <motion.svg viewBox="0 0 24 24" className="size-7" strokeWidth={2.5} fill="none">
     <motion.circle
       cx="12"
       cy="12"
@@ -140,12 +121,7 @@ const AnimatedError = () => (
 );
 
 const PromiseToSuccess = ({ toast }: { toast: ToastType }) => {
-  if (toast.isCompleted) {
-    return <AnimatedCheck />;
-  }
-  if (toast.isError) {
-    return <AnimatedError />;
-  }
-
-  return <div className="!static  ml-[2px]  loader "></div>;
+  if (toast.isError) return <AnimatedError />;
+  if (toast.isCompleted) return <AnimatedCheck />;
+  return <div className="!static ml-[2px] loader"></div>;
 };

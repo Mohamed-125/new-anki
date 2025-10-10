@@ -265,6 +265,7 @@ export function AddCardModal({
         setExamples([]);
         setIsExmaplesVisible(false);
         setJsonInput("");
+        setMode("single");
         if (editor) {
           editor.commands.clearContent();
         }
@@ -321,7 +322,7 @@ export function AddCardModal({
                   <Form.Textarea
                     value={defaultValues?.front || frontValue || ""}
                     onChange={(e) => {
-                      setFrontValue(e.target.value.trim());
+                      setFrontValue(e.target.value);
                       setDefaultValues((pre: {}) => {
                         return { ...pre, front: null };
                       });
@@ -499,7 +500,7 @@ export function AddCardModal({
                   ref={backRef}
                   value={backValue || defaultValues?.back || ""}
                   onChange={(e) => {
-                    setBackValue(e.target.value.trim());
+                    setBackValue(e.target.value);
                     setDefaultValues((pre: {}) => {
                       return { ...pre, back: null };
                     });

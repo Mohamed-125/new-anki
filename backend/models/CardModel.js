@@ -57,11 +57,12 @@ const CardSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
       index: true,
-    },stability: {
-  type: Number,
-  default: 1, // 1 = يوم واحد كبداية
-  min: 1,
-},
+    },
+    stability: {
+      type: Number,
+      default: 1, // 1 = يوم واحد كبداية
+      min: 1,
+    },
 
     reviewCount: {
       type: Number,
@@ -86,11 +87,9 @@ CardSchema.post("find", async function (docs) {
   if (!query.study) return;
   const updatePromises = [];
 
-  const duration = 86400000 * (card.stability || 1);
- 
-
   for (const card of docs) {
     if (card.easeFactorDate) {
+      const duration = 86400000 * (card.stability || 1);
       const easeFactor = card.easeFactor;
 
       const easeFactorChange =
