@@ -220,17 +220,17 @@ module.exports.batchUpdate = async (req, res, next) => {
 
       const stability = existing.stability || 1;
 
-      // 🧮 نحسب المدة المطلوبة قبل السماح بالتحديث زي أنكي (لوغاريتمي)
-      const maxWait = 3 * 60 * 60 * 1000; // أقصى انتظار = 3 ساعات
-      const minWait = 15 * 60 * 1000; // حد أدنى = 15 دقيقة
-      const k = 0.1; // كل ما زادت القيمة، التغير يصير أسرع (تقدر تعدلها)
+      // // 🧮 نحسب المدة المطلوبة قبل السماح بالتحديث زي أنكي (لوغاريتمي)
+      // const maxWait = 3 * 60 * 60 * 1000; // أقصى انتظار = 3 ساعات
+      // const minWait = 15 * 60 * 1000; // حد أدنى = 15 دقيقة
+      // const k = 0.1; // كل ما زادت القيمة، التغير يصير أسرع (تقدر تعدلها)
       
-      // e^(-k * stability) يخلي العلاقة تنزل بسرعة في الأول وببطء بعدين
-      let dynamicWait = maxWait * Math.exp(-k * stability);
-      dynamicWait = Math.max(dynamicWait, minWait);
+      // // e^(-k * stability) يخلي العلاقة تنزل بسرعة في الأول وببطء بعدين
+      // let dynamicWait = maxWait * Math.exp(-k * stability);
+      // dynamicWait = Math.max(dynamicWait, minWait);
 
-      // ⏳ لو لسه الوقت ماكملش المدة المطلوبة → متحدثش الكارت
-      if (currentTimestamp - easeFactorTimestamp < dynamicWait) continue;
+      // // ⏳ لو لسه الوقت ماكملش المدة المطلوبة → متحدثش الكارت
+      // if (currentTimestamp - easeFactorTimestamp < dynamicWait) continue;
 
       let newEaseFactor = cardData.easeFactor;
       let reviewCount = (existing.reviewCount || 0) + 1;
