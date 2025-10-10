@@ -77,6 +77,8 @@ const CardSchema = new mongoose.Schema(
 );
 
 CardSchema.pre("find", function (next) {
+ 
+
   // Sort by order first (if exists), then by createdAt in ascending order
   this.sort({ order: 1, createdAt: -1 });
   next();

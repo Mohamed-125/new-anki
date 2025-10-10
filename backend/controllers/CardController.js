@@ -124,7 +124,7 @@ module.exports.getUserCards = async (req, res, next) => {
     query.sectionId = sectionId;
   }
   if (study) {
-    options.study = true
+    options.study = true;
     // إضافة _id للترتيب لضمان ثبات الترتيب وعدم التكرار
     options.sort = { easeFactor: 1, _id: 1 };
   }
@@ -136,10 +136,12 @@ module.exports.getUserCards = async (req, res, next) => {
     const skipNumber = page * limit;
     const remaining = Math.max(0, cardsCount - limit * (page + 1));
     const nextPage = remaining > 0 ? page + 1 : null;
-    const cards = await
-      CardModel.find(query, {}, options).skip(skipNumber).limit(limit).lean() // الثانية بالـ pagination
+    const cards = await CardModel.find(query, {}, options)
+      .skip(skipNumber)
+      .limit(limit)
+      .lean(); // الثانية بالـ pagination
 
-    res.status(200).send({  cards, nextPage, cardsCount });
+    res.status(200).send({ cards, nextPage, cardsCount });
   } catch (err) {
     console.log("get cards error :", err);
     res.status(400).send(err);
@@ -192,42 +194,60 @@ module.exports.updateCard = async (req, res, next) => {
 module.exports.batchUpdate = async (req, res, next) => {
   const { toUpdateCardsData } = req.body;
   if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
-    return res.status(400).send('You must send a non-empty "toUpdateCardsData" array');
+    return res
+      .status(400)
+      .send('You must send a non-empty "toUpdateCardsData" array');
   }
 
   try {
-    const cardIds = toUpdateCardsData.map(c => c._id);
-    const existingCards = await CardModel.find({ _id: { $in: cardIds } }).lean();
+    const cardIds = toUpdateCardsData.map((c) => c._id);
+    const existingCards = await CardModel.find({
+      _id: { $in: cardIds },
+    }).lean();
 
     const ops = [];
-    const minInterval = 3 * 60 * 60 * 1000; // 3 ساعات
 
     for (const cardData of toUpdateCardsData) {
-      const existing = existingCards.find(c => c._id.toString() === cardData._id);
+      const existing = existingCards.find(
+        (c) => c._id.toString() === cardData._id
+      );
       if (!existing) continue;
 
-      const easeFactorTimestamp = new Date(existing.easeFactorDate || 0).getTime();
+      const easeFactorTimestamp = new Date(
+        existing.easeFactorDate || 0
+      ).getTime();
       const currentTimestamp = Date.now();
 
-      // ✅ لو لسه ماعدتش 3 ساعات، متحدثش الكارت
-      if (currentTimestamp - easeFactorTimestamp < minInterval) continue;
+      const stability = existing.stability || 1;
+
+      // 🧮 نحسب المدة المطلوبة قبل السماح بالتحديث زي أنكي (لوغاريتمي)
+      const maxWait = 3 * 60 * 60 * 1000; // أقصى انتظار = 3 ساعات
+      const minWait = 15 * 60 * 1000; // حد أدنى = 15 دقيقة
+      const k = 0.1; // كل ما زادت القيمة، التغير يصير أسرع (تقدر تعدلها)
+      
+      // e^(-k * stability) يخلي العلاقة تنزل بسرعة في الأول وببطء بعدين
+      let dynamicWait = maxWait * Math.exp(-k * stability);
+      dynamicWait = Math.max(dynamicWait, minWait);
+
+      // ⏳ لو لسه الوقت ماكملش المدة المطلوبة → متحدثش الكارت
+      if (currentTimestamp - easeFactorTimestamp < dynamicWait) continue;
 
       let newEaseFactor = cardData.easeFactor;
       let reviewCount = (existing.reviewCount || 0) + 1;
-      let newStability = existing.stability || 1;
+      let newStability = stability;
 
-      // 🧠 نعدل الـ stability بناءً على الأداء
+      // 🧠 تعديل الثبات حسب الأداء
       if (newEaseFactor > existing.easeFactor) {
-        newStability *= 1.5; // لو الأداء ممتاز زود الثبات
+        newStability *= 1.5;
       } else if (newEaseFactor < existing.easeFactor) {
-        newStability *= 0.7; // لو الكارت صعب قلل الثبات
+        newStability *= 0.7;
       }
 
-      // نحط سقف وحد أدنى
-      newStability = Math.min(Math.max(newStability, 1), 30); // من 1 إلى 30 يوم مثلاً
+      // سقف وحد أدنى للثبات
+      newStability = Math.min(Math.max(newStability, 1), 30);
 
-      // ✅ لو عدد المراجعات أقل من 4، قلل معدل الزيادة
-      if (reviewCount < 4) {
+      // ✅ لو عدد المراجعات قليل، نبطئ زيادة الـease
+      if (reviewCount < 2) {
         const maxAllowedIncrease = 0.15;
         const diff = newEaseFactor - existing.easeFactor;
         if (diff > maxAllowedIncrease) {
@@ -264,7 +284,6 @@ module.exports.batchUpdate = async (req, res, next) => {
     res.status(400).send("error in updating the study cards");
   }
 };
-
 
 
 module.exports.deleteCard = async (req, res, next) => {
