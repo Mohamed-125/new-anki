@@ -83,13 +83,14 @@ const StudyCards = () => {
     isLoading: cardsLoading,
   } = useGetCards({
     collectionId,
-    study: true,
+    study: 'all',
     difficultyFilter,
   });
 
   useEffect(() => {
     queryClient.removeQueries({ queryKey: ["cards", "study"] });
   }, [queryClient]);
+  const card = cardsToStudy?.[currentCard];
 
   useEffect(() => {
     console.log("cardsToStudy :");
@@ -113,7 +114,11 @@ const StudyCards = () => {
 
   const submitAnswer = async (answer = "") => {
     if (!cardsToStudy?.length) return;
-    if (cardsToStudy[currentCard]?.easeFactor === undefined || !cardsCount)
+    if (
+      cardsToStudy[currentCard]?.easeFactor === undefined ||
+      !card ||
+      !cardsCount
+    )
       return;
 
     let easeFactor =
@@ -125,7 +130,7 @@ const StudyCards = () => {
         ? Math.max(0, +cardsToStudy[currentCard].easeFactor - 0.5)
         : Math.max(0, +cardsToStudy[currentCard].easeFactor - 1);
 
-    updatedCardsRef.current.push({ _id: card._id, easeFactor });
+    updatedCardsRef.current.push({ _id: card._id, answer });
 
     setShowAnswer(false);
     setCurrentCard((pre) => {
@@ -215,7 +220,6 @@ const StudyCards = () => {
     if (cardsToStudy) setContent(cardsToStudy[currentCard]?.content || "");
   }, [currentCard]);
 
-  const card = cardsToStudy?.[currentCard];
   if (collectionLoading || cardsLoading || isIntialLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-[rgba(173,150,255,0.08)]">

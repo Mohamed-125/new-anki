@@ -1,5 +1,92 @@
 const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
+const { fsrs, createEmptyCard, Rating } = require("ts-fsrs");
+
+module.exports.batchUpdate = async (req, res, next) => {
+  const { toUpdateCardsData } = req.body;
+  if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
+    return res
+      .status(400)
+      .send('You must send a non-empty "toUpdateCardsData" array');
+  }
+  try {
+    const cardIds = toUpdateCardsData.map((c) => c._id);
+    const existingCards = await CardModel.find({
+      _id: { $in: cardIds },
+    }).lean();
+    const ops = [];
+    const f = fsrs({});
+    for (const { _id, answer } of toUpdateCardsData) {
+      const existing = existingCards.find((c) => c._id.toString() === _id);
+      if (!existing) continue;
+      const card = createEmptyCard(existing.last_review ?? new Date());
+      console.log("empty card", card);
+      card.stability = existing.stability ?? 0;
+      card.difficulty = existing.difficulty ?? 0;
+      card.elapsed_days = existing.elapsed_days ?? 0;
+      card.scheduled_days = existing.scheduled_days ?? 0;
+      card.learning_steps = existing.learning_steps ?? 0;
+      card.reps = existing.reps ?? 0;
+      card.lapses = existing.lapses ?? 0;
+      card.state = parseInt(existing.state) ?? 0;
+
+      console.log("card", card);
+      let grade;
+      switch ((answer || "").toLowerCase()) {
+        case "forgot":
+          grade = Rating.Again;
+          break;
+        case "hard":
+          grade = Rating.Hard;
+          break;
+        case "medium":
+          grade = Rating.Good;
+          break;
+        case "easy":
+          grade = card.state === 0 ? Rating.Good : Rating.Easy;
+          break;
+        default:
+          grade = Rating.Good;
+      }
+      const scheduling = f.repeat(card, new Date());
+      console.log(scheduling, scheduling[grade], grade);
+      const updatedCard = scheduling[grade]?.card;
+      if (!updatedCard) {
+        console.warn("FSRS repeat failed for card", _id);
+        continue;
+      }
+      console.log("updatedCard", updatedCard);
+      ops.push({
+        updateOne: {
+          filter: { _id: existing._id },
+          update: {
+            $set: {
+              stability: updatedCard.stability,
+              difficulty: updatedCard.difficulty,
+              elapsed_days: updatedCard.elapsed_days,
+              scheduled_days: updatedCard.scheduled_days,
+              learning_steps: updatedCard.learning_steps,
+              reps: updatedCard.reps,
+              lapses: updatedCard.lapses,
+              state: updatedCard.state,
+              last_review: updatedCard.last_review,
+              due: updatedCard.due,
+            },
+            $inc: { reviewCount: 1 },
+          },
+        },
+      });
+    }
+    if (ops.length > 0) {
+      const result = await CardModel.bulkWrite(ops);
+      return res.status(200).json({ modifiedCount: result.modifiedCount });
+    }
+    res.status(200).json({ modifiedCount: 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(400).send("Error in updating the study cards");
+  }
+};
 
 module.exports.createCard = async (req, res, next) => {
   const { cards, collectionId, videoId, language, sectionId } = req.body;
@@ -68,8 +155,52 @@ module.exports.createCard = async (req, res, next) => {
     }
   }
 };
+async function resetAllCards() {
+  try {
+    const cards = await CardModel.find({});
+
+    const ops = cards.map((card) => {
+      const fsrsCard = createEmptyCard(new Date());
+
+      return {
+        updateOne: {
+          filter: { _id: card._id },
+          update: {
+            $set: {
+              // تحديث الحقول الخاصة بـ FSRS
+              stability: fsrsCard.stability,
+              difficulty: fsrsCard.difficulty,
+              elapsed_days: fsrsCard.elapsed_days,
+              scheduled_days: fsrsCard.scheduled_days,
+              learning_steps: fsrsCard.learning_steps,
+              reps: fsrsCard.reps,
+              lapses: fsrsCard.lapses,
+              state: fsrsCard.state,
+              last_review: fsrsCard.last_review,
+              due: fsrsCard.due,
+
+              // إعادة تعيين الإحصائيات القديمة
+              reviewCount: 0,
+              easeFactor: 0.5, // إذا كنت تستخدمه مع واجهة المستخدم
+            },
+          },
+        },
+      };
+    });
+
+    if (ops.length > 0) {
+      const result = await CardModel.bulkWrite(ops);
+      console.log("Cards reset:", result.modifiedCount);
+    }
+
+    console.log("All cards have been reset successfully!");
+  } catch (err) {
+    console.error("Error resetting cards:", err);
+  }
+}
 
 module.exports.getUserCards = async (req, res, next) => {
+  // resetAllCards();
   const {
     page: pageNumber,
     searchQuery,
@@ -95,13 +226,13 @@ module.exports.getUserCards = async (req, res, next) => {
   if (difficulty) {
     switch (difficulty) {
       case "easy":
-        query.easeFactor = { $gte: 0.75 };
+        query.difficulty = { $gte: 0.7 };
         break;
       case "medium":
-        query.easeFactor = { $gte: 0.5, $lt: 0.75 };
+        query.difficulty = { $gte: 0.5, $lt: 0.7 };
         break;
       case "hard":
-        query.easeFactor = { $lt: 0.5 };
+        query.difficulty = { $lt: 0.5 };
         break;
     }
   }
@@ -123,11 +254,30 @@ module.exports.getUserCards = async (req, res, next) => {
   if (sectionId) {
     query.sectionId = sectionId;
   }
+
   if (study) {
-    options.study = true;
-    // إضافة _id للترتيب لضمان ثبات الترتيب وعدم التكرار
-    options.sort = { easeFactor: 1, _id: 1 };
+    // 1. الترتيب يكون دائمًا حسب الأقدم استحقاقًا
+    options.sort = { due: 1, difficulty: 1, _id: 1 };
+
+    // 2. تطبيق منطق الجدولة بناءً على قيمة study
+    switch (study.toLowerCase()) {
+      case "today":
+        // حساب نهاية اليوم الحالي (لتضمين جميع البطاقات المستحقة اليوم)
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999); // 11:59:59 PM
+
+        // إرجاع البطاقات المستحقة (due) اليوم أو قبله
+        query.due = { $lte: endOfToday };
+        break;
+
+      case "all":
+        // لا نضيف أي فلتر على 'due'، وبالتالي سيتم إرجاع جميع البطاقات.
+        // يمكننا إضافة فلتر وهمي إذا أردنا الترتيب فقط:
+        // query.userId = req.user?._id; // يجب أن تكون موجودة بالفعل في منطق 'else' أدناه
+        break;
+    }
   }
+
   const limit = 30; // Increased limit for better performance
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
   try {
@@ -190,101 +340,112 @@ module.exports.updateCard = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
+// module.exports.batchUpdate = async (req, res, next) => {
+//   const { toUpdateCardsData } = req.body;
+//   if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
+//     return res
+//       .status(400)
+//       .send('You must send a non-empty "toUpdateCardsData" array');
+//   }
 
-module.exports.batchUpdate = async (req, res, next) => {
-  const { toUpdateCardsData } = req.body;
-  if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
-    return res
-      .status(400)
-      .send('You must send a non-empty "toUpdateCardsData" array');
-  }
+//   try {
+//     const cardIds = toUpdateCardsData.map((c) => c._id);
+//     const existingCards = await CardModel.find({
+//       _id: { $in: cardIds },
+//     }).lean();
 
-  try {
-    const cardIds = toUpdateCardsData.map((c) => c._id);
-    const existingCards = await CardModel.find({
-      _id: { $in: cardIds },
-    }).lean();
+//     const ops = [];
 
-    const ops = [];
+//     // 🧠 دالة تحديث الكارت زي أنكي لكن تقبل قيمك الحالية من الفرونت (1، 0.5، -0.5، -1)
+//     const updateCardReview = (card, answerValue) => {
+//       const currentEase = card.easeFactor || 0.5;
+//       const currentStability = card.stability || 1;
 
-    for (const cardData of toUpdateCardsData) {
-      const existing = existingCards.find(
-        (c) => c._id.toString() === cardData._id
-      );
-      if (!existing) continue;
+//       // 🧮 نعمل تطبيع للقيم الجاية من الفرونت
+//       // 1 → +0.15, 0.5 → +0.07, -0.5 → -0.07, -1 → -0.15 تقريبًا
+//       const normalizedDelta  = answerValue / 6.7; // رقم تجريبي قريب من أنكي الحقيقي
 
-      const easeFactorTimestamp = new Date(
-        existing.easeFactorDate || 0
-      ).getTime();
-      const currentTimestamp = Date.now();
+//       // 📉 كل ما زاد الثبات → التغيير يقل (زي أنكي)
+//       const changeFactor = 1 / Math.log2(currentStability + 1);
 
-      const stability = existing.stability || 1;
+//       let newEaseFactor = currentEase + normalizedDelta * changeFactor;
+//       newEaseFactor = Math.min(Math.max(newEaseFactor, 0), 1);
 
-      // // 🧮 نحسب المدة المطلوبة قبل السماح بالتحديث زي أنكي (لوغاريتمي)
-      // const maxWait = 3 * 60 * 60 * 1000; // أقصى انتظار = 3 ساعات
-      // const minWait = 15 * 60 * 1000; // حد أدنى = 15 دقيقة
-      // const k = 0.1; // كل ما زادت القيمة، التغير يصير أسرع (تقدر تعدلها)
-      
-      // // e^(-k * stability) يخلي العلاقة تنزل بسرعة في الأول وببطء بعدين
-      // let dynamicWait = maxWait * Math.exp(-k * stability);
-      // dynamicWait = Math.max(dynamicWait, minWait);
+//       // 📈 نحسب الثبات الجديد بناءً على الأداء
+//       let newStability = currentStability;
+//       if (answerValue <= -0.9) {
+//         // again
+//         newStability = 1;
+//       } else if (answerValue < 0) {
+//         // hard
+//         newStability *= 1.2;
+//       } else if (answerValue === 0.5) {
+//         // medium
+//         newStability *= 2.5 * (0.8 + newEaseFactor);
+//       } else if (answerValue === 1) {
+//         // easy
+//         newStability *= 3.0 * (0.8 + newEaseFactor);
+//       }
 
-      // // ⏳ لو لسه الوقت ماكملش المدة المطلوبة → متحدثش الكارت
-      // if (currentTimestamp - easeFactorTimestamp < dynamicWait) continue;
+//       newStability = Math.min(Math.max(newStability, 1), 60);
 
-      let newEaseFactor = cardData.easeFactor;
-      let reviewCount = (existing.reviewCount || 0) + 1;
-      let newStability = stability;
+//       return {
+//         newEaseFactor: +newEaseFactor.toFixed(3),
+//         newStability: +newStability.toFixed(2),
+//       };
+//     };
 
-      // 🧠 تعديل الثبات حسب الأداء
-      if (newEaseFactor > existing.easeFactor) {
-        newStability *= 1.5;
-      } else if (newEaseFactor < existing.easeFactor) {
-        newStability *= 0.7;
-      }
+//     // 🕒 أقصى انتظار ديناميكي زي أنكي
+//     for (const { _id, answer } of toUpdateCardsData) {
+//       const existing = existingCards.find((c) => c._id.toString() === _id);
+//       if (!existing) continue;
 
-      // سقف وحد أدنى للثبات
-      newStability = Math.min(Math.max(newStability, 1), 30);
+//       const stability = existing.stability || 1;
+//       const easeFactorTimestamp = new Date(
+//         existing.easeFactorDate || 0
+//       ).getTime();
+//       const currentTimestamp = Date.now();
 
-      // ✅ لو عدد المراجعات قليل، نبطئ زيادة الـease
-      if (reviewCount < 2) {
-        const maxAllowedIncrease = 0.15;
-        const diff = newEaseFactor - existing.easeFactor;
-        if (diff > maxAllowedIncrease) {
-          newEaseFactor = existing.easeFactor + maxAllowedIncrease;
-        }
-      }
+//       const maxWait = 3 * 60 * 60 * 1000;
+//       const minWait = 15 * 60 * 1000;
+//       const k = 0.1;
+//       let dynamicWait = maxWait * Math.exp(-k * stability);
+//       dynamicWait = Math.max(dynamicWait, minWait);
 
-      // ضمان أن القيمة بين 0 و 1
-      newEaseFactor = Math.min(Math.max(newEaseFactor, 0), 1);
+//       // ⏳ لو لسه الوقت ماكملش المدة المطلوبة → متحدثش الكارت
+//       if (currentTimestamp - easeFactorTimestamp < dynamicWait) continue;
 
-      ops.push({
-        updateOne: {
-          filter: { _id: existing._id },
-          update: {
-            $set: {
-              easeFactor: newEaseFactor,
-              easeFactorDate: new Date(),
-              stability: newStability,
-            },
-            $inc: { reviewCount: 1 },
-          },
-        },
-      });
-    }
+//       const { newEaseFactor, newStability } = updateCardReview(
+//         existing,
+//         answer
+//       );
 
-    if (ops.length > 0) {
-      const result = await CardModel.bulkWrite(ops);
-      return res.status(200).json({ modifiedCount: result.modifiedCount });
-    }
+//       ops.push({
+//         updateOne: {
+//           filter: { _id: existing._id },
+//           update: {
+//             $set: {
+//               easeFactor: newEaseFactor,
+//               stability: newStability,
+//               easeFactorDate: new Date(),
+//             },
+//             $inc: { reviewCount: 1 },
+//           },
+//         },
+//       });
+//     }
 
-    res.status(200).json({ modifiedCount: 0 });
-  } catch (err) {
-    console.error(err);
-    res.status(400).send("error in updating the study cards");
-  }
-};
+//     if (ops.length > 0) {
+//       const result = await CardModel.bulkWrite(ops);
+//       return res.status(200).json({ modifiedCount: result.modifiedCount });
+//     }
 
+//     res.status(200).json({ modifiedCount: 0 });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(400).send("error in updating the study cards");
+//   }
+// };
 
 module.exports.deleteCard = async (req, res, next) => {
   try {

@@ -36,7 +36,7 @@ const useGetCards = ({
   query?: string;
   collectionId?: string;
   videoId?: string;
-  study?: boolean;
+  study?: string;
   difficultyFilter?: string;
   srsMode?: boolean;
 } = {}) => {
@@ -80,7 +80,7 @@ const useGetCards = ({
       if (query) url += `&searchQuery=${query}`;
       if (collectionId) url += `&collectionId=${collectionId}`;
       if (videoId) url += `&videoId=${videoId}`;
-      if (study) url += `&study=true`;
+      if (study) url += `&study=${study}`;
       if (srsMode) url += `&srsMode=true`;
       if (selectedLearningLanguage)
         url += `&language=${selectedLearningLanguage}`;
@@ -106,7 +106,6 @@ const useGetCards = ({
       (page) => (page as GetCardsResponse).cards ?? []
     );
   }, [data]);
-
 
   return {
     userCards,
