@@ -37,8 +37,8 @@ const CardSchema = new mongoose.Schema(
     lapses: { type: Number, default: 0 },
     state: {
       type: String,
-      enum: [0 , 1 , 2 , 3],
-      default: 0,
+      enum: ["again", "hard", "medium", "easy"],
+      default: "again",
     },
     due: { type: Date, default: Date.now }, // لازم يكون موجود
     last_review: { type: Date, default: Date.now }, // لازم يكون موجود

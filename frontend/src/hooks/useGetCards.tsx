@@ -14,8 +14,16 @@ export type CardType = {
   content?: string;
   collectionId?: string;
   userId?: string;
-  easeFactor?: number;
-};
+   stability: number,
+      difficulty: number, // Default medium difficulty
+      elapsed_days: number,
+      scheduled_days: number,
+      learning_steps: number,
+      reps: number,
+      lapses: number,
+ state: number,
+      last_review: lastReviewDate,
+      due: lastReviewDate,};
 
 type GetCardsResponse = {
   cards: CardType[];

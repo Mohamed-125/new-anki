@@ -81,15 +81,38 @@ const StudyCards = () => {
     isFetchingNextPage,
     isIntialLoading,
     isLoading: cardsLoading,
+    refetch: refetchCards,
   } = useGetCards({
     collectionId,
-    study: 'all',
+    study: "all",
     difficultyFilter,
   });
 
+  // useEffect(() => {
+  //   queryClient.removeQueries({ queryKey: ["cards", "study"] });
+  // }, [queryClient]);
+
   useEffect(() => {
-    queryClient.removeQueries({ queryKey: ["cards", "study"] });
-  }, [queryClient]);
+    const unsyncedCards = localStorage.getItem("unsyncedCards");
+    if (unsyncedCards) {
+      const parsed = JSON.parse(unsyncedCards);
+      if (parsed.length > 0) {
+        axios
+          .patch(`card/batch`, { toUpdateCardsData: parsed })
+          .then(() => {
+            console.log("✅ Synced old updates successfully");
+            localStorage.removeItem("unsyncedCards");
+
+            // ⏳ بعد الـ sync الناجح → نعيد تحميل الكروت
+            refetchCards();
+          })
+          .catch(() => {
+            console.warn("⚠️ Failed to sync previous updates");
+          });
+      }
+    }
+  }, [refetchCards]);
+
   const card = cardsToStudy?.[currentCard];
 
   useEffect(() => {
@@ -99,58 +122,66 @@ const StudyCards = () => {
 
   const { user } = useGetCurrentUser();
 
-  const updatedCardsRef = useRef<{ _id: string; easeFactor: number }[]>([]);
+  const updatedCardsRef = useRef<{ _id: string; answer: string }[]>([]);
 
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (updatedCardsRef.current.length > 0) {
+        localStorage.setItem(
+          "unsyncedCards",
+          JSON.stringify(updatedCardsRef.current)
+        );
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
-      if (updatedCardsRef.current.length <= 0) return;
-      axios
-        .patch(`card/batch`, {
-          toUpdateCardsData: updatedCardsRef.current,
-        })
-        .then(() => {});
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+
+      if (updatedCardsRef.current.length > 0) {
+        axios
+          .patch(`card/batch`, {
+            toUpdateCardsData: updatedCardsRef.current,
+          })
+          .then(() => {
+            console.log("✅ Synced on normal exit");
+            localStorage.removeItem("unsyncedCards");
+          })
+          .catch(() => {
+            console.warn("⚠️ Sync failed on normal exit — keeping local copy");
+          });
+      } else {
+        localStorage.removeItem("unsyncedCards");
+      }
     };
   }, []);
 
   const submitAnswer = async (answer = "") => {
-    if (!cardsToStudy?.length) return;
-    if (
-      cardsToStudy[currentCard]?.easeFactor === undefined ||
-      !card ||
-      !cardsCount
-    )
-      return;
+    if (!cardsToStudy?.length || !card || !cardsCount) return;
 
-    let easeFactor =
-      answer === "easy"
-        ? Math.min(1, +cardsToStudy[currentCard].easeFactor + 1)
-        : answer === "medium"
-        ? Math.min(1, +cardsToStudy[currentCard].easeFactor + 0.5)
-        : answer === "hard"
-        ? Math.max(0, +cardsToStudy[currentCard].easeFactor - 0.5)
-        : Math.max(0, +cardsToStudy[currentCard].easeFactor - 1);
+    const update = { _id: card._id, answer };
+    updatedCardsRef.current.push(update);
 
-    updatedCardsRef.current.push({ _id: card._id, answer });
+    const existing = JSON.parse(localStorage.getItem("unsyncedCards") || "[]");
+    existing.push(update);
+    localStorage.setItem("unsyncedCards", JSON.stringify(existing));
 
     setShowAnswer(false);
     setCurrentCard((pre) => {
       const nextIndex = pre + 1;
-      // Update the highest card index if we're moving to a new card
-      if (nextIndex > highestCardIndex) {
-        setHighestCardIndex(nextIndex);
-      }
+      if (nextIndex > highestCardIndex) setHighestCardIndex(nextIndex);
 
       if (pre >= cardsToStudy.length - 1) {
         navigate("/congrats", { replace: true });
         return pre;
       } else {
-        if (pre === cardsToStudy.length - 20) {
-          fetchNextPage();
-        }
+        if (pre === cardsToStudy.length - 20) fetchNextPage();
         return nextIndex;
       }
     });
   };
+
   const [voice, setVoice] = useState<any>();
 
   const { languages, voices } = useVoices();
@@ -191,7 +222,7 @@ const StudyCards = () => {
         } else if (e.key === "3") {
           submitAnswer("hard");
         } else if (e.key === "4") {
-          submitAnswer("forgot");
+          submitAnswer("again");
         }
       }
 
@@ -220,6 +251,16 @@ const StudyCards = () => {
     if (cardsToStudy) setContent(cardsToStudy[currentCard]?.content || "");
   }, [currentCard]);
 
+  const [studyMode, setStudyMode] = useState<"all" | "due">("due");
+
+  const now = new Date();
+  const dueCards =
+    cardsToStudy?.filter((card) => new Date(card.due) <= now) || [];
+  const notDueCards =
+    cardsToStudy?.filter((card) => new Date(card.due) > now) || [];
+
+  const visibleCards = studyMode === "due" ? dueCards : cardsToStudy;
+
   if (collectionLoading || cardsLoading || isIntialLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-[rgba(173,150,255,0.08)]">
@@ -240,6 +281,17 @@ const StudyCards = () => {
   return (
     <div className="min-h-screen bg-[rgba(173,150,255,0.08)]">
       <AddCardModal />
+      {/*
+      {dueCards.length > 0 ? (
+        <div className="py-2 text-center text-yellow-800 bg-yellow-100 rounded-md py-2font-medium">
+          🕐 {dueCards.length} {dueCards.length === 1 ? "card" : "cards"} due
+          now
+        </div>
+      ) : (
+        <div className="py-2 font-medium text-center text-green-700 bg-green-100 rounded-md">
+          🎉 All cards are up to date!
+        </div>
+      )} */}
       <div className="w-full bg-white shadow-sm">
         <div className="container px-4 py-4 mx-auto">
           <div className="flex justify-between items-center">
@@ -468,7 +520,7 @@ const StudyCards = () => {
                           <ChevronLeft size={18} />
                         </Button>
 
-                        {cardsToStudy[currentCard]?.easeFactor !==
+                        {/* {cardsToStudy[currentCard]?.easeFactor !==
                           undefined && (
                           <div
                             className={`px-3 py-1 !w-fit  rounded-md text-sm font-medium ${
@@ -489,7 +541,7 @@ const StudyCards = () => {
                               ? "Hard"
                               : "New"}
                           </div>
-                        )}
+                        )} */}
 
                         <Button
                           tabIndex={-1}
@@ -596,9 +648,9 @@ const StudyCards = () => {
                     tabIndex={-1}
                     className="flex-1 h-10 text-gray-700 border-gray-700 transition-colors hover:bg-gray-700 hover:text-white"
                     variant="primary-outline"
-                    onClick={() => submitAnswer(`forgot`)}
+                    onClick={() => submitAnswer(`a`)}
                   >
-                    Forgot
+                    Again
                   </Button>
                 </motion.div>
               )}
