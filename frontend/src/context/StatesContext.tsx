@@ -76,7 +76,16 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   // sets the parent collection when when editing moving collections
   const [parentCollectionId, setParentCollectionId] = useState("");
   // state to select many card,collection, etc.
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  // Using localStorage to persist selection state across pagination
+  const [selectedItems, setSelectedItems] = useState<string[]>(() => {
+    const savedItems = localStorage.getItem('selectedItems');
+    return savedItems ? JSON.parse(savedItems) : [];
+  });
+  
+  // Update localStorage when selectedItems changes
+  useEffect(() => {
+    localStorage.setItem('selectedItems', JSON.stringify(selectedItems));
+  }, [selectedItems]);
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<Record<
     string,

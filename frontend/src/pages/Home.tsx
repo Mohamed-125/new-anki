@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Card from "../components/Card";
 import AddCardModal from "../components/AddCardModal";
 import Button from "../components/Button";
@@ -32,16 +32,17 @@ const Home = () => {
 
   const states = useModalStates();
 
+  // Extract all card IDs for select all functionality
+  const allCardIds = useMemo(() => {
+    return userCards?.map(card => card._id) || [];
+  }, [userCards]);
+
   const CardsJSX = useMemo(() => {
     if (!userCards) return null;
-
-    // Set loading state while computing cards
 
     const cards = userCards.map((card) => (
       <Card key={card._id} card={card} id={card._id} />
     ));
-
-    // Reset loading state after computation is complete
 
     return cards;
   }, [userCards, user?._id, states?.selectedItems]); // Ensure minimal dependencies
@@ -51,7 +52,10 @@ const Home = () => {
       <AddCardModal />
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
-      <SelectedItemsController isItemsCards={true} />
+      <SelectedItemsController 
+        itemType="cards" 
+        allItems={allCardIds} 
+      />
       <h6 className="mb-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>

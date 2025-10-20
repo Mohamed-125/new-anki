@@ -158,6 +158,7 @@ const StudyCards = () => {
   }, []);
 
   const submitAnswer = async (answer = "") => {
+    console.log(!cardsToStudy?.length, !card, !cardsCount);
     if (!cardsToStudy?.length || !card || !cardsCount) return;
 
     const update = { _id: card._id, answer };
@@ -185,6 +186,9 @@ const StudyCards = () => {
   const [voice, setVoice] = useState<any>();
 
   const { languages, voices } = useVoices();
+
+
+
 
   useEffect(() => {
     if (voices.length > 0) {

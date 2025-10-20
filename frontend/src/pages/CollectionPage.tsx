@@ -113,7 +113,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
           <Skeleton className="w-1/3 h-8" />
           <Skeleton className="w-full h-12" />
         </div>
-        <Skeleton className="w-full h-16 mb-4" />
+        <Skeleton className="mb-4 w-full h-16" />
         <CardsSkeleton />
       </div>
     );
@@ -137,14 +137,12 @@ const CollectionPage = React.memo(function CollectionPage({}) {
           <AddCardModal collectionId={collection?._id} />
           <ExportJsonModal />
         </>
-        {selectedItems.length > 0 && (
-          <SelectedItemsController
-            allItems={collectionCards?.map((card) => card._id)}
-            isItemsCards={moving === "cards" && true}
-            isItemsCollections={moving === "collections" && true}
-            moving={moving}
-          />
-        )}{" "}
+        <SelectedItemsController
+          allItems={collectionCards?.map((card) => card._id) || []}
+          itemType={moving === "collections" ? "collections" : "cards"}
+          moving={moving}
+          // setMoveVideoModal={setMoveVideoModal}
+        />
         {/* <ChangeItemsParent
           changeItemsParent={changeItemsParent}
           setChangeItemsParent={setChangeItemsParent}

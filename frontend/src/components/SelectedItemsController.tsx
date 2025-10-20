@@ -1,66 +1,162 @@
-type SelectedItemsControllerProps = {
-  isItemsVideos?: boolean;
-  isItemsCollections?: boolean;
-  isItemsPlaylists?: boolean;
-  isItemsNotes?: boolean;
-  isItemsTexts?: boolean;
-  isItemsCards?: boolean;
-  isItemsLists?: boolean;
-  moving?: string;
-  setMoveVideoModal?: React.Dispatch<React.SetStateAction<boolean>>;
-  allItems: string[];
-};
-import React from "react";
-import Button from "./Button";
+import React, { useCallback, useMemo } from "react";
 import axios from "axios";
-import { TextType } from "../pages/MyTexts";
 import { IoClose } from "react-icons/io5";
 import { FaTrash } from "react-icons/fa";
 import { MdDriveFileMove } from "react-icons/md";
-import useModalStates from "@/hooks/useModalsStates";
 import { useQueryClient } from "@tanstack/react-query";
+import useModalStates from "@/hooks/useModalsStates";
+
+// Define item types for better type safety
+export type ItemType = 
+  | "videos"
+  | "collections"
+  | "playlists"
+  | "notes"
+  | "texts"
+  | "cards"
+  | "lists";
+
+type SelectedItemsControllerProps = {
+  itemType?: ItemType;
+  moving?: string;
+  setMoveVideoModal?: React.Dispatch<React.SetStateAction<boolean>>;
+  allItems?: string[];
+  onSelectionChange?: (selectedItems: string[]) => void;
+};
 
 const SelectedItemsController = ({
-  isItemsVideos,
-  isItemsCollections,
-  isItemsPlaylists,
-  isItemsNotes,
-  isItemsTexts,
-  isItemsCards,
-  isItemsLists,
+  itemType = "cards",
   moving,
   setMoveVideoModal,
   allItems = [],
+  onSelectionChange,
 }: SelectedItemsControllerProps) => {
-  const { selectedItems, setSelectedItems, setIsMoveToCollectionOpen } =
-    useModalStates();
-
+  const { selectedItems, setSelectedItems, setIsMoveToCollectionOpen } = useModalStates();
   const queryClient = useQueryClient();
 
-  return selectedItems.length ? (
-    <div className="flex fixed right-0 bottom-0 left-0 z-50 gap-4 justify-between px-6 py-7 w-full bg-white bg-opacity-90 border-t shadow-lg backdrop-blur-sm py-4items-center border-neutral-200">
+  // Map item types to their API endpoints and query keys
+  const itemConfig = useMemo(() => ({
+    videos: {
+      endpoint: "video/batch-delete",
+      queryKeys: ["videos", "video"],
+      moveText: "Move to Playlist"
+    },
+    collections: {
+      endpoint: "collection/batch-delete",
+      queryKeys: ["collections", "collection"],
+      moveText: "Move to Collection"
+    },
+    playlists: {
+      endpoint: "playlist/batch-delete",
+      queryKeys: ["playlists", "playlist"],
+      moveText: "Move to Collection"
+    },
+    notes: {
+      endpoint: "note/batch-delete",
+      queryKeys: ["notes", "note"],
+      moveText: "Move to Collection"
+    },
+    texts: {
+      endpoint: "text/batch-delete",
+      queryKeys: ["texts", "text"],
+      moveText: "Move to Collection"
+    },
+    cards: {
+      endpoint: "card/batch-delete",
+      queryKeys: ["cards", "card"],
+      moveText: "Move to Collection"
+    },
+    lists: {
+      endpoint: "list/batch-delete",
+      queryKeys: ["topic-lists"],
+      moveText: "Move to Collection"
+    }
+  }), []);
+
+  // Determine if move button should be shown
+  const showMoveButton = useMemo(() => {
+    return itemType === "cards" || 
+           itemType === "collections" || 
+           itemType === "videos" || 
+           moving === "cards" || 
+           moving === "collections";
+  }, [itemType, moving]);
+
+  // Get the current item configuration
+  const currentConfig = useMemo(() => {
+    // If moving is specified, use that as the item type
+    const effectiveType = moving || itemType;
+    return itemConfig[effectiveType as ItemType];
+  }, [itemConfig, itemType, moving]);
+
+  // Handle select/deselect all
+  const handleSelectAll = useCallback(() => {
+    const newSelection = selectedItems.length === allItems.length ? [] : [...allItems];
+    setSelectedItems(newSelection);
+    onSelectionChange?.(newSelection);
+  }, [allItems, selectedItems, setSelectedItems, onSelectionChange]);
+
+  // Handle clear selection
+  const handleClearSelection = useCallback(() => {
+    setSelectedItems([]);
+    onSelectionChange?.([]);
+  }, [setSelectedItems, onSelectionChange]);
+
+  // Handle move items
+  const handleMoveItems = useCallback(() => {
+    setIsMoveToCollectionOpen(true);
+    setMoveVideoModal?.(true);
+  }, [setIsMoveToCollectionOpen, setMoveVideoModal]);
+
+  // Handle delete items
+  const handleDeleteItems = useCallback(async () => {
+    if (!selectedItems.length || !currentConfig) return;
+
+    const confirmation = window.confirm(
+      "Are you sure you want to delete all selected items?"
+    );
+    
+    if (confirmation) {
+      try {
+        await axios.post(currentConfig.endpoint, { ids: selectedItems });
+        
+        // Invalidate relevant queries
+        currentConfig.queryKeys.forEach(key => {
+          queryClient.invalidateQueries({ queryKey: [key] });
+        });
+        
+        // Clear selection
+        setSelectedItems([]);
+        onSelectionChange?.([]);
+      } catch (error) {
+        console.error("Error deleting items:", error);
+      }
+    }
+  }, [selectedItems, currentConfig, queryClient, setSelectedItems, onSelectionChange]);
+
+  // Don't render if no items are selected
+  if (!selectedItems.length) return null;
+
+  return (
+    <div className="flex fixed right-0 bottom-0 left-0 z-50 gap-4 justify-between items-center px-6 py-4 w-full bg-white bg-opacity-90 border-t shadow-lg backdrop-blur-sm border-neutral-200">
       <div className="flex gap-3 items-center">
         <button
-          onClick={() => setSelectedItems([])}
+          onClick={handleClearSelection}
           className="flex gap-2 items-center text-xl text-gray-600 transition-colors hover:text-gray-900"
+          aria-label="Clear selection"
         >
           <IoClose />
         </button>
 
         <span className="text-lg font-semibold text-primary">
-          {selectedItems?.length}{" "}
-          {selectedItems.length === 1 ? "item" : "items"}
+          {selectedItems.length} {selectedItems.length === 1 ? "item" : "items"}
         </span>
+        
         <span className="text-gray-400">|</span>
-        {allItems && (
+        
+        {allItems.length > 0 && (
           <button
-            onClick={() => {
-              if (selectedItems.length === allItems.length) {
-                setSelectedItems([]);
-              } else {
-                setSelectedItems(allItems);
-              }
-            }}
+            onClick={handleSelectAll}
             className="flex gap-2 items-center transition-colors text-primary hover:text-primary/80"
           >
             <span>
@@ -73,82 +169,26 @@ const SelectedItemsController = ({
       </div>
 
       <div className="flex gap-6 items-center text-[16px]">
-        {isItemsCards ||
-        moving === "cards" ||
-        isItemsCollections ||
-        isItemsVideos ? (
+        {showMoveButton && (
           <button
             className="flex gap-2 items-center transition-colors text-primary hover:text-primary/80"
-            onClick={() => {
-              setIsMoveToCollectionOpen(true);
-              setMoveVideoModal?.(true);
-            }}
+            onClick={handleMoveItems}
           >
             <MdDriveFileMove className="text-3xl" />
-            <span>
-              {isItemsVideos ? "Move to Playlist" : "Move to Collection"}
-            </span>
+            <span>{currentConfig?.moveText}</span>
           </button>
-        ) : null}
+        )}
 
         <button
           className="flex gap-2 items-center text-red-500 transition-colors hover:text-red-600"
-          onClick={async () => {
-            const url = isItemsVideos
-              ? `video/batch-delete`
-              : isItemsCollections
-              ? `collection/batch-delete`
-              : isItemsPlaylists
-              ? `playlist/batch-delete`
-              : isItemsNotes
-              ? `note/batch-delete`
-              : isItemsTexts
-              ? `text/batch-delete`
-              : isItemsLists
-              ? `list/batch-delete`
-              : `card/batch-delete`;
-
-            const confirmation = window.confirm(
-              "Are you sure you want to delete all selected items?"
-            );
-            if (confirmation) {
-              await axios.post(url, { ids: selectedItems });
-              // setItemsState?.((pre: string[]) =>
-              //   //@ts-ignore
-              //   pre.filter((item: TextType) => selectedItems.includes(item._id))
-              // );
-              if (isItemsVideos) {
-                queryClient.invalidateQueries({ queryKey: ["videos"] });
-                queryClient.invalidateQueries({ queryKey: ["video"] });
-              } else if (isItemsCollections) {
-                queryClient.invalidateQueries({ queryKey: ["collections"] });
-                queryClient.invalidateQueries({ queryKey: ["collection"] });
-              } else if (isItemsPlaylists) {
-                queryClient.invalidateQueries({ queryKey: ["playlists"] });
-                queryClient.invalidateQueries({ queryKey: ["playlist"] });
-              } else if (isItemsNotes) {
-                queryClient.invalidateQueries({ queryKey: ["notes"] });
-                queryClient.invalidateQueries({ queryKey: ["note"] });
-              } else if (isItemsTexts) {
-                queryClient.invalidateQueries({ queryKey: ["texts"] });
-                queryClient.invalidateQueries({ queryKey: ["text"] });
-              } else if (isItemsLists) {
-                queryClient.invalidateQueries({ queryKey: ["topic-lists"] });
-              } else {
-                queryClient.invalidateQueries({ queryKey: ["cards"] });
-                queryClient.invalidateQueries({ queryKey: ["card"] });
-              }
-
-              setSelectedItems([]);
-            }
-          }}
+          onClick={handleDeleteItems}
         >
           <FaTrash className="text-xl" />
           <span>Delete</span>
         </button>
       </div>
     </div>
-  ) : null;
+  );
 };
 
 export default SelectedItemsController;

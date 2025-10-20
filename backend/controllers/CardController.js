@@ -1,5 +1,31 @@
 const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
+const mongoose = require("mongoose");
+
+// Batch delete cards
+exports.batchDelete = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "Invalid or empty ids array" });
+    }
+    
+    // Convert string IDs to ObjectIds
+    const objectIds = ids.map(id => mongoose.Types.ObjectId(id));
+    
+    // Delete cards in batch
+    const result = await CardModel.deleteMany({ _id: { $in: objectIds } });
+    
+    return res.status(200).json({ 
+      message: `Successfully deleted ${result.deletedCount} cards`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error("Error in batch delete cards:", error);
+    return res.status(500).json({ message: "Failed to delete cards", error: error.message });
+  }
+};
 
 // Custom SRS implementation to replace ts-fsrs
 const SRS = {

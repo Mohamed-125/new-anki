@@ -1,5 +1,5 @@
 import Collection from "../components/Collection";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Button from "../components/Button";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
@@ -30,15 +30,20 @@ const Collections = () => {
     query: debouncedQuery,
   });
 
-  console.log(collections, isLoading);
+  // Extract all collection IDs for select all functionality
+  const allCollectionIds = useMemo(() => {
+    return collections?.map(collection => collection._id) || [];
+  }, [collections]);
+
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
       <MoveCollectionModal />
       <AddNewCollectionModal />
       <ShareModal sharing="collections" />
-      {selectedItems.length > 0 && (
-        <SelectedItemsController isItemsCollections={true} />
-      )}
+      <SelectedItemsController 
+        itemType="collections" 
+        allItems={allCollectionIds} 
+      />
       <div className="space-y-6">
         <div className="flex gap-4 justify-between items-center my-4 sm:flex-row sm:items-center">
           <h1 className="text-3xl font-bold text-gray-900">

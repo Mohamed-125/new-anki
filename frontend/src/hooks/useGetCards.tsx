@@ -22,8 +22,8 @@ export type CardType = {
       reps: number,
       lapses: number,
  state: number,
-      last_review: lastReviewDate,
-      due: lastReviewDate,};
+      last_review: number,
+      due: number,};
 
 type GetCardsResponse = {
   cards: CardType[];
