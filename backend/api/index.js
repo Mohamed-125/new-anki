@@ -59,6 +59,7 @@ const whitelist = [
   "http://192.168.1.3:5174",
   "http://192.168.1.3:5173",
   "http://localhost:5174",
+  "http://192.168.1.2:8080",
 ];
 
 const corsOptions = {

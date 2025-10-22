@@ -34,7 +34,7 @@ const Home = () => {
 
   // Extract all card IDs for select all functionality
   const allCardIds = useMemo(() => {
-    return userCards?.map(card => card._id) || [];
+    return userCards?.map((card) => card._id) || [];
   }, [userCards]);
 
   const CardsJSX = useMemo(() => {
@@ -52,10 +52,7 @@ const Home = () => {
       <AddCardModal />
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
-      <SelectedItemsController 
-        itemType="cards" 
-        allItems={allCardIds} 
-      />
+      <SelectedItemsController itemType="cards" allItems={allCardIds} />
       <h6 className="mb-4 text-lg font-bold text-gray-400">
         Your Cards : {cardsCount}
       </h6>
