@@ -26,7 +26,7 @@ interface HeaderProps {
 const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
   const { user } = useGetCurrentUser();
   const location = useLocation();
-  const hideLayout = location.pathname.startsWith("/study-cards");
+  const hideLayout = location.pathname.startsWith("/study");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   if (hideLayout) return null;

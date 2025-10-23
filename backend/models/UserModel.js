@@ -74,8 +74,10 @@ UserSchema.methods.generateNewToken = async function (res) {
   });
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    // secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
+    // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true, // Only over HTTPS
+    sameSite: "none",
     maxAge: process.env.TOKEN_EXPIRESIN,
   });
 };
@@ -86,8 +88,10 @@ UserSchema.methods.generateRefreshToken = async function (res) {
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+   // secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
+    // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+     secure: true, // Only over HTTPS
+    sameSite: "none",
     maxAge: process.env.REFRESH_TOKEN_EXPIRESIN,
   });
 };

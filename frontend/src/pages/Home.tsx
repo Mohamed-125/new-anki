@@ -58,7 +58,7 @@ const Home = () => {
       </h6>
       <Search searchingFor="cards" query={query} setQuery={setQuery} />
       <div className="flex gap-2 justify-between items-center my-5">
-        <Link to="/study-cards">
+        <Link to="/study">
           <Button variant="primary-outline" className="py-3 sm:text-sm">
             Study Your Cards
           </Button>

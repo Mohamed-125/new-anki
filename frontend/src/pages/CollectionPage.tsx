@@ -167,7 +167,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                           variant="primary-outline"
                           className="flex gap-2 items-center hover:bg-blue-50"
                         >
-                          <Link to={"/study-cards/" + id}>
+                          <Link to={"/study/" + id}>
                             <span className="flex gap-2 items-center">
                               📚 Study Now
                             </span>

@@ -79,7 +79,6 @@ const StudyCards = () => {
     cardsCount,
     fetchNextPage,
     isFetchingNextPage,
-    isIntialLoading,
     isLoading: cardsLoading,
     refetch: refetchCards,
   } = useGetCards({
@@ -92,26 +91,6 @@ const StudyCards = () => {
   //   queryClient.removeQueries({ queryKey: ["cards", "study"] });
   // }, [queryClient]);
 
-  useEffect(() => {
-    const unsyncedCards = localStorage.getItem("unsyncedCards");
-    if (unsyncedCards) {
-      const parsed = JSON.parse(unsyncedCards);
-      if (parsed.length > 0) {
-        axios
-          .patch(`card/batch`, { toUpdateCardsData: parsed })
-          .then(() => {
-            console.log("✅ Synced old updates successfully");
-            localStorage.removeItem("unsyncedCards");
-
-            // ⏳ بعد الـ sync الناجح → نعيد تحميل الكروت
-            refetchCards();
-          })
-          .catch(() => {
-            console.warn("⚠️ Failed to sync previous updates");
-          });
-      }
-    }
-  }, [refetchCards]);
 
   const card = cardsToStudy?.[currentCard];
 
@@ -145,6 +124,7 @@ const StudyCards = () => {
             toUpdateCardsData: updatedCardsRef.current,
           })
           .then(() => {
+            queryClient.invalidateQueries({queryKey:['cards', user?._id, 'study']})
             console.log("✅ Synced on normal exit");
             localStorage.removeItem("unsyncedCards");
           })
@@ -186,9 +166,6 @@ const StudyCards = () => {
   const [voice, setVoice] = useState<any>();
 
   const { languages, voices } = useVoices();
-
-
-
 
   useEffect(() => {
     if (voices.length > 0) {
@@ -265,7 +242,7 @@ const StudyCards = () => {
 
   const visibleCards = studyMode === "due" ? dueCards : cardsToStudy;
 
-  if (collectionLoading || cardsLoading || isIntialLoading) {
+  if (collectionLoading || cardsLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-[rgba(173,150,255,0.08)]">
         <div className="w-full max-w-3xl">

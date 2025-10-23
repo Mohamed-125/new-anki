@@ -8,6 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      injectManifest: {
+        // increase the file size limit (e.g., 10 MiB)
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+      },
+      filename: "sw.js", // your custom service worker file
       manifest: {
         name: "Collingo",
         short_name: "Collingo",
@@ -26,49 +33,52 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
-        // Precache all built assets
-        globPatterns: ["**/*.{js,css,html,png,svg,json}"],
-        // Runtime caching for pages and API
-        runtimeCaching: [
-          {
-            // Cache all SPA pages and other HTML routes
-            urlPattern: /^\/.*$/,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "pages-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
-              },
-            },
-          },
-          {
-            // Cache API responses
-            urlPattern: /\/api\/.*$/,
-            handler: "NetworkFirst", // or 'StaleWhileRevalidate' for faster offline UX
-            options: {
-              cacheName: "api-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 24 * 60 * 60, // 1 day
-              },
-            },
-          },
-          {
-            // Cache images, icons
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "images-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-              },
-            },
-          },
-        ],
-      },
+      // workbox: {
+      //   // Precache all built assets
+      //   globPatterns: ["**/*.{js,css,html,png,svg,json}"],
+      //   // Runtime caching for pages and API
+      //   runtimeCaching: [
+      //     {
+      //       // Cache all SPA pages and other HTML routes
+      //       urlPattern: /^\/.*$/,
+      //       handler: "NetworkFirst",
+      //       options: {
+      //         cacheName: "pages-cache",
+      //         expiration: {
+      //           maxEntries: 50,
+      //           maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+      //         },
+      //       },
+      //     },
+      //     {
+      //       // Cache API responses
+      //       urlPattern: /\/api\/.*$/,
+      //       handler: "NetworkFirst", // or 'StaleWhileRevalidate' for faster offline UX
+      //       options: {
+      //         cacheableResponse: {
+      //           statuses: [0, 200], // allow caching opaque responses (cross-origin)
+      //         },
+      //         cacheName: "api-cache",
+      //         expiration: {
+      //           maxEntries: 100,
+      //           maxAgeSeconds: 24 * 60 * 60, // 1 day
+      //         },
+      //       },
+      //     },
+      //     {
+      //       // Cache images, icons
+      //       urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
+      //       handler: "CacheFirst",
+      //       options: {
+      //         cacheName: "images-cache",
+      //         expiration: {
+      //           maxEntries: 100,
+      //           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      //         },
+      //       },
+      //     },
+      //   ],
+      // },
     }),
   ],
   resolve: {

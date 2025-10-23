@@ -35,6 +35,7 @@ import MoveCollectionModal from "./MoveCollectionModal";
 import { IoClose } from "react-icons/io5";
 import useGetCollectionById from "@/hooks/useGetCollectionById";
 import useGetCollections from "@/hooks/useGetCollections";
+import { useNetwork } from "../context/NetworkStatusContext";
 
 type CardData = {
   front: string;
@@ -158,6 +159,7 @@ export function AddCardModal({
 
   const { addToast } = useToasts();
   const [isLoading, setIsLoading] = useState(false);
+  const {isOnline} = useNetwork()
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -168,7 +170,7 @@ export function AddCardModal({
       sectionId: defaultValues?.sectionId || null,
     };
 
-    setIsLoading(true);
+    if(isOnline) setIsLoading(true);
     if (isEdit) {
       await updateCardHandler(
         e,

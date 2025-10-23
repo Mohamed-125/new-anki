@@ -10,6 +10,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
+        console.log("proteceted");
         // Store the current location before redirecting
         sessionStorage.setItem("redirectPath", location.pathname);
         navigate("/login");

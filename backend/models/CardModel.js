@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 
 const CardSchema = new mongoose.Schema(
   {
+    _id: String, // allow custom string IDs
+
     // ------------------- Core fields -------------------
     front: {
       type: String,

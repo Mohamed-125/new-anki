@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { LanguageProvider } from "./context/SelectedLearningLanguageContext.tsx";
+import { NetworkStatusProvider } from "./context/NetworkStatusContext";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -33,6 +34,7 @@ import Congrats from "./pages/Congrats.tsx";
 import Profile from "./pages/Profile.tsx";
 import AddNewNote from "./pages/AddNewNote.tsx";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.tsx";
+import useUserDatabase from "./hooks/useUserDatabase.tsx";
 import { ReactNode, useEffect, useState } from "react";
 import Admin from "./pages/Admin/Admin.tsx";
 import AiChat from "./components/AiChat";
@@ -52,11 +54,16 @@ import AdminList from "./pages/AdminList.tsx";
 import ListPage from "./pages/ListPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header.tsx";
+import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 
 function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
+  useUserDatabase(); // Initialize user-specific database
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+ const queryClient = useQueryClient()
 
+ 
   const links = [
     { name: "Home", path: "/" },
     { name: "Learn", path: "/learn" },
@@ -69,296 +76,293 @@ function App() {
     { name: "Library", path: "/library" },
   ];
 
+  useEffect(() => {
+    const unsyncedCards = localStorage.getItem("unsyncedCards");
+    if (unsyncedCards) {
+      const parsed = JSON.parse(unsyncedCards);
+      if (parsed.length > 0) {
+        setTimeout(() => {
+          axios
+            .patch(`card/batch`, { toUpdateCardsData: parsed })
+            .then(() => {
+            queryClient.invalidateQueries({queryKey:['cards', user?._id, 'study']})
+              console.log("✅ Synced old updates successfully");
+              localStorage.removeItem("unsyncedCards");
+            })
+            .catch(() => {
+              console.warn("⚠️ Failed to sync previous updates");
+            });
+        }, 2000);
+      }
+    }
+  }, []);
+
   return (
     <>
       <Router>
-        <LanguageProvider user={user}>
-          <div className="flex min-h-screen">
-            <Sidebar
-              links={links}
-              isMobileOpen={isMobileOpen}
-              setIsMobileOpen={setIsMobileOpen}
-            />
+        <NetworkStatusProvider>
+          <LanguageProvider user={user}>
+            <div className="flex min-h-screen">
+              <Sidebar
+                links={links}
+                isMobileOpen={isMobileOpen}
+                setIsMobileOpen={setIsMobileOpen}
+              />
 
-            <div className="overflow-y-auto flex-1 bg-white">
-              <Header links={links} setIsMobileOpen={setIsMobileOpen} />
-              <Routes>
-                <Route
-                  path={`/`}
-                  element={
-                    <ProtectedRoute>
-                      <Home />
-                    </ProtectedRoute>
-                  }
-                ></Route>
-
-                <Route
-                  path="/collections"
-                  element={
-                    <ProtectedRoute>
-                      <Collections />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path={`/collections/*`}
-                  element={
-                    <ProtectedRoute>
-                      <CollectionPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/library"
-                  element={
-                    <ProtectedRoute>
-                      <Library />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/library/:channelId"
-                  element={
-                    <ProtectedRoute>
-                      <Channel />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lists/:listId"
-                  element={
-                    <ProtectedRoute>
-                      <ListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/videos"
-                  element={
-                    <ProtectedRoute>
-                      <Videos />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/videos/:id"
-                  element={
-                    <ProtectedRoute>
-                      <Video />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/transcript"
-                  element={
-                    <ProtectedRoute>
-                      <GetTranscript />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/playlists/:id"
-                  element={
-                    <ProtectedRoute>
-                      <Playlist />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/playlists"
-                  element={
-                    <ProtectedRoute>
-                      <Playlists />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/notes"
-                  element={
-                    <ProtectedRoute>
-                      <Notes />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/notes/:id"
-                  element={
-                    <ProtectedRoute>
-                      <Note />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/notes/new"
-                  element={
-                    <ProtectedRoute>
-                      <AddNewNote />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notes/edit/:id"
-                  element={
-                    <ProtectedRoute>
-                      <AddNewNote />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/texts"
-                  element={
-                    <ProtectedRoute>
-                      <MyTexts />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/texts/:id"
-                  element={
-                    <ProtectedRoute>
-                      <TextPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/texts/new"
-                  element={
-                    <ProtectedRoute>
-                      <AddNewText />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/texts/edit/:id"
-                  element={
-                    <ProtectedRoute>
-                      <AddNewText />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/article"
-                  element={
-                    <ProtectedRoute>
-                      <WordArticle />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/congrats"
-                  element={
-                    <ProtectedRoute>
-                      <Congrats />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route path="/profile/:id" element={<Profile />} />
-
-                <Route
-                  path="/learn"
-                  element={
-                    <ProtectedRoute>
-                      <LearnPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/learn/:lessonId"
-                  element={
-                    <ProtectedRoute>
-                      <LessonPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/learn/:courseLevelId/:lessonId"
-                  element={
-                    <ProtectedRoute>
-                      <LessonPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route
-                  path="/user-profile"
-                  element={
-                    <ProtectedRoute>
-                      <UserProfile />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminRoute>
-                        <Admin />
-                      </AdminRoute>
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="courses" element={<AdminCourses />} />
-                  <Route path="courses/:courseId" element={<AdminCourse />} />
+              <div className="overflow-y-auto flex-1 bg-white">
+                <Header links={links} setIsMobileOpen={setIsMobileOpen} />
+                <Routes>
                   <Route
-                    path="courses/:courseId/:courseLevelId"
-                    element={<AdminCourseLevel />}
-                  />
-                  <Route
-                    path="courses/:courseId/:courseLevelId/:lessonId"
-                    element={<AdminLesson />}
-                  />
-
-                  <Route path="topics/:topicId" element={<AdminTopic />} />
+                    path={`/`}
+                    element={
+                      <ProtectedRoute>
+                        <Home />
+                      </ProtectedRoute>
+                    }
+                  ></Route>
 
                   <Route
-                    path="topics/:topicId/:channelId"
-                    element={<AdminChannel />}
+                    path="/collections"
+                    element={
+                      <ProtectedRoute>
+                        <Collections />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
-                    path="topics/:topicId/lists/:listId"
-                    element={<AdminList />}
+                    path="/collections/:collectionId"
+                    element={
+                      <ProtectedRoute>
+                        <CollectionPage />
+                      </ProtectedRoute>
+                    }
                   />
-                </Route>
 
-                <Route path="/landing" element={<LandingPage />} />
-                <Route
-                  path="*"
-                  element={selectedLearningLanguage ? <PageNotFound /> : ""}
-                />
+                  <Route
+                    path="/videos"
+                    element={
+                      <ProtectedRoute>
+                        <Videos />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                <Route
-                  path="/study-cards/:collectionId?"
-                  element={
-                    <ProtectedRoute>
-                      <StudyCards />
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-              <ChatComponent />
+                  <Route
+                    path="/playlists"
+                    element={
+                      <ProtectedRoute>
+                        <Playlists />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/playlists/:playlistId"
+                    element={
+                      <ProtectedRoute>
+                        <Playlist />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/videos/:videoId"
+                    element={
+                      <ProtectedRoute>
+                        <Video />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/notes"
+                    element={
+                      <ProtectedRoute>
+                        <Notes />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/notes/:noteId"
+                    element={
+                      <ProtectedRoute>
+                        <Note />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/texts"
+                    element={
+                      <ProtectedRoute>
+                        <MyTexts />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/texts/add"
+                    element={
+                      <ProtectedRoute>
+                        <AddNewText />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/texts/:textId"
+                    element={
+                      <ProtectedRoute>
+                        <TextPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/article"
+                    element={
+                      <ProtectedRoute>
+                        <WordArticle />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/library"
+                    element={
+                      <ProtectedRoute>
+                        <Library />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/study"
+                    element={
+                      <ProtectedRoute>
+                        <StudyCards />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/congrats"
+                    element={
+                      <ProtectedRoute>
+                        <Congrats />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/notes/add"
+                    element={
+                      <ProtectedRoute>
+                        <AddNewNote />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/learn"
+                    element={
+                      <ProtectedRoute>
+                        <LearnPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/learn/:lessonId"
+                    element={
+                      <ProtectedRoute>
+                        <LessonPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/learn/:courseLevelId/:lessonId"
+                    element={
+                      <ProtectedRoute>
+                        <LessonPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route
+                    path="/user-profile"
+                    element={
+                      <ProtectedRoute>
+                        <UserProfile />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute>
+                        <AdminRoute>
+                          <Admin />
+                        </AdminRoute>
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="courses" element={<AdminCourses />} />
+                    <Route path="courses/:courseId" element={<AdminCourse />} />
+                    <Route
+                      path="courses/:courseId/:courseLevelId"
+                      element={<AdminCourseLevel />}
+                    />
+                    <Route
+                      path="courses/:courseId/:courseLevelId/:lessonId"
+                      element={<AdminLesson />}
+                    />
+                    <Route path="topics" element={<AdminTopic />} />
+                    <Route path="channels" element={<AdminChannel />} />
+                    <Route path="lists" element={<AdminList />} />
+                  </Route>
+
+                  <Route
+                    path="/channels/:channelId"
+                    element={
+                      <ProtectedRoute>
+                        <Channel />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/lists/:listId"
+                    element={
+                      <ProtectedRoute>
+                        <ListPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route path="*" element={<PageNotFound />} />
+                </Routes>
+              </div>
             </div>
-          </div>
-        </LanguageProvider>
+          </LanguageProvider>
+        </NetworkStatusProvider>
       </Router>
-      <AiChat />
     </>
   );
 }

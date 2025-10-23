@@ -52,8 +52,7 @@ mongoose
 const whitelist = [
   "https://new-anki-one.vercel.app",
   "http://localhost:5173",
-    "https://192.168.1.2:8080", // testing pwa
-  "https://localhost:4173", // testing pwa
+  "https://localhost:5173",
   "chrome-extension://cbjhlfenceikgmdhffgcklhcfmjomojk",
   "chrome-extension://djlfoidjlgljkgpdnlglajpjigbgkdab",
   "http://192.168.1.2:5174",
@@ -61,7 +60,7 @@ const whitelist = [
   "http://192.168.1.3:5174",
   "http://192.168.1.3:5173",
   "http://localhost:5174",
-
+  "https://localhost:4173",
 ];
 
 const corsOptions = {

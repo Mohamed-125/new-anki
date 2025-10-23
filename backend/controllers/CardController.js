@@ -6,24 +6,26 @@ const mongoose = require("mongoose");
 exports.batchDelete = async (req, res) => {
   try {
     const { ids } = req.body;
-    
+
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ message: "Invalid or empty ids array" });
     }
-    
+
     // Convert string IDs to ObjectIds
-    const objectIds = ids.map(id => mongoose.Types.ObjectId(id));
-    
+    const objectIds = ids.map((id) => mongoose.Types.ObjectId(id));
+
     // Delete cards in batch
     const result = await CardModel.deleteMany({ _id: { $in: objectIds } });
-    
-    return res.status(200).json({ 
+
+    return res.status(200).json({
       message: `Successfully deleted ${result.deletedCount} cards`,
-      deletedCount: result.deletedCount
+      deletedCount: result.deletedCount,
     });
   } catch (error) {
     console.error("Error in batch delete cards:", error);
-    return res.status(500).json({ message: "Failed to delete cards", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to delete cards", error: error.message });
   }
 };
 
@@ -102,181 +104,180 @@ const SRS = {
         return this._handleNewCard(updatedCard, rating);
     }
   },
- // Handle new cards
-_handleNewCard: function (card, rating) {
-  switch (rating) {
-    case this.Rating.Again:
-      // Failed, stay in learning with short interval
-      card.learning_steps = 0;
-      card.due = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-      break;
+  // Handle new cards
+  _handleNewCard: function (card, rating) {
+    switch (rating) {
+      case this.Rating.Again:
+        // Failed, stay in learning with short interval
+        card.learning_steps = 0;
+        card.due = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        break;
 
-    case this.Rating.Hard:
-      // Move to learning with short interval
-      card.state = this.States.LEARNING;
-      card.learning_steps = 1;
-      card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      break;
+      case this.Rating.Hard:
+        // Move to learning with short interval
+        card.state = this.States.LEARNING;
+        card.learning_steps = 1;
+        card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        break;
 
-    case this.Rating.Good:
-      // Move to learning with medium interval
-      card.state = this.States.LEARNING;
-      card.learning_steps = 1;
-      card.due = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-      break;
+      case this.Rating.Good:
+        // Move to learning with medium interval
+        card.state = this.States.LEARNING;
+        card.learning_steps = 1;
+        card.due = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        break;
 
-    case this.Rating.Easy:
-      // Light learning instead of direct review
-      card.state = this.States.LEARNING;
-      card.learning_steps = 2;
-      card.due = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
-      break;
-  }
+      case this.Rating.Easy:
+        // Light learning instead of direct review
+        card.state = this.States.LEARNING;
+        card.learning_steps = 2;
+        card.due = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
+        break;
+    }
 
-  return card;
-},
+    return card;
+  },
 
-// Handle cards in learning phase
-_handleLearningCard: function (card, rating) {
-  switch (rating) {
-    case this.Rating.Again:
-      // Reset learning progress
-      card.learning_steps = 0;
-      card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      break;
+  // Handle cards in learning phase
+  _handleLearningCard: function (card, rating) {
+    switch (rating) {
+      case this.Rating.Again:
+        // Reset learning progress
+        card.learning_steps = 0;
+        card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        break;
 
-    case this.Rating.Hard:
-      // Small progress in learning
-      card.learning_steps += 1;
-      card.due = new Date(Date.now() + 45 * 60 * 1000); // 45 minutes
-      break;
+      case this.Rating.Hard:
+        // Small progress in learning
+        card.learning_steps += 1;
+        card.due = new Date(Date.now() + 45 * 60 * 1000); // 45 minutes
+        break;
 
-    case this.Rating.Good:
-      card.learning_steps += 1;
+      case this.Rating.Good:
+        card.learning_steps += 1;
 
-      // If completed learning steps, graduate to review
-      if (card.learning_steps >= 3) {
+        // If completed learning steps, graduate to review
+        if (card.learning_steps >= 3) {
+          card.state = this.States.REVIEW;
+          card.stability = 3;
+          card.due = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+        } else {
+          // Otherwise, increase interval within learning
+          const intervals = [0, 30, 240, 1440]; // minutes: 0, 30min, 4h, 1d
+          const minutesToAdd = intervals[card.learning_steps] || 1440;
+          card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
+        }
+        break;
+
+      case this.Rating.Easy:
+        // Graduate immediately to review
         card.state = this.States.REVIEW;
-        card.stability = 3;
-        card.due = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
-      } else {
-        // Otherwise, increase interval within learning
-        const intervals = [0, 30, 240, 1440]; // minutes: 0, 30min, 4h, 1d
-        const minutesToAdd = intervals[card.learning_steps] || 1440;
-        card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
-      }
-      break;
+        card.stability = 4;
+        card.due = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days
+        break;
+    }
 
-    case this.Rating.Easy:
-      // Graduate immediately to review
-      card.state = this.States.REVIEW;
-      card.stability = 4;
-      card.due = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days
-      break;
-  }
+    return card;
+  },
 
-  return card;
-},
+  // Handle cards in review phase
+  _handleReviewCard: function (card, rating) {
+    this._updateDifficulty(card, rating);
 
-// Handle cards in review phase
-_handleReviewCard: function (card, rating) {
-  this._updateDifficulty(card, rating);
+    switch (rating) {
+      case this.Rating.Again:
+        // Failed review, move to relearning
+        card.state = this.States.RELEARNING;
+        card.lapses += 1;
+        card.learning_steps = 0;
 
-  switch (rating) {
-    case this.Rating.Again:
-      // Failed review, move to relearning
-      card.state = this.States.RELEARNING;
-      card.lapses += 1;
-      card.learning_steps = 0;
+        // Reduce stability
+        card.stability = Math.max(0.5, card.stability * 0.4);
+        card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        break;
 
-      // Reduce stability
-      card.stability = Math.max(0.5, card.stability * 0.4);
-      card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      break;
+      case this.Rating.Hard:
+        // Slightly harder recall
+        card.stability = card.stability * 1.15;
+        card.scheduled_days = Math.max(1, Math.floor(card.stability * 0.9));
+        card.due = new Date(
+          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
+        );
+        break;
 
-    case this.Rating.Hard:
-      // Slightly harder recall
-      card.stability = card.stability * 1.15;
-      card.scheduled_days = Math.max(1, Math.floor(card.stability * 0.9));
-      card.due = new Date(
-        Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-      );
-      break;
+      case this.Rating.Good:
+        // Normal review success
+        const stabilityMultiplier = 1.4 * (1 - 0.4 * card.difficulty);
+        card.stability = card.stability * stabilityMultiplier;
 
-    case this.Rating.Good:
-      // Normal review success
-      const stabilityMultiplier = 1.4 * (1 - 0.4 * card.difficulty);
-      card.stability = card.stability * stabilityMultiplier;
+        // Next interval
+        card.scheduled_days = Math.max(1, Math.floor(card.stability));
+        card.due = new Date(
+          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
+        );
+        break;
 
-      // Next interval
-      card.scheduled_days = Math.max(1, Math.floor(card.stability));
-      card.due = new Date(
-        Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-      );
-      break;
+      case this.Rating.Easy:
+        // Easy recall
+        const easyMultiplier = 2.0 * (1 - 0.25 * card.difficulty);
+        card.stability = card.stability * easyMultiplier;
 
-    case this.Rating.Easy:
-      // Easy recall
-      const easyMultiplier = 2.0 * (1 - 0.25 * card.difficulty);
-      card.stability = card.stability * easyMultiplier;
+        // Slight bonus interval
+        card.scheduled_days = Math.max(1, Math.floor(card.stability * 1.4));
+        card.due = new Date(
+          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
+        );
+        break;
+    }
 
-      // Slight bonus interval
-      card.scheduled_days = Math.max(1, Math.floor(card.stability * 1.4));
-      card.due = new Date(
-        Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-      );
-      break;
-  }
+    return card;
+  },
 
-  return card;
-},
+  // Handle cards in relearning phase
+  _handleRelearningCard: function (card, rating) {
+    switch (rating) {
+      case this.Rating.Again:
+        // Reset relearning progress
+        card.learning_steps = 0;
+        card.due = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        break;
 
-// Handle cards in relearning phase
-_handleRelearningCard: function (card, rating) {
-  switch (rating) {
-    case this.Rating.Again:
-      // Reset relearning progress
-      card.learning_steps = 0;
-      card.due = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-      break;
+      case this.Rating.Hard:
+        // Small progress in relearning
+        card.learning_steps += 1;
+        card.due = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        break;
 
-    case this.Rating.Hard:
-      // Small progress in relearning
-      card.learning_steps += 1;
-      card.due = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-      break;
+      case this.Rating.Good:
+        card.learning_steps += 1;
 
-    case this.Rating.Good:
-      card.learning_steps += 1;
+        // If completed relearning steps, return to review
+        if (card.learning_steps >= 2) {
+          card.state = this.States.REVIEW;
+          // Reduced stability compared to normal graduation
+          card.stability = Math.max(2, card.stability);
+          card.due = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
+        } else {
+          // Otherwise, increase interval within relearning
+          const intervals = [0, 60, 240]; // minutes: 0, 1h, 4h
+          const minutesToAdd = intervals[card.learning_steps] || 240;
+          card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
+        }
+        break;
 
-      // If completed relearning steps, return to review
-      if (card.learning_steps >= 2) {
+      case this.Rating.Easy:
+        // Return to review with slightly reduced stability
         card.state = this.States.REVIEW;
-        // Reduced stability compared to normal graduation
-        card.stability = Math.max(2, card.stability);
-        card.due = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
-      } else {
-        // Otherwise, increase interval within relearning
-        const intervals = [0, 60, 240]; // minutes: 0, 1h, 4h
-        const minutesToAdd = intervals[card.learning_steps] || 240;
-        card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
-      }
-      break;
+        card.stability = Math.max(2, card.stability * 0.9);
+        card.scheduled_days = Math.max(1, Math.floor(card.stability));
+        card.due = new Date(
+          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
+        );
+        break;
+    }
 
-    case this.Rating.Easy:
-      // Return to review with slightly reduced stability
-      card.state = this.States.REVIEW;
-      card.stability = Math.max(2, card.stability * 0.9);
-      card.scheduled_days = Math.max(1, Math.floor(card.stability));
-      card.due = new Date(
-        Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-      );
-      break;
-  }
-
-  return card;
-},
-
+    return card;
+  },
 
   // Update card difficulty based on performance
   _updateDifficulty: function (card, rating) {
@@ -383,12 +384,25 @@ module.exports.batchUpdate = async (req, res, next) => {
         },
       });
     }
-
     if (ops.length > 0) {
-      const result = await CardModel.bulkWrite(ops);
-      return res.status(200).json({ modifiedCount: result.modifiedCount });
+      // Perform bulk update
+      const bulkResult = await CardModel.bulkWrite(ops);
+
+      // Extract all IDs from the ops array
+      const updatedIds = ops
+        .filter(
+          (op) => op.updateOne && op.updateOne.filter && op.updateOne.filter._id
+        )
+        .map((op) => op.updateOne.filter._id);
+
+      // Fetch updated cards in a single query
+      const updatedCards = await CardModel.find({ _id: { $in: updatedIds } });
+
+      return res.status(200).json({
+        modifiedCount: bulkResult.modifiedCount,
+        updatedCards,
+      });
     }
-    res.status(200).json({ modifiedCount: 0 });
   } catch (err) {
     console.error(err);
     res.status(400).send("Error in updating the study cards");
@@ -396,7 +410,7 @@ module.exports.batchUpdate = async (req, res, next) => {
 };
 
 module.exports.createCard = async (req, res, next) => {
-  const { cards, collectionId, videoId, language, sectionId } = req.body;
+  const { cards, collectionId, videoId, language, sectionId, _id } = req.body;
 
   let shownInHome = true;
   if (collectionId) {
@@ -412,6 +426,7 @@ module.exports.createCard = async (req, res, next) => {
       ...card,
       videoId,
       language,
+      _id,
       sectionId,
       userId: sectionId ? undefined : req.user?._id,
     }));
@@ -445,6 +460,7 @@ module.exports.createCard = async (req, res, next) => {
       front,
       back,
       content,
+      _id,
       collectionId,
       videoId,
       language,
@@ -600,6 +616,7 @@ module.exports.getUserCards = async (req, res, next) => {
       .lean(); // الثانية بالـ pagination
     // const allCards = await CardModel.find().lean(); // الثانية بالـ pagination
 
+    console.log("query", query);
     res.status(200).send({
       //  allCards,
       cards,

@@ -26,7 +26,7 @@ interface SidebarProps {
 
 const Sidebar = ({ links, isMobileOpen, setIsMobileOpen }: SidebarProps) => {
   const location = useLocation();
-  const hideLayout = location.pathname.startsWith("/study-cards");
+  const hideLayout = location.pathname.startsWith("/study");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 

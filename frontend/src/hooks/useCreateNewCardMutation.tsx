@@ -1,137 +1,181 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { CardType } from "./useGetCards";
+import { nanoid } from "nanoid";
+import useDb from "../db/useDb";
+import { CardType } from "@/hooks/useGetCards";
 import useToasts from "./useToasts";
-import useGetCurrentUser from "./useGetCurrentUser";
 import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLanguageContext";
-
-type Optimistic = {
-  isOptimistic?: boolean;
-  setOptimistic: (state: any) => void;
-};
+import { useNetwork } from "../context/NetworkStatusContext";
+import useGetCurrentUser from "./useGetCurrentUser";
 
 type Params = {
-  optimistic?: Optimistic;
   collectionId?: string;
 };
 
-const useCreateNewCard = ({ optimistic, collectionId }: Params = {}) => {
+const useCreateNewCard = ({ collectionId }: Params = {}) => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
   const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
-
+  const { isOnline } = useNetwork();
+  const { user } = useGetCurrentUser();
   const { mutateAsync, data, isPending } = useMutation({
-    onMutate: async (newCard) => {
+    mutationFn: async (cardData: CardType) => {
+      // Generate _id per card submission
+      const cardWithId = { ...cardData };
+
+      if (!isOnline) return;
+      // Send to server
+      const response = await axios.post("/card/", cardWithId);
+
+      // Return card with frontend _id
+      return { ...response.data };
+    },
+
+    onMutate: async (newCard: CardType) => {
       const toast = addToast("Creating card...", "promise");
-      
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["cards"] });
-      
-      // Get the current query cache
-      const previousCards = queryClient.getQueryData(["cards", selectedLearningLanguage]);
-      const previousCollectionCards = collectionId ? 
-        queryClient.getQueryData(["cards", collectionId, selectedLearningLanguage]) : null;
-      
-      // Create an optimistic card with a temporary ID
-      const tempId = `temp-${Date.now()}`;
-      const optimisticCard = {
+
+      const optimisticCard: CardType = {
         ...newCard,
-        _id: tempId,
-        id: tempId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+
+        stability: newCard.stability ?? 0,
+        difficulty: newCard.difficulty ?? 0.3,
+        elapsed_days: newCard.elapsed_days ?? 0,
+        scheduled_days: newCard.scheduled_days ?? 0,
+        learning_steps: newCard.learning_steps ?? 0,
+        reps: newCard.reps ?? 0,
+        lapses: newCard.lapses ?? 0,
+        state: newCard.state ?? 0,
+        last_review: newCard.last_review ?? new Date(),
+        due: newCard.due ?? new Date(),
       };
-      
-      // Optimistically update the cache
-      queryClient.setQueriesData(
-        { queryKey: ["cards"] },
+
+      // Add to IndexedDB
+
+      // Cancel any outgoing queries
+      await queryClient.cancelQueries({
+        queryKey: ["cards", selectedLearningLanguage],
+      });
+
+      const previousCards = queryClient.getQueryData([
+        "cards",
+        selectedLearningLanguage,
+      ]);
+
+      // Optimistically update cache
+      queryClient.setQueryData(
+        ["cards", selectedLearningLanguage],
         (old: any) => {
           if (!old) return old;
-          
           return {
             ...old,
             pages: old.pages.map((page: any, index: number) => {
-              // Add the new card to the first page
               if (index === 0) {
                 return {
                   ...page,
                   cards: [optimisticCard, ...page.cards],
-                  cardsCount: (page.cardsCount || 0) + 1
+                  cardsCount: (page.cardsCount || 0) + 1,
                 };
               }
               return page;
-            })
+            }),
           };
         }
       );
-      
-      // Support the legacy optimistic update approach if provided
-      if (optimistic?.isOptimistic === true) {
-        optimistic?.setOptimistic((pre: CardType[]) => [
-          optimisticCard,
-          ...(pre as CardType[]),
-        ]);
-      }
-      
-      return { previousCards, previousCollectionCards, toast, optimisticCard };
+
+      return { previousCards, toast, optimisticCard };
     },
+
     onError: (error, variables, context: any) => {
-      // Revert optimistic updates
+      // Revert optimistic cache
       if (context?.previousCards) {
-        queryClient.setQueryData(["cards", selectedLearningLanguage], context.previousCards);
-      }
-      if (context?.previousCollectionCards && collectionId) {
         queryClient.setQueryData(
-          ["cards", collectionId, selectedLearningLanguage], 
-          context.previousCollectionCards
+          ["cards", selectedLearningLanguage],
+          context.previousCards
         );
       }
-      
-      // Support the legacy optimistic update approach if provided
-      if (optimistic?.isOptimistic === true) {
-        optimistic?.setOptimistic((pre: CardType[]) => pre.filter(card => card._id !== context?.optimisticCard?._id));
-      }
-      
       context?.toast?.setToastData({
         title: "Failed to create card",
         type: "error",
       });
     },
-    onSuccess: async (res, variables, context) => {
-      // Invalidate queries to refetch with the actual server data
-      queryClient.invalidateQueries({ queryKey: ["cards"] });
-      if (collectionId) {
-        queryClient.invalidateQueries({ queryKey: ["cards", collectionId] });
-      }
-      
+
+    onSuccess: (res, variables, context) => {
+      // Invalidate queries to refetch actual data
+      queryClient.invalidateQueries(["cards", selectedLearningLanguage]);
       context?.toast?.setToastData({
         title: "Card created successfully!",
         isCompleted: true,
       });
     },
-    mutationFn: (data: {}) => {
-      return axios.post("/card/", { ...data }).then((res) => {
-        return res.data;
-      });
-    },
   });
 
-  // Use the selectedLearningLanguage from the context instead
+  const { addCard, getCards, handleOfflineOperation } = useDb(user?._id);
+
+  const fetchCards = async () => {
+    const cards = await getCards();
+    if (!cards) return;
+    queryClient.setQueryData(
+      ["cards", selectedLearningLanguage],
+      (old: any) => {
+        if (!old || !old.pages?.length) {
+          return {
+            pages: [{ cards, cardsCount: cards.length, nextPage: undefined }],
+            pageParams: [0],
+          };
+        }
+
+        const updatedPages = [...old.pages];
+        updatedPages[0] = {
+          ...updatedPages[0],
+          cards,
+          cardsCount: cards.length,
+        };
+
+        return { ...old, pages: updatedPages };
+      }
+    );
+  };
 
   const createCardHandler = async (
     e: React.FormEvent<HTMLFormElement> | null,
-    additionalData: any = {}
+    additionalData: Partial<CardType> = {}
   ) => {
     e?.preventDefault();
     const formData = new FormData(e?.target as HTMLFormElement);
-    const data = {
-      front: formData.get("card_word"),
-      back: formData.get("card_translation"),
+    const _id = nanoid();
+
+    const cardData: CardType = {
+      front: formData.get("card_word") as string,
+      back: formData.get("card_translation") as string,
       language: selectedLearningLanguage,
+      userId: user?._id,
+      _id,
       ...additionalData,
     };
+    const optimisticCard: CardType = {
+      ...cardData,
 
-    return mutateAsync(data);
+      stability: cardData.stability ?? 0,
+      difficulty: cardData.difficulty ?? 0.3,
+      elapsed_days: cardData.elapsed_days ?? 0,
+      scheduled_days: cardData.scheduled_days ?? 0,
+      learning_steps: cardData.learning_steps ?? 0,
+      reps: cardData.reps ?? 0,
+      lapses: cardData.lapses ?? 0,
+      state: cardData.state ?? 0,
+      last_review: cardData.last_review ?? new Date(),
+      due: cardData.due ?? new Date(),
+    };
+    addCard(optimisticCard);
+
+    if (!isOnline) {
+      handleOfflineOperation("add", cardData);
+
+      await fetchCards();
+      return;
+    } else {
+      return mutateAsync(cardData);
+    }
   };
 
   return { createCardHandler, data, isLoading: isPending };

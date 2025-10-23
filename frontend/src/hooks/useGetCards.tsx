@@ -1,10 +1,7 @@
-import {
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import { useNetwork } from "@/context/NetworkStatusContext";
+import useDb from "../db/useDb";
 import useGetCurrentUser from "./useGetCurrentUser";
 
 export type CardType = {
@@ -14,16 +11,19 @@ export type CardType = {
   content?: string;
   collectionId?: string;
   userId?: string;
-   stability: number,
-      difficulty: number, // Default medium difficulty
-      elapsed_days: number,
-      scheduled_days: number,
-      learning_steps: number,
-      reps: number,
-      lapses: number,
- state: number,
-      last_review: number,
-      due: number,};
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  language: string;
+  scheduled_days: number;
+  learning_steps: number;
+  reps: number;
+  lapses: number;
+  state: number;
+  last_review: number;
+  due: number;
+  createdAt: number;
+};
 
 type GetCardsResponse = {
   cards: CardType[];
@@ -48,83 +48,116 @@ const useGetCards = ({
   difficultyFilter?: string;
   srsMode?: boolean;
 } = {}) => {
-  const { selectedLearningLanguage } = useGetCurrentUser();
-  let queryKey: any[] = ["cards"];
+  const { selectedLearningLanguage, user } = useGetCurrentUser();
+  const { isOnline } = useNetwork();
+  const queryKey: any[] = ["cards", user?._id];
+  if (study) queryKey.push("study");
+  if (query) queryKey.push(query);
+  else if (collectionId) queryKey.push(collectionId);
+  else if (videoId) queryKey.push(videoId);
+  else if (difficultyFilter) queryKey.push(difficultyFilter);
+  if (selectedLearningLanguage) queryKey.push(selectedLearningLanguage);
 
-  if (study) {
-    queryKey.push("study");
-  }
+  const filterCards = (cards: CardType[]) => {
+    let filteredCards = cards;
+    if (collectionId) {
+      filteredCards = filteredCards.filter(
+        (c) => c.collectionId === collectionId
+      );
+    }
+    if (query) {
+      filteredCards = filteredCards.filter((c) =>
+        c.front.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    if (difficultyFilter && difficultyFilter !== "all") {
+      filteredCards = filteredCards.filter(
+        (c) => String(c.difficulty) === difficultyFilter
+      );
+    }
+    return filteredCards;
+  };
 
-  if (query) {
-    queryKey.push(query);
-  } else if (collectionId) {
-    queryKey.push(collectionId);
-  } else if (videoId) {
-    queryKey.push(videoId);
-  } else if (difficultyFilter) {
-    queryKey.push(difficultyFilter);
-  }
+  const paginateCards = (cards: CardType[], pageParam: number) => {
+    const pageSize = 30;
+    const start = pageParam * pageSize;
+    const end = start + pageSize;
+    const pageCards = cards.slice(start, end);
 
-  if (selectedLearningLanguage) {
-    queryKey.push(selectedLearningLanguage);
-  }
+    return {
+      cards: pageCards,
+      cardsCount: cards.length,
+      nextPage: end < cards.length ? pageParam + 1 : undefined,
+      allCards: cards,
+    } as GetCardsResponse;
+  };
+
+  const { addCard, getCards: getDexieCards } = useDb(user?._id);
 
   const {
     data,
-    error,
     fetchNextPage,
     hasNextPage,
-    isFetching,
-    isLoading: isIntialLoading,
     isFetchingNextPage,
-    status,
     isLoading,
     refetch,
+    status,
   } = useInfiniteQuery({
     queryKey,
-    queryFn: async ({ signal, pageParam, meta }) => {
-      let url = `card/?page=${pageParam}`;
+    queryFn: async ({ pageParam = 0 }) => {
+      // Offline mode: fetch from Dexie
+      console.log("isOnline", isOnline);
 
-      if (query) url += `&searchQuery=${query}`;
-      if (collectionId) url += `&collectionId=${collectionId}`;
-      if (videoId) url += `&videoId=${videoId}`;
-      if (study) url += `&study=${study}`;
-      if (srsMode) url += `&srsMode=true`;
-      if (selectedLearningLanguage)
-        url += `&language=${selectedLearningLanguage}`;
-
-      // Add difficulty filter parameter if provided
-      if (difficultyFilter && difficultyFilter !== "all") {
-        url += `&difficulty=${difficultyFilter}`;
+      if (!isOnline) {
+        const allCards = await getDexieCards();
+        const filteredCards = filterCards(allCards);
+        return paginateCards(filteredCards, pageParam);
       }
 
-      const cards = await axios.get(url, { signal });
+      try {
+        // Online mode: try server first
+        let url = `card/?page=${pageParam}`;
+        if (query) url += `&searchQuery=${query}`;
+        if (collectionId) url += `&collectionId=${collectionId}`;
+        if (videoId) url += `&videoId=${videoId}`;
+        if (study) url += `&study=${study}`;
+        if (srsMode) url += `&srsMode=true`;
+        if (selectedLearningLanguage)
+          url += `&language=${selectedLearningLanguage}`;
+        if (difficultyFilter && difficultyFilter !== "all") {
+          url += `&difficulty=${difficultyFilter}`;
+        }
 
-      if (cards.data) return cards.data as GetCardsResponse;
+        const res = await axios.get(url);
+        return res.data as GetCardsResponse;
+      } catch (error) {
+        // If server request fails and we have local data, use it
+        if (user) {
+          const allCards = await getDexieCards();
+          if (!allCards) return [];
+          const filteredCards = filterCards(allCards);
+          return paginateCards(filteredCards, pageParam);
+        }
+        throw error; // Re-throw if we don't have local data
+      }
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) => {
-      return lastPage?.nextPage;
-    },
-    enabled: enabled,
+    getNextPageParam: (lastPage) => lastPage?.nextPage,
+    enabled,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
-  let userCards = useMemo(() => {
-    return data?.pages.flatMap(
-      (page) => (page as GetCardsResponse).cards ?? []
-    );
-  }, [data]);
+  const userCards = data?.pages.flatMap((page) => page.cards) ?? [];
 
   return {
     userCards,
     cardsCount: data?.pages[0]?.cardsCount,
     fetchNextPage,
-    isIntialLoading,
-    refetch,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    allCards: data?.pages[0]?.allCards,
+    refetch,
+    // allCards: data?.pages[0]?.allCards,
   };
 };
 
