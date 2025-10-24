@@ -1,7 +1,8 @@
 const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
 const mongoose = require("mongoose");
-
+const ObjectId = mongoose.Types.ObjectId;
+const { nanoid } = require("nanoid");
 // Batch delete cards
 exports.batchDelete = async (req, res) => {
   try {
@@ -29,285 +30,6 @@ exports.batchDelete = async (req, res) => {
   }
 };
 
-// Custom SRS implementation to replace ts-fsrs
-const SRS = {
-  // Learning states
-  States: {
-    NEW: 0,
-    LEARNING: 1,
-    REVIEW: 2,
-    RELEARNING: 3,
-  },
-
-  // Rating values (similar to Anki/FSRS)
-  Rating: {
-    Again: 1,
-    Hard: 2,
-    Good: 3,
-    Easy: 4,
-  },
-
-  // Create a new card or reset an existing one
-  createEmptyCard: function (lastReviewDate = new Date()) {
-    return {
-      stability: 0,
-      difficulty: 0.3, // Default medium difficulty
-      elapsed_days: 0,
-      scheduled_days: 0,
-      learning_steps: 0,
-      reps: 0,
-      lapses: 0,
-      state: this.States.NEW,
-      last_review: lastReviewDate,
-      due: lastReviewDate,
-    };
-  },
-
-  // Main algorithm for calculating intervals
-  calculateNextInterval: function (card, rating) {
-    // Clone the card to avoid modifying the original
-    const updatedCard = { ...card };
-
-    // Update review count
-    updatedCard.reps += 1;
-
-    // Current date for calculations
-    const now = new Date();
-
-    // Calculate days elapsed since last review
-    const daysSinceLastReview = Math.max(
-      0,
-      Math.floor(
-        (now - new Date(updatedCard.last_review)) / (1000 * 60 * 60 * 24)
-      )
-    );
-    updatedCard.elapsed_days = daysSinceLastReview;
-
-    // Update last review date
-    updatedCard.last_review = now;
-
-    // Handle different states and ratings
-    switch (updatedCard.state) {
-      case this.States.NEW:
-        return this._handleNewCard(updatedCard, rating);
-
-      case this.States.LEARNING:
-        return this._handleLearningCard(updatedCard, rating);
-
-      case this.States.REVIEW:
-        return this._handleReviewCard(updatedCard, rating);
-
-      case this.States.RELEARNING:
-        return this._handleRelearningCard(updatedCard, rating);
-
-      default:
-        return this._handleNewCard(updatedCard, rating);
-    }
-  },
-  // Handle new cards
-  _handleNewCard: function (card, rating) {
-    switch (rating) {
-      case this.Rating.Again:
-        // Failed, stay in learning with short interval
-        card.learning_steps = 0;
-        card.due = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-        break;
-
-      case this.Rating.Hard:
-        // Move to learning with short interval
-        card.state = this.States.LEARNING;
-        card.learning_steps = 1;
-        card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        break;
-
-      case this.Rating.Good:
-        // Move to learning with medium interval
-        card.state = this.States.LEARNING;
-        card.learning_steps = 1;
-        card.due = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-        break;
-
-      case this.Rating.Easy:
-        // Light learning instead of direct review
-        card.state = this.States.LEARNING;
-        card.learning_steps = 2;
-        card.due = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
-        break;
-    }
-
-    return card;
-  },
-
-  // Handle cards in learning phase
-  _handleLearningCard: function (card, rating) {
-    switch (rating) {
-      case this.Rating.Again:
-        // Reset learning progress
-        card.learning_steps = 0;
-        card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        break;
-
-      case this.Rating.Hard:
-        // Small progress in learning
-        card.learning_steps += 1;
-        card.due = new Date(Date.now() + 45 * 60 * 1000); // 45 minutes
-        break;
-
-      case this.Rating.Good:
-        card.learning_steps += 1;
-
-        // If completed learning steps, graduate to review
-        if (card.learning_steps >= 3) {
-          card.state = this.States.REVIEW;
-          card.stability = 3;
-          card.due = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
-        } else {
-          // Otherwise, increase interval within learning
-          const intervals = [0, 30, 240, 1440]; // minutes: 0, 30min, 4h, 1d
-          const minutesToAdd = intervals[card.learning_steps] || 1440;
-          card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
-        }
-        break;
-
-      case this.Rating.Easy:
-        // Graduate immediately to review
-        card.state = this.States.REVIEW;
-        card.stability = 4;
-        card.due = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days
-        break;
-    }
-
-    return card;
-  },
-
-  // Handle cards in review phase
-  _handleReviewCard: function (card, rating) {
-    this._updateDifficulty(card, rating);
-
-    switch (rating) {
-      case this.Rating.Again:
-        // Failed review, move to relearning
-        card.state = this.States.RELEARNING;
-        card.lapses += 1;
-        card.learning_steps = 0;
-
-        // Reduce stability
-        card.stability = Math.max(0.5, card.stability * 0.4);
-        card.due = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        break;
-
-      case this.Rating.Hard:
-        // Slightly harder recall
-        card.stability = card.stability * 1.15;
-        card.scheduled_days = Math.max(1, Math.floor(card.stability * 0.9));
-        card.due = new Date(
-          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-        );
-        break;
-
-      case this.Rating.Good:
-        // Normal review success
-        const stabilityMultiplier = 1.4 * (1 - 0.4 * card.difficulty);
-        card.stability = card.stability * stabilityMultiplier;
-
-        // Next interval
-        card.scheduled_days = Math.max(1, Math.floor(card.stability));
-        card.due = new Date(
-          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-        );
-        break;
-
-      case this.Rating.Easy:
-        // Easy recall
-        const easyMultiplier = 2.0 * (1 - 0.25 * card.difficulty);
-        card.stability = card.stability * easyMultiplier;
-
-        // Slight bonus interval
-        card.scheduled_days = Math.max(1, Math.floor(card.stability * 1.4));
-        card.due = new Date(
-          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-        );
-        break;
-    }
-
-    return card;
-  },
-
-  // Handle cards in relearning phase
-  _handleRelearningCard: function (card, rating) {
-    switch (rating) {
-      case this.Rating.Again:
-        // Reset relearning progress
-        card.learning_steps = 0;
-        card.due = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-        break;
-
-      case this.Rating.Hard:
-        // Small progress in relearning
-        card.learning_steps += 1;
-        card.due = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-        break;
-
-      case this.Rating.Good:
-        card.learning_steps += 1;
-
-        // If completed relearning steps, return to review
-        if (card.learning_steps >= 2) {
-          card.state = this.States.REVIEW;
-          // Reduced stability compared to normal graduation
-          card.stability = Math.max(2, card.stability);
-          card.due = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
-        } else {
-          // Otherwise, increase interval within relearning
-          const intervals = [0, 60, 240]; // minutes: 0, 1h, 4h
-          const minutesToAdd = intervals[card.learning_steps] || 240;
-          card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
-        }
-        break;
-
-      case this.Rating.Easy:
-        // Return to review with slightly reduced stability
-        card.state = this.States.REVIEW;
-        card.stability = Math.max(2, card.stability * 0.9);
-        card.scheduled_days = Math.max(1, Math.floor(card.stability));
-        card.due = new Date(
-          Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000
-        );
-        break;
-    }
-
-    return card;
-  },
-
-  // Update card difficulty based on performance
-  _updateDifficulty: function (card, rating) {
-    // Current difficulty
-    let difficulty = card.difficulty;
-
-    // Adjust difficulty based on rating
-    switch (rating) {
-      case this.Rating.Again:
-        difficulty += 0.15;
-        break;
-      case this.Rating.Hard:
-        difficulty += 0.05;
-        break;
-      case this.Rating.Good:
-        // Slight regression to the mean
-        difficulty = difficulty + (0.3 - difficulty) * 0.05;
-        break;
-      case this.Rating.Easy:
-        difficulty -= 0.15;
-        break;
-    }
-
-    // Ensure difficulty stays within bounds
-    card.difficulty = Math.min(1, Math.max(0, difficulty));
-
-    return card;
-  },
-};
-
 module.exports.batchUpdate = async (req, res, next) => {
   const { toUpdateCardsData } = req.body;
   if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
@@ -315,97 +37,58 @@ module.exports.batchUpdate = async (req, res, next) => {
       .status(400)
       .send('You must send a non-empty "toUpdateCardsData" array');
   }
-  try {
-    const cardIds = toUpdateCardsData.map((c) => c._id);
-    const existingCards = await CardModel.find({
-      _id: { $in: cardIds },
-    }).lean();
-    const ops = [];
 
-    for (const { _id, answer } of toUpdateCardsData) {
-      const existing = existingCards.find((c) => c._id.toString() === _id);
-      if (!existing) continue;
+  // Validate each card's data
+  for (const card of toUpdateCardsData) {
+    if (!card._id) {
+      return res
+        .status(400)
+        .json({ error: "Each card must have an _id field" });
+    }
+  }
 
-      // Create a card object with the existing card's properties
-      const card = {
-        stability: existing.stability ?? 0,
-        difficulty: existing.difficulty ?? 0.3,
-        elapsed_days: existing.elapsed_days ?? 0,
-        scheduled_days: existing.scheduled_days ?? 0,
-        learning_steps: existing.learning_steps ?? 0,
-        reps: existing.reps ?? 0,
-        lapses: existing.lapses ?? 0,
-        state: parseInt(existing.state) ?? 0,
-        last_review: existing.last_review ?? new Date(),
-        due: existing.due ?? new Date(),
-      };
+  console.log(
+    "Processing batch update for cards:",
+    toUpdateCardsData.map((card) => card._id)
+  );
 
-      // Map the answer to our rating system
-      let rating;
-      switch ((answer || "").toLowerCase()) {
-        case "forgot":
-          rating = SRS.Rating.Again;
-          break;
-        case "hard":
-          rating = SRS.Rating.Hard;
-          break;
-        case "medium":
-          rating = SRS.Rating.Good;
-          break;
-        case "easy":
-          rating = card.state === 0 ? SRS.Rating.Good : SRS.Rating.Easy;
-          break;
-        default:
-          rating = SRS.Rating.Good;
-      }
-
-      // Calculate the next interval using our custom SRS system
-      const updatedCard = SRS.calculateNextInterval(card, rating);
-
-      // Push the update operation
-      ops.push({
-        updateOne: {
-          filter: { _id: existing._id },
-          update: {
-            $set: {
-              stability: updatedCard.stability,
-              difficulty: updatedCard.difficulty,
-              elapsed_days: updatedCard.elapsed_days,
-              scheduled_days: updatedCard.scheduled_days,
-              learning_steps: updatedCard.learning_steps,
-              reps: updatedCard.reps,
-              lapses: updatedCard.lapses,
-              state: updatedCard.state,
-              last_review: updatedCard.last_review,
-              due: updatedCard.due,
-            },
-            $inc: { reviewCount: 1 },
-          },
+  const ops = toUpdateCardsData.map((cardData) => ({
+    updateOne: {
+      filter: { _id: cardData._id },
+      update: {
+        $set: {
+          stability: cardData.stability,
+          difficulty: cardData.difficulty,
+          elapsed_days: cardData.elapsed_days,
+          scheduled_days: cardData.scheduled_days,
+          learning_steps: cardData.learning_steps,
+          reps: cardData.reps,
+          lapses: cardData.lapses,
+          state: cardData.state,
+          last_review: new Date(cardData.last_review),
+          due: new Date(cardData.due),
         },
-      });
-    }
-    if (ops.length > 0) {
-      // Perform bulk update
-      const bulkResult = await CardModel.bulkWrite(ops);
+        $inc: { reviewCount: 1 },
+      },
+    },
+  }));
 
-      // Extract all IDs from the ops array
-      const updatedIds = ops
-        .filter(
-          (op) => op.updateOne && op.updateOne.filter && op.updateOne.filter._id
-        )
-        .map((op) => op.updateOne.filter._id);
+  console.log("Generated update operations:", ops);
+  if (ops.length === 0) return res.status(400).send("No cards to update");
 
-      // Fetch updated cards in a single query
-      const updatedCards = await CardModel.find({ _id: { $in: updatedIds } });
-
-      return res.status(200).json({
-        modifiedCount: bulkResult.modifiedCount,
-        updatedCards,
-      });
-    }
+  try {
+    const bulkResult = await CardModel.bulkWrite(ops);
+    console.log("Bulk update result:", bulkResult);
+    return res.status(200).json({
+      modifiedCount: bulkResult.modifiedCount,
+      message: "Cards updated successfully",
+    });
   } catch (err) {
-    console.error(err);
-    res.status(400).send("Error in updating the study cards");
+    console.error("Bulk update error:", err);
+    return res.status(500).json({
+      error: "Bulk update failed",
+      details: err.message || err,
+    });
   }
 };
 
@@ -478,53 +161,177 @@ module.exports.createCard = async (req, res, next) => {
     }
   }
 };
+
 async function resetAllCards() {
   try {
-    // 1. Fetch all cards from the DB
-    const cards = await CardModel.find({});
-    if (!cards.length) {
-      console.log("No cards found to reset.");
-      return;
-    }
+    const now = new Date();
 
-    // 2. Prepare bulk update operations
-    const operations = cards.map((card) => {
-      // Create a fresh baseline from your SRS model
-      const baseCard = SRS.createEmptyCard(new Date());
+    // Build the reset object based on SRS.createEmptyCard
+    const resetFields = {
+      stability: 0,
+      difficulty: 0.3,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      learning_steps: 0,
+      reps: 0,
+      lapses: 0,
+      state: 0,
+      last_review: now,
+      due: now,
+    };
 
-      // Build the update payload
-      const resetData = {
-        stability: baseCard.stability,
-        difficulty: baseCard.difficulty,
-        elapsed_days: baseCard.elapsed_days,
-        scheduled_days: baseCard.scheduled_days,
-        learning_steps: baseCard.learning_steps,
-        reps: baseCard.reps,
-        lapses: baseCard.lapses,
-        state: baseCard.state,
-        last_review: baseCard.last_review,
-        due: baseCard.due,
-        reviewCount: 0,
-      };
+    // Update all cards at once
+    const result = await CardModel.updateMany({}, { $set: resetFields });
 
-      return {
-        updateOne: {
-          filter: { _id: card._id },
-          update: { $set: resetData },
-        },
-      };
-    });
-
-    // 3. Perform bulk write
-    const result = await CardModel.bulkWrite(operations);
-    console.log(`✅ Cards reset: ${result.modifiedCount}/${cards.length}`);
+    console.log(
+      `All cards have been reset. Modified count: ${result.modifiedCount}`
+    );
+    return result;
   } catch (err) {
-    console.error("❌ Error resetting cards:", err);
+    console.error("Failed to reset cards:", err);
+    throw err;
   }
 }
 
 module.exports.getUserCards = async (req, res, next) => {
   // resetAllCards();
+
+  // async function migrateAndDedupeTransactional() {
+  //   const session = await mongoose.startSession();
+
+  //   try {
+  //     session.startTransaction();
+
+  //     // 1) Aggregate groups by key and find duplicates
+  //     const groups = await CardModel.aggregate([
+  //       {
+  //         $project: {
+  //           frontNorm: { $toLower: { $trim: { input: "$front" } } },
+  //           backNorm: { $toLower: { $trim: { input: "$back" } } },
+  //           userId: 1,
+  //           createdAt: 1,
+  //           _id: 1,
+  //         },
+  //       },
+  //       {
+  //         $group: {
+  //           _id: { userId: "$userId", front: "$frontNorm", back: "$backNorm" },
+  //           docs: { $push: { id: "$_id", createdAt: "$createdAt" } },
+  //           count: { $sum: 1 },
+  //         },
+  //       },
+  //       { $match: { count: { $gt: 1 } } },
+  //     ]).session(session);
+
+  //     console.log(`Found ${groups.length} duplicate groups.`);
+
+  //     // 2) For each group: choose canonical doc to keep, delete others
+  //     for (const g of groups) {
+  //       // Prefer to keep any doc that already has string _id (i.e., type string),
+  //       // otherwise keep the earliest createdAt doc.
+  //       const docIds = g.docs.map((d) => d.id);
+  //       // fetch full documents for these ids (in session)
+  //       const docs = await CardModel.find({ _id: { $in: docIds } }).session(
+  //         session
+  //       );
+
+  //       // try prefer existing string _id (type string)
+  //       let keepDoc = docs.find((d) => typeof d._id === "string");
+  //       if (!keepDoc) {
+  //         // keep earliest createdAt
+  //         keepDoc = docs.reduce((a, b) => (a.createdAt < b.createdAt ? a : b));
+  //       }
+
+  //       const keepId = keepDoc._id.toString();
+  //       const deleteIds = docs
+  //         .filter((d) => d._id.toString() !== keepId)
+  //         .map((d) => d._id);
+
+  //       if (deleteIds.length) {
+  //         await CardModel.deleteMany({ _id: { $in: deleteIds } }).session(
+  //           session
+  //         );
+  //         console.log(
+  //           `Group ${JSON.stringify(g._id)}: kept ${keepId}, deleted ${
+  //             deleteIds.length
+  //           }`
+  //         );
+  //       }
+  //     }
+
+  //     // 3) Migrate remaining ObjectId _id docs (non-duplicates now)
+  //     const toMigrate = await CardModel.find({
+  //       _id: { $type: "objectId" },
+  //     }).session(session);
+  //     console.log(`After dedupe, migrating ${toMigrate.length} docs.`);
+
+  //     for (const card of toMigrate) {
+  //       const key = {
+  //         userId: card.userId ? card.userId.toString() : null,
+  //         frontNorm: card.front.trim().toLowerCase(),
+  //         backNorm: card.back.trim().toLowerCase(),
+  //       };
+
+  //       // ensure there is no existing doc in DB (string id) for this key
+  //       const existing = await CardModel.findOne({
+  //         userId: card.userId,
+  //         $expr: {
+  //           $and: [
+  //             {
+  //               $eq: [
+  //                 { $toLower: { $trim: { input: "$front" } } },
+  //                 key.frontNorm,
+  //               ],
+  //             },
+  //             {
+  //               $eq: [
+  //                 { $toLower: { $trim: { input: "$back" } } },
+  //                 key.backNorm,
+  //               ],
+  //             },
+  //           ],
+  //         },
+  //       }).session(session);
+
+  //       if (existing) {
+  //         // duplicate exists (kept during dedupe) → delete current ObjectId card
+  //         await CardModel.deleteOne({ _id: card._id }).session(session);
+  //         console.log(
+  //           `Deleted ObjectId doc ${card._id} because duplicate exists ${existing._id}`
+  //         );
+  //         continue;
+  //       }
+
+  //       // insert new with new string _id
+  //       const newCardObj = card.toObject();
+  //       delete newCardObj._id;
+  //       const newId = nanoid();
+  //       await CardModel.create([{ ...newCardObj, _id: newId }], { session });
+  //       // remove old
+  //       await CardModel.deleteOne({ _id: card._id }).session(session);
+  //       console.log(`Migrated ${card._id} -> ${newId}`);
+  //     }
+
+  //     await session.commitTransaction();
+  //     console.log("Transaction committed: migration + dedupe finished.");
+  //   } catch (err) {
+  //     await session.abortTransaction();
+  //     console.error("Transaction aborted due to error:", err);
+  //   } finally {
+  //     session.endSession();
+  //   }
+  // }
+
+  // migrateAndDedupeTransactional();
+
+  const updateCards = await CardModel.find({ state: { $type: "string" } });
+  await Promise.all(
+    updateCards.map(async (card) => {
+      card.state = Number(card.state);
+      await card.save();
+    })
+  );
+
   const {
     page: pageNumber,
     searchQuery,
@@ -580,8 +387,9 @@ module.exports.getUserCards = async (req, res, next) => {
   }
 
   if (study) {
+    console.log("sort", study);
     // 1. الترتيب يكون دائمًا حسب الأقدم استحقاقًا
-    options.sort = { due: 1, difficulty: 1, createdAt: 1, _id: 1 };
+    options.sort = { due: 1, createdAt: 1, difficulty: 1, _id: 1 };
 
     // 2. تطبيق منطق الجدولة بناءً على قيمة study
     switch (study.toLowerCase()) {
@@ -600,6 +408,8 @@ module.exports.getUserCards = async (req, res, next) => {
         // query.userId = req.user?._id; // يجب أن تكون موجودة بالفعل في منطق 'else' أدناه
         break;
     }
+  } else {
+    options.sort = { createdAt: -1 };
   }
 
   const limit = 30; // Increased limit for better performance
@@ -616,7 +426,6 @@ module.exports.getUserCards = async (req, res, next) => {
       .lean(); // الثانية بالـ pagination
     // const allCards = await CardModel.find().lean(); // الثانية بالـ pagination
 
-    console.log("query", query);
     res.status(200).send({
       //  allCards,
       cards,
@@ -671,112 +480,6 @@ module.exports.updateCard = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
-// module.exports.batchUpdate = async (req, res, next) => {
-//   const { toUpdateCardsData } = req.body;
-//   if (!Array.isArray(toUpdateCardsData) || toUpdateCardsData.length === 0) {
-//     return res
-//       .status(400)
-//       .send('You must send a non-empty "toUpdateCardsData" array');
-//   }
-
-//   try {
-//     const cardIds = toUpdateCardsData.map((c) => c._id);
-//     const existingCards = await CardModel.find({
-//       _id: { $in: cardIds },
-//     }).lean();
-
-//     const ops = [];
-
-//     // 🧠 دالة تحديث الكارت زي أنكي لكن تقبل قيمك الحالية من الفرونت (1، 0.5، -0.5، -1)
-//     const updateCardReview = (card, answerValue) => {
-//       const currentEase = card.easeFactor || 0.5;
-//       const currentStability = card.stability || 1;
-
-//       // 🧮 نعمل تطبيع للقيم الجاية من الفرونت
-//       // 1 → +0.15, 0.5 → +0.07, -0.5 → -0.07, -1 → -0.15 تقريبًا
-//       const normalizedDelta  = answerValue / 6.7; // رقم تجريبي قريب من أنكي الحقيقي
-
-//       // 📉 كل ما زاد الثبات → التغيير يقل (زي أنكي)
-//       const changeFactor = 1 / Math.log2(currentStability + 1);
-
-//       let newEaseFactor = currentEase + normalizedDelta * changeFactor;
-//       newEaseFactor = Math.min(Math.max(newEaseFactor, 0), 1);
-
-//       // 📈 نحسب الثبات الجديد بناءً على الأداء
-//       let newStability = currentStability;
-//       if (answerValue <= -0.9) {
-//         // again
-//         newStability = 1;
-//       } else if (answerValue < 0) {
-//         // hard
-//         newStability *= 1.2;
-//       } else if (answerValue === 0.5) {
-//         // medium
-//         newStability *= 2.5 * (0.8 + newEaseFactor);
-//       } else if (answerValue === 1) {
-//         // easy
-//         newStability *= 3.0 * (0.8 + newEaseFactor);
-//       }
-
-//       newStability = Math.min(Math.max(newStability, 1), 60);
-
-//       return {
-//         newEaseFactor: +newEaseFactor.toFixed(3),
-//         newStability: +newStability.toFixed(2),
-//       };
-//     };
-
-//     // 🕒 أقصى انتظار ديناميكي زي أنكي
-//     for (const { _id, answer } of toUpdateCardsData) {
-//       const existing = existingCards.find((c) => c._id.toString() === _id);
-//       if (!existing) continue;
-
-//       const stability = existing.stability || 1;
-//       const easeFactorTimestamp = new Date(
-//         existing.easeFactorDate || 0
-//       ).getTime();
-//       const currentTimestamp = Date.now();
-
-//       const maxWait = 3 * 60 * 60 * 1000;
-//       const minWait = 15 * 60 * 1000;
-//       const k = 0.1;
-//       let dynamicWait = maxWait * Math.exp(-k * stability);
-//       dynamicWait = Math.max(dynamicWait, minWait);
-
-//       // ⏳ لو لسه الوقت ماكملش المدة المطلوبة → متحدثش الكارت
-//       if (currentTimestamp - easeFactorTimestamp < dynamicWait) continue;
-
-//       const { newEaseFactor, newStability } = updateCardReview(
-//         existing,
-//         answer
-//       );
-
-//       ops.push({
-//         updateOne: {
-//           filter: { _id: existing._id },
-//           update: {
-//             $set: {
-//               easeFactor: newEaseFactor,
-//               stability: newStability,
-//               easeFactorDate: new Date(),
-//             },
-//             $inc: { reviewCount: 1 },
-//           },
-//         },
-//       });
-//     }
-
-//     if (ops.length > 0) {
-//       const result = await CardModel.bulkWrite(ops);
-//       return res.status(200).json({ modifiedCount: result.modifiedCount });
-//     }
-
-//     res.status(200).json({ modifiedCount: 0 });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(400).send("error in updating the study cards");
-//   }
-// };
 
 module.exports.deleteCard = async (req, res, next) => {
   try {

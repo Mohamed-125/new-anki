@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import Card from "../components/Card";
 import AddCardModal from "../components/AddCardModal";
 import Button from "../components/Button";
@@ -14,6 +14,7 @@ import Form from "@/components/Form";
 import AddNewCollectionModal from "@/components/AddNewCollectionModal";
 import useModalStates from "@/hooks/useModalsStates";
 import InfiniteScroll from "@/components/InfiniteScroll";
+import { Virtuoso } from "react-virtuoso";
 
 const Home = () => {
   const { user } = useGetCurrentUser();
@@ -25,20 +26,23 @@ const Home = () => {
     userCards,
     fetchNextPage,
     isFetchingNextPage,
-    isIntialLoading,
+    isLoading,
     cardsCount,
     hasNextPage,
   } = useGetCards({ query: debouncedQuery }); // Pass the query here
 
   const states = useModalStates();
 
+  console.log(userCards);
   // Extract all card IDs for select all functionality
   const allCardIds = useMemo(() => {
-    return userCards?.map((card) => card._id) || [];
+    if (!userCards) return null;
+
+    return userCards.map((card) => card._id) || [];
   }, [userCards]);
 
   const CardsJSX = useMemo(() => {
-    if (!userCards) return null;
+    if (!userCards || !userCards.length) return null;
 
     const cards = userCards.map((card) => (
       <Card key={card._id} card={card} id={card._id} />
@@ -46,6 +50,7 @@ const Home = () => {
 
     return cards;
   }, [userCards, user?._id, states?.selectedItems]); // Ensure minimal dependencies
+  const scrollParentRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div className="container">
@@ -72,18 +77,34 @@ const Home = () => {
         </Button>
       </div>
 
-      <>
-        {isIntialLoading ? (
+      <div>
+        {isLoading ? (
           <CardsSkeleton cards={[]} />
         ) : userCards?.length ? (
-          <InfiniteScroll
-            fetchNextPage={fetchNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            hasNextPage={hasNextPage}
-            loadingElement={<CardsSkeleton cards={userCards} />}
-          >
-            {CardsJSX}
-          </InfiniteScroll>
+          // <InfiniteScroll
+          //   fetchNextPage={fetchNextPage}
+          //   isFetchingNextPage={isFetchingNextPage}
+          //   hasNextPage={hasNextPage}
+          //   loadingElement={<CardsSkeleton cards={userCards} />}
+          // >
+          //   {CardsJSX}
+          // </InfiniteScroll>
+          <Virtuoso
+            // customScrollParent={scrollParentRef.current || undefined}
+            // style={{ height: "60vh" }}
+            useWindowScroll
+            data={userCards}
+            itemContent={(index, card) => (
+              <div className="py-2">
+                <Card key={card._id} card={card} id={card._id} />
+              </div>
+            )}
+            endReached={() => hasNextPage && fetchNextPage()}
+            components={{
+              Footer: () =>
+                isFetchingNextPage ? <CardsSkeleton cards={userCards} /> : null,
+            }}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh]">
             <Button
@@ -96,7 +117,7 @@ const Home = () => {
             </Button>
           </div>
         )}
-      </>
+      </div>
     </div>
   );
 };

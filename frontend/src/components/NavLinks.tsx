@@ -15,7 +15,7 @@ import {
 import { useLocalStorage } from "react-use";
 import { useState } from "react";
 import useGetCourses from "@/hooks/Queries/useGetCourses";
-import { googleLogout } from "@react-oauth/google";
+import useDb from "../db/useDb";
 
 type NavLinkProps = {
   links: LinkType[];
@@ -92,19 +92,7 @@ const ProfileDropdown = ({
   user: UserType | null;
   setIsNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
-  const logoutHandler = () => {
-    axios.post("auth/logout").then(() => {
-      googleLogout();
-      queryClient.setQueryData(["me"], null);
-      queryClient.clear();
-      sessionStorage.removeItem("redirectPath");
-      navigate("/login");
-    });
-    setIsNavOpen(false);
-  };
 
   return (
     <DropdownMenu modal={false}>
@@ -128,9 +116,7 @@ const ProfileDropdown = ({
           </Link>
         )}
         <DropdownMenuSeparator className="my-3 h-[2px]" />
-        <Button onClick={logoutHandler} variant="danger">
-          Logout
-        </Button>
+      
       </DropdownMenuContent>
     </DropdownMenu>
   );

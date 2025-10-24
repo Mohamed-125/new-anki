@@ -107,7 +107,7 @@ const Card = ({
             }
           : () => {}
       }
-      className="p-5 my-3 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-300 cursor-pointer hover:shadow-md"
+      className="p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all duration-300 cursor-pointer hover:shadow-md"
       id={id}
     >
       <div className="flex justify-between items-start">

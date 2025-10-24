@@ -17,6 +17,7 @@ import { Menu, X } from "lucide-react";
 import logo from "../assets/white logo.png";
 import { LinkType } from "./Navbar";
 import { cn } from "../lib/utils";
+import useDb from "../db/useDb";
 
 interface HeaderProps {
   setIsMobileOpen: (open: boolean) => void;
@@ -62,7 +63,7 @@ const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
           {user?._id ? (
             <>
               <LanguagesDropdown />
-              <ProfileDropdown user={user} />
+              <ProfileDropdown setMobileOpen={setMobileOpen} user={user} />
             </>
           ) : (
             <div className="flex gap-4 items-center">
@@ -128,7 +129,7 @@ const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
               {user?._id ? (
                 <div className="flex flex-col gap-3 mt-4">
                   <LanguagesDropdown />
-                  <ProfileDropdown user={user} />
+                  <ProfileDropdown setMobileOpen={setMobileOpen} user={user} />
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 mt-4">
@@ -154,18 +155,32 @@ const Header = ({ setIsMobileOpen, links }: HeaderProps) => {
 
 export default Header;
 
-const ProfileDropdown = ({ user }: { user: UserType | null }) => {
+const ProfileDropdown = ({
+  user,
+  setMobileOpen,
+}: {
+  user: UserType | null;
+  setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { deleteUser } = useDb(user?._id);
 
   const logoutHandler = () => {
-    axios.post("auth/logout").then(() => {
-      googleLogout();
-      queryClient.setQueryData(["me"], null);
-      queryClient.clear();
-      sessionStorage.removeItem("redirectPath");
-      navigate("/login");
-    });
+    console.log("looging out");
+    axios
+      .post("auth/logout")
+      .then(() => {
+        googleLogout();
+        queryClient.clear();
+        localStorage.removeItem("userId");
+        console.log("deleting user");
+        deleteUser();
+        sessionStorage.removeItem("redirectPath");
+        navigate("/login");
+      })
+      .catch((err) => console.log("logout failed", err));
+    setMobileOpen(false);
   };
 
   return (

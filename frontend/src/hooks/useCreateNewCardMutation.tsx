@@ -53,7 +53,7 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
 
       // Cancel any outgoing queries
       await queryClient.cancelQueries({
-        queryKey: ["cards", selectedLearningLanguage],
+        queryKey: ["cards", user?._id, selectedLearningLanguage],
       });
 
       const previousCards = queryClient.getQueryData([
@@ -101,7 +101,9 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
 
     onSuccess: (res, variables, context) => {
       // Invalidate queries to refetch actual data
-      queryClient.invalidateQueries(["cards", selectedLearningLanguage]);
+      queryClient.invalidateQueries({
+        queryKey: ["cards", user?._id, selectedLearningLanguage],
+      });
       context?.toast?.setToastData({
         title: "Card created successfully!",
         isCompleted: true,
@@ -115,7 +117,7 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
     const cards = await getCards();
     if (!cards) return;
     queryClient.setQueryData(
-      ["cards", selectedLearningLanguage],
+      ["cards", user?._id, selectedLearningLanguage],
       (old: any) => {
         if (!old || !old.pages?.length) {
           return {

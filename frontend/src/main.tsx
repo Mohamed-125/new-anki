@@ -10,7 +10,7 @@ import StatesContext from "./context/StatesContext.js";
 import { LanguageProvider } from "./context/SelectedLearningLanguageContext.js";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { PostHogProvider } from "posthog-js/react";
-
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
@@ -67,6 +67,7 @@ createRoot(document.getElementById("root")!).render(
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <LanguageProvider>
           <QueryClientProvider client={queryClient}>
+            <ReactQueryDevtools initialIsOpen={false} />
             <>
               <ToastContext>
                 <StatesContext>

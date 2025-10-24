@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
 import { CollectionType } from "@/hooks/useGetCollections";
 import useGetCards, { CardType } from "../hooks/useGetCards";
+import { SRS } from "@/utils/srs";
 import Button from "../components/Button";
 import { Skeleton } from "@/components/ui/skeleton";
 // @ts-ignore
@@ -41,11 +42,12 @@ import { BsXCircleFill } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
 import useModalsStates from "@/hooks/useModalsStates";
 import { AddCardModal } from "@/components/AddCardModal";
+import useDb from "../db/useDb";
 
 const StudyCards = () => {
+  const { user } = useGetCurrentUser();
   const collectionId = useParams()?.collectionId;
   const navigate = useNavigate();
-
   const [currentCard, setCurrentCard] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const queryClient = useQueryClient();
@@ -65,6 +67,7 @@ const StudyCards = () => {
         .then((res) => res.data as CollectionType),
     enabled: !!collectionId,
   });
+  const { updateCard } = useDb(user?._id);
 
   useEffect(() => {
     const nav = document.querySelector("nav");
@@ -79,8 +82,7 @@ const StudyCards = () => {
     cardsCount,
     fetchNextPage,
     isFetchingNextPage,
-    isLoading: cardsLoading,
-    refetch: refetchCards,
+    isFetching,
   } = useGetCards({
     collectionId,
     study: "all",
@@ -91,19 +93,73 @@ const StudyCards = () => {
   //   queryClient.removeQueries({ queryKey: ["cards", "study"] });
   // }, [queryClient]);
 
+  const [isLoading, setIsLoading] = useState(false);
 
   const card = cardsToStudy?.[currentCard];
 
+  const updatedCardsRef = useRef<CardType[]>([]);
+
+  const cardsLoading = isFetching || isLoading;
+
+  const sendLocalCardsToBackend = () => {
+    // Send the full card data to the server
+    const cardsToUpdate = updatedCardsRef.current.map((update) => ({
+      ...update,
+      stability: update.stability ?? 0,
+      difficulty: update.difficulty ?? 0.3,
+      elapsed_days: update.elapsed_days ?? 0,
+      scheduled_days: update.scheduled_days ?? 0,
+      learning_steps: update.learning_steps ?? 0,
+      reps: update.reps ?? 0,
+      lapses: update.lapses ?? 0,
+      state: update.state ?? SRS.States.NEW,
+      // Ensure dates are properly formatted as ISO strings
+      last_review: new Date(update.last_review || Date.now()).toISOString(),
+      due: new Date(update.due || Date.now()).toISOString(),
+      reviewCount: update.reviewCount ?? 0,
+    }));
+
+    if (cardsToUpdate.length === 0) {
+      console.log("No cards to update");
+      return;
+    }
+
+    console.log("Sending batch update:", cardsToUpdate);
+    setIsLoading(true);
+    axios
+      .patch(`card/batch`, {
+        toUpdateCardsData: cardsToUpdate,
+      })
+      .then(() => {
+        console.log("✅ Synced on normal exit");
+        updatedCardsRef.current = [];
+        localStorage.removeItem("unsyncedCards");
+        // // Invalidate queries to ensure updates are reflected
+        // queryClient.invalidateQueries({ queryKey: ["cards"] });
+      })
+      .catch((error) => {
+        console.warn(
+          "⚠️ Sync failed on normal exit — keeping local copy",
+          error
+        );
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
   useEffect(() => {
-    console.log("cardsToStudy :");
-    console.log(cardsToStudy);
-  }, [cardsToStudy]);
+    // Load any unsynced cards from previous sessions
+    const loadUnsyncedCards = () => {
+      const unsyncedCards = JSON.parse(
+        localStorage.getItem("unsyncedCards") || "[]"
+      );
+      if (unsyncedCards.length > 0) {
+        updatedCardsRef.current = unsyncedCards;
+      }
+    };
 
-  const { user } = useGetCurrentUser();
+    loadUnsyncedCards();
 
-  const updatedCardsRef = useRef<{ _id: string; answer: string }[]>([]);
-
-  useEffect(() => {
     const handleBeforeUnload = () => {
       if (updatedCardsRef.current.length > 0) {
         localStorage.setItem(
@@ -119,18 +175,7 @@ const StudyCards = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
 
       if (updatedCardsRef.current.length > 0) {
-        axios
-          .patch(`card/batch`, {
-            toUpdateCardsData: updatedCardsRef.current,
-          })
-          .then(() => {
-            queryClient.invalidateQueries({queryKey:['cards', user?._id, 'study']})
-            console.log("✅ Synced on normal exit");
-            localStorage.removeItem("unsyncedCards");
-          })
-          .catch(() => {
-            console.warn("⚠️ Sync failed on normal exit — keeping local copy");
-          });
+        sendLocalCardsToBackend();
       } else {
         localStorage.removeItem("unsyncedCards");
       }
@@ -138,15 +183,70 @@ const StudyCards = () => {
   }, []);
 
   const submitAnswer = async (answer = "") => {
-    console.log(!cardsToStudy?.length, !card, !cardsCount);
     if (!cardsToStudy?.length || !card || !cardsCount) return;
 
-    const update = { _id: card._id, answer };
+    // Map the answer to SRS rating
+    let rating;
+    switch ((answer || "").toLowerCase()) {
+      case "again":
+        rating = SRS.Rating.Again;
+        break;
+      case "hard":
+        rating = SRS.Rating.Hard;
+        break;
+      case "medium":
+        rating = SRS.Rating.Good;
+        break;
+      case "easy":
+        rating =
+          card.state === SRS.States.NEW ? SRS.Rating.Good : SRS.Rating.Easy;
+        break;
+      default:
+        rating = SRS.Rating.Good;
+    }
+
+    // Calculate new card values using SRS
+    const cardForCalculation = {
+      stability: card.stability ?? 0,
+      difficulty: card.difficulty ?? 0.3,
+      elapsed_days: card.elapsed_days ?? 0,
+      scheduled_days: card.scheduled_days ?? 0,
+      learning_steps: card.learning_steps ?? 0,
+      reps: card.reps ?? 0,
+      lapses: card.lapses ?? 0,
+      state: card.state ?? 0,
+      last_review: card.last_review ?? new Date(),
+      due: card.due ?? new Date(),
+    };
+
+    const updatedCardValues = SRS.calculateNextInterval(
+      cardForCalculation,
+      rating
+    );
+
+    // Create update object with calculated values
+    const update = {
+      _id: card._id,
+      answer,
+      ...updatedCardValues,
+      reviewCount: (card.reviewCount || 0) + 1,
+    };
+
     updatedCardsRef.current.push(update);
+    updateCard(update).catch((err) =>
+      console.error("Failed to update Dexie card", err)
+    );
 
     const existing = JSON.parse(localStorage.getItem("unsyncedCards") || "[]");
-    existing.push(update);
-    localStorage.setItem("unsyncedCards", JSON.stringify(existing));
+
+    // Remove any previous update for the same card
+    const filtered = existing.filter((c: any) => c._id !== update._id);
+
+    // Add the latest update
+    filtered.push(update);
+
+    // Save back to localStorage
+    localStorage.setItem("unsyncedCards", JSON.stringify(filtered));
 
     setShowAnswer(false);
     setCurrentCard((pre) => {
@@ -242,6 +342,7 @@ const StudyCards = () => {
 
   const visibleCards = studyMode === "due" ? dueCards : cardsToStudy;
 
+  console.log("cardsLoading", cardsLoading);
   if (collectionLoading || cardsLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-[rgba(173,150,255,0.08)]">
@@ -629,7 +730,7 @@ const StudyCards = () => {
                     tabIndex={-1}
                     className="flex-1 h-10 text-gray-700 border-gray-700 transition-colors hover:bg-gray-700 hover:text-white"
                     variant="primary-outline"
-                    onClick={() => submitAnswer(`a`)}
+                    onClick={() => submitAnswer(`again`)}
                   >
                     Again
                   </Button>

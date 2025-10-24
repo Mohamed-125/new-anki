@@ -1,8 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useNetwork } from "@/context/NetworkStatusContext";
-import useDb from "../db/useDb";
 import useGetCurrentUser from "./useGetCurrentUser";
+import { useEffect, useMemo, useState } from "react";
+import useDb from "../db/useDb";
 
 export type CardType = {
   _id: string;
@@ -14,22 +15,29 @@ export type CardType = {
   stability: number;
   difficulty: number;
   elapsed_days: number;
-  language: string;
   scheduled_days: number;
   learning_steps: number;
   reps: number;
   lapses: number;
   state: number;
-  last_review: number;
-  due: number;
+  last_review: Date | number;
+  due: Date | number;
+  language: string;
   createdAt: number;
+  reviewCount?: number;
+  // Added for offline sorting, assuming this exists on the backend model
+  order?: number;
 };
 
-type GetCardsResponse = {
-  cards: CardType[];
-  cardsCount: number;
-  nextPage: number;
-};
+interface UseGetCardsProps {
+  enabled?: boolean;
+  query?: string;
+  collectionId?: string;
+  videoId?: string;
+  study?: string;
+  difficultyFilter?: string;
+  srsMode?: boolean;
+}
 
 const useGetCards = ({
   enabled = true,
@@ -39,125 +47,246 @@ const useGetCards = ({
   study,
   difficultyFilter,
   srsMode,
-}: {
-  enabled?: boolean;
-  query?: string;
-  collectionId?: string;
-  videoId?: string;
-  study?: string;
-  difficultyFilter?: string;
-  srsMode?: boolean;
-} = {}) => {
+}: UseGetCardsProps = {}) => {
   const { selectedLearningLanguage, user } = useGetCurrentUser();
   const { isOnline } = useNetwork();
-  const queryKey: any[] = ["cards", user?._id];
-  if (study) queryKey.push("study");
-  if (query) queryKey.push(query);
-  else if (collectionId) queryKey.push(collectionId);
-  else if (videoId) queryKey.push(videoId);
-  else if (difficultyFilter) queryKey.push(difficultyFilter);
-  if (selectedLearningLanguage) queryKey.push(selectedLearningLanguage);
+  const { getCards, bulkPutCards, clearCards } = useDb(user?._id);
 
-  const filterCards = (cards: CardType[]) => {
-    let filteredCards = cards;
+  const queryKey = useMemo(() => {
+    const key = ["cards", user?._id];
+    if (study) key.push("study");
+    if (query) key.push(query);
+    else if (collectionId) key.push(collectionId);
+    else if (videoId) key.push(videoId);
+    else if (difficultyFilter) key.push(difficultyFilter);
+    if (selectedLearningLanguage) key.push(selectedLearningLanguage);
+    return key;
+  }, [
+    user?._id,
+    study,
+    query,
+    collectionId,
+    videoId,
+    difficultyFilter,
+    selectedLearningLanguage,
+  ]);
+
+  /**
+   * Client-side filtering and sorting for OFFLINE mode,
+   * mirroring backend logic (order: 1, createdAt: -1 OR due: 1, createdAt: 1, difficulty: 1, _id: 1)
+   */
+  const filterCards = (cards: CardType[], currentStudy?: string) => {
+    // If online, we don't filter/sort on the client; we trust the server response.
+    if (isOnline) return cards;
+
+    let filtered = cards;
+
+    // --- 1. Filtering Logic (Mirroring Backend) ---
+
+    // Filter by Collection ID
     if (collectionId) {
-      filteredCards = filteredCards.filter(
-        (c) => c.collectionId === collectionId
-      );
+      filtered = filtered.filter((c) => c.collectionId === collectionId);
     }
+
+    // Filter by Search Query (front field only, as per original logic)
     if (query) {
-      filteredCards = filteredCards.filter((c) =>
-        c.front.toLowerCase().includes(query.toLowerCase())
+      const lowerQuery = query.toLowerCase();
+      filtered = filtered.filter((c) =>
+        c.front.toLowerCase().includes(lowerQuery)
       );
     }
+
+    // Filter by Difficulty Ranges (Mirroring Backend's easeFactor logic)
     if (difficultyFilter && difficultyFilter !== "all") {
-      filteredCards = filteredCards.filter(
-        (c) => String(c.difficulty) === difficultyFilter
+      filtered = filtered.filter((c) => {
+        switch (difficultyFilter) {
+          case "easy":
+            return c.difficulty >= 0.7;
+          case "medium":
+            return c.difficulty >= 0.5 && c.difficulty < 0.7;
+          case "hard":
+            return c.difficulty < 0.5;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Filter for Study Mode ('today' only)
+    if (currentStudy?.toLowerCase() === "today") {
+      const endOfToday = new Date();
+      // Set to 11:59:59 PM today
+      endOfToday.setHours(23, 59, 59, 999);
+      const endOfTodayTime = endOfToday.getTime();
+
+      // Only include cards due today or earlier
+      filtered = filtered.filter(
+        (c) => new Date(c.due).getTime() <= endOfTodayTime
       );
     }
-    return filteredCards;
+
+    const compareIds = (a: string, b: string) => {
+      const regex = /^(\D*)(\d*)$/;
+      const [aText, aNum] = a
+        .match(regex)
+        ?.slice(1, 3)
+        .map((x) => x || "") || ["", "0"];
+      const [bText, bNum] = b
+        .match(regex)
+        ?.slice(1, 3)
+        .map((x) => x || "") || ["", "0"];
+
+      const textDiff = aText.localeCompare(bText);
+      if (textDiff !== 0) return textDiff;
+
+      return Number(aNum) - Number(bNum);
+    };
+
+    if (currentStudy) {
+      filtered.sort((a, b) => {
+        const getTimeSafe = (date: any) =>
+          date ? new Date(date).getTime() : Infinity;
+        const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
+
+        // 1. Compare due
+        const dueDiff = getTimeSafe(a.due) - getTimeSafe(b.due);
+        if (dueDiff !== 0) return dueDiff;
+
+        // 2. Compare createdAt
+        const createdDiff = getTimeSafe(a.createdAt) - getTimeSafe(b.createdAt);
+        if (createdDiff !== 0) return createdDiff;
+
+        // 3. Compare difficulty
+        const difficultyDiff =
+          getDifficulty(a.difficulty) - getDifficulty(b.difficulty);
+        if (difficultyDiff !== 0) return difficultyDiff;
+
+        // 4. Compare _id naturally for custom IDs
+        return compareIds(a._id, b._id);
+      });
+    }
+
+    return filtered;
   };
-
-  const paginateCards = (cards: CardType[], pageParam: number) => {
-    const pageSize = 30;
-    const start = pageParam * pageSize;
-    const end = start + pageSize;
-    const pageCards = cards.slice(start, end);
-
-    return {
-      cards: pageCards,
-      cardsCount: cards.length,
-      nextPage: end < cards.length ? pageParam + 1 : undefined,
-      allCards: cards,
-    } as GetCardsResponse;
-  };
-
-  const { addCard, getCards: getDexieCards } = useDb(user?._id);
 
   const {
     data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    isFetching,
     isLoading,
-    refetch,
-    status,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
   } = useInfiniteQuery({
     queryKey,
+    enabled: enabled && !!user && isOnline,
     queryFn: async ({ pageParam = 0 }) => {
-      // Offline mode: fetch from Dexie
-      console.log("isOnline", isOnline);
+      if (!user) throw new Error("User not found");
 
-      if (!isOnline) {
-        const allCards = await getDexieCards();
-        const filteredCards = filterCards(allCards);
-        return paginateCards(filteredCards, pageParam);
-      }
+      let url = `card/?page=${pageParam}`;
+      if (query) url += `&searchQuery=${query}`;
+      if (collectionId) url += `&collectionId=${collectionId}`;
+      if (videoId) url += `&videoId=${videoId}`;
+      if (study) url += `&study=${study}`;
+      if (srsMode) url += `&srsMode=true`;
+      if (selectedLearningLanguage)
+        url += `&language=${selectedLearningLanguage}`;
+      if (difficultyFilter && difficultyFilter !== "all")
+        url += `&difficulty=${difficultyFilter}`;
 
-      try {
-        // Online mode: try server first
-        let url = `card/?page=${pageParam}`;
-        if (query) url += `&searchQuery=${query}`;
-        if (collectionId) url += `&collectionId=${collectionId}`;
-        if (videoId) url += `&videoId=${videoId}`;
-        if (study) url += `&study=${study}`;
-        if (srsMode) url += `&srsMode=true`;
-        if (selectedLearningLanguage)
-          url += `&language=${selectedLearningLanguage}`;
-        if (difficultyFilter && difficultyFilter !== "all") {
-          url += `&difficulty=${difficultyFilter}`;
-        }
+      const { data } = await axios.get(url);
+      const serverCards: CardType[] = data.cards ?? [];
 
-        const res = await axios.get(url);
-        return res.data as GetCardsResponse;
-      } catch (error) {
-        // If server request fails and we have local data, use it
-        if (user) {
-          const allCards = await getDexieCards();
-          if (!allCards) return [];
-          const filteredCards = filterCards(allCards);
-          return paginateCards(filteredCards, pageParam);
-        }
-        throw error; // Re-throw if we don't have local data
-      }
+      return {
+        // filterCards returns serverCards immediately because isOnline is true here
+        cards: filterCards(serverCards),
+        cardsCount: data.cardsCount,
+        nextPage: data.nextPage ?? null,
+      };
     },
+    getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
+    staleTime: 1000 * 60 * 5,
     initialPageParam: 0,
-    getNextPageParam: (lastPage) => lastPage?.nextPage,
-    enabled,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
-  const userCards = data?.pages.flatMap((page) => page.cards) ?? [];
+  // ✅ Automatically fetch all pages
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && !study) {
+      const timer = setTimeout(() => fetchNextPage(), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, study]);
+
+  const [userCards, setUserCards] = useState<CardType[]>([]);
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      if (isOnline) {
+        // Online: get all flattened cards from query pages
+        const cards = data?.pages?.flatMap((p) => p.cards) ?? [];
+        setUserCards(cards);
+      } else {
+        // Offline: get all cards from Dexie
+        const offlineCards = await getCards();
+
+        console.log("offlineCards", offlineCards);
+        if (!offlineCards) return setUserCards([]);
+
+        // Apply client-side filters and sorting, passing 'study'
+        const filteredCards = filterCards(offlineCards, study);
+        console.log("filteredCards ", filteredCards);
+        setUserCards(filteredCards);
+      }
+    };
+
+    fetchCards();
+  }, [data?.pages, isOnline, study]); // Added 'study' to dependencies
+
+  // Synchronization logic for Dexie (using the stable/debounced logic)
+  useEffect(() => {
+    // 1. Only sync when online and user is available
+    if (!isOnline || !user || study) return;
+
+    // 2. Determine when to sync:
+    //    Sync when all non-study data is loaded (!hasNextPage),
+    //    OR if in study mode (where we usually only fetch one page).
+    const allPagesLoaded = !hasNextPage && !isFetchingNextPage;
+    const shouldSync = allPagesLoaded;
+
+    if (userCards.length > 0 && shouldSync) {
+      const syncToDexie = async () => {
+        // Clear and Write in a single, sequential block
+        console.log("Syncing", userCards.length, "cards to Dexie...");
+        await clearCards();
+        await bulkPutCards(userCards);
+        console.log("Sync Complete.");
+      };
+
+      // Use a small timeout to let rapid updates settle, acting as a debouncer.
+      const syncTimer = setTimeout(syncToDexie, 100);
+
+      return () => clearTimeout(syncTimer);
+    }
+  }, [
+    userCards,
+    isOnline,
+    user,
+    hasNextPage,
+    isFetchingNextPage,
+    study,
+    clearCards,
+    bulkPutCards,
+  ]);
 
   return {
     userCards,
-    cardsCount: data?.pages[0]?.cardsCount,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    cardsCount: isOnline
+      ? data?.pages?.[0]?.cardsCount ?? 0
+      : userCards?.length ?? 0,
+    isFetching,
     isLoading,
-    refetch,
-    // allCards: data?.pages[0]?.allCards,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
   };
 };
 

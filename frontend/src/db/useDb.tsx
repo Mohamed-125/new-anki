@@ -38,7 +38,6 @@ class UserSpecificDatabase extends Dexie {
 }
 
 const useDb = (userId: string | undefined) => {
-  
   const getUserDatabase = useCallback(
     (userId: string): UserSpecificDatabase => {
       if (!userId) {
@@ -98,6 +97,14 @@ const useDb = (userId: string | undefined) => {
     [userId, db]
   );
 
+  // ✅ Clear all cards (used before full sync to prevent duplicates)
+  const clearCards = useCallback(async () => {
+    console.log("🧹 Dexie cards cleared");
+
+    if (!db) return null;
+    return await db.cards.clear();
+  }, [userId, db]);
+
   const batchDeleteCards = useCallback(
     async (cardIds: string[]) => {
       if (!userId || !db) return null;
@@ -123,7 +130,6 @@ const useDb = (userId: string | undefined) => {
       .where("status")
       .equals("pending")
       .toArray();
-    console.log("offlineOperations", offlineOperations);
     return offlineOperations;
   }, [userId, db]);
 
@@ -144,12 +150,16 @@ const useDb = (userId: string | undefined) => {
   );
 
   const handleOfflineOperation = useCallback(
-    async (type: "add" | "update" | "delete" | "move" | "batch_delete", data: any) => {
+    async (
+      type: "add" | "update" | "delete" | "move" | "batch_delete",
+      data: any
+    ) => {
       if (!userId) return null;
+
       await addOfflineOperation({
         type,
         timestamp: Date.now(),
-        data,
+        data: data,
         status: "pending",
         retryCount: 0,
       });
@@ -180,18 +190,69 @@ const useDb = (userId: string | undefined) => {
   }, [userId, db]);
 
   const deleteUser = useCallback(async () => {
-    if (!userId || !db) return;
-    await db.delete();
-    delete databaseInstances[userId];
-    localStorage.removeItem("userId");
+    console.log("userId", userId);
+    if (!userId) return;
 
-    const databases = await indexedDB.databases();
-    for (const database of databases) {
-      if (database.name?.startsWith(`collingo_${userId}`)) {
-        await indexedDB.deleteDatabase(database.name);
+    const dbName = `collingo_${userId}`;
+
+    try {
+      // 1️⃣ Close Dexie instance if it exists
+      const dbInstance = databaseInstances[userId];
+      if (dbInstance) {
+        await dbInstance.close();
+        delete databaseInstances[userId];
       }
+
+      // 2️⃣ Delete IndexedDB database properly using a Promise
+      await new Promise<void>((resolve, reject) => {
+        const deleteRequest = indexedDB.deleteDatabase(dbName);
+
+        deleteRequest.onsuccess = () => {
+          console.log(`🗑️ Successfully deleted database: ${dbName}`);
+          resolve();
+        };
+        deleteRequest.onerror = (event) => {
+          console.error("❌ Error deleting database:", event);
+          reject(event);
+        };
+        deleteRequest.onblocked = () => {
+          console.warn(`⚠️ Database deletion blocked for: ${dbName}`);
+        };
+      });
+
+      // 3️⃣ Remove user-related cached info
+      localStorage.removeItem("userId");
+
+      console.log("✅ User data deleted and local storage cleared.");
+    } catch (error) {
+      console.error("❌ Error deleting user database:", error);
     }
-  }, [userId, db]);
+  }, [userId]);
+
+  const bulkAddCards = useCallback(
+    async (cards: CardType[]) => {
+      if (!userId || !db) return null;
+      return await db.cards.bulkAdd(
+        cards.map((c) => ({ ...c, userId, createdAt: Date.now() }))
+      );
+    },
+    [userId, db]
+  );
+
+  const bulkPutCards = useCallback(
+  async (cards: CardType[]) => {
+    if (!userId || !db || !cards?.length) return null;
+    try {
+      await db.cards.bulkPut(
+        cards.map((c) => ({ ...c, userId, createdAt: c.createdAt || Date.now() }))
+      );
+    } catch (err) {
+      console.error("❌ bulkAddCards error:", err);
+    }
+  },
+  [userId, db]
+);
+
 
   return {
     getCards,
@@ -208,6 +269,9 @@ const useDb = (userId: string | undefined) => {
     saveUser,
     getUser,
     deleteUser,
+    bulkAddCards,
+    clearCards,
+    bulkPutCards
   };
 };
 

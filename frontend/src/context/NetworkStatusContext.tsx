@@ -49,10 +49,36 @@ export const NetworkStatusProvider: React.FC<{ children: React.ReactNode }> = ({
 
         switch (operation.type) {
           case "add":
-            await axios.post("/card", operation.data);
+            // Send all SRS fields for new cards
+            await axios.post("/card", {
+              ...operation.data,
+              stability: operation.data.stability,
+              difficulty: operation.data.difficulty,
+              elapsed_days: operation.data.elapsed_days,
+              scheduled_days: operation.data.scheduled_days,
+              learning_steps: operation.data.learning_steps,
+              reps: operation.data.reps,
+              lapses: operation.data.lapses,
+              state: operation.data.state,
+              last_review: operation.data.last_review,
+              due: operation.data.due
+            });
             break;
           case "update":
-            await axios.patch(`/card/${operation.data._id}`, operation.data);
+            // Send all SRS fields for card updates
+            await axios.patch(`/card/${operation.data._id}`, {
+              ...operation.data,
+              stability: operation.data.stability,
+              difficulty: operation.data.difficulty,
+              elapsed_days: operation.data.elapsed_days,
+              scheduled_days: operation.data.scheduled_days,
+              learning_steps: operation.data.learning_steps,
+              reps: operation.data.reps,
+              lapses: operation.data.lapses,
+              state: operation.data.state,
+              last_review: operation.data.last_review,
+              due: operation.data.due
+            });
             break;
           case "delete":
             await axios.delete(`/card/${operation.data._id}`);

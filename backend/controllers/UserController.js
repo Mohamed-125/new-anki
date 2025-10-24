@@ -209,12 +209,12 @@ module.exports.checkUsernameController = async (req, res, next) => {
 
 module.exports.logUserOutController = async (req, res, next) => {
   res.clearCookie("token", {
-    secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true, // Only over HTTPS
+    sameSite: "none",
   });
   res.clearCookie("refreshToken", {
-    secure: process.env.NODE_ENV === "production" ? true : false, // Only over HTTPS
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true, // Only over HTTPS
+    sameSite: "none",
   });
 
   return res.status(200).send("user logged out ");

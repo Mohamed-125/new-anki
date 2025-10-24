@@ -39,8 +39,8 @@ const CardSchema = new mongoose.Schema(
     lapses: { type: Number, default: 0 },
     state: {
       type: String,
-      enum: ["again", "hard", "medium", "easy"],
-      default: "again",
+      enum: [0, 1, 2, 3], // 0 = NEW, 1 = LEARNING, 2 = REVIEW, 3 = RELEARNING
+      default: 0,
     },
     due: { type: Date, default: Date.now }, // لازم يكون موجود
     last_review: { type: Date, default: Date.now }, // لازم يكون موجود
@@ -59,7 +59,6 @@ const CardSchema = new mongoose.Schema(
       ref: "Section",
       index: true,
     },
-    order: { type: Number, index: true },
     shownInHome: { type: Boolean, default: true, index: true },
 
     // ------------------- Stats -------------------
@@ -67,15 +66,13 @@ const CardSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    lean: true,
   }
 );
 
-// ترتيب الكروت تلقائيًا حسب order ثم createdAt
-CardSchema.pre("find", function (next) {
-  this.sort({ order: 1, createdAt: -1 });
-  next();
-});
+// CardSchema.pre("find", function (next) {
+//   this.sort({ createdAt: -1 });
+//   next();
+// });
 
 const CardModel = mongoose.model("Card", CardSchema);
 module.exports = CardModel;

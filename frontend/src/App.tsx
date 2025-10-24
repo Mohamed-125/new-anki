@@ -61,9 +61,8 @@ function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
   useUserDatabase(); // Initialize user-specific database
   const [isMobileOpen, setIsMobileOpen] = useState(false);
- const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
- 
   const links = [
     { name: "Home", path: "/" },
     { name: "Learn", path: "/learn" },
@@ -76,26 +75,7 @@ function App() {
     { name: "Library", path: "/library" },
   ];
 
-  useEffect(() => {
-    const unsyncedCards = localStorage.getItem("unsyncedCards");
-    if (unsyncedCards) {
-      const parsed = JSON.parse(unsyncedCards);
-      if (parsed.length > 0) {
-        setTimeout(() => {
-          axios
-            .patch(`card/batch`, { toUpdateCardsData: parsed })
-            .then(() => {
-            queryClient.invalidateQueries({queryKey:['cards', user?._id, 'study']})
-              console.log("✅ Synced old updates successfully");
-              localStorage.removeItem("unsyncedCards");
-            })
-            .catch(() => {
-              console.warn("⚠️ Failed to sync previous updates");
-            });
-        }, 2000);
-      }
-    }
-  }, []);
+ 
 
   return (
     <>
