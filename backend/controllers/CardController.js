@@ -2,7 +2,7 @@ const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const { nanoid } = require("nanoid");
+
 // Batch delete cards
 exports.batchDelete = async (req, res) => {
   try {
@@ -194,136 +194,6 @@ async function resetAllCards() {
 }
 
 module.exports.getUserCards = async (req, res, next) => {
-  // resetAllCards();
-
-  // async function migrateAndDedupeTransactional() {
-  //   const session = await mongoose.startSession();
-
-  //   try {
-  //     session.startTransaction();
-
-  //     // 1) Aggregate groups by key and find duplicates
-  //     const groups = await CardModel.aggregate([
-  //       {
-  //         $project: {
-  //           frontNorm: { $toLower: { $trim: { input: "$front" } } },
-  //           backNorm: { $toLower: { $trim: { input: "$back" } } },
-  //           userId: 1,
-  //           createdAt: 1,
-  //           _id: 1,
-  //         },
-  //       },
-  //       {
-  //         $group: {
-  //           _id: { userId: "$userId", front: "$frontNorm", back: "$backNorm" },
-  //           docs: { $push: { id: "$_id", createdAt: "$createdAt" } },
-  //           count: { $sum: 1 },
-  //         },
-  //       },
-  //       { $match: { count: { $gt: 1 } } },
-  //     ]).session(session);
-
-  //     console.log(`Found ${groups.length} duplicate groups.`);
-
-  //     // 2) For each group: choose canonical doc to keep, delete others
-  //     for (const g of groups) {
-  //       // Prefer to keep any doc that already has string _id (i.e., type string),
-  //       // otherwise keep the earliest createdAt doc.
-  //       const docIds = g.docs.map((d) => d.id);
-  //       // fetch full documents for these ids (in session)
-  //       const docs = await CardModel.find({ _id: { $in: docIds } }).session(
-  //         session
-  //       );
-
-  //       // try prefer existing string _id (type string)
-  //       let keepDoc = docs.find((d) => typeof d._id === "string");
-  //       if (!keepDoc) {
-  //         // keep earliest createdAt
-  //         keepDoc = docs.reduce((a, b) => (a.createdAt < b.createdAt ? a : b));
-  //       }
-
-  //       const keepId = keepDoc._id.toString();
-  //       const deleteIds = docs
-  //         .filter((d) => d._id.toString() !== keepId)
-  //         .map((d) => d._id);
-
-  //       if (deleteIds.length) {
-  //         await CardModel.deleteMany({ _id: { $in: deleteIds } }).session(
-  //           session
-  //         );
-  //         console.log(
-  //           `Group ${JSON.stringify(g._id)}: kept ${keepId}, deleted ${
-  //             deleteIds.length
-  //           }`
-  //         );
-  //       }
-  //     }
-
-  //     // 3) Migrate remaining ObjectId _id docs (non-duplicates now)
-  //     const toMigrate = await CardModel.find({
-  //       _id: { $type: "objectId" },
-  //     }).session(session);
-  //     console.log(`After dedupe, migrating ${toMigrate.length} docs.`);
-
-  //     for (const card of toMigrate) {
-  //       const key = {
-  //         userId: card.userId ? card.userId.toString() : null,
-  //         frontNorm: card.front.trim().toLowerCase(),
-  //         backNorm: card.back.trim().toLowerCase(),
-  //       };
-
-  //       // ensure there is no existing doc in DB (string id) for this key
-  //       const existing = await CardModel.findOne({
-  //         userId: card.userId,
-  //         $expr: {
-  //           $and: [
-  //             {
-  //               $eq: [
-  //                 { $toLower: { $trim: { input: "$front" } } },
-  //                 key.frontNorm,
-  //               ],
-  //             },
-  //             {
-  //               $eq: [
-  //                 { $toLower: { $trim: { input: "$back" } } },
-  //                 key.backNorm,
-  //               ],
-  //             },
-  //           ],
-  //         },
-  //       }).session(session);
-
-  //       if (existing) {
-  //         // duplicate exists (kept during dedupe) → delete current ObjectId card
-  //         await CardModel.deleteOne({ _id: card._id }).session(session);
-  //         console.log(
-  //           `Deleted ObjectId doc ${card._id} because duplicate exists ${existing._id}`
-  //         );
-  //         continue;
-  //       }
-
-  //       // insert new with new string _id
-  //       const newCardObj = card.toObject();
-  //       delete newCardObj._id;
-  //       const newId = nanoid();
-  //       await CardModel.create([{ ...newCardObj, _id: newId }], { session });
-  //       // remove old
-  //       await CardModel.deleteOne({ _id: card._id }).session(session);
-  //       console.log(`Migrated ${card._id} -> ${newId}`);
-  //     }
-
-  //     await session.commitTransaction();
-  //     console.log("Transaction committed: migration + dedupe finished.");
-  //   } catch (err) {
-  //     await session.abortTransaction();
-  //     console.error("Transaction aborted due to error:", err);
-  //   } finally {
-  //     session.endSession();
-  //   }
-  // }
-
-  // migrateAndDedupeTransactional();
-
   const updateCards = await CardModel.find({ state: { $type: "string" } });
   await Promise.all(
     updateCards.map(async (card) => {

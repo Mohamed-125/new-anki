@@ -39,7 +39,7 @@ const SelectedItemsController = ({
     useModalStates();
   const queryClient = useQueryClient();
   const { isOnline } = useNetwork();
-  const { user , selectedLearningLanguage} = useGetCurrentUser();
+  const { user, selectedLearningLanguage } = useGetCurrentUser();
   const { batchDeleteCards, handleOfflineOperation } = useDb(user?._id);
 
   // Map item types to their API endpoints and query keys
@@ -122,6 +122,47 @@ const SelectedItemsController = ({
     setMoveVideoModal?.(true);
   }, [setIsMoveToCollectionOpen, setMoveVideoModal]);
 
+  const updateCardsCache = useCallback(() => {
+    currentConfig.queryKeys.forEach((key) => {
+      queryClient.setQueryData(
+        [key, user?._id, selectedLearningLanguage],
+        (oldData: any) => {
+          if (!oldData) return oldData;
+
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                cards: page.cards.filter(
+                  (card: any) => !selectedItems.includes(card._id)
+                ),
+                cardsCount: Math.max(
+                  (page.cardsCount ?? 0) - selectedItems.length,
+                  0
+                ),
+              })),
+            };
+          }
+
+          if (Array.isArray(oldData)) {
+            return oldData.filter(
+              (item: any) => !selectedItems.includes(item._id)
+            );
+          }
+
+          return oldData;
+        }
+      );
+    });
+  }, [
+    queryClient,
+    currentConfig,
+    selectedItems,
+    user?._id,
+    selectedLearningLanguage,
+  ]);
+
   const { addToast } = useToasts();
   const handleDeleteItems = useCallback(async () => {
     if (!selectedItems.length || !currentConfig) return;
@@ -143,7 +184,9 @@ const SelectedItemsController = ({
 
         // Invalidate queries to refetch fresh data
         currentConfig.queryKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: [key, user?._id, selectedLearningLanguage] });
+          queryClient.invalidateQueries({
+            queryKey: [key, user?._id, selectedLearningLanguage],
+          });
         });
 
         addToast("Items deleted successfully");
@@ -153,29 +196,7 @@ const SelectedItemsController = ({
           await batchDeleteCards(selectedItems);
           await handleOfflineOperation("batch_delete", { ids: selectedItems });
 
-          // 🧩 Properly update React Query cache
-          queryClient.setQueryData(["cards", user?._id, selectedLearningLanguage], (oldData: any) => {
-            if (!oldData) return oldData;
-
-            // Works for both infinite & normal query
-            if (oldData.pages) {
-              return {
-                ...oldData,
-                pages: oldData.pages.map((page: any) => ({
-                  ...page,
-                  cards: page.cards.filter(
-                    (card: any) => !selectedItems.includes(card._id)
-                  ),
-                  cardsCount: page.cardsCount - selectedItems.length,
-                })),
-              };
-            }
-
-           
-
-            return oldData;
-          });
-
+          updateCardsCache();
           addToast("Items deleted (offline mode)");
         }
       }
