@@ -59,6 +59,7 @@ const StudyCards = () => {
   const [highestCardIndex, setHighestCardIndex] = useState(0);
   const { setIsAddCardModalOpen, setEditId, setDefaultValues } =
     useModalsStates();
+  const { isOnline } = useNetwork();
 
 
   const { editor, setContent } = useUseEditor(true);

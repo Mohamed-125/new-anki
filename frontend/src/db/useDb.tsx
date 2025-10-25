@@ -76,7 +76,7 @@ const useDb = (userId: string | undefined) => {
   const addCard = useCallback(
     async (card: CardType) => {
       if (!userId || !db) return null;
-      return await db.cards.add({ ...card, userId, createdAt: Date.now() });
+      return await db.cards.add({ ...card, createdAt:new Date().toJSON(),  userId, });
     },
     [userId, db]
   );

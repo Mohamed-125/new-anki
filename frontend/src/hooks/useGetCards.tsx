@@ -23,7 +23,7 @@ export type CardType = {
   last_review: Date | number;
   due: Date | number;
   language: string;
-  createdAt: number;
+  createdAt: number | string;
   reviewCount?: number;
   // Added for offline sorting, assuming this exists on the backend model
   order?: number;
@@ -142,10 +142,11 @@ const useGetCards = ({
       return Number(aNum) - Number(bNum);
     };
 
+    const getTimeSafe = (date: any) =>
+      date ? new Date(date).getTime() : Infinity;
+
     if (currentStudy) {
       filtered.sort((a, b) => {
-        const getTimeSafe = (date: any) =>
-          date ? new Date(date).getTime() : Infinity;
         const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
 
         // 1. Compare due
@@ -163,6 +164,11 @@ const useGetCards = ({
 
         // 4. Compare _id naturally for custom IDs
         return compareIds(a._id, b._id);
+      });
+    } else {
+      console.log("filtering");
+      filtered.sort((a, b) => {
+        return getTimeSafe(b.createdAt) - getTimeSafe(a.createdAt);
       });
     }
 

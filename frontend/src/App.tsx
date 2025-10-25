@@ -95,7 +95,7 @@ function App() {
                   <Route
                     path={`/`}
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute protectOffline={false}>
                         <Home />
                       </ProtectedRoute>
                     }
@@ -221,7 +221,7 @@ function App() {
                   <Route
                     path="/study"
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute protectOffline={false}>
                         <StudyCards />
                       </ProtectedRoute>
                     }

@@ -5,7 +5,7 @@ import useDb from "../db/useDb";
 import { useNetwork } from "../context/NetworkStatusContext";
 import OfflineFallback from "./OfflineFallback";
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, protectOffline = true }: { children: React.ReactNode , protectOffline?:boolean}) => {
   const { user, isLoading } = useGetCurrentUser();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,7 +42,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, [isOnline, user, isLoading, navigate, location]);
 
   // If offline and no user and no offline data → show fallback
-  if (!isOnline && !user && !hasOfflineData) {
+  if (!isOnline && !user && !hasOfflineData && !protectOffline) {
     return <OfflineFallback />;
   }
 
