@@ -43,6 +43,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import useModalsStates from "@/hooks/useModalsStates";
 import { AddCardModal } from "@/components/AddCardModal";
 import useDb from "../db/useDb";
+import { useNetwork } from "@/context/NetworkStatusContext";
+import OfflineFallback from "@/components/OfflineFallback";
 
 const StudyCards = () => {
   const { user } = useGetCurrentUser();
@@ -57,6 +59,7 @@ const StudyCards = () => {
   const [highestCardIndex, setHighestCardIndex] = useState(0);
   const { setIsAddCardModalOpen, setEditId, setDefaultValues } =
     useModalsStates();
+
 
   const { editor, setContent } = useUseEditor(true);
   const { data: collection, isLoading: collectionLoading } = useQuery({
@@ -363,17 +366,28 @@ const StudyCards = () => {
   return (
     <div className="min-h-screen bg-[rgba(173,150,255,0.08)]">
       <AddCardModal />
-      {/*
-      {dueCards.length > 0 ? (
-        <div className="py-2 text-center text-yellow-800 bg-yellow-100 rounded-md py-2font-medium">
-          🕐 {dueCards.length} {dueCards.length === 1 ? "card" : "cards"} due
-          now
+      {!isOnline && (
+        <div className="container flex gap-2 justify-center items-center text-center text-amber-800 bg-amber-50 border-b border-amber-100">
+          <svg
+            className="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="font-medium">
+            You're currently offline. Your progress will be synced when you
+            reconnect.
+          </span>
         </div>
-      ) : (
-        <div className="py-2 font-medium text-center text-green-700 bg-green-100 rounded-md">
-          🎉 All cards are up to date!
-        </div>
-      )} */}
+      )}
       <div className="w-full bg-white shadow-sm">
         <div className="container px-4 py-4 mx-auto">
           <div className="flex justify-between items-center">

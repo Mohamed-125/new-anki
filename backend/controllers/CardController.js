@@ -194,14 +194,6 @@ async function resetAllCards() {
 }
 
 module.exports.getUserCards = async (req, res, next) => {
-  const updateCards = await CardModel.find({ state: { $type: "string" } });
-  await Promise.all(
-    updateCards.map(async (card) => {
-      card.state = Number(card.state);
-      await card.save();
-    })
-  );
-
   const {
     page: pageNumber,
     searchQuery,
