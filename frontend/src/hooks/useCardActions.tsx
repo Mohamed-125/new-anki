@@ -7,18 +7,14 @@ import { useGetSelectedLearningLanguage } from "@/context/SelectedLearningLangua
 import { useNetwork } from "@/context/NetworkStatusContext";
 import useDb from "../db/useDb";
 import useGetCurrentUser from "./useGetCurrentUser";
- 
 
 const useCardActions = () => {
   const queryClient = useQueryClient();
   const { addToast } = useToasts();
   const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
-  const { isOnline } = useNetwork();  const {user} = useGetCurrentUser()
- const {
-  updateCard,
-  deleteCard,
-  handleOfflineOperation,
- } = useDb(user?._id);
+  const { isOnline } = useNetwork();
+  const { user } = useGetCurrentUser();
+  const { updateCard, deleteCard, handleOfflineOperation } = useDb(user?._id);
   const { mutateAsync: updateCardMutation } = useMutation({
     onMutate: async (updatedCard) => {
       const toast = addToast("Updating card...", "promise");
@@ -63,7 +59,7 @@ const useCardActions = () => {
       // Invalidate specific collection queries
       if (data.collectionId) {
         queryClient.invalidateQueries({
-          queryKey: ["cards", data.collectionId],
+          queryKey: ["cards", user?._id, data.collectionId],
         });
       }
       context.toast.setToastData({
@@ -75,13 +71,13 @@ const useCardActions = () => {
       // Revert optimistic updates
       if (context.previousCards) {
         queryClient.setQueryData(
-          ["cards", selectedLearningLanguage],
+          ["cards", user?._id, selectedLearningLanguage],
           context.previousCards
         );
       }
       if (context.previousCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", variables.collectionId, selectedLearningLanguage],
+          ["cards", user?._id, variables.collectionId, selectedLearningLanguage],
           context.previousCollectionCards
         );
       }
@@ -197,7 +193,7 @@ const useCardActions = () => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       if (variables.collectionId) {
         queryClient.invalidateQueries({
-          queryKey: ["cards", variables.collectionId],
+          queryKey: ["cards", user?._id,  variables.collectionId],
         });
       }
       addToast("Card Deleted Successfully", "success");
@@ -206,13 +202,13 @@ const useCardActions = () => {
       // Revert optimistic updates
       if (context.previousCards) {
         queryClient.setQueryData(
-          ["cards", selectedLearningLanguage],
+          ["cards", user?._id, selectedLearningLanguage],
           context.previousCards
         );
       }
       if (context.previousCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", variables.collectionId, selectedLearningLanguage],
+          ["cards", user?._id variables.collectionId, selectedLearningLanguage],
           context.previousCollectionCards
         );
       }
@@ -321,19 +317,19 @@ const useCardActions = () => {
       // Revert optimistic updates
       if (context.previousCards) {
         queryClient.setQueryData(
-          ["cards", selectedLearningLanguage],
+          ["cards", user?._id, selectedLearningLanguage],
           context.previousCards
         );
       }
       if (context.previousSourceCollectionCards) {
         queryClient.setQueryData(
-          ["cards", variables.ids[0].collectionId, selectedLearningLanguage],
+          ["cards", user?._id, variables.ids[0].collectionId, selectedLearningLanguage],
           context.previousSourceCollectionCards
         );
       }
       if (context.previousTargetCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", variables.collectionId, selectedLearningLanguage],
+          ["cards", user?._id, variables.collectionId, selectedLearningLanguage],
           context.previousTargetCollectionCards
         );
       }
@@ -445,19 +441,19 @@ const useCardActions = () => {
       // Revert optimistic updates
       if (context.previousCards) {
         queryClient.setQueryData(
-          ["cards", selectedLearningLanguage],
+          ["cards", user?._id, selectedLearningLanguage],
           context.previousCards
         );
       }
       if (context.previousSourceCollectionCards) {
         queryClient.setQueryData(
-          ["cards", variables.id.collectionId, selectedLearningLanguage],
+          ["cards", user?._id,  variables.id.collectionId, selectedLearningLanguage],
           context.previousSourceCollectionCards
         );
       }
       if (context.previousTargetCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", variables.collectionId, selectedLearningLanguage],
+          ["cards", user?._id,  variables.collectionId, selectedLearningLanguage],
           context.previousTargetCollectionCards
         );
       }

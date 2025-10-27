@@ -93,10 +93,7 @@ const StudyCards = () => {
     difficultyFilter,
   });
 
-  // useEffect(() => {
-  //   queryClient.removeQueries({ queryKey: ["cards", "study"] });
-  // }, [queryClient]);
-
+ 
   const [isLoading, setIsLoading] = useState(false);
 
   const card = cardsToStudy?.[currentCard];

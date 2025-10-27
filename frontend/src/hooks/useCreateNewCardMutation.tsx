@@ -61,26 +61,26 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
         selectedLearningLanguage,
       ]);
 
-      // Optimistically update cache
-      queryClient.setQueryData(
-        ["cards", selectedLearningLanguage],
-        (old: any) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page: any, index: number) => {
-              if (index === 0) {
-                return {
-                  ...page,
-                  cards: [optimisticCard, ...page.cards],
-                  cardsCount: (page.cardsCount || 0) + 1,
-                };
-              }
-              return page;
-            }),
-          };
-        }
-      );
+      // // Optimistically update cache
+      // queryClient.setQueryData(
+      //   ["cards", user?._id, selectedLearningLanguage],
+      //   (old: any) => {
+      //     if (!old) return old;
+      //     return {
+      //       ...old,
+      //       pages: old.pages.map((page: any, index: number) => {
+      //         if (index === 0) {
+      //           return {
+      //             ...page,
+      //             cards: [optimisticCard, ...page.cards],
+      //             cardsCount: (page.cardsCount || 0) + 1,
+      //           };
+      //         }
+      //         return page;
+      //       }),
+      //     };
+      //   }
+      // );
 
       return { previousCards, toast, optimisticCard };
     },
@@ -89,7 +89,7 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
       // Revert optimistic cache
       if (context?.previousCards) {
         queryClient.setQueryData(
-          ["cards", selectedLearningLanguage],
+          ["cards", user?._id, selectedLearningLanguage],
           context.previousCards
         );
       }
@@ -113,31 +113,6 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
 
   const { addCard, getCards, handleOfflineOperation } = useDb(user?._id);
 
-  const fetchCards = async () => {
-    const cards = await getCards();
-    if (!cards) return;
-    queryClient.setQueryData(
-      ["cards", user?._id, selectedLearningLanguage],
-      (old: any) => {
-        if (!old || !old.pages?.length) {
-          return {
-            pages: [{ cards, cardsCount: cards.length, nextPage: undefined }],
-            pageParams: [0],
-          };
-        }
-
-        const updatedPages = [...old.pages];
-        updatedPages[0] = {
-          ...updatedPages[0],
-          cards,
-          cardsCount: cards.length,
-        };
-
-        return { ...old, pages: updatedPages };
-      }
-    );
-  };
-
   const createCardHandler = async (
     e: React.FormEvent<HTMLFormElement> | null,
     additionalData: Partial<CardType> = {}
@@ -151,7 +126,7 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
       back: formData.get("card_translation") as string,
       language: selectedLearningLanguage,
       userId: user?._id,
-      createdAt:new Date().toJSON(),
+      createdAt: new Date().toJSON(),
       _id,
       ...additionalData,
     };
@@ -170,11 +145,33 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
       due: cardData.due ?? new Date(),
     };
     addCard(optimisticCard);
+    // Optimistically update cache
+    queryClient.setQueryData(
+      ["cards", user?._id, selectedLearningLanguage],
+      (old: any) => {
+        console.log("adding a card to the cache1 ", old);
 
+        if (!old) return old;
+
+        console.log("adding a card to the cache 2");
+        return {
+          ...old,
+          pages: old.pages.map((page: any, index: number) => {
+            if (index === 0) {
+              return {
+                ...page,
+                cards: [optimisticCard, ...page.cards],
+                cardsCount: (page.cardsCount || 0) + 1,
+              };
+            }
+            return page;
+          }),
+        };
+      }
+    );
     if (!isOnline) {
       handleOfflineOperation("add", cardData);
 
-      await fetchCards();
       return;
     } else {
       return mutateAsync(cardData);

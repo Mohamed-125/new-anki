@@ -53,28 +53,28 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
       // Optimistic cards
       const optimisticCards = newCards;
 
-      // Optimistically update cache
-      queryClient.setQueryData(
-        ["cards", user?._id, selectedLearningLanguage],
-        (old: any) => {
-          if (!old) return old;
+      // // Optimistically update cache
+      // queryClient.setQueryData(
+      //   ["cards", user?._id, selectedLearningLanguage],
+      //   (old: any) => {
+      //     if (!old) return old;
 
-          console.log("updating cache");
-          return {
-            ...old,
-            pages: old.pages.map((page: any, index: number) => {
-              if (index === 0) {
-                return {
-                  ...page,
-                  cards: [...optimisticCards, ...page.cards],
-                  cardsCount: (page.cardsCount || 0) + optimisticCards.length,
-                };
-              }
-              return page;
-            }),
-          };
-        }
-      );
+      //     console.log("updating cache");
+      //     return {
+      //       ...old,
+      //       pages: old.pages.map((page: any, index: number) => {
+      //         if (index === 0) {
+      //           return {
+      //             ...page,
+      //             cards: [...optimisticCards, ...page.cards],
+      //             cardsCount: (page.cardsCount || 0) + optimisticCards.length,
+      //           };
+      //         }
+      //         return page;
+      //       }),
+      //     };
+      //   }
+      // );
 
       return { previousCards, toast, optimisticCards };
     },
@@ -82,7 +82,7 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
     onError: (error, variables, context: any) => {
       if (context?.previousCards) {
         queryClient.setQueryData(
-          ["cards", selectedLearningLanguage],
+          ["cards", user?._id, selectedLearningLanguage],
           context.previousCards
         );
       }
