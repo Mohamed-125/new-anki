@@ -5,49 +5,84 @@ import useDb from "../db/useDb";
 import { useNetwork } from "../context/NetworkStatusContext";
 import OfflineFallback from "./OfflineFallback";
 
-const ProtectedRoute = ({ children, protectOffline = true }: { children: React.ReactNode , protectOffline?:boolean}) => {
+const ALLOWED_OFFLINE_PATHS = ["/", "/study"];
+
+const ProtectedRoute = ({
+  children,
+  protectOffline = true,
+}: {
+  children: React.ReactNode;
+  protectOffline?: boolean;
+}) => {
   const { user, isLoading } = useGetCurrentUser();
   const navigate = useNavigate();
   const location = useLocation();
   const { isOnline } = useNetwork();
-  const { getCards } = useDb(user?._id);
+  const { getUser } = useDb(user?._id);
 
-  const [hasOfflineData, setHasOfflineData] = useState(false);
+  const [localUser, setLocalUser] = useState<any>(null);
+  const [checkingLocalUser, setCheckingLocalUser] = useState(true);
 
   useEffect(() => {
-    const checkOfflineData = async () => {
-      // Only check offline data if user is offline and not logged in
-      if (!isOnline && !user?._id) {
-        const cards = await getCards();
-        setHasOfflineData(!!cards?.length);
+    const checkLocalUser = async () => {
+      if (!isOnline) {
+        const offlineUser = await getUser();
+        setLocalUser(offlineUser);
+      } else {
+        setLocalUser(null);
       }
+      setCheckingLocalUser(false);
     };
 
-    checkOfflineData();
-  }, [isOnline, user?._id, getCards]);
+    checkLocalUser();
+  }, [isOnline, getUser]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || checkingLocalUser) return;
 
-    // If user is online but not logged in → redirect to login
-    if (isOnline && !user) {
-      sessionStorage.setItem("redirectPath", location.pathname);
-      navigate("/login");
+    // 🟢 ONLINE: check normal login
+    if (isOnline) {
+      if (!user) {
+        sessionStorage.setItem("redirectPath", location.pathname);
+        navigate("/login");
+      } else if (!user.languages?.length) {
+        navigate("/user-profile");
+      }
+      return;
     }
+  }, [
+    isOnline,
+    user,
+    localUser,
+    isLoading,
+    checkingLocalUser,
+    navigate,
+    location.pathname,
+  ]);
 
-    // Example of conditional redirect to user-profile if needed later
-    else if (!user?.languages?.length) {
-      navigate("/user-profile");
-    }
-  }, [isOnline, user, isLoading, navigate, location]);
+  // ⏳ Wait while checking offline user
+  if (isLoading || checkingLocalUser) return null;
 
-  // If offline and no user and no offline data → show fallback
-  if (!isOnline && !user && !hasOfflineData && !protectOffline) {
+  // 🧩 Offline fallback logic
+  if (
+    !isOnline &&
+    (!localUser || !ALLOWED_OFFLINE_PATHS.includes(location.pathname))
+  ) {
     return <OfflineFallback />;
   }
 
-  // If user is logged in → render protected content
-  return <>{user && children}</>;
+  // ✅ Allow rendering for:
+  // - logged in user (online)
+  // - offline user with local data on allowed pages
+  if (
+    user ||
+    (localUser && ALLOWED_OFFLINE_PATHS.includes(location.pathname))
+  ) {
+    return <>{children}</>;
+  }
+
+  // default fallback
+  return <OfflineFallback />;
 };
 
 export default ProtectedRoute;

@@ -77,7 +77,12 @@ const useCardActions = () => {
       }
       if (context.previousCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", user?._id, variables.collectionId, selectedLearningLanguage],
+          [
+            "cards",
+            user?._id,
+            variables.collectionId,
+            selectedLearningLanguage,
+          ],
           context.previousCollectionCards
         );
       }
@@ -193,7 +198,7 @@ const useCardActions = () => {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       if (variables.collectionId) {
         queryClient.invalidateQueries({
-          queryKey: ["cards", user?._id,  variables.collectionId],
+          queryKey: ["cards", user?._id, variables.collectionId],
         });
       }
       addToast("Card Deleted Successfully", "success");
@@ -208,7 +213,12 @@ const useCardActions = () => {
       }
       if (context.previousCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", user?._id variables.collectionId, selectedLearningLanguage],
+          [
+            "cards",
+            user?._id,
+            variables.collectionId,
+            selectedLearningLanguage,
+          ],
           context.previousCollectionCards
         );
       }
@@ -323,13 +333,23 @@ const useCardActions = () => {
       }
       if (context.previousSourceCollectionCards) {
         queryClient.setQueryData(
-          ["cards", user?._id, variables.ids[0].collectionId, selectedLearningLanguage],
+          [
+            "cards",
+            user?._id,
+            variables.ids[0].collectionId,
+            selectedLearningLanguage,
+          ],
           context.previousSourceCollectionCards
         );
       }
       if (context.previousTargetCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", user?._id, variables.collectionId, selectedLearningLanguage],
+          [
+            "cards",
+            user?._id,
+            variables.collectionId,
+            selectedLearningLanguage,
+          ],
           context.previousTargetCollectionCards
         );
       }
@@ -447,13 +467,23 @@ const useCardActions = () => {
       }
       if (context.previousSourceCollectionCards) {
         queryClient.setQueryData(
-          ["cards", user?._id,  variables.id.collectionId, selectedLearningLanguage],
+          [
+            "cards",
+            user?._id,
+            variables.id.collectionId,
+            selectedLearningLanguage,
+          ],
           context.previousSourceCollectionCards
         );
       }
       if (context.previousTargetCollectionCards && variables.collectionId) {
         queryClient.setQueryData(
-          ["cards", user?._id,  variables.collectionId, selectedLearningLanguage],
+          [
+            "cards",
+            user?._id,
+            variables.collectionId,
+            selectedLearningLanguage,
+          ],
           context.previousTargetCollectionCards
         );
       }

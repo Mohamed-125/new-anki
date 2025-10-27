@@ -100,6 +100,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   ></Route>
+                  <Route
+                    path={`/`}
+                    element={
+                      <ProtectedRoute protectOffline={false}>
+                        <Home />
+                      </ProtectedRoute>
+                    }
+                  ></Route>
 
                   <Route
                     path="/collections"

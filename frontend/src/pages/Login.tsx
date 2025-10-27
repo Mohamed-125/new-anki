@@ -11,6 +11,8 @@ import useGetCurrentUser, { UserType } from "@/hooks/useGetCurrentUser";
 import useToasts from "@/hooks/useToasts";
 import { title } from "process";
 import { useEffect } from "react";
+import OfflineFallback from "../components/OfflineFallback";
+import { useNetwork } from "../context/NetworkStatusContext";
 // @ts-ignore
 
 const Login = () => {
@@ -62,6 +64,9 @@ const Login = () => {
       });
   };
 
+  const { isOnline } = useNetwork();  
+
+  if (!isOnline) return <OfflineFallback />;
   return (
     <div className="flex flex-grow justify-center items-center">
       <Form

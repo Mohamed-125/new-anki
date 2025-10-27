@@ -1,8 +1,22 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "./Button";
+import useDb from "../db/useDb";
+import useGetCurrentUser from "../hooks/useGetCurrentUser";
 
 const OfflineFallback = () => {
   const navigate = useNavigate();
+  const { user } = useGetCurrentUser();
+  const { getUser } = useDb(user?._id);
+  const [hasUser, setHasUser] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const user = await getUser();
+      setHasUser(!!user);
+    };
+    checkUser();
+  }, [getUser]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -39,6 +53,16 @@ const OfflineFallback = () => {
           >
             Try Again
           </Button>
+
+          {hasUser && (
+            <Button
+              onClick={() => navigate("/home")}
+              variant="secondary"
+              className="w-full"
+            >
+              Go to Home Screen
+            </Button>
+          )}
         </div>
       </div>
     </div>
