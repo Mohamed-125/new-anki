@@ -63,9 +63,12 @@ const useDb = (userId: string | undefined) => {
       const cards = await db.cards
         .where("[userId+createdAt]")
         .between([userId, Dexie.minKey], [userId, Dexie.maxKey])
-        .reverse()
         .toArray();
-      console.log("cards", cards);
+
+      cards.sort((a, b) => {
+        //@ts-ignore
+        return b.createdAt - a.createdAt;
+      });
       return cards;
     } catch (err) {
       console.error(err);
@@ -76,11 +79,16 @@ const useDb = (userId: string | undefined) => {
   const addCard = useCallback(
     async (card: CardType) => {
       if (!userId || !db) return null;
-      return await db.cards.add({ ...card, createdAt:new Date().toJSON(),  userId, });
+      return await db.cards.add({
+        ...card,
+        createdAt: card.createdAt
+          ? new Date(card.createdAt).getTime() // ✅ رقم ثابت
+          : Date.now(),
+        userId,
+      });
     },
     [userId, db]
   );
-
   const updateCard = useCallback(
     async (card: CardType) => {
       if (!userId || !db) return null;
@@ -232,27 +240,38 @@ const useDb = (userId: string | undefined) => {
   const bulkAddCards = useCallback(
     async (cards: CardType[]) => {
       if (!userId || !db) return null;
+
+      console.log("bulk adding to bexie db", cards);
       return await db.cards.bulkAdd(
-        cards.map((c) => ({ ...c, userId, createdAt: Date.now() }))
+        cards.map((c) => ({
+          ...c,
+          userId,
+          // createdAt:new Date().toJSON()
+        }))
       );
     },
     [userId, db]
   );
 
   const bulkPutCards = useCallback(
-  async (cards: CardType[]) => {
-    if (!userId || !db || !cards?.length) return null;
-    try {
-      await db.cards.bulkPut(
-        cards.map((c) => ({ ...c, userId, createdAt: c.createdAt || Date.now() }))
-      );
-    } catch (err) {
-      console.error("❌ bulkAddCards error:", err);
-    }
-  },
-  [userId, db]
-);
-
+    async (cards: CardType[]) => {
+      if (!userId || !db || !cards?.length) return null;
+      try {
+        await db.cards.bulkPut(
+          [...cards].map((c) => ({
+            ...c,
+            userId,
+            createdAt: c.createdAt
+              ? new Date(c.createdAt).getTime() // ✅ خليها رقم timestamp
+              : Date.now(),
+          }))
+        );
+      } catch (err) {
+        console.error("❌ bulkPutCards error:", err);
+      }
+    },
+    [userId, db]
+  );
 
   return {
     getCards,
@@ -271,7 +290,7 @@ const useDb = (userId: string | undefined) => {
     deleteUser,
     bulkAddCards,
     clearCards,
-    bulkPutCards
+    bulkPutCards,
   };
 };
 

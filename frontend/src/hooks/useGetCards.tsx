@@ -25,7 +25,6 @@ export type CardType = {
   language: string;
   createdAt: number | string;
   reviewCount?: number;
-  // Added for offline sorting, assuming this exists on the backend model
   order?: number;
 };
 
@@ -52,6 +51,9 @@ const useGetCards = ({
   const { isOnline } = useNetwork();
   const { getCards, bulkPutCards, clearCards } = useDb(user?._id);
 
+  const [userCards, setUserCards] = useState<CardType[]>([]);
+  const [hasSynced, setHasSynced] = useState(false);
+
   const queryKey = useMemo(() => {
     const key = ["cards", user?._id];
     if (study) key.push("study");
@@ -72,23 +74,18 @@ const useGetCards = ({
   ]);
 
   /**
-   * Client-side filtering and sorting for OFFLINE mode,
-   * mirroring backend logic (order: 1, createdAt: -1 OR due: 1, createdAt: 1, difficulty: 1, _id: 1)
+   * Client-side filtering and sorting for OFFLINE mode.
    */
   const filterCards = (cards: CardType[], currentStudy?: string) => {
-    // If online, we don't filter/sort on the client; we trust the server response.
     if (isOnline) return cards;
 
     let filtered = cards;
 
-    // --- 1. Filtering Logic (Mirroring Backend) ---
-
-    // Filter by Collection ID
+    // --- Filtering ---
     if (collectionId) {
       filtered = filtered.filter((c) => c.collectionId === collectionId);
     }
 
-    // Filter by Search Query (front field only, as per original logic)
     if (query) {
       const lowerQuery = query.toLowerCase();
       filtered = filtered.filter((c) =>
@@ -96,7 +93,6 @@ const useGetCards = ({
       );
     }
 
-    // Filter by Difficulty Ranges (Mirroring Backend's easeFactor logic)
     if (difficultyFilter && difficultyFilter !== "all") {
       filtered = filtered.filter((c) => {
         switch (difficultyFilter) {
@@ -112,14 +108,10 @@ const useGetCards = ({
       });
     }
 
-    // Filter for Study Mode ('today' only)
     if (currentStudy?.toLowerCase() === "today") {
       const endOfToday = new Date();
-      // Set to 11:59:59 PM today
       endOfToday.setHours(23, 59, 59, 999);
       const endOfTodayTime = endOfToday.getTime();
-
-      // Only include cards due today or earlier
       filtered = filtered.filter(
         (c) => new Date(c.due).getTime() <= endOfTodayTime
       );
@@ -138,7 +130,6 @@ const useGetCards = ({
 
       const textDiff = aText.localeCompare(bText);
       if (textDiff !== 0) return textDiff;
-
       return Number(aNum) - Number(bNum);
     };
 
@@ -148,28 +139,37 @@ const useGetCards = ({
     if (currentStudy) {
       filtered.sort((a, b) => {
         const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
-
-        // 1. Compare due
         const dueDiff = getTimeSafe(a.due) - getTimeSafe(b.due);
         if (dueDiff !== 0) return dueDiff;
 
-        // 2. Compare createdAt
         const createdDiff = getTimeSafe(a.createdAt) - getTimeSafe(b.createdAt);
         if (createdDiff !== 0) return createdDiff;
 
-        // 3. Compare difficulty
         const difficultyDiff =
           getDifficulty(a.difficulty) - getDifficulty(b.difficulty);
         if (difficultyDiff !== 0) return difficultyDiff;
 
-        // 4. Compare _id naturally for custom IDs
         return compareIds(a._id, b._id);
       });
     } else {
-      console.log("filtering");
+      console.log("filtering the same as the offline");
       filtered.sort((a, b) => {
-        return getTimeSafe(b.createdAt) - getTimeSafe(a.createdAt);
+        const aTime =
+          typeof a.createdAt === "number"
+            ? a.createdAt
+            : new Date(a.createdAt).getTime();
+        const bTime =
+          typeof b.createdAt === "number"
+            ? b.createdAt
+            : new Date(b.createdAt).getTime();
+        return bTime - aTime;
       });
+
+      // filtered.sort((a, b) => {
+      //   const createdDiff = getTimeSafe(b.createdAt) - getTimeSafe(a.createdAt);
+      //   if (createdDiff !== 0) return createdDiff;
+      //   return compareIds(a._id, b._id);
+      // });
     }
 
     return filtered;
@@ -203,7 +203,6 @@ const useGetCards = ({
       const serverCards: CardType[] = data.cards ?? [];
 
       return {
-        // filterCards returns serverCards immediately because isOnline is true here
         cards: filterCards(serverCards),
         cardsCount: data.cardsCount,
         nextPage: data.nextPage ?? null,
@@ -214,62 +213,46 @@ const useGetCards = ({
     initialPageParam: 0,
   });
 
-  // ✅ Automatically fetch all pages
+  // ✅ Automatically fetch all pages (skip during search)
   useEffect(() => {
+    if (query) return; // 🚫 Skip auto-fetch when searching
     if (hasNextPage && !isFetchingNextPage && !study) {
       const timer = setTimeout(() => fetchNextPage(), 200);
       return () => clearTimeout(timer);
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, study]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, study, query]);
 
-  const [userCards, setUserCards] = useState<CardType[]>([]);
-
+  // ✅ Load user cards (online or offline)
   useEffect(() => {
     const fetchCards = async () => {
       if (isOnline) {
-        // Online: get all flattened cards from query pages
         const cards = data?.pages?.flatMap((p) => p.cards) ?? [];
         setUserCards(cards);
       } else {
-        // Offline: get all cards from Dexie
         const offlineCards = await getCards();
-
-        console.log("offlineCards", offlineCards);
         if (!offlineCards) return setUserCards([]);
-
-        // Apply client-side filters and sorting, passing 'study'
         const filteredCards = filterCards(offlineCards, study);
-        console.log("filteredCards ", filteredCards);
         setUserCards(filteredCards);
       }
     };
-
     fetchCards();
-  }, [data?.pages, isOnline, study]); // Added 'study' to dependencies
+  }, [data?.pages, isOnline, study]);
 
-  // Synchronization logic for Dexie (using the stable/debounced logic)
+  // ✅ Sync Dexie (only on first full load, skip search & study)
   useEffect(() => {
-    // 1. Only sync when online and user is available
-    if (!isOnline || !user || study) return;
+    if (!isOnline || !user || study || query || hasSynced) return;
 
-    // 2. Determine when to sync:
-    //    Sync when all non-study data is loaded (!hasNextPage),
-    //    OR if in study mode (where we usually only fetch one page).
     const allPagesLoaded = !hasNextPage && !isFetchingNextPage;
-    const shouldSync = allPagesLoaded;
-
-    if (userCards.length > 0 && shouldSync) {
+    if (userCards.length > 0 && allPagesLoaded) {
       const syncToDexie = async () => {
-        // Clear and Write in a single, sequential block
         console.log("Syncing", userCards.length, "cards to Dexie...");
         await clearCards();
         await bulkPutCards(userCards);
         console.log("Sync Complete.");
+        setHasSynced(true); // ✅ prevent re-syncing
       };
 
-      // Use a small timeout to let rapid updates settle, acting as a debouncer.
       const syncTimer = setTimeout(syncToDexie, 100);
-
       return () => clearTimeout(syncTimer);
     }
   }, [
@@ -279,6 +262,8 @@ const useGetCards = ({
     hasNextPage,
     isFetchingNextPage,
     study,
+    query,
+    hasSynced,
     clearCards,
     bulkPutCards,
   ]);

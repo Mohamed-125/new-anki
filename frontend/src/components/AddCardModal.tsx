@@ -36,6 +36,8 @@ import { IoClose } from "react-icons/io5";
 import useGetCollectionById from "@/hooks/useGetCollectionById";
 import useGetCollections from "@/hooks/useGetCollections";
 import { useNetwork } from "../context/NetworkStatusContext";
+import { CardType } from "../hooks/useGetCards";
+import { nanoid } from "nanoid";
 
 type CardData = {
   front: string;
@@ -102,7 +104,24 @@ export function AddCardModal({
       if (!Array.isArray(parsed.cards)) {
         throw new Error('JSON must contain a "cards" array');
       }
-      setCards(parsed.cards);
+      setCards(
+        parsed.cards.map((card: CardType) => ({
+          ...card,
+          stability: card.stability ?? 0,
+          difficulty: card.difficulty ?? 0.3,
+          _id: nanoid(),
+          userId: user?._id,
+          elapsed_days: card.elapsed_days ?? 0,
+          scheduled_days: card.scheduled_days ?? 0,
+          learning_steps: card.learning_steps ?? 0,
+          reps: card.reps ?? 0,
+          lapses: card.lapses ?? 0,
+          state: card.state ?? 0,
+          last_review: card.last_review ?? new Date(),
+          due: card.due ?? new Date(),
+          createdAt: new Date().toISOString(),
+        }))
+      );
       setJsonError("");
     } catch (err: any) {
       setJsonError(err.message);
@@ -159,7 +178,7 @@ export function AddCardModal({
 
   const { addToast } = useToasts();
   const [isLoading, setIsLoading] = useState(false);
-  const {isOnline} = useNetwork()
+  const { isOnline } = useNetwork();
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -170,7 +189,7 @@ export function AddCardModal({
       sectionId: defaultValues?.sectionId || null,
     };
 
-    if(isOnline) setIsLoading(true);
+    if (isOnline) setIsLoading(true);
     if (isEdit) {
       await updateCardHandler(
         e,

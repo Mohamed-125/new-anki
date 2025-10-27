@@ -182,12 +182,8 @@ const SelectedItemsController = ({
           await batchDeleteCards(selectedItems);
         }
 
-        // Invalidate queries to refetch fresh data
-        currentConfig.queryKeys.forEach((key) => {
-          queryClient.invalidateQueries({
-            queryKey: [key, user?._id, selectedLearningLanguage],
-          });
-        });
+        updateCardsCache();
+        await batchDeleteCards(selectedItems);
 
         addToast("Items deleted successfully");
       } else {

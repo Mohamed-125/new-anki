@@ -167,7 +167,6 @@ const ProfileDropdown = ({
   const { deleteUser } = useDb(user?._id);
 
   const logoutHandler = () => {
-    console.log("looging out");
     axios
       .post("auth/logout")
       .then(() => {
@@ -225,7 +224,6 @@ const LanguagesDropdown = () => {
 
   if (isLoading) return <div>Loading....</div>;
 
-  console.log(courses);
   const filteredLanguages = courses?.filter(
     (course) => !user?.languages.includes(course.lang)
   );
@@ -243,11 +241,8 @@ const LanguagesDropdown = () => {
         });
   };
 
-  console.log(
-    courses?.find((courses) => courses.lang === selectedLearningLanguage)
-  );
+ 
 
-  console.log(courses);
   return (
     <DropdownMenu
       modal={false}

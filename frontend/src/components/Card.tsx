@@ -49,7 +49,6 @@ const Card = ({
   const { user } = useGetCurrentUser();
 
   const isSameUser = user?._id === card.userId || Boolean(sectionId);
-
   const { updateCardHandler } = useCardActions();
 
   const switchHandler = () => {

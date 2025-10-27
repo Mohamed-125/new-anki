@@ -151,6 +151,7 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
       back: formData.get("card_translation") as string,
       language: selectedLearningLanguage,
       userId: user?._id,
+      createdAt:new Date().toJSON(),
       _id,
       ...additionalData,
     };
