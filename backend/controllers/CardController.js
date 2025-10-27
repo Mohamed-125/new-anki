@@ -2,7 +2,7 @@ const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const { nanoid } = require("nanoid");
+const nanoid = require("nanoid");
 // Batch delete cards
 exports.batchDelete = async (req, res) => {
   try {
