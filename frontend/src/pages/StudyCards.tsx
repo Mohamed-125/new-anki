@@ -7,7 +7,7 @@ import { CollectionType } from "@/hooks/useGetCollections";
 import useGetCards, { CardType } from "../hooks/useGetCards";
 import { SRS } from "@/utils/srs";
 import Button from "../components/Button";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 // @ts-ignore
 import { useSpeech, useVoices } from "react-text-to-speech";
 import TipTapEditor from "../components/TipTapEditor";
@@ -61,7 +61,6 @@ const StudyCards = () => {
     useModalsStates();
   const { isOnline } = useNetwork();
 
-
   const { editor, setContent } = useUseEditor(true);
   const { data: collection, isLoading: collectionLoading } = useQuery({
     queryKey: ["collection", collectionId],
@@ -93,7 +92,6 @@ const StudyCards = () => {
     difficultyFilter,
   });
 
- 
   const [isLoading, setIsLoading] = useState(false);
 
   const card = cardsToStudy?.[currentCard];

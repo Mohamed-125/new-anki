@@ -9,7 +9,7 @@ import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import useGetTopicVideos from "@/hooks/useGetTopicVideos";
 import useGetTopicTexts from "@/hooks/useGetTopicTexts";
 import InfiniteScroll from "../components/InfiniteScroll";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import useGetTopicChannels from "@/hooks/useGetTopicChannels";
 import useGetTopicLists from "@/hooks/useGetTopicLists";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";

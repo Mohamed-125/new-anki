@@ -7,24 +7,28 @@ const mongoose = require("mongoose");
 module.exports.batchDelete = async (req, res) => {
   try {
     const { ids } = req.body;
-    
+
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ message: "Invalid or empty ids array" });
     }
-    
+
     // Convert string IDs to ObjectIds
-    const objectIds = ids.map(id => mongoose.Types.ObjectId(id));
-    
+    const objectIds = ids.map((id) => mongoose.Types.ObjectId(id));
+
     // Delete collections in batch
-    const result = await CollectionModel.deleteMany({ _id: { $in: objectIds } });
-    
-    return res.status(200).json({ 
+    const result = await CollectionModel.deleteMany({
+      _id: { $in: objectIds },
+    });
+
+    return res.status(200).json({
       message: `Successfully deleted ${result.deletedCount} collections`,
-      deletedCount: result.deletedCount
+      deletedCount: result.deletedCount,
     });
   } catch (error) {
     console.error("Error in batch delete collections:", error);
-    return res.status(500).json({ message: "Failed to delete collections", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to delete collections", error: error.message });
   }
 };
 
@@ -189,32 +193,34 @@ module.exports.getCollections = async (req, res, next) => {
   if (language) query.language = language;
 
   try {
-      // Get total count for pagination
-      const collectionsCount = await CollectionModel.countDocuments(query);
+    // Get total count for pagination
+    const collectionsCount = await CollectionModel.countDocuments(query);
 
-      // Get paginated collections
-      let collections;
-      if (all === "true") {
-        collections = await CollectionModel.find(query)
-          .skip(page * limit)
-          .limit(limit)
-          .populate("subCollections")
-          .lean();
-      } else {
-        collections = await CollectionModel.find(query)
-          .skip(page * limit)
-          .limit(limit)
-          .lean();
-      }
-      const remaining = Math.max(0, collectionsCount - limit * (page + 1));
+    // Get paginated collections
+    let collections;
+    if (all === "true") {
+      collections = await CollectionModel.find(query)
+        .skip(page * limit)
+        .limit(limit)
+        .populate("subCollections")
+        .lean()
+        .populate("cardsCount");
+    } else {
+      collections = await CollectionModel.find(query)
+        .skip(page * limit)
+        .limit(limit)
+        .lean()
+        .populate("cardsCount");
+    }
+    const remaining = Math.max(0, collectionsCount - limit * (page + 1));
 
-      const nextPage = remaining > 0 ? page + 1 : null;
+    const nextPage = remaining > 0 ? page + 1 : null;
 
-      res.status(200).send({
-        collections,
-        nextPage,
-        collectionsCount,
-      });
+    res.status(200).send({
+      collections,
+      nextPage,
+      collectionsCount,
+    });
   } catch (err) {
     console.log("get collections err:", err);
     res.status(400).send(err);
@@ -223,26 +229,27 @@ module.exports.getCollections = async (req, res, next) => {
 
 module.exports.getPublicCollections = async (req, res, next) => {
   try {
-    const collections = await CollectionModel.find();
+    const collections = await CollectionModel.find().populate("cardsCount");
     res.status(200).send(collections);
   } catch (err) {
     res.status(400).send(err);
   }
 };
 
-module.exports.getCollection = async (req, res, next) => {
+ module.exports.getCollection = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    // Use lean query for better performance
     const collection = await CollectionModel.findById(id)
+      // ✅ Include cardsCount for the main collection
+      .populate("cardsCount")
+      // ✅ Populate first-level subcollections + their cardsCount
       .populate({
         path: "subCollections",
-        populate: {
-          path: "subCollections",
-        },
+        populate: { path: "cardsCount" },
       })
-      .lean();
+      // ✅ Needed to make virtuals like cardsCount appear
+      .lean({ virtuals: true });
 
     if (!collection) {
       return res.status(404).send("Collection not found");
@@ -250,10 +257,12 @@ module.exports.getCollection = async (req, res, next) => {
 
     res.status(200).send(collection);
   } catch (err) {
-    console.log("collection err : ", err);
+    console.error("collection err:", err);
     res.status(400).send(err);
   }
 };
+
+
 module.exports.updateCollection = async (req, res, next) => {
   const { name, cards, public, parentCollectionId, showCardsInHome } = req.body;
 

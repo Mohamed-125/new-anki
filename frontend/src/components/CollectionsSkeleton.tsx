@@ -1,5 +1,5 @@
 import React from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 const skeletons = new Array(10).fill(0).map((_, i) => {
   return (

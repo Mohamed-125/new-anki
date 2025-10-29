@@ -81,6 +81,7 @@ CollectionSchema.virtual("subCollections", {
           name: 1,
           public: 1,
           parentCollectionId: 1,
+          userId: 1,
         },
       },
     },
@@ -89,6 +90,7 @@ CollectionSchema.virtual("subCollections", {
       name: 1,
       public: 1,
       parentCollectionId: 1,
+      userId: 1,
     },
   },
 });
@@ -108,6 +110,13 @@ CollectionSchema.virtual("parentCollection", {
       childCollectionsIds: 1,
     },
   },
+});
+
+CollectionSchema.virtual("cardsCount", {
+  ref: "Card",
+  localField: "_id",
+  foreignField: "collectionId",
+  count: true, // ✅ this tells mongoose to return the count, not the documents
 });
 
 // CollectionSchema.pre(["save", "findByIdAndUpdate"], async function (next) {

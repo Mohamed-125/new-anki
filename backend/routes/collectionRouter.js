@@ -19,11 +19,11 @@ router
   .post("/", Authorization, createCollection)
   .post("/fork/:id", Authorization, forkCollection)
   .get("/", Authorization, getCollections)
-  .get("/public", Authorization, getPublicCollections)
+  // .get("/public", Authorization, getPublicCollections)
   .get("/:id", Authorization, getCollection)
   .get("/:id/cards", Authorization, getAllCollectionCards)
   .patch("/:id", Authorization, updateCollection)
-  .delete("/:id", Authorization, deleteCollection)
-  .post("/batch-delete", Authorization, batchDelete);
+  .delete("/:id", Authorization, deleteCollection);
+// .post("/batch-delete", Authorization, batchDelete);
 
 module.exports = router;

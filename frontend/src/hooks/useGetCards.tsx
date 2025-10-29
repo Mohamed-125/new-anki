@@ -1,9 +1,14 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios from "axios";
 import { useNetwork } from "@/context/NetworkStatusContext";
 import useGetCurrentUser from "./useGetCurrentUser";
 import { useEffect, useMemo, useState } from "react";
 import useDb from "../db/useDb";
+import { useLocation } from "react-router-dom";
 
 export type CardType = {
   _id: string;
@@ -54,14 +59,35 @@ const useGetCards = ({
   const [userCards, setUserCards] = useState<CardType[]>([]);
   const [hasSynced, setHasSynced] = useState(false);
 
+  const location = useLocation();
+
   const queryKey = useMemo(() => {
     const key = ["cards", user?._id];
+
+    // --- Extract collection/subcollection IDs from the URL ---
+    if (location?.pathname?.includes("collection")) {
+      // Example: /collections/123/subcollections/456
+      const matches = location.pathname.match(/collection[s]?\/(\w+)/g);
+
+      console.log("matches", matches);
+      if (matches) {
+        matches.forEach((segment) => {
+          const id = segment.split("/")[1];
+          console.log("segment", segment);
+          console.log("id", id);
+          if (id) key.push(id);
+        });
+      }
+    }
+
+    // --- Add the usual filters ---
     if (study) key.push("study");
     if (query) key.push(query);
-    else if (collectionId) key.push(collectionId);
-    else if (videoId) key.push(videoId);
-    else if (difficultyFilter) key.push(difficultyFilter);
+    if (collectionId) key.push(collectionId);
+    if (videoId) key.push(videoId);
+    if (difficultyFilter) key.push(difficultyFilter);
     if (selectedLearningLanguage) key.push(selectedLearningLanguage);
+
     return key;
   }, [
     user?._id,
@@ -71,8 +97,8 @@ const useGetCards = ({
     videoId,
     difficultyFilter,
     selectedLearningLanguage,
+    location.pathname, // <-- include this dependency
   ]);
-
   /**
    * Client-side filtering and sorting for OFFLINE mode.
    */
@@ -209,10 +235,12 @@ const useGetCards = ({
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
-    staleTime: 1000 * 60 * 5,
+    staleTime: location.pathname.includes("collection") ? 0 : 1000 * 60 * 5, // 👈 disable cache for collections
+    cacheTime: location.pathname.includes("collection") ? 0 : 1000 * 60 * 10, // 👈 don't keep cache for collections
+    refetchOnMount: location.pathname.includes("collection"), // 👈 always refetch if in collection
+    refetchOnWindowFocus: location.pathname.includes("collection"), // 👈 optional
     initialPageParam: 0,
   });
-
   // ✅ Automatically fetch all pages (skip during search)
   useEffect(() => {
     if (query) return; // 🚫 Skip auto-fetch when searching

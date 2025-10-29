@@ -25,7 +25,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/Drawer";
 import useToasts from "@/hooks/useToasts";
 import { fetchConjugations } from "../utils/conjugations";
 import useModalsStates from "@/hooks/useModalsStates";
-import { Skeleton } from "./ui/skeleton";
+import Skeleton from "./ui/skeleton";
 import { motion } from "framer-motion";
 
 const TranslationWindow = ({
@@ -482,7 +482,8 @@ const TranslationWindow = ({
         <div
           id="translationWindow"
           className={`px-4 py-5 bg-white rounded-xl border border-gray-200 shadow-sm translationWindow text-wrap ${
-            isTranslationBoxOpen ? "open" : ""}`}
+            isTranslationBoxOpen ? "open" : ""
+          }`}
         >
           {translationData?.fromDatabase ? (
             <>

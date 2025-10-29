@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Loading from "./Loading";
-import { Skeleton } from "./ui/skeleton";
+import   Skeleton   from "./ui/skeleton";
 import MoveCollectionModal from "./MoveCollectionModal";
 import { IoClose } from "react-icons/io5";
 import useGetCollectionById from "@/hooks/useGetCollectionById";

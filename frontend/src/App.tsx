@@ -75,8 +75,6 @@ function App() {
     { name: "Library", path: "/library" },
   ];
 
- 
-
   return (
     <>
       <Router>
@@ -117,15 +115,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-
-                  <Route
-                    path="/collections/:collectionId"
-                    element={
-                      <ProtectedRoute>
-                        <CollectionPage />
-                      </ProtectedRoute>
-                    }
-                  />
+<Route
+  path="/collections/*"
+  element={
+    <ProtectedRoute>
+      <CollectionPage />
+    </ProtectedRoute>
+  }
+/>
 
                   <Route
                     path="/videos"

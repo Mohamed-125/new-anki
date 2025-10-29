@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import Card from "../components/Card";
 import Loading from "../components/Loading";
 import Button from "../components/Button";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import AddCardModal from "../components/AddCardModal";
 import { useQueryClient } from "@tanstack/react-query";
 import SelectedItemsController from "../components/SelectedItemsController";
@@ -47,6 +47,8 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     cardsCount,
     fetchNextPage,
     isIntialLoading,
+    isLoading,
+    isFetching,
     isFetchingNextPage,
     hasNextPage,
     userCards: collectionCards,
@@ -75,13 +77,15 @@ const CollectionPage = React.memo(function CollectionPage({}) {
 
   const memoizedCards = useMemo(() => {
     return collectionCards?.map((card) => (
-      <Card
-        key={card._id}
-        id={card._id}
-        card={card}
-        sectionId={location?.state?.sectionId}
-        collectionId={collection?._id}
-      />
+      <div className="py-2">
+        <Card
+          key={card._id}
+          id={card._id}
+          card={card}
+          sectionId={location?.state?.sectionId}
+          collectionId={collection?._id}
+        />
+      </div>
     ));
   }, [collectionCards, collection?._id]);
 
@@ -108,7 +112,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
 
   if (isCollectionLoading) {
     return (
-      <div className="space-y-6">
+      <div className="container space-y-6">
         <div className="flex flex-col gap-4 mb-8">
           <Skeleton className="w-1/3 h-8" />
           <Skeleton className="w-full h-12" />
@@ -153,7 +157,6 @@ const CollectionPage = React.memo(function CollectionPage({}) {
         <div className="py-8 min-h-screen">
           <div className="space-y-8">
             <div className="container">
-              {/* Header courseLevel */}
               <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-start md:block">
                   <h1 className="text-3xl font-bold text-gray-800 md:mb-3">
@@ -275,12 +278,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                   </div>
                 </div>
               </div>
-              {/* Search courseLevel */}
               <div className="mt-6 rounded-lg white">
-                {/* <Search
-                      label="Search cards"
-                      filter="front"
-                    /> */}
                 <Search
                   searchingFor="Cards"
                   query={query}
@@ -315,7 +313,6 @@ const CollectionPage = React.memo(function CollectionPage({}) {
               </div>{" "}
             </div>
 
-            {/* Cards courseLevel */}
             <div className="container space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-medium text-gray-700">
@@ -326,7 +323,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                 </h2>
               </div>
 
-              {isIntialLoading ? (
+              {isLoading || isFetching ? (
                 <CardsSkeleton cards={[]} />
               ) : collectionCards?.length > 0 ? (
                 <InfiniteScroll

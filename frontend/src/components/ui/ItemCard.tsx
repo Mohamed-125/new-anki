@@ -31,11 +31,14 @@ const ItemCard = ({
   Icon: any;
   isNotes?: boolean;
   shareHandler?: () => void;
-  isSameUser?: boolean;
+  isSameUser: boolean;
   select?: boolean;
   to?: string;
   sectionId?: string;
 }) => {
+  console.log("isSameUser", isSameUser);
+  console.log("id", id);
+
   const { selectedItems, setSelectedItems } = useModalsStates();
   const linkContent = (
     <div className="flex flex-1 gap-3 items-center">

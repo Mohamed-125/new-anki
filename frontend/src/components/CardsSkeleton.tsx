@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import   Skeleton   from "@/components/ui/skeleton";
 import { motion, useInView, useAnimation } from "framer-motion";
 import { CardType } from "@/hooks/useGetCards";
 

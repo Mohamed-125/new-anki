@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useGetLessons from "../hooks/Queries/useGetLessons";
 import { Book } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 const GrammarLessons = () => {
   const navigate = useNavigate();

@@ -3,7 +3,7 @@ import useGetList from "../hooks/useGetList";
 import useGetListVideos from "../hooks/useGetListVideos";
 import useGetListTexts from "../hooks/useGetListTexts";
 import Button from "@/components/Button";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { Clock, Video, Text, CheckCircle } from "lucide-react";
 import VideoCard from "@/components/VideoCard";

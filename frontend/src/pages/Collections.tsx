@@ -32,7 +32,7 @@ const Collections = () => {
 
   // Extract all collection IDs for select all functionality
   const allCollectionIds = useMemo(() => {
-    return collections?.map(collection => collection._id) || [];
+    return collections?.map((collection) => collection._id) || [];
   }, [collections]);
 
   return (
@@ -40,9 +40,9 @@ const Collections = () => {
       <MoveCollectionModal />
       <AddNewCollectionModal />
       <ShareModal sharing="collections" />
-      <SelectedItemsController 
-        itemType="collections" 
-        allItems={allCollectionIds} 
+      <SelectedItemsController
+        itemType="collections"
+        allItems={allCollectionIds}
       />
       <div className="space-y-6">
         <div className="flex gap-4 justify-between items-center my-4 sm:flex-row sm:items-center">

@@ -14,7 +14,7 @@ import { useLocalStorage } from "react-use";
 import useGetCurrentUser from "@/hooks/useGetCurrentUser";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
-import { Skeleton } from "@/components/ui/skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import GrammarLessons from "./GrammarLessons";
 
 const CoursePage = () => {
