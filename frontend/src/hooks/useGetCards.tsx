@@ -41,6 +41,7 @@ interface UseGetCardsProps {
   study?: string;
   difficultyFilter?: string;
   srsMode?: boolean;
+  searchSidebar?: boolean;
 }
 
 const useGetCards = ({
@@ -51,6 +52,7 @@ const useGetCards = ({
   study,
   difficultyFilter,
   srsMode,
+  searchSidebar,
 }: UseGetCardsProps = {}) => {
   const { selectedLearningLanguage, user } = useGetCurrentUser();
   const { isOnline } = useNetwork();
@@ -244,7 +246,7 @@ const useGetCards = ({
   // ✅ Automatically fetch all pages (skip during search)
   useEffect(() => {
     if (query) return; // 🚫 Skip auto-fetch when searching
-    if (hasNextPage && !isFetchingNextPage && !study) {
+    if (hasNextPage && !isFetchingNextPage && !study && !collectionId && !searchSidebar) {
       const timer = setTimeout(() => fetchNextPage(), 200);
       return () => clearTimeout(timer);
     }

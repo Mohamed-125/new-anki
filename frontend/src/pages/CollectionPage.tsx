@@ -323,9 +323,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
                 </h2>
               </div>
 
-              {isLoading || isFetching ? (
-                <CardsSkeleton cards={[]} />
-              ) : collectionCards?.length > 0 ? (
+              {collectionCards?.length > 0 ? (
                 <InfiniteScroll
                   hasNextPage={hasNextPage}
                   loadingElement={<CardsSkeleton cards={collectionCards} />}

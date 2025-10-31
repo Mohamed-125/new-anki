@@ -37,6 +37,7 @@ import {
   XIcon,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { BsXCircleFill } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,6 +46,8 @@ import { AddCardModal } from "@/components/AddCardModal";
 import useDb from "../db/useDb";
 import { useNetwork } from "@/context/NetworkStatusContext";
 import OfflineFallback from "@/components/OfflineFallback";
+import useDebounce from "../hooks/useDebounce";
+import SearchSidebar from "../components/SearchSidebar";
 
 const StudyCards = () => {
   const { user } = useGetCurrentUser();
@@ -60,6 +63,9 @@ const StudyCards = () => {
   const { setIsAddCardModalOpen, setEditId, setDefaultValues } =
     useModalsStates();
   const { isOnline } = useNetwork();
+
+  // Search sidebar state
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { editor, setContent } = useUseEditor(true);
   const { data: collection, isLoading: collectionLoading } = useQuery({
@@ -84,7 +90,6 @@ const StudyCards = () => {
     userCards: cardsToStudy,
     cardsCount,
     fetchNextPage,
-    isFetchingNextPage,
     isFetching,
   } = useGetCards({
     collectionId,
@@ -133,8 +138,10 @@ const StudyCards = () => {
         console.log("✅ Synced on normal exit");
         updatedCardsRef.current = [];
         localStorage.removeItem("unsyncedCards");
-        // // Invalidate queries to ensure updates are reflected
-        // queryClient.invalidateQueries({ queryKey: ["cards"] });
+        // Invalidate queries to ensure updates are reflected
+        queryClient.invalidateQueries({
+          queryKey: ["cards", user?._id, "study"],
+        });
       })
       .catch((error) => {
         console.warn(
@@ -384,6 +391,11 @@ const StudyCards = () => {
           </span>
         </div>
       )}
+      <SearchSidebar
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        collectionId={collectionId}
+      />
       <div className="w-full bg-white shadow-sm">
         <div className="container px-4 py-4 mx-auto">
           <div className="flex justify-between items-center">
@@ -396,13 +408,21 @@ const StudyCards = () => {
                 {collection?.name || "All cards"}
               </h3>
             </div>
-            <button
-              onClick={() => {
-                navigate(-1);
-              }}
-            >
-              <BsXCircleFill size="30" style={{ color: "red" }} />
-            </button>
+            <div className="flex gap-4 items-center">
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 text-gray-600 rounded-full transition-colors hover:text-gray-900 hover:bg-gray-100"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => {
+                  navigate(-1);
+                }}
+              >
+                <BsXCircleFill size="30" style={{ color: "red" }} />
+              </button>
+            </div>
           </div>
         </div>
         <div className="overflow-hidden relative w-full h-1 bg-gray-200">
