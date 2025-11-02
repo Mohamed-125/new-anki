@@ -66,22 +66,18 @@ const StudyCards = () => {
   const [hasOfflineData, setHasOfflineData] = useState(true);
   const { getCards } = useDb(user?._id);
 
+  const storedUserId = localStorage.getItem("userId");
+  const offlineDb = useDb(storedUserId || user?._id);
+
   useEffect(() => {
     const checkOfflineData = async () => {
-      // Always try to get stored user data first
-      const storedUserId = localStorage.getItem("userId");
-      if (storedUserId) {
-        const db = useDb(storedUserId);
-        if (db) {
-          const cards = await db.getCards();
-          setHasOfflineData(!!cards?.length);
-          return;
-        }
+      if (!isOnline && offlineDb) {
+        const cards = await offlineDb.getCards();
+        setHasOfflineData(!!cards?.length);
       }
-      setHasOfflineData(false);
     };
     checkOfflineData();
-  }, [isOnline]);
+  }, [isOnline, offlineDb]);
 
   // Search sidebar state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
