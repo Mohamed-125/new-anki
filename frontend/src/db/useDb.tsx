@@ -181,6 +181,8 @@ const useDb = (userId: string | undefined) => {
         throw new Error("Cannot save user without _id");
       }
       const db = getUserDatabase(user._id);
+      // Store user ID in localStorage for offline access
+      localStorage.setItem("userId", user._id);
       await db.users.put({ ...user, lastSync: Date.now() });
     },
     [getUserDatabase]

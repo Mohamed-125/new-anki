@@ -38,13 +38,20 @@ const Home = () => {
 
   useEffect(() => {
     const checkOfflineData = async () => {
-      if (!isOnline && user?._id) {
-        const cards = await getCards();
-        setHasOfflineData(!!cards?.length);
+      if (!isOnline) {
+        // Try to get user ID from localStorage if not available from online state
+        const storedUserId = localStorage.getItem("userId");
+        const db = storedUserId ? useDb(storedUserId) : null;
+        if (db) {
+          const cards = await db.getCards();
+          setHasOfflineData(!!cards?.length);
+        } else {
+          setHasOfflineData(false);
+        }
       }
     };
     checkOfflineData();
-  }, [isOnline, user?._id, getCards]);
+  }, [isOnline, getCards]);
 
   const states = useModalStates();
 

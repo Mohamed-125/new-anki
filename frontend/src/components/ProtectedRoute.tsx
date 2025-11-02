@@ -26,8 +26,13 @@ const ProtectedRoute = ({
   useEffect(() => {
     const checkLocalUser = async () => {
       if (!isOnline) {
-        const offlineUser = await getUser();
-        setLocalUser(offlineUser);
+        // Try to get user ID from localStorage if not available from online state
+        const storedUserId = localStorage.getItem("userId");
+        const db = storedUserId ? useDb(storedUserId) : null;
+        if (db) {
+          const offlineUser = await db.getUser();
+          setLocalUser(offlineUser);
+        }
       } else {
         setLocalUser(null);
       }
@@ -50,6 +55,11 @@ const ProtectedRoute = ({
       }
       return;
     }
+
+    // 🔴 OFFLINE: check if we have local user data
+    if (!isOnline && !localUser && !ALLOWED_OFFLINE_PATHS.includes(location.pathname)) {
+      navigate("/login");
+    }
   }, [
     isOnline,
     user,
@@ -60,29 +70,27 @@ const ProtectedRoute = ({
     location.pathname,
   ]);
 
-  // ⏳ Wait while checking offline user
+  // ⏳ Wait while checking user status
   if (isLoading || checkingLocalUser) return null;
 
-  // 🧩 Offline fallback logic
+  // ✅ Allow access if:
+  // 1. User is online and authenticated
+  // 2. User is offline but has local data and accessing allowed paths
   if (
-    !isOnline &&
-    (!localUser || !ALLOWED_OFFLINE_PATHS.includes(location.pathname))
-  ) {
-    return <OfflineFallback />;
-  }
-
-  // ✅ Allow rendering for:
-  // - logged in user (online)
-  // - offline user with local data on allowed pages
-  if (
-    user ||
-    (localUser && ALLOWED_OFFLINE_PATHS.includes(location.pathname))
+    (isOnline && user) ||
+    (!isOnline && localUser && ALLOWED_OFFLINE_PATHS.includes(location.pathname))
   ) {
     return <>{children}</>;
   }
 
-  // default fallback
-  return <OfflineFallback />;
+  // 🚫 Show offline fallback for non-allowed paths when offline
+  if (!isOnline && !ALLOWED_OFFLINE_PATHS.includes(location.pathname)) {
+    return <OfflineFallback />;
+  }
+
+  // Default: redirect to login
+  navigate("/login");
+  return null;
 };
 
 export default ProtectedRoute;
