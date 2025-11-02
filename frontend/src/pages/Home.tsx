@@ -38,20 +38,20 @@ const Home = () => {
 
   useEffect(() => {
     const checkOfflineData = async () => {
-      if (!isOnline) {
-        // Try to get user ID from localStorage if not available from online state
-        const storedUserId = localStorage.getItem("userId");
-        const db = storedUserId ? useDb(storedUserId) : null;
+      // Always try to get stored user data first
+      const storedUserId = localStorage.getItem("userId");
+      if (storedUserId) {
+        const db = useDb(storedUserId);
         if (db) {
           const cards = await db.getCards();
           setHasOfflineData(!!cards?.length);
-        } else {
-          setHasOfflineData(false);
+          return;
         }
       }
+      setHasOfflineData(false);
     };
     checkOfflineData();
-  }, [isOnline, getCards]);
+  }, [isOnline]);
 
   const states = useModalStates();
 
@@ -70,8 +70,8 @@ const Home = () => {
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
       {!isOnline && hasOfflineData && (
-        <div className="mb-4 py-3 px-4 text-center text-amber-800 bg-amber-50 rounded-lg border border-amber-100">
-          <div className="flex items-center justify-center gap-2">
+        <div className="px-4 py-3 mb-4 text-center text-amber-800 bg-amber-50 rounded-lg border border-amber-100">
+          <div className="flex gap-2 justify-center items-center">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

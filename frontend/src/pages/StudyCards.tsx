@@ -68,16 +68,17 @@ const StudyCards = () => {
 
   useEffect(() => {
     const checkOfflineData = async () => {
-      if (!isOnline) {
-        const storedUserId = localStorage.getItem("userId");
-        const db = storedUserId ? useDb(storedUserId) : null;
+      // Always try to get stored user data first
+      const storedUserId = localStorage.getItem("userId");
+      if (storedUserId) {
+        const db = useDb(storedUserId);
         if (db) {
           const cards = await db.getCards();
           setHasOfflineData(!!cards?.length);
-        } else {
-          setHasOfflineData(false);
+          return;
         }
       }
+      setHasOfflineData(false);
     };
     checkOfflineData();
   }, [isOnline]);

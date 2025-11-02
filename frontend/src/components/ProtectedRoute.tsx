@@ -25,15 +25,22 @@ const ProtectedRoute = ({
 
   useEffect(() => {
     const checkLocalUser = async () => {
-      if (!isOnline) {
-        // Try to get user ID from localStorage if not available from online state
-        const storedUserId = localStorage.getItem("userId");
-        const db = storedUserId ? useDb(storedUserId) : null;
+      // Always try to get stored user data first
+      const storedUserId = localStorage.getItem("userId");
+      if (storedUserId) {
+        const db = useDb(storedUserId);
         if (db) {
           const offlineUser = await db.getUser();
-          setLocalUser(offlineUser);
+          if (offlineUser) {
+            setLocalUser(offlineUser);
+            setCheckingLocalUser(false);
+            return;
+          }
         }
-      } else {
+      }
+
+      // If online and no local user, wait for online user data
+      if (isOnline) {
         setLocalUser(null);
       }
       setCheckingLocalUser(false);

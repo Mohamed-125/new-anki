@@ -52,8 +52,10 @@ const useDb = (userId: string | undefined) => {
   );
 
   const db = useMemo(() => {
-    if (!userId) return null;
-    return getUserDatabase(userId);
+    // Try to get userId from localStorage if not provided
+    const storedUserId = !userId ? localStorage.getItem("userId") : userId;
+    if (!storedUserId) return null;
+    return getUserDatabase(storedUserId);
   }, [userId, getUserDatabase]);
 
   // ✅ All functions wrapped with useCallback
