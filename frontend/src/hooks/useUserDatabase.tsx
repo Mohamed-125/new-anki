@@ -6,7 +6,7 @@ import useDb from "../db/useDb";
 const useUserDatabase = () => {
   const { user } = useGetCurrentUser();
   const queryClient = useQueryClient();
-  const { getUserDatabase, deleteUser } = useDb(user?._id);
+  const { getUserDatabase, deleteUser } = useDb(user?._id || "");
 
   useEffect(() => {
     console.log("user", user);

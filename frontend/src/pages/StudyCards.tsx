@@ -63,21 +63,6 @@ const StudyCards = () => {
   const { setIsAddCardModalOpen, setEditId, setDefaultValues } =
     useModalsStates();
   const { isOnline } = useNetwork();
-  const [hasOfflineData, setHasOfflineData] = useState(true);
-  const { getCards } = useDb(user?._id);
-
-  const storedUserId = localStorage.getItem("userId");
-  const offlineDb = useDb(storedUserId || user?._id);
-
-  useEffect(() => {
-    const checkOfflineData = async () => {
-      if (!isOnline && offlineDb) {
-        const cards = await offlineDb.getCards();
-        setHasOfflineData(!!cards?.length);
-      }
-    };
-    checkOfflineData();
-  }, [isOnline, offlineDb]);
 
   // Search sidebar state
   const [isSearchOpen, setIsSearchOpen] = useState(false);

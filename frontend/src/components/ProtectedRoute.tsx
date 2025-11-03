@@ -18,7 +18,7 @@ const ProtectedRoute = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { isOnline } = useNetwork();
-  const { getUser } = useDb(user?._id);
+  const { getUser } = useDb(user?._id || "");
 
   const [localUser, setLocalUser] = useState<any>(null);
   const [checkingLocalUser, setCheckingLocalUser] = useState(true);
@@ -26,13 +26,8 @@ const ProtectedRoute = ({
   useEffect(() => {
     const checkLocalUser = async () => {
       if (!isOnline) {
-        // Try to get user ID from localStorage if not available from online state
-        const storedUserId = localStorage.getItem("userId");
-        const db = storedUserId ? useDb(storedUserId) : null;
-        if (db) {
-          const offlineUser = await db.getUser();
-          setLocalUser(offlineUser);
-        }
+        const offlineUser = await getUser();
+        setLocalUser(offlineUser);
       } else {
         setLocalUser(null);
       }
@@ -55,11 +50,6 @@ const ProtectedRoute = ({
       }
       return;
     }
-
-    // 🔴 OFFLINE: check if we have local user data
-    if (!isOnline && !localUser && !ALLOWED_OFFLINE_PATHS.includes(location.pathname)) {
-      navigate("/login");
-    }
   }, [
     isOnline,
     user,
@@ -70,27 +60,29 @@ const ProtectedRoute = ({
     location.pathname,
   ]);
 
-  // ⏳ Wait while checking user status
+  // ⏳ Wait while checking offline user
   if (isLoading || checkingLocalUser) return null;
 
-  // ✅ Allow access if:
-  // 1. User is online and authenticated
-  // 2. User is offline but has local data and accessing allowed paths
+  // 🧩 Offline fallback logic
   if (
-    (isOnline && user) ||
-    (!isOnline && localUser && ALLOWED_OFFLINE_PATHS.includes(location.pathname))
+    !isOnline &&
+    (!localUser || !ALLOWED_OFFLINE_PATHS.includes(location.pathname))
+  ) {
+    return <OfflineFallback />;
+  }
+
+  // ✅ Allow rendering for:
+  // - logged in user (online)
+  // - offline user with local data on allowed pages
+  if (
+    user ||
+    (localUser && ALLOWED_OFFLINE_PATHS.includes(location.pathname))
   ) {
     return <>{children}</>;
   }
 
-  // 🚫 Show offline fallback for non-allowed paths when offline
-  if (!isOnline && !ALLOWED_OFFLINE_PATHS.includes(location.pathname)) {
-    return <OfflineFallback />;
-  }
-
-  // Default: redirect to login
-  navigate("/login");
-  return null;
+  // default fallback
+  return <OfflineFallback />;
 };
 
 export default ProtectedRoute;

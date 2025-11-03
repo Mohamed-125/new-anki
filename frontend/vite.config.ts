@@ -4,6 +4,9 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync } from "fs";
 export default defineConfig({
+  build: {
+    sourcemap: true, // 👈 enables source maps in production
+  },
   plugins: [
     react(),
     VitePWA({
@@ -13,6 +16,9 @@ export default defineConfig({
       injectManifest: {
         // increase the file size limit (e.g., 10 MiB)
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+      },
+      devOptions: {
+        enabled: true, // ✅ allows service worker during `npm run dev`
       },
       filename: "sw.js", // your custom service worker file
       manifest: {

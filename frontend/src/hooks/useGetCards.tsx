@@ -56,7 +56,7 @@ const useGetCards = ({
 }: UseGetCardsProps = {}) => {
   const { selectedLearningLanguage, user } = useGetCurrentUser();
   const { isOnline } = useNetwork();
-  const { getCards, bulkPutCards, clearCards } = useDb(user?._id);
+  const { getCards, bulkPutCards, clearCards } = useDb(user?._id || "");
 
   const [userCards, setUserCards] = useState<CardType[]>([]);
   const [hasSynced, setHasSynced] = useState(false);
@@ -246,8 +246,14 @@ const useGetCards = ({
   // ✅ Automatically fetch all pages (skip during search)
   useEffect(() => {
     if (query) return; // 🚫 Skip auto-fetch when searching
-    if (hasNextPage && !isFetchingNextPage && !study && !collectionId && !searchSidebar) {
-      const timer = setTimeout(() => fetchNextPage(), 200);
+    if (
+      hasNextPage &&
+      !isFetchingNextPage &&
+      !study &&
+      !collectionId &&
+      !searchSidebar
+    ) {
+      const timer = setTimeout(() => fetchNextPage(), 50);
       return () => clearTimeout(timer);
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, study, query]);

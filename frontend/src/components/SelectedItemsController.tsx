@@ -40,7 +40,7 @@ const SelectedItemsController = ({
   const queryClient = useQueryClient();
   const { isOnline } = useNetwork();
   const { user, selectedLearningLanguage } = useGetCurrentUser();
-  const { batchDeleteCards, handleOfflineOperation } = useDb(user?._id);
+  const { batchDeleteCards, handleOfflineOperation } = useDb(user?._id || "");
 
   // Map item types to their API endpoints and query keys
   const itemConfig = useMemo(

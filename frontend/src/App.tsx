@@ -61,7 +61,6 @@ function App() {
   const { user, selectedLearningLanguage } = useGetCurrentUser();
   useUserDatabase(); // Initialize user-specific database
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const links = [
     { name: "Home", path: "/" },

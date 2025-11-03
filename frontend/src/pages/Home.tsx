@@ -36,18 +36,15 @@ const Home = () => {
     hasNextPage,
   } = useGetCards({ query: debouncedQuery });
 
-  const storedUserId = localStorage.getItem("userId");
-  const offlineDb = useDb(storedUserId || user?._id);
-
   useEffect(() => {
     const checkOfflineData = async () => {
-      if (!isOnline && offlineDb) {
-        const cards = await offlineDb.getCards();
+      if (!isOnline && user?._id) {
+        const cards = await getCards();
         setHasOfflineData(!!cards?.length);
       }
     };
     checkOfflineData();
-  }, [isOnline, offlineDb]);
+  }, [isOnline, user?._id, getCards]);
 
   const states = useModalStates();
 
@@ -66,26 +63,12 @@ const Home = () => {
       <MoveCollectionModal cards={userCards ?? []} />
       <AddNewCollectionModal />
       {!isOnline && hasOfflineData && (
-        <div className="px-4 py-3 mb-4 text-center text-amber-800 bg-amber-50 rounded-lg border border-amber-100">
-          <div className="flex gap-2 justify-center items-center">
-            <svg
-              className="w-5 h-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+        <div className="mb-4 py-3 px-4 text-center text-amber-800 bg-amber-50 rounded-lg border border-amber-100">
+          <div className="flex items-center justify-center gap-2">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="font-medium">
-              You're currently offline. Your changes will be synced when you
-              reconnect.
-            </span>
+            <span className="font-medium">You're currently offline. Your changes will be synced when you reconnect.</span>
           </div>
         </div>
       )}
