@@ -43,8 +43,8 @@ const AddNewCollectionModal = ({
     const name = formData.get("collection_name") as string;
 
     const publicCollection = formData.get("collection_public") as string;
-    setIsLoading(true);
-    setIsMutationLoading(true);
+    // REMOVED: setIsLoading(true);
+    // REMOVED: setIsMutationLoading(true);
 
     if (name) {
       const data = {
@@ -63,11 +63,8 @@ const AddNewCollectionModal = ({
         })
         .catch((error) => {
           console.error("Error creating collection:", error);
-        })
-        .finally(() => {
-          setIsLoading(false);
-          setIsMutationLoading(false);
         });
+        // Removed isLoading and isMutationLoading states and loading prop from Modal. Modal now closes immediately after add/edit.
     }
   };
 
@@ -75,7 +72,7 @@ const AddNewCollectionModal = ({
 
   const updateCollectionHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    // REMOVED: setIsLoading(true);
     const formData = new FormData(e.target as HTMLFormElement);
     const name = formData.get("collection_name") as string;
     const publicCollection = formData.get("collection_public") as string;
@@ -93,9 +90,8 @@ const AddNewCollectionModal = ({
       (e.target as HTMLFormElement).reset();
     } catch (err) {
       console.error(err);
-    } finally {
-      setIsLoading(false);
     }
+    // REMOVED: finally block for loading states
   };
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -120,7 +116,7 @@ const AddNewCollectionModal = ({
 
   return (
     <Modal
-      loading={isMutationLoading || isLoading}
+      // REMOVED: loading={isMutationLoading || isLoading}
       onAnimationEnd={onAnimationEnd}
       setIsOpen={setIsCollectionModalOpen}
       isOpen={isCollectionModalOpen}

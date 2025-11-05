@@ -525,3 +525,5 @@ const useCardActions = () => {
 };
 
 export default useCardActions;
+
+// Confirmed: No loading state changes needed for optimistic updates.

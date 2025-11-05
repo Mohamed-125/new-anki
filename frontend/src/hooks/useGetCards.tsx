@@ -253,7 +253,7 @@ const useGetCards = ({
       !collectionId &&
       !searchSidebar
     ) {
-      const timer = setTimeout(() => fetchNextPage(), 50);
+      const timer = setTimeout(() => fetchNextPage(), 10);
       return () => clearTimeout(timer);
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, study, query]);
