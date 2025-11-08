@@ -115,9 +115,10 @@ const useCollectionActions = () => {
 
   // Delete collection mutation with optimistic updates
   const deleteCollectionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await axios.delete(`collection/${id}`);
-      return response.data;
+    mutationFn: async ({ id, deleteCards }: { id: string; deleteCards?: boolean }) => {
+      return await axios.delete(`/collection/${id}`, {
+        data: { deleteCards },
+      });
     },
     onMutate: async (id) => {
       // Cancel any outgoing refetches
@@ -219,8 +220,8 @@ const useCollectionActions = () => {
   };
 
   // Delete collection handler
-  const deleteCollectionHandler = (id: string) => {
-    return deleteCollectionMutation.mutateAsync(id);
+  const deleteCollectionHandler = async (id: string, deleteCards?: boolean) => {
+    return await deleteCollectionMutation.mutateAsync({ id, deleteCards });
   };
 
   // Fork collection handler

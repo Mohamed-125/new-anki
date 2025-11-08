@@ -21,6 +21,7 @@ import InfiniteScroll from "@/components/InfiniteScroll.tsx";
 import useToasts from "@/hooks/useToasts.tsx";
 import ExportJsonModal from "@/components/ExportJsonModal";
 import useCollectionActions from "@/hooks/useCollectionActions";
+import DeleteCollectionModal from "../components/DeleteCollectionModal";
 
 const CollectionPage = React.memo(function CollectionPage({}) {
   const location = useLocation();
@@ -59,21 +60,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
   const { deleteCollectionHandler, forkCollectionHandler } =
     useCollectionActions();
 
-  const handleAddCard = useMemo(
-    () => () => {
-      setDefaultValues({ collectionId: id });
-      setIsAddCardModalOpen(true);
-    },
-    [id, setDefaultValues, setIsAddCardModalOpen]
-  );
-
-  const handleAddSubCollection = useMemo(
-    () => () => {
-      setDefaultValues({ parentCollectionId: id });
-      setIsCollectionModalOpen(true);
-    },
-    [id, setDefaultValues, setIsCollectionModalOpen]
-  );
+ 
 
   const memoizedCards = useMemo(() => {
     return collectionCards?.map((card) => (
@@ -110,6 +97,37 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     }
   }, [selectedItems]);
 
+  const isSameUser =
+    user?._id === collection?.userId ||
+    (collection?.sectionId && user?.isAdmin);
+
+  const { addToast } = useToasts();
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail?.id) {
+        onDelete(e.detail.id, e.detail.deleteCards);
+      }
+    };
+    window.addEventListener("confirmDeleteCollection", handler);
+    return () => window.removeEventListener("confirmDeleteCollection", handler);
+  }, []);
+
+  const onDelete = async (id: string, deleteCards: boolean) => {
+    const toast = addToast("Deleting collection...", "promise");
+    try {
+      await deleteCollectionHandler(id, deleteCards);
+      toast.setToastData({
+        title: "Collection deleted successfully",
+        type: "success",
+      });
+    } catch (error) {
+      toast.setToastData({
+        title: "Failed to delete collection",
+        type: "error",
+      });
+    }
+  };
   if (isCollectionLoading) {
     return (
       <div className="container space-y-6">
@@ -123,12 +141,6 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     );
   }
 
-  const isSameUser =
-    user?._id === collection?.userId ||
-    (collection?.sectionId && user?.isAdmin);
-
-  const { addToast } = useToasts();
-
   return (
     <div className="">
       <div className="">
@@ -137,8 +149,10 @@ const CollectionPage = React.memo(function CollectionPage({}) {
             cards={collectionCards}
             // moving={moving}
           />
+          <DeleteCollectionModal />
+
           <AddNewCollectionModal />
-          <AddCardModal collectionId={collection?._id} />
+          <AddCardModal collection={collection} />
           <ExportJsonModal />
         </>
         <SelectedItemsController

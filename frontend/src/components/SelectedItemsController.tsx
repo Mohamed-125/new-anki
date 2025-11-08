@@ -155,12 +155,41 @@ const SelectedItemsController = ({
         }
       );
     });
+    // Also update collection-specific cards cache if on collection page
+    if (itemType === "cards" && window.location.pathname.includes("collection")) {
+      const pathArray = window.location.pathname.split("/").filter(Boolean);
+      const collectionId = pathArray[pathArray.length - 1];
+      queryClient.setQueryData(
+        ["cards", user?._id, selectedLearningLanguage, collectionId],
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                cards: page.cards.filter(
+                  (card: any) => !selectedItems.includes(card._id)
+                ),
+                cardsCount: Math.max(
+                  (page.cardsCount ?? 0) - selectedItems.length,
+                  0
+                ),
+              })),
+            };
+          }
+          return oldData;
+        }
+      );
+    }
   }, [
     queryClient,
     currentConfig,
     selectedItems,
     user?._id,
     selectedLearningLanguage,
+    itemType,
+    allItems,
   ]);
 
   const { addToast } = useToasts();
@@ -184,6 +213,16 @@ const SelectedItemsController = ({
 
         updateCardsCache();
         await batchDeleteCards(selectedItems);
+
+        // Invalidate queries for cards and collection-specific cards
+        currentConfig.queryKeys.forEach((key) => {
+          queryClient.invalidateQueries([key, user?._id, selectedLearningLanguage]);
+        });
+        if (itemType === "cards" && window.location.pathname.includes("collection")) {
+          const pathArray = window.location.pathname.split("/").filter(Boolean);
+          const collectionId = pathArray[pathArray.length - 1];
+          queryClient.invalidateQueries(["cards", user?._id, selectedLearningLanguage, collectionId]);
+        }
 
         addToast("Items deleted successfully");
       } else {
@@ -216,6 +255,8 @@ const SelectedItemsController = ({
     setSelectedItems,
     onSelectionChange,
     addToast,
+    updateCardsCache,
+    allItems,
   ]);
 
   // Don't render if no items are selected

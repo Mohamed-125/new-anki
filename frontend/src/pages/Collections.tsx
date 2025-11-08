@@ -1,5 +1,5 @@
 import Collection from "../components/Collection";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Button from "../components/Button";
 import Search from "../components/Search";
 import SelectedItemsController from "../components/SelectedItemsController";
@@ -12,12 +12,43 @@ import CollectionSkeleton from "@/components/CollectionsSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import ShareModal from "@/components/ShareModal";
 import InfiniteScroll from "@/components/InfiniteScroll";
+import DeleteCollectionModal from "@/components/DeleteCollectionModal";
+import useCollectionActions from "../hooks/useCollectionActions";
+import useToasts from "../hooks/useToasts";
 
 const Collections = () => {
   const { setIsCollectionModalOpen, selectedItems } = useModalStates();
   useAddModalShortcuts(setIsCollectionModalOpen);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query);
+  const { deleteCollectionHandler } = useCollectionActions();
+  const { addToast } = useToasts();
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail?.id) {
+        onDelete(e.detail.id, e.detail.deleteCards);
+      }
+    };
+    window.addEventListener("confirmDeleteCollection", handler);
+    return () => window.removeEventListener("confirmDeleteCollection", handler);
+  }, []);
+
+  const onDelete = async (id: string, deleteCards: boolean) => {
+    const toast = addToast("Deleting collection...", "promise");
+    try {
+      await deleteCollectionHandler(id, deleteCards);
+      toast.setToastData({
+        title: "Collection deleted successfully",
+        type: "success",
+      });
+    } catch (error) {
+      toast.setToastData({
+        title: "Failed to delete collection",
+        type: "error",
+      });
+    }
+  };
 
   const {
     collections,
@@ -37,6 +68,7 @@ const Collections = () => {
 
   return (
     <div className="container px-6 py-8 mx-auto max-w-7xl">
+      <DeleteCollectionModal />
       <MoveCollectionModal />
       <AddNewCollectionModal />
       <ShareModal sharing="collections" />

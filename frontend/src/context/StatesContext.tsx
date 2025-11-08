@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { boolean } from "zod";
 
 type StatesType = {
   isMoveToCollectionOpen: boolean;
@@ -60,6 +61,12 @@ type StatesType = {
 
   setIsTranslationBoxOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isTranslationBoxOpen: boolean;
+  isDeleteCollectionModalOpen: boolean;
+  setIsDeleteCollectionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  deleteCollectionModalData: { id: string; showCardsInHome: boolean } | null;
+  setDeleteCollectionModalData: React.Dispatch<
+    React.SetStateAction<{ id: string; showCardsInHome: boolean } | null>
+  >;
 };
 
 export const statesContext = createContext<StatesType | null>(null);
@@ -78,13 +85,13 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   // state to select many card,collection, etc.
   // Using localStorage to persist selection state across pagination
   const [selectedItems, setSelectedItems] = useState<string[]>(() => {
-    const savedItems = localStorage.getItem('selectedItems');
+    const savedItems = localStorage.getItem("selectedItems");
     return savedItems ? JSON.parse(savedItems) : [];
   });
-  
+
   // Update localStorage when selectedItems changes
   useEffect(() => {
-    localStorage.setItem('selectedItems', JSON.stringify(selectedItems));
+    localStorage.setItem("selectedItems", JSON.stringify(selectedItems));
   }, [selectedItems]);
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<Record<
@@ -104,6 +111,12 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTranslationBoxOpen, setIsTranslationBoxOpen] = useState(false);
+  const [deleteCollectionModalData, setDeleteCollectionModalData] = useState<{
+    showCardsInHome: boolean;
+    id: string;
+  } | null>({ showCardsInHome: true, id: "" });
+  const [isDeleteCollectionModalOpen, setIsDeleteCollectionModalOpen] =
+    useState(false);
 
   useEffect(() => {
     if (selectedItems.length) {
@@ -147,6 +160,10 @@ const StatesContext = ({ children }: { children: ReactNode }) => {
         isTextModalOpen,
         isTranslationBoxOpen,
         setIsTranslationBoxOpen,
+        isDeleteCollectionModalOpen,
+        setIsDeleteCollectionModalOpen,
+        deleteCollectionModalData,
+        setDeleteCollectionModalData,
       }}
     >
       {children}

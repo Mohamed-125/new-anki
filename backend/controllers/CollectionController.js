@@ -168,10 +168,10 @@ module.exports.getCollections = async (req, res, next) => {
   //   { $set: { showCardsInHome: true } }
   // );
 
-  // // Update cards without shownInHome field
+  // // Update cards without showInHome field
   // const updatedCards = await CardModel.updateMany(
-  //   { shownInHome: { $exists: false } },
-  //   { $set: { shownInHome: true } }
+  //   { showInHome: { $exists: false } },
+  //   { $set: { showInHome: true } }
   // );
 
   page = +page;
@@ -236,7 +236,7 @@ module.exports.getPublicCollections = async (req, res, next) => {
   }
 };
 
- module.exports.getCollection = async (req, res, next) => {
+module.exports.getCollection = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -262,7 +262,6 @@ module.exports.getPublicCollections = async (req, res, next) => {
   }
 };
 
-
 module.exports.updateCollection = async (req, res, next) => {
   const { name, cards, public, parentCollectionId, showCardsInHome } = req.body;
 
@@ -278,7 +277,7 @@ module.exports.updateCollection = async (req, res, next) => {
     if (showCardsInHome !== undefined) {
       await CardModel.updateMany(
         { collectionId: req.params.id },
-        { shownInHome: showCardsInHome }
+        { showInHome: showCardsInHome }
       );
     }
 
@@ -288,26 +287,70 @@ module.exports.updateCollection = async (req, res, next) => {
     res.status(400).send(err);
   }
 };
-module.exports.deleteCollection = async (req, res, next) => {
+module.exports.deleteCollection = async (req, res) => {
   try {
-    const deletedCollection = await CollectionModel.findOneAndDelete({
-      _id: req.params.id,
-    });
-    res.status(200).send("deleted!!");
-  } catch (err) {
-    res.status(400).send(err);
+    const { id } = req.params;
+    const { deleteCards } = req.body;
+    const collection = await CollectionModel.findById(id);
+    if (!collection) {
+      return res.status(404).json({ message: "Collection not found" });
+    }
+    if (deleteCards) {
+      // Delete all cards in this collection
+      await CardModel.deleteMany({ collectionId: id });
+    } else {
+      if (!collection.showCardsInHome) {
+        // Keep cards, but ensure all are visible in home
+        await CardModel.updateMany(
+          { collectionId: id, showInHome: false },
+          { $set: { showInHome: true } }
+        );
+      }
+    }
+    await CollectionModel.findByIdAndDelete(id);
+    res.status(200).json({ message: "Collection deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
 module.exports.batchDelete = async (req, res) => {
-  const { ids } = req.body;
+  const { ids } = req.body; // array of collection IDs
 
   try {
-    // Assuming you're using a database model like `Video`
+    // Fetch all collections to be deleted
+    const collections = await CollectionModel.find({ _id: { $in: ids } });
+
+    if (!collections.length) {
+      return res.status(404).json({ message: "No collections found" });
+    }
+
+    // Iterate collections to handle cards before deletion
+    for (const collection of collections) {
+      if (collection.showCardsInHome === false) {
+        // If cards are only visible in collection, delete them
+        await CardModel.deleteMany({ collectionId: collection._id });
+      } else {
+        // Keep cards but ensure they appear in home
+        await CardModel.updateMany(
+          { collectionId: collection._id, showInHome: false },
+          { $set: { showInHome: true } }
+        );
+      }
+    }
+
+    // Delete the collections themselves
     await CollectionModel.deleteMany({ _id: { $in: ids } });
-    res.status(200).send({ message: "collections deleted successfully" });
+
+    // Delete associations to child collections (handled in pre/post middleware)
+    // The existing pre/post middleware in your CollectionSchema will cascade deletion to subcollections
+
+    res.status(200).json({ message: "Collections deleted successfully" });
   } catch (error) {
-    res.status(500).send({ error: "Error deleting collections" });
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error deleting collections", error: error.message });
   }
 };
 

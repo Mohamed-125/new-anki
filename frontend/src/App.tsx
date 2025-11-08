@@ -114,14 +114,14 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-<Route
-  path="/collections/*"
-  element={
-    <ProtectedRoute>
-      <CollectionPage />
-    </ProtectedRoute>
-  }
-/>
+                  <Route
+                    path="/collections/*"
+                    element={
+                      <ProtectedRoute>
+                        <CollectionPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   <Route
                     path="/videos"
@@ -223,7 +223,7 @@ function App() {
                   />
 
                   <Route
-                    path="/study"
+                    path="/study/:collectionId?"
                     element={
                       <ProtectedRoute protectOffline={false}>
                         <StudyCards />

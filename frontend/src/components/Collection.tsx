@@ -31,25 +31,29 @@ const Collection = ({ collection, sectionId, to }: CollectionProps) => {
     setIsShareModalOpen,
     setShareItemId,
     setShareItemName,
+    setDeleteCollectionModalData,
+     setIsDeleteCollectionModalOpen,
   } = useModalsStates();
 
-  const { deleteCollectionHandler } = useCollectionActions();
-
-  const deleteHandler = async () => {
-    const toast = addToast("Deleting collection...", "promise");
-    try {
-      await deleteCollectionHandler(id);
-      toast.setToastData({
-        title: "Collection deleted successfully",
-        type: "success",
-      });
-    } catch (error) {
-      toast.setToastData({
-        title: "Failed to delete collection",
-        type: "error",
-      });
-    }
+  const deleteHandler = () => {
+    setDeleteCollectionModalData({ id, showCardsInHome: collection.showCardsInHome });
+    setIsDeleteCollectionModalOpen(true);
   };
+  // const deleteHandler = async () => {
+  //   const toast = addToast("Deleting collection...", "promise");
+  //   try {
+  //     await deleteCollectionHandler(id);
+  //     toast.setToastData({
+  //       title: "Collection deleted successfully",
+  //       type: "success",
+  //     });
+  //   } catch (error) {
+  //     toast.setToastData({
+  //       title: "Failed to delete collection",
+  //       type: "error",
+  //     });
+  //   }
+  // };
 
   const editHandler = () => {
     setEditId(id);

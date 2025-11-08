@@ -36,7 +36,6 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
 
       const optimisticCard: CardType = {
         ...newCard,
-
         stability: newCard.stability ?? 0,
         difficulty: newCard.difficulty ?? 0.3,
         elapsed_days: newCard.elapsed_days ?? 0,
@@ -61,7 +60,7 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
         selectedLearningLanguage,
       ]);
 
-      // // Optimistically update cache
+      // Optimistically update general cards cache
       // queryClient.setQueryData(
       //   ["cards", user?._id, selectedLearningLanguage],
       //   (old: any) => {
@@ -82,6 +81,29 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
       //   }
       // );
 
+      // Optimistically update collection cards cache if collectionId exists
+      if (newCard.collectionId) {
+        queryClient.setQueryData(
+          ["cards", user?._id, selectedLearningLanguage, newCard.collectionId],
+          (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page: any, index: number) => {
+                if (index === 0) {
+                  return {
+                    ...page,
+                    cards: [optimisticCard, ...page.cards],
+                    cardsCount: (page.cardsCount || 0) + 1,
+                  };
+                }
+                return page;
+              }),
+            };
+          }
+        );
+      }
+
       return { previousCards, toast, optimisticCard };
     },
 
@@ -100,10 +122,11 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
     },
 
     onSuccess: (res, variables, context) => {
-      // Invalidate queries to refetch actual data
       queryClient.invalidateQueries({
         queryKey: ["cards", user?._id, selectedLearningLanguage],
       });
+      // Also invalidate collections queries to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
       context?.toast?.setToastData({
         title: "Card created successfully!",
         isCompleted: true,
@@ -146,29 +169,30 @@ const useCreateNewCard = ({ collectionId }: Params = {}) => {
     };
     addCard(optimisticCard);
     // Optimistically update cache
-    queryClient.setQueryData(
-      ["cards", user?._id, selectedLearningLanguage],
-      (old: any) => {
-        console.log("adding a card to the cache1 ", old);
 
-        if (!old) return old;
+    if (optimisticCard.showInHome !== false) {
+      queryClient.setQueryData(
+        ["cards", user?._id, selectedLearningLanguage],
+        (old: any) => {
+          if (!old) return old;
 
-        console.log("adding a card to the cache 2");
-        return {
-          ...old,
-          pages: old.pages.map((page: any, index: number) => {
-            if (index === 0) {
-              return {
-                ...page,
-                cards: [optimisticCard, ...page.cards],
-                cardsCount: (page.cardsCount || 0) + 1,
-              };
-            }
-            return page;
-          }),
-        };
-      }
-    );
+          return {
+            ...old,
+            pages: old.pages.map((page: any, index: number) => {
+              if (index === 0) {
+                return {
+                  ...page,
+                  cards: [optimisticCard, ...page.cards],
+                  cardsCount: (page.cardsCount || 0) + 1,
+                };
+              }
+              return page;
+            }),
+          };
+        }
+      );
+    }
+
     if (!isOnline) {
       handleOfflineOperation("add", cardData);
 

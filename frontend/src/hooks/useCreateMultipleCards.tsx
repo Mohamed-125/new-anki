@@ -53,13 +53,11 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
       // Optimistic cards
       const optimisticCards = newCards;
 
-      // // Optimistically update cache
+      // Optimistically update general cards cache
       // queryClient.setQueryData(
       //   ["cards", user?._id, selectedLearningLanguage],
       //   (old: any) => {
       //     if (!old) return old;
-
-      //     console.log("updating cache");
       //     return {
       //       ...old,
       //       pages: old.pages.map((page: any, index: number) => {
@@ -75,6 +73,38 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
       //     };
       //   }
       // );
+
+      // Optimistically update collection cards cache for each collectionId
+      const collectionGroups: { [key: string]: CardType[] } = {};
+      for (const card of newCards) {
+        if (card.collectionId) {
+          if (!collectionGroups[card.collectionId]) {
+            collectionGroups[card.collectionId] = [];
+          }
+          collectionGroups[card.collectionId].push(card);
+        }
+      }
+      Object.entries(collectionGroups).forEach(([collectionId, cards]) => {
+        queryClient.setQueryData(
+          ["cards", user?._id, selectedLearningLanguage, collectionId],
+          (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page: any, index: number) => {
+                if (index === 0) {
+                  return {
+                    ...page,
+                    cards: [...cards, ...page.cards],
+                    cardsCount: (page.cardsCount || 0) + cards.length,
+                  };
+                }
+                return page;
+              }),
+            };
+          }
+        );
+      });
 
       return { previousCards, toast, optimisticCards };
     },
@@ -94,10 +124,11 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
     },
 
     onSuccess: async (res, variables, context) => {
-      // queryClient.invalidateQueries({
-      //   queryKey: ["cards", user?._id, selectedLearningLanguage],
-      // });
-
+      queryClient.invalidateQueries({
+        queryKey: ["cards", user?._id, selectedLearningLanguage],
+      });
+      // Also invalidate collections queries to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
       context?.toast?.setToastData({
         title: `${res.length} cards created successfully!`,
         isCompleted: true,
@@ -125,36 +156,37 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
       last_review: card.last_review ?? new Date(),
       due: card.due ?? new Date(),
     }));
+    if (preparedCards[0].showInHome) {
+      // Add locally (Dexie)
+      await bulkAddCards(preparedCards);
 
-    // Add locally (Dexie)
-    await bulkAddCards(preparedCards);
+      queryClient.setQueryData(
+        ["cards", user?._id, selectedLearningLanguage],
+        (old: any) => {
+          if (!old) return old;
 
-    queryClient.setQueryData(
-      ["cards", user?._id, selectedLearningLanguage],
-      (old: any) => {
-        if (!old) return old;
+          console.log("updating cache 222");
+          return {
+            ...old,
+            pages: old.pages.map((page: any, index: number) => {
+              if (index === 0) {
+                return {
+                  ...page,
+                  cards: [...preparedCards, ...page.cards],
+                  cardsCount: (page.cardsCount || 0) + preparedCards.length,
+                };
+              }
+              return page;
+            }),
+          };
+        }
+      );
 
-        console.log("updating cache 222");
-        return {
-          ...old,
-          pages: old.pages.map((page: any, index: number) => {
-            if (index === 0) {
-              return {
-                ...page,
-                cards: [...preparedCards, ...page.cards],
-                cardsCount: (page.cardsCount || 0) + preparedCards.length,
-              };
-            }
-            return page;
-          }),
-        };
+      if (!isOnline) {
+        // Offline: queue operation
+        handleOfflineOperation("add", { cards: preparedCards });
+        return;
       }
-    );
-
-    if (!isOnline) {
-      // Offline: queue operation
-      handleOfflineOperation("add", { cards: preparedCards });
-      return;
     }
 
     // Online: sync with server

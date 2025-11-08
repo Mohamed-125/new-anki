@@ -64,11 +64,12 @@ const AddNewCollectionModal = ({
         .catch((error) => {
           console.error("Error creating collection:", error);
         });
-        // Removed isLoading and isMutationLoading states and loading prop from Modal. Modal now closes immediately after add/edit.
+      // Removed isLoading and isMutationLoading states and loading prop from Modal. Modal now closes immediately after add/edit.
     }
   };
 
-  const { updateCollectionHandler: updateCollection, createCollectionHandler } = useCollectionActions();
+  const { updateCollectionHandler: updateCollection, createCollectionHandler } =
+    useCollectionActions();
 
   const updateCollectionHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -174,7 +175,13 @@ const AddNewCollectionModal = ({
                 <input
                   id="show_cards_home"
                   name="show_cards_home"
-                  defaultChecked={defaultValues?.collectionShowCardsInHome}
+                  defaultChecked={
+                    defaultValues?.collectionShowCardsInHome !== undefined
+                      ? defaultValues?.collectionShowCardsInHome === false
+                        ? false
+                        : true
+                      : true
+                  }
                   type="checkbox"
                   className="w-5 h-5 text-blue-600 rounded border-gray-300 transition-colors focus:ring-primary"
                 />

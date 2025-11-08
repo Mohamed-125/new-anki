@@ -31,6 +31,7 @@ export type CardType = {
   createdAt: number | string;
   reviewCount?: number;
   order?: number;
+  showInHome:boolean
 };
 
 interface UseGetCardsProps {
@@ -63,32 +64,24 @@ const useGetCards = ({
 
   const location = useLocation();
 
+  
+ 
+
+
+
+
+ 
   const queryKey = useMemo(() => {
     const key = ["cards", user?._id];
 
-    // --- Extract collection/subcollection IDs from the URL ---
-    if (location?.pathname?.includes("collection")) {
-      // Example: /collections/123/subcollections/456
-      const matches = location.pathname.match(/collection[s]?\/(\w+)/g);
-
-      console.log("matches", matches);
-      if (matches) {
-        matches.forEach((segment) => {
-          const id = segment.split("/")[1];
-          console.log("segment", segment);
-          console.log("id", id);
-          if (id) key.push(id);
-        });
-      }
-    }
-
+    
     // --- Add the usual filters ---
+    if (selectedLearningLanguage) key.push(selectedLearningLanguage);
     if (study) key.push("study");
     if (query) key.push(query);
     if (collectionId) key.push(collectionId);
     if (videoId) key.push(videoId);
     if (difficultyFilter) key.push(difficultyFilter);
-    if (selectedLearningLanguage) key.push(selectedLearningLanguage);
 
     return key;
   }, [

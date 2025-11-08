@@ -59,7 +59,7 @@ const CardSchema = new mongoose.Schema(
       ref: "Section",
       index: true,
     },
-    shownInHome: { type: Boolean, default: true, index: true },
+    showInHome: { type: Boolean, default: true, index: true },
 
     // ------------------- Stats -------------------
     reviewCount: { type: Number, default: 0, min: 0 },

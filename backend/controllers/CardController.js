@@ -95,11 +95,11 @@ module.exports.batchUpdate = async (req, res, next) => {
 module.exports.createCard = async (req, res, next) => {
   const { cards, collectionId, videoId, language, sectionId, _id } = req.body;
 
-  let shownInHome = true;
+  let showInHome = true;
   if (collectionId) {
     const collection = await CollectionModel.findById(collectionId);
     if (collection) {
-      shownInHome = collection.showCardsInHome;
+      showInHome = collection.showCardsInHome;
     }
   }
 
@@ -150,7 +150,7 @@ module.exports.createCard = async (req, res, next) => {
       language,
       sectionId,
       userId: sectionId ? undefined : req.user._id,
-      shownInHome,
+      showInHome,
     };
 
     try {
@@ -318,6 +318,29 @@ async function migrateAndDedupeTransactional() {
   }
 }
 
+async function renameShownInHome() {
+  try {
+    // Update all documents that have "shownInHome" field
+    const result = await CardModel.updateMany(
+      { shownInHome: { $exists: true } },
+      [
+        {
+          $set: { showInHome: "$shownInHome" }, // copy the value to new field
+        },
+        {
+          $unset: "shownInHome", // remove the old field
+        },
+      ]
+    );
+
+    console.log(
+      `Migration complete: ${result.modifiedCount} documents updated`
+    );
+  } catch (err) {
+    console.error("Migration error:", err);
+  }
+}
+
 module.exports.getUserCards = async (req, res, next) => {
   const {
     page: pageNumber,
@@ -333,6 +356,7 @@ module.exports.getUserCards = async (req, res, next) => {
 
   const query = {};
   const options = {};
+  // renameShownInHome();
 
   if (searchQuery) {
     query.$or = [
@@ -361,7 +385,7 @@ module.exports.getUserCards = async (req, res, next) => {
   } else if (collectionId) {
     query.collectionId = collectionId;
   } else {
-    query.shownInHome = true;
+    query.showInHome = true;
     query.userId = req.user?._id;
   }
   if (videoId) {
@@ -415,6 +439,9 @@ module.exports.getUserCards = async (req, res, next) => {
       .skip(skipNumber)
       .limit(limit)
       .lean();
+
+    console.log("query", query);
+    console.log("cards", cards);
     res.status(200).send({
       //  allCards,
       cards,
@@ -440,11 +467,11 @@ module.exports.updateCard = async (req, res, next) => {
   const { front, back, content, collectionId, easeFactor } = req.body;
 
   try {
-    let shownInHome = true;
+    let showInHome = true;
     if (collectionId) {
       const collection = await CollectionModel.findById(collectionId);
       if (collection) {
-        shownInHome = collection.showCardsInHome;
+        showInHome = collection.showCardsInHome;
       }
     }
 
@@ -457,7 +484,7 @@ module.exports.updateCard = async (req, res, next) => {
         collectionId,
         userId: req.user?._id,
         easeFactor,
-        shownInHome,
+        showInHome,
       },
       {
         new: true,
@@ -502,17 +529,17 @@ module.exports.batchMove = async (req, res) => {
   const { ids, collectionId } = req.body;
 
   try {
-    let shownInHome = true;
+    let showInHome = true;
     if (collectionId) {
       const collection = await CollectionModel.findById(collectionId);
       if (collection) {
-        shownInHome = collection.showCardsInHome;
+        showInHome = collection.showCardsInHome;
       }
     }
 
     await CardModel.updateMany(
       { _id: { $in: ids } },
-      { collectionId: collectionId, shownInHome: shownInHome }
+      { collectionId: collectionId, showInHome: showInHome }
     );
 
     res.status(200).send({ message: "cards moved successfully" });

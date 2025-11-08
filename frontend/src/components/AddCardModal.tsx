@@ -30,11 +30,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Loading from "./Loading";
-import   Skeleton   from "./ui/skeleton";
+import Skeleton from "./ui/skeleton";
 import MoveCollectionModal from "./MoveCollectionModal";
 import { IoClose } from "react-icons/io5";
 import useGetCollectionById from "@/hooks/useGetCollectionById";
-import useGetCollections from "@/hooks/useGetCollections";
+import useGetCollections, { CollectionType } from "@/hooks/useGetCollections";
 import { useNetwork } from "../context/NetworkStatusContext";
 import { CardType } from "../hooks/useGetCards";
 import { nanoid } from "nanoid";
@@ -49,7 +49,7 @@ type CardData = {
 };
 
 type AddCardModalProps = {
-  collectionId?: string;
+  collection?: CollectionType;
   optimistic?: {
     isOptimistic: boolean;
     setOptimistic: any;
@@ -59,7 +59,7 @@ type AddCardModalProps = {
 };
 
 export function AddCardModal({
-  collectionId,
+  collection,
   optimistic,
   videoId,
   onCardCreated,
@@ -75,6 +75,7 @@ export function AddCardModal({
     setDefaultValues,
     targetCollectionId,
   } = useModalStates();
+  const collectionId = collection?._id || defaultValues?.collectionId || null;
 
   const [mode, setMode] = useState<"single" | "multi">("single");
   const [jsonInput, setJsonInput] = useState("");
@@ -167,15 +168,8 @@ export function AddCardModal({
   }, [defaultValues?.content]);
 
   const { updateCardHandler } = useCardActions();
-  const { createCardHandler } = useCreateNewCard({
-    optimistic: {
-      isOptimistic: optimistic?.isOptimistic,
-      setOptimistic: optimistic?.setOptimistic
-        ? optimistic?.setOptimistic
-        : () => {},
-    },
-  });
-
+  const {createCardHandler} = useCreateNewCard()
+  // Create collectionId variable from collection
   const { addToast } = useToasts();
   const [isLoading, setIsLoading] = useState(false);
   const { isOnline } = useNetwork();
@@ -183,10 +177,11 @@ export function AddCardModal({
     e.preventDefault();
 
     const cardData = {
-      collectionId: defaultValues?.collectionId || collectionId || null,
+      collectionId,
       videoId,
       content: editor?.getHTML(),
       sectionId: defaultValues?.sectionId || null,
+      showInHome: collection?.showCardsInHome !== undefined ? collection.showCardsInHome : true,
     };
 
     // REMOVED: if (isOnline) setIsLoading(true);
@@ -196,7 +191,7 @@ export function AddCardModal({
         setIsAddCardModalOpen,
         editor?.getHTML(),
         editId,
-        defaultValues?.collectionId || collectionId || null,
+        collectionId,
         frontValue.trim(),
         backValue.trim()
       );
@@ -299,16 +294,8 @@ export function AddCardModal({
   }, [isAddCardModalOpen, editor]);
 
   const formRef = useRef<HTMLFormElement | null>(null);
-
-  const { collection, isLoading: isCollectionLoading } = useGetCollectionById(
-    defaultValues?.collectionId || collectionId
-  );
-
-  const { collections } = useGetCollections({
-    enabled: isMoveToCollectionOpen,
-    sectionId: defaultValues?.sectionId || null,
-  });
-
+ 
+ 
   return (
     <Modal
       // REMOVED: loading={isLoading || isCollectionLoading}
