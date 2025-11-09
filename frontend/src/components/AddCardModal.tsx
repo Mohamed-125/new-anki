@@ -136,6 +136,7 @@ export function AddCardModal({
 
   const handleMultiCardSubmit = async () => {
     if (cards.length === 0) return;
+    setIsAddCardModalOpen(false);
 
     // REMOVED: setIsLoading(true);
 
@@ -183,6 +184,7 @@ export function AddCardModal({
       sectionId: defaultValues?.sectionId || null,
       showInHome: collection?.showCardsInHome !== undefined ? collection.showCardsInHome : true,
     };
+    setIsAddCardModalOpen(false);
 
     // REMOVED: if (isOnline) setIsLoading(true);
     if (isEdit) {
@@ -200,7 +202,6 @@ export function AddCardModal({
       onCardCreated?.(createdCard._id);
     }
 
-    setIsAddCardModalOpen(false);
     // Removed isLoading state and loading prop from Modal. Modal now closes immediately after add/edit.
     //@ts-ignore
     e.target.reset();
@@ -298,7 +299,7 @@ export function AddCardModal({
  
   return (
     <Modal
-      // REMOVED: loading={isLoading || isCollectionLoading}
+      //  loading={isLoading || isCollectionLoading}
       className={`w-full max-w-2xl bg-white rounded-xl shadow-lg ${
         isMoveToCollectionOpen ? "opacity-0 pointer-events-none" : ""}`}
       setIsOpen={setIsAddCardModalOpen}
