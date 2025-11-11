@@ -156,7 +156,7 @@ const useCreateMultipleCards = ({ collectionId }: Params = {}) => {
       last_review: card.last_review ?? new Date(),
       due: card.due ?? new Date(),
     }));
-    if (preparedCards[0].showInHome) {
+    if (preparedCards[0].showInHome !== false) {
       // Add locally (Dexie)
       await bulkAddCards(preparedCards);
 
