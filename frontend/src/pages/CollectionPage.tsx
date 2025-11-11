@@ -22,6 +22,7 @@ import useToasts from "@/hooks/useToasts.tsx";
 import ExportJsonModal from "@/components/ExportJsonModal";
 import useCollectionActions from "@/hooks/useCollectionActions";
 import DeleteCollectionModal from "../components/DeleteCollectionModal";
+import useDebounce from "../hooks/useDebounce";
 
 const CollectionPage = React.memo(function CollectionPage({}) {
   const location = useLocation();
@@ -44,6 +45,10 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     if (collection?._id) setParentCollectionId(collection._id);
   }, [collection]);
 
+
+  const [query , setQuery] = useState('')
+  const debouncedQuery = useDebounce(query);
+
   const {
     cardsCount,
     fetchNextPage,
@@ -56,6 +61,7 @@ const CollectionPage = React.memo(function CollectionPage({}) {
   } = useGetCards({
     enabled: Boolean(collection?._id),
     collectionId: collection?._id,
+    query: debouncedQuery,
   });
   const { deleteCollectionHandler, forkCollectionHandler } =
     useCollectionActions();
@@ -82,7 +88,6 @@ const CollectionPage = React.memo(function CollectionPage({}) {
     ));
   }, [collection?.subCollections]);
 
-  const [query, setQuery] = useState("");
 
   const queryClient = useQueryClient();
 

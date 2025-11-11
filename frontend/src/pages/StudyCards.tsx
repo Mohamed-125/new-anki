@@ -230,7 +230,6 @@ const StudyCards = () => {
       rating
     );
 
-    // Create update object with calculated values
     const update = {
       _id: card._id,
       answer,
@@ -238,22 +237,39 @@ const StudyCards = () => {
       reviewCount: (card.reviewCount || 0) + 1,
     };
 
+    // ✅ 1. Push to local ref
     updatedCardsRef.current.push(update);
-    updateCard(update).catch((err) =>
-      console.error("Failed to update Dexie card", err)
-    );
 
+    // ✅ 2. Update Dexie
+    updateCard(update).catch((err) => console.error(err));
+
+    // ✅ 3. Optimistically update React Query cache
+    queryClient.setQueryData<any>(["cards", user?._id], (oldData) => {
+      if (!oldData) return oldData;
+
+      // Handle infinite query structure
+      const newPages = oldData.pages.map((page: any) => {
+        return {
+          ...page,
+          cards: page.cards.map((c: CardType) =>
+            c._id === update._id ? { ...c, ...update } : c
+          ),
+        };
+      });
+
+      return {
+        ...oldData,
+        pages: newPages,
+      };
+    });
+
+    // ✅ 4. Update localStorage (for offline sync)
     const existing = JSON.parse(localStorage.getItem("unsyncedCards") || "[]");
-
-    // Remove any previous update for the same card
     const filtered = existing.filter((c: any) => c._id !== update._id);
-
-    // Add the latest update
     filtered.push(update);
-
-    // Save back to localStorage
     localStorage.setItem("unsyncedCards", JSON.stringify(filtered));
 
+    // ✅ 5. Move to next card
     setShowAnswer(false);
     setCurrentCard((pre) => {
       const nextIndex = pre + 1;

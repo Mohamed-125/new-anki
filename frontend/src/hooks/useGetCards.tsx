@@ -231,7 +231,6 @@ const useGetCards = ({
     },
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
     staleTime: location.pathname.includes("collection") ? 0 : 1000 * 60 * 5, // 👈 disable cache for collections
-    cacheTime: location.pathname.includes("collection") ? 0 : 1000 * 60 * 10, // 👈 don't keep cache for collections
     refetchOnMount: location.pathname.includes("collection"), // 👈 always refetch if in collection
     refetchOnWindowFocus: location.pathname.includes("collection"), // 👈 optional
     initialPageParam: 0,
