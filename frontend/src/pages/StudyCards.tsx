@@ -48,6 +48,11 @@ import { useNetwork } from "@/context/NetworkStatusContext";
 import OfflineFallback from "@/components/OfflineFallback";
 import useDebounce from "../hooks/useDebounce";
 import SearchSidebar from "../components/SearchSidebar";
+import {
+  selectedLearningLanguageContext,
+  useGetSelectedLearningLanguage,
+} from "../context/SelectedLearningLanguageContext";
+import { update } from "lodash";
 
 const StudyCards = () => {
   const { user } = useGetCurrentUser();
@@ -66,7 +71,7 @@ const StudyCards = () => {
 
   // Search sidebar state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
+  const { selectedLearningLanguage } = useGetSelectedLearningLanguage();
   const { editor, setContent } = useUseEditor(true);
   const { data: collection, isLoading: collectionLoading } = useQuery({
     queryKey: ["collection", collectionId],
@@ -104,6 +109,16 @@ const StudyCards = () => {
   const updatedCardsRef = useRef<CardType[]>([]);
 
   const cardsLoading = isFetching || isLoading;
+  const queryKeyToUpdate = collectionId
+    ? [
+        "cards",
+        user?._id,
+        selectedLearningLanguage,
+        "study",
+        collectionId,
+        "all",
+      ]
+    : ["cards", user?._id, selectedLearningLanguage, "study", "all"];
 
   const sendLocalCardsToBackend = () => {
     // Send the full card data to the server
@@ -140,7 +155,7 @@ const StudyCards = () => {
         localStorage.removeItem("unsyncedCards");
         // Invalidate queries to ensure updates are reflected
         queryClient.invalidateQueries({
-          queryKey: ["cards", user?._id, "study"],
+          queryKey: queryKeyToUpdate,
         });
       })
       .catch((error) => {
@@ -244,7 +259,8 @@ const StudyCards = () => {
     updateCard(update).catch((err) => console.error(err));
 
     // ✅ 3. Optimistically update React Query cache
-    queryClient.setQueryData<any>(["cards", user?._id], (oldData) => {
+    queryClient.setQueryData<any>(queryKeyToUpdate, (oldData) => {
+      console.log("oldData", oldData);
       if (!oldData) return oldData;
 
       // Handle infinite query structure
