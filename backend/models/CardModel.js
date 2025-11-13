@@ -38,7 +38,7 @@ const CardSchema = new mongoose.Schema(
     reps: { type: Number, default: 0 },
     lapses: { type: Number, default: 0 },
     state: {
-      type: String,
+      type: Number,
       enum: [0, 1, 2, 3], // 0 = NEW, 1 = LEARNING, 2 = REVIEW, 3 = RELEARNING
       default: 0,
     },

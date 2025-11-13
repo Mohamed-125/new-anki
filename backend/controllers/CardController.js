@@ -401,7 +401,7 @@ module.exports.getUserCards = async (req, res, next) => {
   if (study) {
     console.log("sort", study);
     // 1. الترتيب يكون دائمًا حسب الأقدم استحقاقًا
-    options.sort = { due: 1, createdAt: 1, difficulty: 1, _id: 1 };
+    options.sort = { state:1, due: 1, createdAt: 1, difficulty: 1, _id: 1 };
 
     // 2. تطبيق منطق الجدولة بناءً على قيمة study
     switch (study.toLowerCase()) {

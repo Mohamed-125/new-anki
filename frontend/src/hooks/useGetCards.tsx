@@ -154,25 +154,32 @@ const useGetCards = ({
       return Number(aNum) - Number(bNum);
     };
 
-    const getTimeSafe = (date: any) =>
-      date ? new Date(date).getTime() : Infinity;
-
+ 
     if (currentStudy) {
-      filtered.sort((a, b) => {
-        const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
-        const dueDiff = getTimeSafe(a.due) - getTimeSafe(b.due);
-        if (dueDiff !== 0) return dueDiff;
+  filtered.sort((a, b) => {
+    const getTimeSafe = (date: any) => (date ? new Date(date).getTime() : Infinity);
+    const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
 
-        const createdDiff = getTimeSafe(a.createdAt) - getTimeSafe(b.createdAt);
-        if (createdDiff !== 0) return createdDiff;
+    // 1️⃣ state ascending (new -> learning -> review -> relearning)
+    if (a.state !== b.state) return a.state - b.state;
 
-        const difficultyDiff =
-          getDifficulty(a.difficulty) - getDifficulty(b.difficulty);
-        if (difficultyDiff !== 0) return difficultyDiff;
+    // 2️⃣ due ascending
+    const dueDiff = getTimeSafe(a.due) - getTimeSafe(b.due);
+    if (dueDiff !== 0) return dueDiff;
 
-        return compareIds(a._id, b._id);
-      });
-    } else {
+    // 3️⃣ createdAt ascending
+    const createdDiff = getTimeSafe(a.createdAt) - getTimeSafe(b.createdAt);
+    if (createdDiff !== 0) return createdDiff;
+
+    // 4️⃣ difficulty ascending
+    const difficultyDiff = getDifficulty(a.difficulty) - getDifficulty(b.difficulty);
+    if (difficultyDiff !== 0) return difficultyDiff;
+
+    // 5️⃣ fallback: compare _id
+    return compareIds(a._id, b._id);
+  });
+}
+ else {
       console.log("filtering the same as the offline");
       filtered.sort((a, b) => {
         const aTime =
