@@ -150,13 +150,21 @@ const StudyCards = () => {
         toUpdateCardsData: cardsToUpdate,
       })
       .then(() => {
-        console.log("✅ Synced on normal exit");
+        console.log("✅ Synced on normal exit 4324234");
         updatedCardsRef.current = [];
         localStorage.removeItem("unsyncedCards");
-        // Invalidate queries to ensure updates are reflected
-        queryClient.invalidateQueries({
-          queryKey: queryKeyToUpdate,
-        });
+        queryClient
+          .getQueryCache()
+          .getAll()
+          .forEach((query) => {
+            if (query.queryKey.includes("study")) {
+              console.log(query);
+              queryClient.refetchQueries({
+                queryKey: query.queryKey,
+                exact: true,
+              });
+            }
+          });
       })
       .catch((error) => {
         console.warn(
