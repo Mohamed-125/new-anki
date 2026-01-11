@@ -398,39 +398,36 @@ module.exports.getUserCards = async (req, res, next) => {
     query.sectionId = sectionId;
   }
 
- if (study) {
-  const now = new Date();
+  if (study) {
+    const now = new Date();
 
-  // 1️⃣ Force study-safe base query
-  query.userId = req.user?._id;
-const sessionStartTime = req.query.sessionStartTime
-  ? new Date(req.query.sessionStartTime)
-  : new Date();
+    // 1️⃣ Force study-safe base query
+    query.userId = req.user?._id;
+    const sessionStartTime = req.query.sessionStartTime
+      ? new Date(req.query.sessionStartTime)
+      : new Date();
 
-query.due = { $lte: sessionStartTime };
-  // 2️⃣ REMOVE dangerous filters during study
-  delete query.difficulty;
+    query.due = { $lte: sessionStartTime };
+    // 2️⃣ REMOVE dangerous filters during study
+    delete query.difficulty;
 
-  // 3️⃣ SRS-safe ordering
-  // Priority score:
-  // - overdue first
-  // - relearning > learning > review > new
-  options.sort = {
-    due: 1,                // most overdue first
-    state: -1,             // RELEARNING > LEARNING > REVIEW > NEW
-    lapses: -1,            // struggling cards first
-    difficulty: -1,        // harder cards first
-    createdAt: 1,
-    _id: 1,
-  };
-
- 
-
-} else {
-  // Browsing mode (unchanged behavior)
-  options.sort = { createdAt: -1 };
-}
-
+    // 3️⃣ SRS-safe ordering
+    // Priority score:
+    // - overdue first
+    // - relearning > learning > review > new
+    options.sort = {
+      due: 1, // most overdue first
+      state: -1, // RELEARNING > LEARNING > REVIEW > NEW
+      lapses: -1, // struggling cards first
+      difficulty: -1, // harder cards first
+      createdAt: 1,
+      _id: 1,
+    };
+    //trsatasrt
+  } else {
+    // Browsing mode (unchanged behavior)
+    options.sort = { createdAt: -1 };
+  }
 
   const limit = 30; // Increased limit for better performance
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
