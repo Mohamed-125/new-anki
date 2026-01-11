@@ -248,7 +248,7 @@ const StudyCards = () => {
       due: card.due ?? new Date(),
     };
 
-    const updatedCardValues = SRS.calculateNextInterval(
+    const updatedCardValues = SRS.review(
       cardForCalculation,
       rating
     );

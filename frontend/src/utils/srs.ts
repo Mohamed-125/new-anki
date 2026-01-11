@@ -1,4 +1,20 @@
 export const SRS = {
+  /* =======================
+     CONFIGURATION
+     ======================= */
+
+  TARGET_RECALL: 0.9,
+  MIN_STABILITY: 0.5,
+  MAX_DIFFICULTY: 1,
+  MIN_DIFFICULTY: 0,
+
+  DAY: 24 * 60 * 60 * 1000,
+  MINUTE: 60 * 1000,
+
+  /* =======================
+     ENUMS
+     ======================= */
+
   States: {
     NEW: 0,
     LEARNING: 1,
@@ -13,187 +29,167 @@ export const SRS = {
     Easy: 4,
   },
 
-  createEmptyCard: function (lastReviewDate = new Date()) {
+  /* =======================
+     CARD CREATION
+     ======================= */
+
+  createEmptyCard(lastReview = new Date()) {
     return {
       stability: 0,
       difficulty: 0.3,
-      elapsed_days: 0,
-      scheduled_days: 0,
-      learning_steps: 0,
       reps: 0,
       lapses: 0,
       state: this.States.NEW,
-      last_review: lastReviewDate,
-      due: lastReviewDate,
+      learning_steps: 0,
+      last_review: lastReview,
+      due: lastReview,
     };
   },
 
-  calculateNextInterval: function (card: any, rating: number) {
-    const updatedCard = { ...card };
-    updatedCard.reps += 1;
+  /* =======================
+     PUBLIC ENTRY POINT
+     ======================= */
+
+  review(card: any, rating: number) {
     const now = new Date();
-    const daysSinceLastReview = Math.max(
+    const elapsedDays = Math.max(
       0,
-      Math.floor((now.getTime() - new Date(updatedCard.last_review).getTime()) / (1000 * 60 * 60 * 24))
+      (now.getTime() - new Date(card.last_review).getTime()) / this.DAY
     );
-    updatedCard.elapsed_days = daysSinceLastReview;
-    updatedCard.last_review = now;
 
-    switch (updatedCard.state) {
+    const updated = { ...card };
+    updated.reps += 1;
+    updated.last_review = now;
+
+    switch (updated.state) {
       case this.States.NEW:
-        return this._handleNewCard(updatedCard, rating);
+        return this._new(updated, rating);
+
       case this.States.LEARNING:
-        return this._handleLearningCard(updatedCard, rating);
+        return this._learning(updated, rating);
+
       case this.States.REVIEW:
-        return this._handleReviewCard(updatedCard, rating);
+        return this._review(updated, rating, elapsedDays);
+
       case this.States.RELEARNING:
-        return this._handleRelearningCard(updatedCard, rating);
+        return this._relearning(updated, rating);
+
       default:
-        return this._handleNewCard(updatedCard, rating);
+        return this._new(updated, rating);
     }
   },
 
-  _handleNewCard: function (card: any, rating: number) {
-    switch (rating) {
-      case this.Rating.Again:
-        card.learning_steps = 0;
-        card.due = new Date(Date.now() + 5 * 60 * 1000);
-        break;
-      case this.Rating.Hard:
-        card.state = this.States.LEARNING;
-        card.learning_steps = 1;
-        card.due = new Date(Date.now() + 10 * 60 * 1000);
-        break;
-      case this.Rating.Good:
-        card.state = this.States.LEARNING;
-        card.learning_steps = 1;
-        card.due = new Date(Date.now() + 60 * 60 * 1000);
-        break;
-      case this.Rating.Easy:
-        card.state = this.States.LEARNING;
-        card.learning_steps = 2;
-        card.due = new Date(Date.now() + 6 * 60 * 60 * 1000);
-        break;
+  /* =======================
+     STATE HANDLERS
+     ======================= */
+
+  _new(card: any, rating: number) {
+    card.state = this.States.LEARNING;
+    card.learning_steps = 0;
+
+    if (rating === this.Rating.Again) {
+      card.due = new Date(Date.now() + 5 * this.MINUTE);
+      return card;
     }
+
+    card.stability = rating === this.Rating.Easy ? 2.5 : 1.5;
+    card.difficulty = rating === this.Rating.Easy ? 0.2 : 0.3;
+    card.due = new Date(Date.now() + 30 * this.MINUTE);
     return card;
   },
 
-  _handleLearningCard: function (card: any, rating: number) {
-    switch (rating) {
-      case this.Rating.Again:
-        card.learning_steps = 0;
-        card.due = new Date(Date.now() + 10 * 60 * 1000);
-        break;
-      case this.Rating.Hard:
-        card.learning_steps += 1;
-        card.due = new Date(Date.now() + 45 * 60 * 1000);
-        break;
-      case this.Rating.Good:
-        card.learning_steps += 1;
-        if (card.learning_steps >= 3) {
-          card.state = this.States.REVIEW;
-          card.stability = 3;
-          card.due = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-        } else {
-          const intervals = [0, 30, 240, 1440];
-          const minutesToAdd = intervals[card.learning_steps] || 1440;
-          card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
-        }
-        break;
-      case this.Rating.Easy:
-        card.state = this.States.REVIEW;
-        card.stability = 4;
-        card.due = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-        break;
+  _learning(card: any, rating: number) {
+    const requiredSteps = Math.ceil(2 + card.difficulty * 4);
+
+    if (rating === this.Rating.Again) {
+      card.learning_steps = 0;
+      card.due = new Date(Date.now() + 10 * this.MINUTE);
+      return card;
     }
+
+    card.learning_steps += 1;
+
+    if (card.learning_steps >= requiredSteps || rating === this.Rating.Easy) {
+      card.state = this.States.REVIEW;
+      card.stability = Math.max(2, card.stability);
+      card.due = this._scheduleFromStability(card.stability);
+      return card;
+    }
+
+    const minutes = 15 + card.learning_steps * 30;
+    card.due = new Date(Date.now() + minutes * this.MINUTE);
     return card;
   },
 
-  _handleReviewCard: function (card: any, rating: number) {
+  _review(card: any, rating: number, elapsedDays: number) {
     this._updateDifficulty(card, rating);
 
-    switch (rating) {
-      case this.Rating.Again:
-        card.state = this.States.RELEARNING;
-        card.lapses += 1;
-        card.learning_steps = 0;
-        card.stability = Math.max(0.5, card.stability * 0.4);
-        card.due = new Date(Date.now() + 10 * 60 * 1000);
-        break;
+    const recallProb = Math.exp(-elapsedDays / Math.max(card.stability, 0.1));
 
-      case this.Rating.Hard:
-        card.stability = card.stability * 1.25; // زيادة معتدلة
-        card.scheduled_days = Math.max(1, Math.floor(card.stability));
-        card.due = new Date(Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000);
-        break;
-
-      case this.Rating.Good:
-        const stabilityMultiplier = 1.55 * (1 - 0.3 * card.difficulty);
-        card.stability = card.stability * stabilityMultiplier;
-        card.scheduled_days = Math.max(1, Math.floor(card.stability));
-        card.due = new Date(Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000);
-        break;
-
-      case this.Rating.Easy:
-        const easyMultiplier = 2.0 * (1 - 0.25 * card.difficulty);
-        card.stability = card.stability * easyMultiplier;
-        card.scheduled_days = Math.max(1, Math.floor(card.stability * 1.4));
-        card.due = new Date(Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000);
-        break;
+    if (rating === this.Rating.Again) {
+      card.state = this.States.RELEARNING;
+      card.lapses += 1;
+      card.stability = Math.max(
+        this.MIN_STABILITY,
+        card.stability * 0.35
+      );
+      card.learning_steps = 0;
+      card.due = new Date(Date.now() + 10 * this.MINUTE);
+      return card;
     }
 
+    const successFactor =
+      rating === this.Rating.Easy ? 1.3 :
+      rating === this.Rating.Good ? 1.0 :
+      0.8;
+
+    card.stability *= 1 + successFactor * recallProb;
+    card.due = this._scheduleFromStability(card.stability);
     return card;
   },
 
-  _handleRelearningCard: function (card: any, rating: number) {
-    switch (rating) {
-      case this.Rating.Again:
-        card.learning_steps = 0;
-        card.due = new Date(Date.now() + 5 * 60 * 1000);
-        break;
-      case this.Rating.Hard:
-        card.learning_steps += 1;
-        card.due = new Date(Date.now() + 30 * 60 * 1000);
-        break;
-      case this.Rating.Good:
-        card.learning_steps += 1;
-        if (card.learning_steps >= 2) {
-          card.state = this.States.REVIEW;
-          card.stability = Math.max(2, card.stability);
-          card.due = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-        } else {
-          const intervals = [0, 60, 240];
-          const minutesToAdd = intervals[card.learning_steps] || 240;
-          card.due = new Date(Date.now() + minutesToAdd * 60 * 1000);
-        }
-        break;
-      case this.Rating.Easy:
-        card.state = this.States.REVIEW;
-        card.stability = Math.max(2, card.stability * 0.9);
-        card.scheduled_days = Math.max(1, Math.floor(card.stability));
-        card.due = new Date(Date.now() + card.scheduled_days * 24 * 60 * 60 * 1000);
-        break;
+  _relearning(card: any, rating: number) {
+    if (rating === this.Rating.Again) {
+      card.learning_steps = 0;
+      card.due = new Date(Date.now() + 5 * this.MINUTE);
+      return card;
     }
+
+    card.learning_steps += 1;
+
+    if (card.learning_steps >= 2 || rating === this.Rating.Easy) {
+      card.state = this.States.REVIEW;
+      card.stability = Math.max(2, card.stability);
+      card.due = this._scheduleFromStability(card.stability);
+      return card;
+    }
+
+    card.due = new Date(Date.now() + 30 * this.MINUTE);
     return card;
   },
 
-  _updateDifficulty: function (card: any, rating: number) {
-    let difficulty = card.difficulty;
-    switch (rating) {
-      case this.Rating.Again:
-        difficulty += 0.15;
-        break;
-      case this.Rating.Hard:
-        difficulty += 0.05;
-        break;
-      case this.Rating.Good:
-        difficulty = difficulty + (0.3 - difficulty) * 0.08; // تعديل متوسط
-        break;
-      case this.Rating.Easy:
-        difficulty -= 0.15;
-        break;
-    }
-    card.difficulty = Math.min(1, Math.max(0, difficulty));
-    return card;
+  /* =======================
+     MEMORY MODEL
+     ======================= */
+
+  _scheduleFromStability(stability: number) {
+    const days =
+      -stability * Math.log(this.TARGET_RECALL);
+
+    return new Date(Date.now() + Math.max(1, days) * this.DAY);
+  },
+
+  _updateDifficulty(card: any, rating: number) {
+    const delta =
+      rating === this.Rating.Again ? +0.12 :
+      rating === this.Rating.Hard ? +0.04 :
+      rating === this.Rating.Good ? -0.02 :
+      -0.08;
+
+    card.difficulty += delta * (1 - card.difficulty);
+    card.difficulty = Math.min(
+      this.MAX_DIFFICULTY,
+      Math.max(this.MIN_DIFFICULTY, card.difficulty)
+    );
   },
 };

@@ -31,7 +31,7 @@ export type CardType = {
   createdAt: number | string;
   reviewCount?: number;
   order?: number;
-  showInHome:boolean
+  showInHome: boolean;
 };
 
 interface UseGetCardsProps {
@@ -64,17 +64,9 @@ const useGetCards = ({
 
   const location = useLocation();
 
-  
- 
-
-
-
-
- 
   const queryKey = useMemo(() => {
     const key = ["cards", user?._id];
 
-    
     // --- Add the usual filters ---
     if (selectedLearningLanguage) key.push(selectedLearningLanguage);
     if (study) key.push("study");
@@ -154,32 +146,32 @@ const useGetCards = ({
       return Number(aNum) - Number(bNum);
     };
 
- 
     if (currentStudy) {
-  filtered.sort((a, b) => {
-    const getTimeSafe = (date: any) => (date ? new Date(date).getTime() : Infinity);
-    const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
+      filtered.sort((a, b) => {
+        const getTimeSafe = (date: any) =>
+          date ? new Date(date).getTime() : Infinity;
+        const getDifficulty = (d: any) => (d != null ? Number(d) : Infinity);
 
-    // 1️⃣ state ascending (new -> learning -> review -> relearning)
-    if (a.state !== b.state) return a.state - b.state;
+        // 1️⃣ state ascending (new -> learning -> review -> relearning)
+        if (a.state !== b.state) return a.state - b.state;
 
-    // 2️⃣ due ascending
-    const dueDiff = getTimeSafe(a.due) - getTimeSafe(b.due);
-    if (dueDiff !== 0) return dueDiff;
+        // 2️⃣ due ascending
+        const dueDiff = getTimeSafe(a.due) - getTimeSafe(b.due);
+        if (dueDiff !== 0) return dueDiff;
 
-    // 3️⃣ createdAt ascending
-    const createdDiff = getTimeSafe(a.createdAt) - getTimeSafe(b.createdAt);
-    if (createdDiff !== 0) return createdDiff;
+        // 3️⃣ createdAt ascending
+        const createdDiff = getTimeSafe(a.createdAt) - getTimeSafe(b.createdAt);
+        if (createdDiff !== 0) return createdDiff;
 
-    // 4️⃣ difficulty ascending
-    const difficultyDiff = getDifficulty(a.difficulty) - getDifficulty(b.difficulty);
-    if (difficultyDiff !== 0) return difficultyDiff;
+        // 4️⃣ difficulty ascending
+        const difficultyDiff =
+          getDifficulty(a.difficulty) - getDifficulty(b.difficulty);
+        if (difficultyDiff !== 0) return difficultyDiff;
 
-    // 5️⃣ fallback: compare _id
-    return compareIds(a._id, b._id);
-  });
-}
- else {
+        // 5️⃣ fallback: compare _id
+        return compareIds(a._id, b._id);
+      });
+    } else {
       console.log("filtering the same as the offline");
       filtered.sort((a, b) => {
         const aTime =
@@ -226,6 +218,9 @@ const useGetCards = ({
         url += `&language=${selectedLearningLanguage}`;
       if (difficultyFilter && difficultyFilter !== "all")
         url += `&difficulty=${difficultyFilter}`;
+
+      const sessionStartTime = new Date().toISOString(); // send ISO string to backend
+      url += `&sessionStartTime=${sessionStartTime}`;
 
       const { data } = await axios.get(url);
       const serverCards: CardType[] = data.cards ?? [];

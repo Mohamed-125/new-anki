@@ -398,34 +398,39 @@ module.exports.getUserCards = async (req, res, next) => {
     query.sectionId = sectionId;
   }
 
-  if (study) {
-    console.log("sort", study);
-    // 1. الترتيب يكون دائمًا حسب الأقدم استحقاقًا
-    options.sort = { state:1, due: 1, createdAt: 1, difficulty: 1, _id: 1 };
+ if (study) {
+  const now = new Date();
 
-    // 2. تطبيق منطق الجدولة بناءً على قيمة study
-    switch (study.toLowerCase()) {
-      case "today":
-        // حساب نهاية اليوم الحالي (لتضمين جميع البطاقات المستحقة اليوم)
-        const endOfToday = new Date();
-        endOfToday.setHours(23, 59, 59, 999); // 11:59:59 PM
+  // 1️⃣ Force study-safe base query
+  query.userId = req.user?._id;
+const sessionStartTime = req.query.sessionStartTime
+  ? new Date(req.query.sessionStartTime)
+  : new Date();
 
-        // إرجاع البطاقات المستحقة (due) اليوم أو قبله
-        query.due = { $lte: endOfToday };
-        break;
+query.due = { $lte: sessionStartTime };
+  // 2️⃣ REMOVE dangerous filters during study
+  delete query.difficulty;
 
-      case "all":
-        // لا نضيف أي فلتر على 'due'، وبالتالي سيتم إرجاع جميع البطاقات.
-        // يمكننا إضافة فلتر وهمي إذا أردنا الترتيب فقط:
-        // query.userId = req.user?._id; // يجب أن تكون موجودة بالفعل في منطق 'else' أدناه
-        break;
-    }
-  } else {
-    options.sort = {
-      createdAt: -1,
-      // _id: 1
-    };
-  }
+  // 3️⃣ SRS-safe ordering
+  // Priority score:
+  // - overdue first
+  // - relearning > learning > review > new
+  options.sort = {
+    due: 1,                // most overdue first
+    state: -1,             // RELEARNING > LEARNING > REVIEW > NEW
+    lapses: -1,            // struggling cards first
+    difficulty: -1,        // harder cards first
+    createdAt: 1,
+    _id: 1,
+  };
+
+ 
+
+} else {
+  // Browsing mode (unchanged behavior)
+  options.sort = { createdAt: -1 };
+}
+
 
   const limit = 30; // Increased limit for better performance
   let page = +pageNumber || 0; // Default to 0 if pageNumber is not provided
