@@ -24,7 +24,7 @@ module.exports.registerUserController = async (req, res, next) => {
 
     res.status(201).send(createdUser);
   } catch (err) {
-    err;
+    console.log(err);
     res.status(400).send(err.message);
   }
 };

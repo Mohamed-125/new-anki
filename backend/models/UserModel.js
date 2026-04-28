@@ -61,11 +61,11 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-UserSchema.pre("save", async function (next) {
+UserSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+
   const salt = await bcrypt.genSalt(10);
-  const hashed = await bcrypt.hash(this.password, salt);
-  this.password = hashed;
-  next();
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 UserSchema.methods.generateNewToken = async function (res) {

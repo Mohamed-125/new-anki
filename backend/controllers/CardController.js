@@ -49,7 +49,7 @@ module.exports.batchUpdate = async (req, res, next) => {
 
   console.log(
     "Processing batch update for cards:",
-    toUpdateCardsData.map((card) => card._id)
+    toUpdateCardsData.map((card) => card._id),
   );
 
   const ops = toUpdateCardsData.map((cardData) => ({
@@ -185,7 +185,7 @@ async function resetAllCards() {
     const result = await CardModel.updateMany({}, { $set: resetFields });
 
     console.log(
-      `All cards have been reset. Modified count: ${result.modifiedCount}`
+      `All cards have been reset. Modified count: ${result.modifiedCount}`,
     );
     return result;
   } catch (err) {
@@ -231,7 +231,7 @@ async function migrateAndDedupeTransactional() {
       const docIds = g.docs.map((d) => d.id);
       // fetch full documents for these ids (in session)
       const docs = await CardModel.find({ _id: { $in: docIds } }).session(
-        session
+        session,
       );
 
       // try prefer existing string _id (type string)
@@ -248,12 +248,12 @@ async function migrateAndDedupeTransactional() {
 
       if (deleteIds.length) {
         await CardModel.deleteMany({ _id: { $in: deleteIds } }).session(
-          session
+          session,
         );
         console.log(
           `Group ${JSON.stringify(g._id)}: kept ${keepId}, deleted ${
             deleteIds.length
-          }`
+          }`,
         );
       }
     }
@@ -293,7 +293,7 @@ async function migrateAndDedupeTransactional() {
         // duplicate exists (kept during dedupe) → delete current ObjectId card
         await CardModel.deleteOne({ _id: card._id }).session(session);
         console.log(
-          `Deleted ObjectId doc ${card._id} because duplicate exists ${existing._id}`
+          `Deleted ObjectId doc ${card._id} because duplicate exists ${existing._id}`,
         );
         continue;
       }
@@ -330,11 +330,11 @@ async function renameShownInHome() {
         {
           $unset: "shownInHome", // remove the old field
         },
-      ]
+      ],
     );
 
     console.log(
-      `Migration complete: ${result.modifiedCount} documents updated`
+      `Migration complete: ${result.modifiedCount} documents updated`,
     );
   } catch (err) {
     console.error("Migration error:", err);
@@ -490,7 +490,7 @@ module.exports.updateCard = async (req, res, next) => {
       },
       {
         new: true,
-      }
+      },
     );
 
     res.status(200).send(updatedCard);
@@ -541,7 +541,7 @@ module.exports.batchMove = async (req, res) => {
 
     await CardModel.updateMany(
       { _id: { $in: ids } },
-      { collectionId: collectionId, showInHome: showInHome }
+      { collectionId: collectionId, showInHome: showInHome },
     );
 
     res.status(200).send({ message: "cards moved successfully" });
