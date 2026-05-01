@@ -10,7 +10,6 @@ const fs = require("fs");
 require("dotenv").config({
   path: path.resolve(__dirname, "../config.env"),
 });
-const { faker } = require("@faker-js/faker");
 
 const userRouter = require("../routes/userRouter");
 const collectionRouter = require("../routes/collectionRouter");
