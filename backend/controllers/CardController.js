@@ -2,8 +2,7 @@ const CardModel = require("../models/CardModel");
 const CollectionModel = require("../models/CollectionModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const nanoid = require("nanoid");
-// Batch delete cards
+const { randomUUID } = require("crypto"); // Batch delete cards
 exports.batchDelete = async (req, res) => {
   try {
     const { ids } = req.body;
@@ -301,7 +300,7 @@ async function migrateAndDedupeTransactional() {
       // insert new with new string _id
       const newCardObj = card.toObject();
       delete newCardObj._id;
-      const newId = nanoid();
+      const newId = randomUUID();
       await CardModel.create([{ ...newCardObj, _id: newId }], { session });
       // remove old
       await CardModel.deleteOne({ _id: card._id }).session(session);
