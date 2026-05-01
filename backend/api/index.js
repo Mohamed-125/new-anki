@@ -51,7 +51,9 @@ const whitelist = [
   "http://localhost:5174",
   "https://localhost:4173",
 ];
+const connectDB = require("../lib/db.js");
 
+connectDB();
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {
@@ -71,11 +73,11 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", "true");
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
   );
   res.header(
     "Access-Control-Allow-Methods",
-    "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+    "GET,POST,PUT,DELETE,PATCH,OPTIONS",
   );
 
   if (req.method === "OPTIONS") {
@@ -110,8 +112,6 @@ app.use("/api/v1/topic", topicRouter);
 app.use("/api/v1/scrape-conjugations", conjugationRouter);
 app.use("/api/v1/list", listRouter);
 
-const PORT = process.env.PORT || 5000;
- 
 /**
  * ✅ LOCAL DEVELOPMENT ONLY
  */
