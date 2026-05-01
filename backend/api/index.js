@@ -39,15 +39,6 @@ const { decode } = require("he");
 const LessonModel = require("../models/LessonModel.js");
 const SectionModel = require("../models/SectionModel.js");
 
-// Mongo DB Connections
-mongoose
-  .connect(process.env.MONGO_DB_URL)
-  .then((response) => {
-    console.log("MongoDB Connection Succeeded with SSL/TLS.");
-  })
-  .catch((error) => {
-    console.log("Error in DB connection: " + error);
-  });
 
 const whitelist = [
   "https://new-anki-one.vercel.app",
