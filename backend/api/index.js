@@ -116,7 +116,8 @@ mongoose
     app.listen(PORT, () => {
       console.log("App running in port: " + PORT);
     });
-  }).catch((err) => {
+  })
+  .catch((err) => {
     console.error("MongoDB connection error:", err);
     process.exit(1);
   });
